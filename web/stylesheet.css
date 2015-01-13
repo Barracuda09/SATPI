@@ -1,0 +1,95 @@
+
+div {
+    font-size: 12px;
+}
+
+div.log {
+	margin-left: auto;
+	margin-right: auto;
+	white-space: nowrap;
+    padding: inherit;
+    height: 500px;
+}
+
+textarea.logtext {
+	background-image: url("bg-grain.png");
+    font-size: 13px;
+	width: 80%;
+    height: 95%;
+    overflow: scroll;
+	white-space: nowrap;
+    border: 2px outset CadetBlue;
+}
+
+tr.separator {
+    color: white;
+    background-color: DarkSalmon;
+//    background-color: blue;
+}
+
+ul.menu_ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    padding: 2px;
+}
+
+li.menu_il {
+    border: 2px solid #a1a1a1;
+    border-radius: 10px;
+    padding: 2px;
+    float: left;
+}
+
+a:link, a:visited {
+    display: block;
+    width: 90px;
+    font-weight: bold;
+    background-color: inherit;
+    text-align: center;
+    color:gray;
+    text-decoration: none;
+}
+
+a:hover, a:active {
+    color:blue;
+    background-color: inherit;
+}
+
+#header {
+    font-size: 17px;
+    background-color:inherit;
+    color:black;
+    text-align:center;
+    padding:5px;
+}
+
+#footer {
+	background-color: inherit;
+	color: black;
+	clear: both;
+	text-align: center;
+	padding: 5px;	 	 
+	float: bottom;
+}
+
+#nav {
+	line-height: 30px;
+	background-color: inherit;
+    height: 550px;
+	width: 100px;
+	float: left;
+	padding: 5px;	      
+}
+
+body {
+	background-image: url("grid_noise.png");
+//    background-color: DarkSalmon ;
+    height: auto;
+    padding: 5px;
+}
+
+h3 {
+    text-align: center;
+}

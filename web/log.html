@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="stylesheet.css">
+
+<title>SAT>IP Log Page</title>
+
+<script src="loadxmldoc.js"></script>
+<script>
+    function buildcontent(xmlDoc) {
+		page = "";
+		logdata = xmlDoc.getElementsByTagName("log");
+		for (i = logdata.length-1; i >= 0; i--) {
+			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
+			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
+			prio = logdata[i].getElementsByTagName("prio")[0].childNodes[0].nodeValue;
+			
+			page +=  i;
+			page += "&nbsp;  ";
+			page +=  timestamp;
+			page += "&nbsp;  ";
+			page +=  prio;
+			page += "&nbsp;  ";
+			page +=  msg;
+			page += "\n";
+		}
+		return page;
+	}
+    function updatePage() {
+		loadXMLDoc("log.xml");
+	}
+	// function called when xml is loaded
+	function xmlloaded(xml) {
+		document.getElementById("txt").innerHTML = buildcontent(xml);
+	}
+</script>
+
+</head>
+<body>
+
+<div id="header">
+<h3>Main Log Page</h3>
+</div>
+
+<div id="nav">
+<ul class="menu_ul">
+  <li class="menu_il"><a href="index.html">Home</a></li>
+  <li class="menu_il"><a href="log.html">Log</a></li>
+  <li class="menu_il"><a href="frontend.html">Frontend</a></li>
+  <li class="menu_il"><a href="#contact">Contact</a></li>
+  <li class="menu_il"><a href="#about">About</a></li>
+  <li class="menu_il"><a href="STOP">Stop</a></li>
+</ul>
+</div>
+
+<div id="content" class="log">
+	<textarea id="txt" class="logtext" readOnly>
+	</textarea>
+</div>
+
+<script>
+    // Call the ajax refresh each refresh_time seconds
+    updatePage();
+    setInterval("updatePage()", refresh_time);
+</script>
+
+<div id="footer">
+ Copyright &#169; 2014
+</div>
+
+
+</body>
+</html>
