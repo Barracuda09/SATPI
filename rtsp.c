@@ -691,7 +691,7 @@ static void *thread_work_rtsp(void *arg) {
  *
  */
 void start_rtsp(RtpSession_t *rtpsession) {
-	if (pthread_create(&(rtpsession->rtsp_threadID), NULL, &thread_work_rtsp, &rtpsession) != 0) {
+	if (pthread_create(&(rtpsession->rtsp_threadID), NULL, &thread_work_rtsp, rtpsession) != 0) {
 		PERROR("thread_work_rtsp");
 	}
 	pthread_setname_np(rtpsession->rtsp_threadID, "thread_rtsp");

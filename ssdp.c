@@ -155,7 +155,7 @@ static void * thread_work_ssdp(void *arg) {
  *
  */
 void start_ssdp(RtpSession_t *rtpsession) {
-	if (pthread_create(&(rtpsession->rtsp_threadID), NULL, &thread_work_ssdp, &rtpsession) != 0) {
+	if (pthread_create(&(rtpsession->rtsp_threadID), NULL, &thread_work_ssdp, rtpsession) != 0) {
 		PERROR("thread_work_ssdp");
 	}
 	pthread_setname_np(rtpsession->rtsp_threadID, "thread_ssdp");

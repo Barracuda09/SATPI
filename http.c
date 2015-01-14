@@ -401,7 +401,7 @@ static void * thread_work_http(void *arg) {
  *
  */
 void start_http(RtpSession_t *rtpsession) {
-	if (pthread_create(&threadID, NULL, &thread_work_http, &rtpsession) != 0) {
+	if (pthread_create(&threadID, NULL, &thread_work_http, rtpsession) != 0) {
 		SI_LOG_ERROR("thread_work_http");
 	}
 	pthread_setname_np(threadID, "thread_http");

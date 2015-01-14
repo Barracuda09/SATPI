@@ -74,9 +74,9 @@ static size_t get_attached_frontend_count(const char *path, size_t count, Fronte
 						if (strstr(file_list[i]->d_name, "frontend") != NULL) {
 							// check if we have an array we can fill in
 							if (fe_array && fe_array[count]) {
-								size_t fe_nr;
+								int fe_nr;
 								sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
-								size_t adapt_nr;
+								int adapt_nr;
 								sscanf(path, "/dev/dvb/adapter%d", &adapt_nr);
 
 								//
@@ -341,13 +341,13 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 		size_t i;
 		for (i = 0; i < fe->max_fe; ++i) {
 			fe->array[i] = malloc(sizeof(Frontend_t));;
-			fe->array[i]->index = i;		
+			fe->array[i]->index = i;
 		}
 		get_attached_frontend_count("/dev/dvb", 0, fe->array);
-		printf("Found %d frontend!!\n", fe->max_fe);
-		
+		printf("Found %zu frontend!!\n", fe->max_fe);
+
 		size_t nr_dvb_s2 = 0;
-		
+
 		// Get all Frontend properties
 		for (i = 0; i < fe->max_fe; ++i) {
 			Frontend_t *frontend = fe->array[i];
@@ -367,7 +367,7 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			}
 		}
 		// make xml delivery system string
-		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%d", nr_dvb_s2);
+		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu", nr_dvb_s2);
 	}
 	return fe->max_fe;
 }

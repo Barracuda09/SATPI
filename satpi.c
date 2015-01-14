@@ -264,9 +264,8 @@ int main(int argc, char *argv[]) {
 		usleep(150000);
 	}
 
-	stop_http();
 	stop_rtsp(&rtpsession);
-	
+
 	// cleanup threads
 	stop_http();
 	if (ssdp) {
