@@ -37,8 +37,6 @@ int exitApp;
 static int retval;
 static int otherSig;
 
-static pthread_t threadID;
-
 static RtpSession_t rtpsession;
 
 /*
