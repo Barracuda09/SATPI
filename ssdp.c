@@ -45,7 +45,7 @@ static pthread_t threadID;
  *
  */
 static void * thread_work_ssdp(void *arg) {
-#define UUID "50c958a8-e839-4b96-b7ae-8f9d989e136c"
+#define UUID "50c958a8-e839-4b96-b7ae-%s"
 #define UPNP_ROOTDEVICE	"NOTIFY * HTTP/1.1\r\n" \
 						"HOST: 239.255.255.250:1900\r\n" \
 						"CACHE-CONTROL: max-age=1800\r\n" \
@@ -56,20 +56,20 @@ static void * thread_work_ssdp(void *arg) {
 						"USN: uuid:%s::upnp:rootdevice\r\n" \
 						"BOOTID.UPNP.ORG: 2318\r\n" \
 						"CONFIGID.UPNP.ORG: 0\r\n" \
-						"DEVICEID.SES.COM: 1\r\n" \
+						"DEVICEID.SES.COM: %d\r\n" \
 						"\r\n"
 
 #define UPNP_ALIVE	"NOTIFY * HTTP/1.1\r\n" \
 					"HOST: 239.255.255.250:1900\r\n" \
 					"CACHE-CONTROL: max-age=1800\r\n" \
 					"LOCATION: http://%s:%d/desc.xml\r\n" \
-					"NT: uuid:50c958a8-e839-4b96-b7ae-8f9d989e136c\r\n" \
+					"NT: uuid:%s\r\n" \
 					"NTS: ssdp:alive\r\n" \
 					"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
 					"USN: uuid:%s\r\n" \
 					"BOOTID.UPNP.ORG: 2318\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
-					"DEVICEID.SES.COM: 1\r\n" \
+					"DEVICEID.SES.COM: %d\r\n" \
 					"\r\n"
 
 #define UPNP_DEVICE "NOTIFY * HTTP/1.1\r\n" \
@@ -82,12 +82,17 @@ static void * thread_work_ssdp(void *arg) {
 					"USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
 					"BOOTID.UPNP.ORG: 2318\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
-					"DEVICEID.SES.COM: 1\r\n" \
+					"DEVICEID.SES.COM: %d\r\n" \
 					"\r\n"
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
 	char msg[500];
+	char uuid[40];
+	unsigned int deviceId = 0xbeef; // just for now a different value
 
 	SI_LOG_INFO("Setting up SSDP server");
+	
+	// Make UUID with MAC address
+	snprintf(uuid, sizeof(uuid), UUID, rtpsession->interface.mac_addr);
 
 	// fill in the socket structure with host information
 	memset(&udp_conn.addr, 0, sizeof(udp_conn.addr));
@@ -103,7 +108,7 @@ static void * thread_work_ssdp(void *arg) {
 	for (;;) {
 //		SI_LOG_INFO("Announcement SAT>IP server");
 
-		snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, UUID);
+		snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {
@@ -118,7 +123,7 @@ static void * thread_work_ssdp(void *arg) {
 		}
 		usleep(UTIME_DEL);
 
-		snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, UUID);
+		snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {
@@ -133,7 +138,7 @@ static void * thread_work_ssdp(void *arg) {
 		}
 		usleep(UTIME_DEL);
 
-		snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, UUID);
+		snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {

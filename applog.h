@@ -49,13 +49,16 @@ char *make_log_xml();
 void open_satip_log();
 void close_satip_log();
 
+#ifdef NDEBUG
 #define PERROR(str)             satiplog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
 #define SI_LOG_INFO(...)        satiplog(LOG_INFO, __VA_ARGS__)
 #define SI_LOG_ERROR(...)       satiplog(LOG_ERR, __VA_ARGS__)
-#ifdef NDEBUG
 #define SI_LOG_DEBUG(...)
 #else
-#define SI_LOG_DEBUG(...)       satiplog(LOG_DEBUG, __VA_ARGS__)
+#define PERROR(str)             satiplog(LOG_ERR, "[%s:%d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
+#define SI_LOG_INFO(fmt, ...)   satiplog(LOG_INFO, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_ERROR(fmt, ...)  satiplog(LOG_ERR, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(fmt, ...)  satiplog(LOG_DEBUG, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif

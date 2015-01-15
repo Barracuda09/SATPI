@@ -219,15 +219,6 @@ int main(int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 	}
-	
-	// detect the attached frontends and get frontend properties
-	if (detect_attached_frontends("/dev/dvb", &rtpsession.fe) == 0) {
-		printf("Error: No frontend found!!\n");
-		return EXIT_FAILURE;
-	}
-	
-	// initialize all variables
-	init_rtp(&rtpsession);
 
 	// initialize the logging interface
 	openlog(DAEMON_NAME, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
@@ -242,7 +233,16 @@ int main(int argc, char *argv[]) {
 	
 	// notify we are alive
 	SI_LOG_INFO("--- starting ---");
-	
+
+	// detect the attached frontends and get frontend properties
+	if (detect_attached_frontends("/dev/dvb", &rtpsession.fe) == 0) {
+		printf("Error: No frontend found!!\n");
+		return EXIT_FAILURE;
+	}
+
+	// initialize all variables
+	init_rtp(&rtpsession);
+
 	// get interface IP and MAC addresses
 	get_interface_properties(&rtpsession.interface);
 	

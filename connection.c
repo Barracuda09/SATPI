@@ -231,7 +231,9 @@ int get_interface_properties(Interface_Attr_t *interface) {
 	}
 	
 	const unsigned char* mac=(unsigned char*)ifr.ifr_hwaddr.sa_data;
-	snprintf(interface->mac_addr, 17, "%02x:%02x:%02x:%02x:%02x:%02x",
+	snprintf(interface->mac_addr_decorated, 18, "%02x:%02x:%02x:%02x:%02x:%02x",
+				mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	snprintf(interface->mac_addr, 18, "%02x%02x%02x%02x%02x%02x",
 				mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	memset(&ifr, 0, sizeof(ifr));
@@ -254,7 +256,7 @@ int get_interface_properties(Interface_Attr_t *interface) {
 	memcpy(interface->ip_addr, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), 20);
 	memcpy(interface->iface_name, ifr.ifr_name, IFNAMSIZ);
 	
-	SI_LOG_INFO("%s: %s [%s]", interface->iface_name, interface->ip_addr, interface->mac_addr);
+	SI_LOG_INFO("%s: %s [%s]", interface->iface_name, interface->ip_addr, interface->mac_addr_decorated);
 	
 	return 1;
 }

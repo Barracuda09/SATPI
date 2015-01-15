@@ -39,7 +39,8 @@ typedef struct {
 // Interface attributes
 typedef struct {
 	char ip_addr[20];               // ip address of the used interface
-	char mac_addr[18];              // mac address of the used interface
+	char mac_addr_decorated[20];    // mac address of the used interface
+	char mac_addr[20];              // mac address of the used interface
 	char iface_name[IFNAMSIZ];      // used interface name i.e. eth0
 } Interface_Attr_t;
 
