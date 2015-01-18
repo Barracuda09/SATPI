@@ -7,15 +7,17 @@
 	</specVersion>
 	<device>
 		<deviceType>urn:ses-com:device:SatIPServer:1</deviceType>
-		<friendlyName>SATIPBOX</friendlyName>
-		<manufacturer>Manufacturer</manufacturer>
-		<manufacturerURL>http://www.manufacturer.com</manufacturerURL>
+		<friendlyName>SATPI Server</friendlyName>
+		<manufacturer>Marc Postema</manufacturer>
+		<manufacturerURL>https://github.com/Barracuda09/SATPI</manufacturerURL>
 		<modelDescription>SATIPBOX 500 4.0</modelDescription>
-		<modelName>SATIPBOX</modelName>
+		<modelName>SATPI Server</modelName>
 		<modelNumber>1.0</modelNumber>
-		<modelURL>http://www.manufacturer.com/satipbox</modelURL>
+		<modelURL>https://github.com/Barracuda09/SATPI</modelURL>
 		<serialNumber>1S81A31231000007</serialNumber>
-		<UDN>uuid:50c958a8-e839-4b96-b7ae-8f9d989e136c</UDN>
+		<!-- filled in by server -->
+		<UDN>uuid:%s</UDN>
+		<!-- filled in by server -->
 		<iconList>
 			<icon>
 				<mimetype>image/png</mimetype>
@@ -47,6 +49,8 @@
 			</icon>
 		</iconList>
 		<presentationURL>/</presentationURL>
-		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPCAP> <!-- filled in by server -->
+		<!-- filled in by server -->
+		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPCAP>
+		<!-- filled in by server -->
 	</device>
 </root>

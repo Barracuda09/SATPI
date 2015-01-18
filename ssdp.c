@@ -45,7 +45,6 @@ static pthread_t threadID;
  *
  */
 static void * thread_work_ssdp(void *arg) {
-#define UUID "50c958a8-e839-4b96-b7ae-%s"
 #define UPNP_ROOTDEVICE	"NOTIFY * HTTP/1.1\r\n" \
 						"HOST: 239.255.255.250:1900\r\n" \
 						"CACHE-CONTROL: max-age=1800\r\n" \
@@ -86,14 +85,10 @@ static void * thread_work_ssdp(void *arg) {
 					"\r\n"
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
 	char msg[500];
-	char uuid[40];
-	unsigned int deviceId = 0xbeef; // just for now a different value
+	unsigned int deviceId = 0xbe; // just for now a different value
 
 	SI_LOG_INFO("Setting up SSDP server");
 	
-	// Make UUID with MAC address
-	snprintf(uuid, sizeof(uuid), UUID, rtpsession->interface.mac_addr);
-
 	// fill in the socket structure with host information
 	memset(&udp_conn.addr, 0, sizeof(udp_conn.addr));
 	udp_conn.addr.sin_family      = AF_INET;
@@ -108,7 +103,7 @@ static void * thread_work_ssdp(void *arg) {
 	for (;;) {
 //		SI_LOG_INFO("Announcement SAT>IP server");
 
-		snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, deviceId);
+		snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {
@@ -123,7 +118,7 @@ static void * thread_work_ssdp(void *arg) {
 		}
 		usleep(UTIME_DEL);
 
-		snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, uuid, deviceId);
+		snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, rtpsession->uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {
@@ -138,7 +133,7 @@ static void * thread_work_ssdp(void *arg) {
 		}
 		usleep(UTIME_DEL);
 
-		snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, uuid, deviceId);
+		snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
 
 		// broadcast message
 		if (sendto(udp_conn.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_conn.addr, sizeof(udp_conn.addr)) == -1) {

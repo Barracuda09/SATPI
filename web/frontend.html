@@ -64,11 +64,12 @@
 				page += addTableLineEntry(frontenddata, "Freq Range", "freq");
 				page += addTableLineEntry(frontenddata, "Symbol Rate Range", "symbol");
 				page += "<tr class=\"separator\"><th colspan=\"" + (frontenddata.length+1) + "\">Channel Info</th></tr>";
-				page += addTableLineEntry(frontenddata, "Delivery System", "delsys");
+				delsys = addTableLineEntry(frontenddata, "Delivery System", "delsys");
+				page += delsys;
 				page += addTableLineEntry(frontenddata, "Tune Freq", "tunefreq");
-				page += addTableLineEntry(frontenddata, "Symbol Rate", "tunesymbol");
 				page += addTableLineEntry(frontenddata, "Modulation", "modulation");
 				page += addTableLineEntry(frontenddata, "Fec", "fec");
+				page += addTableLineEntry(frontenddata, "Symbol Rate", "tunesymbol");
 				page += addTableLineEntry(frontenddata, "Rolloff", "rolloff");
 				page += addTableLineEntry(frontenddata, "Source", "src");
 				page += addTableLineEntry(frontenddata, "Polarization", "pol");

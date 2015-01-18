@@ -102,6 +102,8 @@ typedef struct {
 	pthread_t        rtsp_threadID;           //
 
 	Interface_Attr_t interface;               //
+	char             uuid[40];                //
+
 	pthread_mutex_t  mutex;                   // global mutex
 	time_t           appStartTime;            // the application start time (EPOCH)
 	double           rtp_payload;             // Total RTP payload count in MBytes

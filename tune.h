@@ -67,9 +67,9 @@ typedef struct {
 
 // PID and DMX file descriptor
 typedef struct {
-    int     fd_dmx;          // used DMX file descriptor for PID
-    uint8_t used;            // used pid (0 = not used, 1 = in use)
-	uint8_t cc;              // continuity counter (0 - 15) of this PID
+	int      fd_dmx;         // used DMX file descriptor for PID
+	uint8_t  used;           // used pid (0 = not used, 1 = in use)
+	uint8_t  cc;             // continuity counter (0 - 15) of this PID
 	uint32_t cc_error;       // cc error count
 	uint32_t count;          // the number of times this pid occurred
 } PidData_t;
@@ -92,6 +92,12 @@ typedef struct {
     int rolloff;             // roll-off
     int pilot;               // pilot tones (on/off)
     int inversion;           //
+
+	int transmission;        // DVB-T(2)
+	int guard;               // DVB-T(2)
+	int hierarchy;           // DVB-T(2)
+	int bandwidth;           // DVB-T(2)
+	int plp_id;              // DVB-T2
 } ChannelData_t;
 
 // Frontend properties
@@ -121,7 +127,7 @@ typedef struct {
 typedef struct {
 	Frontend_t       **array;         //
 	size_t           max_fe;          //
-	char             del_sys_str[25]; // delivery system string for xml
+	char             del_sys_str[50]; // delivery system string for xml
 } FrontendArray_t;
 
 // Detect the attached frontends and get frontend properties

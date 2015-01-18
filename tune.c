@@ -43,13 +43,16 @@
 #include "utils.h"
 #include "applog.h"
 
-#if DVB_API_VERSION < 5
+#define FULL_DVB_API_VERSION (DVB_API_VERSION << 8 | DVB_API_VERSION_MINOR)
+
+#if FULL_DVB_API_VERSION < 0x0500
 #error Not correct DVB_API_VERSION
 #endif
 
-#ifndef DTV_ENUM_DELSYS
-#define DTV_ENUM_DELSYS    44
-#define NO_DTV_ENUM_DELSYS  1
+#if FULL_DVB_API_VERSION < 0x0505
+#define DTV_ENUM_DELSYS     44
+#define SYS_DVBC_ANNEX_A    SYS_DVBC_ANNEX_AC
+#define NOT_PREFERRED_DVB_API 1
 #endif
 
 #define DMX       "/dev/dvb/adapter%d/demux%d"
@@ -123,11 +126,8 @@ static int get_fe_info(Frontend_t *frontend) {
 		CLOSE_FD(fd_fe);
 		return -1;
 	}
-	SI_LOG_DEBUG("Frontend Name: %s", frontend->fe_info.name);
+	SI_LOG_INFO("Frontend Name: %s", frontend->fe_info.name);
 
-#ifdef NO_DTV_ENUM_DELSYS
-	SI_LOG_ERROR("No DTV_ENUM_DELSYS ?? (DVB_API_VERSION: %d)", DVB_API_VERSION);
-#endif
 	dtvProperty.cmd = DTV_ENUM_DELSYS;
 	dtvProperty.u.data = DTV_UNDEFINED;
 
@@ -151,6 +151,31 @@ static int get_fe_info(Frontend_t *frontend) {
 				frontend->info_del_sys[i] = SYS_DVBS2;
 				SI_LOG_DEBUG("Frontend Type: Satellite (DVB-S2)");
 				break;
+			case SYS_DVBT:
+				frontend->info_del_sys[i] = SYS_DVBT;
+				SI_LOG_DEBUG("Frontend Type: Terrestrial (DVB-T)");
+				break;
+			case SYS_DVBT2:
+				frontend->info_del_sys[i] = SYS_DVBT2;
+				SI_LOG_DEBUG("Frontend Type: Terrestrial (DVB-T2)");
+				break;
+			case SYS_DVBC_ANNEX_A:
+				frontend->info_del_sys[i] = SYS_DVBC_ANNEX_A;
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex A)");
+				break;
+			case SYS_DVBC_ANNEX_B:
+				frontend->info_del_sys[i] = SYS_DVBC_ANNEX_B;
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex B)");
+				break;
+#if FULL_DVB_API_VERSION >= 0x0505
+			case SYS_DVBC_ANNEX_C:
+				frontend->info_del_sys[i] = SYS_DVBC_ANNEX_C;
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+				break;
+#endif
+			default:
+				SI_LOG_DEBUG("Frontend Type Unknown: %d", dtvProperty.u.buffer.data[i]);
+				break;
 		}
 	}
 
@@ -165,22 +190,22 @@ static int get_fe_info(Frontend_t *frontend) {
  *
  */
 static int open_dvr(const char *pah_to_dvr) {
-  int fd;
-  if((fd = open(pah_to_dvr, O_RDONLY | O_NONBLOCK)) < 0){
-    PERROR("DVR DEVICE");
-  }
-  return fd;
+	int fd;
+	if((fd = open(pah_to_dvr, O_RDONLY | O_NONBLOCK)) < 0) {
+		PERROR("DVR DEVICE");
+	}
+	return fd;
 }
 
 /*
  *
  */
 static int open_dmx(const char *path_to_dmx) {
-  int fd;
-  if((fd = open(path_to_dmx, O_RDWR)) < 0){
-    PERROR("DMX DEVICE");
-  }
-  return fd;
+	int fd;
+	if((fd = open(path_to_dmx, O_RDWR | O_NONBLOCK)) < 0) {
+		PERROR("DMX DEVICE");
+	}
+	return fd;
 }
 
 /*
@@ -199,6 +224,7 @@ static int set_demux_filter(int fd, uint16_t pid) {
 		PERROR("DMX_SET_PES_FILTER");
 		return -1;
 	}
+	SI_LOG_DEBUG("Set filter PID %d - fd %d", pid, fd);
 	return 1;
 }
 
@@ -259,32 +285,51 @@ static int send_diseqc(int fd_fe, DiSEqc_t *diseqc) {
  *
  */
 static int tune(int fd_fe, const ChannelData_t *channel) {
-	struct dtv_property p[] = {
-		{ .cmd = DTV_DELIVERY_SYSTEM, .u.data = channel->delsys },
-		{ .cmd = DTV_FREQUENCY,       .u.data = channel->ifreq },
-		{ .cmd = DTV_MODULATION,      .u.data = channel->modtype },
-		{ .cmd = DTV_SYMBOL_RATE,     .u.data = channel->srate },
-		{ .cmd = DTV_INNER_FEC,       .u.data = channel->fec },
-		{ .cmd = DTV_INVERSION,       .u.data = INVERSION_AUTO },
-		{ .cmd = DTV_ROLLOFF,         .u.data = channel->rolloff },
-		{ .cmd = DTV_PILOT,           .u.data = PILOT_AUTO },
-		{ .cmd = DTV_TUNE },
-	};
+	struct dtv_property p[13];
+	int size = 0;
+	switch (channel->delsys) {
+		case SYS_DVBS:
+		case SYS_DVBS2:
+			p[0].cmd = DTV_CLEAR;
+			p[1].cmd = DTV_DELIVERY_SYSTEM; p[1].u.data = channel->delsys;
+			p[2].cmd = DTV_FREQUENCY;       p[2].u.data = channel->ifreq;
+			p[3].cmd = DTV_MODULATION;      p[3].u.data = channel->modtype;
+			p[4].cmd = DTV_SYMBOL_RATE;     p[4].u.data = channel->srate;
+			p[5].cmd = DTV_INNER_FEC;       p[5].u.data = channel->fec;
+			p[6].cmd = DTV_INVERSION;       p[6].u.data = INVERSION_AUTO;
+			p[7].cmd = DTV_ROLLOFF;         p[7].u.data = channel->rolloff;
+			p[8].cmd = DTV_PILOT;           p[8].u.data = PILOT_AUTO;
+			p[9].cmd = DTV_TUNE;
+			size = 10;
+			break;
+		case SYS_DVBT:
+			p[0].cmd = DTV_CLEAR;
+			p[1].cmd = DTV_DELIVERY_SYSTEM;   p[1].u.data = channel->delsys;
+			p[2].cmd = DTV_FREQUENCY;         p[2].u.data = channel->freq;
+			p[3].cmd = DTV_MODULATION;        p[3].u.data = channel->modtype;
+			p[4].cmd = DTV_INVERSION;         p[4].u.data = channel->inversion;
+			p[5].cmd = DTV_BANDWIDTH_HZ;      p[5].u.data = channel->bandwidth;
+			p[6].cmd = DTV_CODE_RATE_HP;      p[6].u.data = channel->fec;
+			p[7].cmd = DTV_CODE_RATE_LP;      p[7].u.data = channel->fec;
+			p[8].cmd = DTV_TRANSMISSION_MODE; p[8].u.data = channel->transmission;
+			p[9].cmd = DTV_GUARD_INTERVAL;    p[9].u.data = channel->guard;
+			p[10].cmd = DTV_HIERARCHY;        p[10].u.data = channel->hierarchy;
+			p[11].cmd = DTV_TUNE;
+			size = 12;
+			break;
+
+		default:
+			return -1;
+	}
 	struct dtv_properties cmdseq = {
-		.num = 9,
+		.num = size,
 		.props = p
 	};
-
-	// Tune only DVB-S and DVB-S2
-	if ((channel->delsys != SYS_DVBS) && (channel->delsys != SYS_DVBS2)) {
-		return -1;
-	}
 
 	if ((ioctl(fd_fe, FE_SET_PROPERTY, &cmdseq)) == -1) {
 		PERROR("FE_SET_PROPERTY failed");
 		return -1;
 	}
-
 	return 1;
 }
 
@@ -292,49 +337,45 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
  *
  */
 static int tune_it(int fd, ChannelData_t *channel, DiSEqc_t *diseqc) {
-	struct dtv_property p[] = {
-		{ .cmd = DTV_CLEAR },
-	};
-	struct dtv_properties cmdseq = {
-		.num = 1,
-		.props = p
-	};
 
 	SI_LOG_DEBUG("Start tuning");
-
-	diseqc->hiband = 0;
-	if (diseqc->LNB->switchlof && diseqc->LNB->lofHigh && channel->freq >= diseqc->LNB->switchlof) {
-		diseqc->hiband = 1;
-	}
-
-	if (diseqc->hiband) {
-		channel->ifreq = channel->freq - diseqc->LNB->lofHigh;
-	} else {
-		if (channel->freq < diseqc->LNB->lofLow) {
-			channel->ifreq = diseqc->LNB->lofLow - channel->freq;
-		} else {
-			channel->ifreq = channel->freq - diseqc->LNB->lofLow;
-		}
-	}
-	// clear
-	if ((ioctl(fd, FE_SET_PROPERTY, &cmdseq)) == -1) {
-		PERROR("ioctl FE_SET_PROPERTY");
-		return -1;
-	}
 	
-	// diseqc
-	if (send_diseqc(fd, diseqc) == 1) {
-		if (tune(fd, channel) == 1) {
-			return 1;
+	if (channel->delsys == SYS_DVBS || channel->delsys == SYS_DVBS2) {
+		diseqc->hiband = 0;
+		if (diseqc->LNB->switchlof && diseqc->LNB->lofHigh && channel->freq >= diseqc->LNB->switchlof) {
+			diseqc->hiband = 1;
+		}
+
+		if (diseqc->hiband) {
+			channel->ifreq = channel->freq - diseqc->LNB->lofHigh;
+		} else {
+			if (channel->freq < diseqc->LNB->lofLow) {
+				channel->ifreq = diseqc->LNB->lofLow - channel->freq;
+			} else {
+				channel->ifreq = channel->freq - diseqc->LNB->lofLow;
+			}
+		}		
+		// set diseqc
+		if (send_diseqc(fd, diseqc) == -1) {
+			return 0;
 		}
 	}
-	return 0;
+	// Now tune
+	if (tune(fd, channel) == -1) {
+		return 0;
+	}
+	return 1;
 }
 
 /*
  *
  */
 size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
+#ifdef NOT_PREFERRED_DVB_API
+	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher (current DVB_API_VERSION: %d.%d)", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_ERROR("current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+#endif
+	SI_LOG_INFO("Detecting frontends in: %s", path);
 	fe->max_fe = get_attached_frontend_count(path, 0, NULL);
 	if (fe->max_fe != 0) {
 		fe->array = malloc(sizeof(Frontend_t *) * fe->max_fe);
@@ -344,9 +385,13 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			fe->array[i]->index = i;
 		}
 		get_attached_frontend_count("/dev/dvb", 0, fe->array);
-		printf("Found %zu frontend!!\n", fe->max_fe);
+		SI_LOG_INFO("Frontends found: %zu", fe->max_fe);
 
 		size_t nr_dvb_s2 = 0;
+		size_t nr_dvb_t  = 0;
+		size_t nr_dvb_t2 = 0;
+		size_t nr_dvb_c  = 0;
+		size_t nr_dvb_c2 = 0;
 
 		// Get all Frontend properties
 		for (i = 0; i < fe->max_fe; ++i) {
@@ -359,6 +404,21 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 						case SYS_DVBS2:
 							++nr_dvb_s2;
 							break;
+						case SYS_DVBT:
+							++nr_dvb_t;
+							break;
+						case SYS_DVBT2:
+							++nr_dvb_t2;
+							break;
+						case SYS_DVBC_ANNEX_A:
+						case SYS_DVBC_ANNEX_B:
+							++nr_dvb_c;
+							break;
+#if FULL_DVB_API_VERSION >= 0x0505
+						case SYS_DVBC_ANNEX_C:
+							++nr_dvb_c2;
+							break;
+#endif
 						default:
 							// Not supported
 							break;
@@ -367,7 +427,10 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			}
 		}
 		// make xml delivery system string
-		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu", nr_dvb_s2);
+		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
+		               nr_dvb_s2, nr_dvb_t, nr_dvb_t2, nr_dvb_c, nr_dvb_c2);
+	} else {
+		SI_LOG_ERROR("No Frontends found!!", fe->max_fe);
 	}
 	return fe->max_fe;
 }
@@ -376,21 +439,22 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
  *
  */
 int open_fe(const char *path_to_fe, int readonly) {
-  int fd_fe;
-  if((fd_fe = open(path_to_fe, (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
-    PERROR("FRONTEND DEVICE");
-  }
-  return fd_fe;
+	int fd;
+	if((fd = open(path_to_fe, (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
+		PERROR("FRONTEND DEVICE");
+	}
+	SI_LOG_INFO("Open FE fd: %d readonly %d", fd, readonly);
+	return fd;
 }
 
 /*
  *
  */
 void reset_pid(PidData_t *pid) {
-	pid->used = 0;
-	pid->cc = 0x80;
+	pid->used     = 0;
+	pid->cc       = 0x80;
 	pid->cc_error = 0;
-	pid->count = 0;
+	pid->count    = 0;
 	CLOSE_FD(pid->fd_dmx);
 }
 
@@ -471,7 +535,7 @@ int setup_frontend_and_tune(Frontend_t *frontend) {
 				return -1;
 			}
 		}
-		SI_LOG_INFO("Frontend: %d, Opened DVR.", frontend->index);
+		SI_LOG_INFO("Frontend: %d, Opened DVR fd: %d.", frontend->index, frontend->fd_dvr);
 	}
 	return 1;
 }

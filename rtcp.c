@@ -288,6 +288,13 @@ static void *thread_work_rtcp(void *arg) {
 
 		switch (state) {
 			case Starting:
+				pthread_mutex_lock(&client->fe_ptr_mutex);
+				if (client->fe) {
+					SI_LOG_INFO("Frontend: %d, Start RTCP stream to %s (%d - %d)", client->fe->index, client->ip_addr,
+									ntohs(client->rtp.client.addr.sin_port), ntohs(client->rtcp.client.addr.sin_port));
+				}
+				pthread_mutex_unlock(&client->fe_ptr_mutex);
+
 				pthread_mutex_lock(&client->mutex);
 				client->rtcp.state = Started;
 				pthread_mutex_unlock(&client->mutex);
@@ -297,6 +304,8 @@ static void *thread_work_rtcp(void *arg) {
 				if (client->fe) {
 					// Check if have already opened the monitor FE (in read only mode)
 					if (client->fe->monitor.fd_fe == -1) {
+						SI_LOG_INFO("Frontend: %d, Open Frontend Monitor for %s (%d - %d)", client->fe->index, client->ip_addr,
+										ntohs(client->rtp.client.addr.sin_port), ntohs(client->rtcp.client.addr.sin_port));
 						client->fe->monitor.fd_fe = open_fe(client->fe->path_to_fe, 1);
 					}
 

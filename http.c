@@ -103,9 +103,10 @@ static char *make_frontend_xml(const RtpSession_t *rtpsession) {
 		// channel
 		addString(&ptr, "<delsys>%s</delsys>", delsys_to_string(fe->channel.delsys));
 		addString(&ptr, "<tunefreq>%d</tunefreq>", fe->channel.freq);
-		addString(&ptr, "<tunesymbol>%d</tunesymbol>", fe->channel.srate);
 		addString(&ptr, "<modulation>%s</modulation>", modtype_to_sting(fe->channel.modtype));
 		addString(&ptr, "<fec>%s</fec>", fec_to_string(fe->channel.fec));
+
+		addString(&ptr, "<tunesymbol>%d</tunesymbol>", fe->channel.srate);
 		addString(&ptr, "<rolloff>%s</rolloff>", rolloff_to_sting(fe->channel.rolloff));
 		addString(&ptr, "<src>%d</src>", fe->diseqc.src);
 		addString(&ptr, "<pol>%c</pol>", fe->diseqc.pol ? 'V' : 'H');
@@ -273,12 +274,13 @@ static int get_http(int fd, const char *msg, const RtpSession_t *rtpsession) {
 			snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize);
 		} else if ((docType = read_file(path, &docTypeSize))) {
 			if (strstr(file, ".xml") != NULL) {
-				// check if the request is the SAT>IP description xml then fill in the tuner string
+				// check if the request is the SAT>IP description xml then fill in the UUID and tuner string
 				if (strstr(docType, "urn:ses-com:device") != NULL) {
-					docTypeSize -= 2;
+					docTypeSize -= 4; // minus 2x %s
 					docTypeSize += strlen(rtpsession->fe.del_sys_str);
+					docTypeSize += strlen(rtpsession->uuid);
 					char *doc_desc_xml = malloc(docTypeSize+1);
-					snprintf(doc_desc_xml, docTypeSize+1, docType, rtpsession->fe.del_sys_str);
+					snprintf(doc_desc_xml, docTypeSize+1, docType, rtpsession->uuid, rtpsession->fe.del_sys_str);
 					FREE_PTR(docType);
 					docType = doc_desc_xml;
 				}

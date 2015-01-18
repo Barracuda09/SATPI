@@ -206,13 +206,77 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 						client->fe->channel.delsys = SYS_DVBS2;
 					} else if (strcmp(token_id_val, "dvbs") == 0) {
 						client->fe->channel.delsys = SYS_DVBS;
+					} else if (strcmp(token_id_val, "dvbt") == 0) {
+						client->fe->channel.delsys = SYS_DVBT;
+					} else if (strcmp(token_id_val, "dvbt2") == 0) {
+						client->fe->channel.delsys = SYS_DVBT2;
 					}
 				} else if (strcmp(token_id, "mtype") == 0) {
 					if (strcmp(token_id_val, "8psk") == 0) {
 						client->fe->channel.modtype = PSK_8;
 					} else if (strcmp(token_id_val, "qpsk") == 0) {
 						client->fe->channel.modtype = QPSK;
+					} else if (strcmp(token_id_val, "16qam") == 0) {
+						client->fe->channel.modtype = QAM_16;
+					} else if (strcmp(token_id_val, "64qam") == 0) {
+						client->fe->channel.modtype = QAM_64;
+					} else if (strcmp(token_id_val, "256qam") == 0) {
+						client->fe->channel.modtype = QAM_256;
 					}
+				} else if (strcmp(token_id, "bw") == 0) {
+					//	"5", "6", "7", "8", "10", "1.712"
+					if (strcmp(token_id_val, "5") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_5_MHZ;
+					} else if (strcmp(token_id_val, "6") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_6_MHZ;
+					} else if (strcmp(token_id_val, "7") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_7_MHZ;
+					} else if (strcmp(token_id_val, "8") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_8_MHZ;
+					} else if (strcmp(token_id_val, "10") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_10_MHZ;
+					} else if (strcmp(token_id_val, "1.712") == 0) {
+						client->fe->channel.bandwidth = BANDWIDTH_1_712_MHZ;
+					}
+				} else if (strcmp(token_id, "tmode") == 0) {
+					// "2k", "4k", "8k", "1k", "16k", "32k"
+					if (strcmp(token_id_val, "2k") == 0) {
+						client->fe->channel.transmission = TRANSMISSION_MODE_2K;
+					} else if (strcmp(token_id_val, "4k") == 0) {
+						client->fe->channel.transmission = TRANSMISSION_MODE_4K;
+					} else if (strcmp(token_id_val, "1k") == 0) {
+						client->fe->channel.transmission = TRANSMISSION_MODE_1K;
+					} else if (strcmp(token_id_val, "16k") == 0) {
+						client->fe->channel.transmission = TRANSMISSION_MODE_16K;
+					} else if (strcmp(token_id_val, "32k") == 0) {
+						client->fe->channel.transmission = TRANSMISSION_MODE_32K;
+					}
+				} else if (strcmp(token_id, "gi") == 0) {
+					// "14", "18", "116", "132","1128", "19128", "19256"
+					const int gi = atoi(token_id_val);
+					if (gi == 14) {
+						client->fe->channel.guard = GUARD_INTERVAL_1_4;
+					} else if (gi == 18) {
+						client->fe->channel.guard = GUARD_INTERVAL_1_8;
+					} else if (gi == 116) {
+						client->fe->channel.guard = GUARD_INTERVAL_1_16;
+					} else if (gi == 132) {
+						client->fe->channel.guard = GUARD_INTERVAL_1_32;
+					} else if (gi == 1128) {
+						client->fe->channel.guard = GUARD_INTERVAL_1_128;
+					} else if (gi == 19128) {
+						client->fe->channel.guard = GUARD_INTERVAL_19_128;
+					} else if (gi == 19256) {
+						client->fe->channel.guard = GUARD_INTERVAL_19_256;
+					}
+				} else if (strcmp(token_id, "plp") == 0) {
+					client->fe->channel.plp_id = atoi(token_id_val);
+				} else if (strcmp(token_id, "t2id") == 0) {
+					SI_LOG_ERROR("t2id = %s", token_id_val);
+
+				} else if (strcmp(token_id, "sm") == 0) {
+					SI_LOG_ERROR("sm = %s", token_id_val);
+				
 				} else if (strcmp(token_id, "pids") == 0 ||
 						   strcmp(token_id, "addpids") == 0 ||
 						   strcmp(token_id, "delpids") == 0) {
@@ -535,6 +599,9 @@ static void setup_teardown_message(Client_t *client, int graceful) {
 	
 	if (client->teardown_session == NULL) {
 		SI_LOG_INFO("Teardown Message, gracefull: %d", graceful);
+
+		// clear watchdog, to prevent watchdog kicking in during teardown
+		client->rtsp.watchdog = 0;
 		
 		client->teardown_graceful = graceful;
 		client->teardown_session = &teardown_session;
@@ -551,7 +618,7 @@ static void setup_teardown_message(Client_t *client, int graceful) {
 			}
 		}
 	} else {
-		SI_LOG_INFO("Teardown Message underway");
+		SI_LOG_INFO("Teardown Message under-way");
 	}
 	pthread_mutex_unlock(&client->mutex);
 }

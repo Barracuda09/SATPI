@@ -88,11 +88,7 @@ static void *thread_work_rtp(void *arg) {
 		pthread_mutex_lock(&client->mutex);
 		pthread_mutex_lock(&client->fe_ptr_mutex);
 		const Session_t state = client->rtp.state;
-		if (client->fe) {
-			pfd[0].fd = client->fe->fd_dvr;
-		} else {
-			pfd[0].fd = -1;
-		}
+		pfd[0].fd = client->fe ? client->fe->fd_dvr : -1;
 		pthread_mutex_unlock(&client->fe_ptr_mutex);
 		pthread_mutex_unlock(&client->mutex);
 
@@ -263,13 +259,20 @@ void init_rtp(RtpSession_t *rtpsession) {
 		pthread_mutex_init(&rtpsession->fe.array[j]->monitor.mutex, &attr);
 
 		// Channel properties
-		rtpsession->fe.array[j]->channel.freq    = 12187000;
-		rtpsession->fe.array[j]->channel.srate   = 27500000;
-		rtpsession->fe.array[j]->channel.delsys  = SYS_DVBS2;
+		rtpsession->fe.array[j]->channel.freq    = 0;
+		rtpsession->fe.array[j]->channel.srate   = 0;
+		rtpsession->fe.array[j]->channel.delsys  = SYS_UNDEFINED;
 		rtpsession->fe.array[j]->channel.modtype = PSK_8;
-		rtpsession->fe.array[j]->channel.fec     = FEC_2_3;
+		rtpsession->fe.array[j]->channel.fec     = FE_IS_STUPID;
 		rtpsession->fe.array[j]->channel.pilot   = PILOT_AUTO;
 		rtpsession->fe.array[j]->channel.rolloff = ROLLOFF_35;
+		
+		rtpsession->fe.array[j]->channel.transmission = TRANSMISSION_MODE_AUTO;
+		rtpsession->fe.array[j]->channel.guard        = GUARD_INTERVAL_AUTO;
+		rtpsession->fe.array[j]->channel.hierarchy    = HIERARCHY_AUTO;
+		rtpsession->fe.array[j]->channel.bandwidth    = BANDWIDTH_AUTO;
+		rtpsession->fe.array[j]->channel.plp_id       = 0;
+
 
 		// DiSEqc properties
 		rtpsession->fe.array[j]->diseqc.src      = 0;
@@ -284,11 +287,11 @@ void init_rtp(RtpSession_t *rtpsession) {
 
 		// PID properties
 		for (i = 0; i < MAX_PIDS; ++i) {
-			rtpsession->fe.array[j]->pid.data[i].used = 0;
-			rtpsession->fe.array[j]->pid.data[i].cc = 0x80;
+			rtpsession->fe.array[j]->pid.data[i].used     = 0;
+			rtpsession->fe.array[j]->pid.data[i].cc       = 0x80;
 			rtpsession->fe.array[j]->pid.data[i].cc_error = 0;
-			rtpsession->fe.array[j]->pid.data[i].count = 0;
-			rtpsession->fe.array[j]->pid.data[i].fd_dmx = -1;
+			rtpsession->fe.array[j]->pid.data[i].count    = 0;
+			rtpsession->fe.array[j]->pid.data[i].fd_dmx   = -1;
 		}
 	}
 	////////////////////

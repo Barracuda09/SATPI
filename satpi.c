@@ -246,6 +246,9 @@ int main(int argc, char *argv[]) {
 	// get interface IP and MAC addresses
 	get_interface_properties(&rtpsession.interface);
 	
+	// Make UUID with MAC address
+	snprintf(rtpsession.uuid, sizeof(rtpsession.uuid), "50c958a8-e839-4b96-b7ae-%s", rtpsession.interface.mac_addr);
+	
 	start_rtsp(&rtpsession);
 	start_http(&rtpsession);
 	start_rtp(&rtpsession);

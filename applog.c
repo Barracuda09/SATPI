@@ -67,7 +67,7 @@ void close_satip_log() {
 void satiplog(int priority, const char *fmt, ...) {
 	pthread_mutex_lock(&mutex);
 	
-    char txt[500];
+    char txt[1024];
     va_list arglist;
     va_start(arglist, fmt);
     vsnprintf(txt, sizeof(txt), fmt, arglist);
@@ -101,7 +101,7 @@ void satiplog(int priority, const char *fmt, ...) {
 	}
 	pthread_mutex_unlock(&mutex);
 
-    syslog(priority, "%d %s", index, satip_log.elem[index].msg);
+    syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
 }
 
 /*
