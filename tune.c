@@ -372,7 +372,7 @@ static int tune_it(int fd, ChannelData_t *channel, DiSEqc_t *diseqc) {
  */
 size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 #ifdef NOT_PREFERRED_DVB_API
-	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher (current DVB_API_VERSION: %d.%d)", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 	SI_LOG_ERROR("current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 #endif
 	SI_LOG_INFO("Detecting frontends in: %s", path);

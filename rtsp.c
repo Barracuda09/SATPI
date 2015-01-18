@@ -337,7 +337,7 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 	// Do we have an frontend attached, check for requested one or find a free one
 	if (client->fe == NULL) {
 		const int fe_nr = get_int_parameter_from(msg, "SETUP", "fe");
-		if (fe_nr != -1 && (fe_nr - 1) < fe->max_fe) {
+		if (fe_nr != -1 && fe_nr > 0 && (size_t)(fe_nr - 1) < fe->max_fe) {
 			size_t timeout = 0;
 			do {
 				if (!fe->array[fe_nr-1]->attached) {
