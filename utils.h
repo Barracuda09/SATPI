@@ -51,10 +51,4 @@ size_t addString(char **str, const char *fmt, ...);
 // get time of day in ms
 long getmsec();
 
-// Convert Functions
-const char *fec_to_string(int fec);
-const char *delsys_to_string(int delsys);
-const char *modtype_to_sting(int modtype);
-const char *rolloff_to_sting(int rolloff);
-
 #endif

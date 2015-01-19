@@ -217,6 +217,8 @@ static void *thread_work_rtp(void *arg) {
 			case Stopped:
 				usleep(500000);
 				break;
+			case Not_Initialized:
+				// fall-through
 			default:
 				SI_LOG_ERROR("Wrong rtp state %d", state);
 				break;
@@ -262,13 +264,13 @@ void init_rtp(RtpSession_t *rtpsession) {
 		rtpsession->fe.array[j]->channel.freq    = 0;
 		rtpsession->fe.array[j]->channel.srate   = 0;
 		rtpsession->fe.array[j]->channel.delsys  = SYS_UNDEFINED;
-		rtpsession->fe.array[j]->channel.modtype = PSK_8;
-		rtpsession->fe.array[j]->channel.fec     = FE_IS_STUPID;
+		rtpsession->fe.array[j]->channel.modtype = QAM_64;
+		rtpsession->fe.array[j]->channel.fec     = FEC_1_2;
 		rtpsession->fe.array[j]->channel.pilot   = PILOT_AUTO;
 		rtpsession->fe.array[j]->channel.rolloff = ROLLOFF_35;
 		
 		rtpsession->fe.array[j]->channel.transmission = TRANSMISSION_MODE_AUTO;
-		rtpsession->fe.array[j]->channel.guard        = GUARD_INTERVAL_AUTO;
+		rtpsession->fe.array[j]->channel.guard        = GUARD_INTERVAL_1_4;
 		rtpsession->fe.array[j]->channel.hierarchy    = HIERARCHY_AUTO;
 		rtpsession->fe.array[j]->channel.bandwidth    = BANDWIDTH_AUTO;
 		rtpsession->fe.array[j]->channel.plp_id       = 0;
@@ -311,12 +313,12 @@ void init_rtp(RtpSession_t *rtpsession) {
 		rtpsession->client[i].rtsp.cseq = 0;
 		
 		// RTP properties
-		rtpsession->client[i].rtp.state = Stopped;
+		rtpsession->client[i].rtp.state = Not_Initialized;
 		rtpsession->client[i].rtp.client.fd = -1;
 		rtpsession->client[i].rtp.server.fd = -1;
 		
 		// RTCP properties
-		rtpsession->client[i].rtcp.state = Stopped;
+		rtpsession->client[i].rtcp.state = Not_Initialized;
 		rtpsession->client[i].rtcp.client.fd = -1;
 		rtpsession->client[i].rtcp.server.fd = -1;
 
@@ -339,7 +341,7 @@ void start_rtp(RtpSession_t *rtpsession) {
 	size_t i = 0;
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		Client_t *client = &rtpsession->client[i];
-
+		client->rtp.state = Stopped;
 		if (pthread_create(&client->rtp.threadID, NULL, &thread_work_rtp, client) != 0) {
 			SI_LOG_ERROR("thread_work_rtp");
 		}

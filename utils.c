@@ -49,11 +49,16 @@ char *get_line_from(const char *buf, size_t *ptr_index, const char *line_delim) 
 		if (size) {
 			line = malloc(size + 1);
 			if (line == NULL) {
-//				PERROR("get_line_from malloc");
 				return NULL;
 			}
 			memcpy(line, begin, size);
 			line[size] = 0;
+		} else {
+			line = malloc(17);
+			if (line == NULL) {
+				return NULL;
+			}
+			sprintf(line, "--- LINE END ---");
 		}
 	}
 	return line;
@@ -124,7 +129,7 @@ char *make_xml_string(char *str) {
  *
  */
 size_t addString(char **str, const char *fmt, ...) {
-    char txt[500];
+    char txt[1024];
     va_list arglist;
     va_start(arglist, fmt);
     const size_t cnt = vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
@@ -158,84 +163,4 @@ long getmsec() {
   struct timeval tv;
   gettimeofday(&tv,(struct timezone*) NULL);
   return(tv.tv_sec%1000000)*1000 + tv.tv_usec/1000;
-}
-
-/*
- *
- */
-const char *fec_to_string(int fec) {
-	switch (fec) {
-		case FEC_1_2:
-			return "FEC_1_2";
-		case FEC_2_3:
-			return "FEC_2_3";
-		case FEC_3_4:
-			return "FEC_3_4";
-		case FEC_3_5:
-			return "FEC_3_5";
-		case FEC_4_5:
-			return "FEC_4_5";
-		case FEC_5_6:
-			return "FEC_5_6";
-		case FEC_6_7:
-			return "FEC_6_7";
-		case FEC_7_8:
-			return "FEC_7_8";
-		case FEC_8_9:
-			return "FEC_8_9";
-		case FEC_9_10:
-			return "FEC_9_10";
-		case FEC_AUTO:
-			return "FEC_AUTO";
-		case FEC_NONE:
-			return "FEC_NONE";
-		default:
-			return "UNKNOWN FEC";
-	}
-}
-
-/*
- *
- */
-const char *delsys_to_string(int delsys) {
-	switch (delsys) {
-		case SYS_DVBS2:
-			return "SYS_DVBS2";
-		case SYS_DVBS:
-			return "SYS_DVBS";
-		default:
-			return "UNKNOWN DELSYS";
-	}
-}
-
-/*
- *
- */
-const char *modtype_to_sting(int modtype) {
-	switch (modtype) {
-		case QPSK:
-			return "QPSK";
-		case PSK_8:
-			return "PSK_8";
-		default:
-			return "UNKNOWN MODTYPE";
-	}
-}
-
-/*
- *
- */
-const char *rolloff_to_sting(int rolloff) {
-	switch (rolloff) {
-		case ROLLOFF_35:
-			return "0.35";
-		case ROLLOFF_25:
-			return "0.25";
-		case ROLLOFF_20:
-			return "0.20";
-		case ROLLOFF_AUTO:
-			return "auto";
-		default:
-			return "UNKNOWN ROLLOFF";
-	}
 }

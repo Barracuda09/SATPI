@@ -276,7 +276,7 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 
 				} else if (strcmp(token_id, "sm") == 0) {
 					SI_LOG_ERROR("sm = %s", token_id_val);
-				
+
 				} else if (strcmp(token_id, "pids") == 0 ||
 						   strcmp(token_id, "addpids") == 0 ||
 						   strcmp(token_id, "delpids") == 0) {
@@ -333,7 +333,7 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 	pthread_mutex_lock(&client->fe_ptr_mutex);
 
 	SI_LOG_INFO("Setup Message");
-	
+
 	// Do we have an frontend attached, check for requested one or find a free one
 	if (client->fe == NULL) {
 		const int fe_nr = get_int_parameter_from(msg, "SETUP", "fe");
@@ -351,9 +351,9 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 					// unlock - client data - frontend pointer BEFORE SLEEP
 					pthread_mutex_unlock(&client->mutex);
 					pthread_mutex_unlock(&client->fe_ptr_mutex);
-					
+
 					usleep(150000);
-					
+
 					// lock - client data - frontend pointer AFTER SLEEP
 					pthread_mutex_lock(&client->mutex);
 					pthread_mutex_lock(&client->fe_ptr_mutex);
@@ -361,7 +361,7 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 				}
 			} while (timeout < 3);
 		} else {
-			// dynamic alloc a frontend 
+			// dynamic alloc a frontend
 			size_t i;
 			for (i = 0; i < fe->max_fe; ++i) {
 				if (!fe->array[i]->attached) {
@@ -446,9 +446,9 @@ static int play_rtsp(const char *msg, Client_t *client, const char *server_ip_ad
 	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
 	pthread_mutex_lock(&client->fe_ptr_mutex);
-	
+
 	SI_LOG_INFO("Play Message");
-	
+
 	if (client->fe) {
 		// lock - frontend data
 		pthread_mutex_lock(&client->fe->mutex);
@@ -531,7 +531,7 @@ static int options_rtsp(Client_t *client) {
 static int teardown_session(void *arg) {
 	int ret = 1;
 	Client_t *client = (Client_t *)arg;
-	
+
 #define RTSP_TEARDOWN_OK	"RTSP/1.0 200 OK\r\n" \
 							"CSeq: %d\r\n" \
 							"Session: %08X\r\n" \
@@ -546,7 +546,7 @@ static int teardown_session(void *arg) {
 		// clear rtsp state
 		client->rtsp.watchdog  = 0;
 		client->rtsp.state     = NotConnected;
-		
+
 		if (client->fe) {
 			// clear frontend
 			client->fe->tuned      = 0;
@@ -579,7 +579,7 @@ static int teardown_session(void *arg) {
 		client->rtsp.sessionID = 0;
 		// clear callback
 		client->teardown_session = NULL;
-		
+
 		CLOSE_FD(client->rtsp.socket.fd);
 	} else {
 		ret = 0;
@@ -596,13 +596,13 @@ static int teardown_session(void *arg) {
  */
 static void setup_teardown_message(Client_t *client, int graceful) {
 	pthread_mutex_lock(&client->mutex);
-	
+
 	if (client->teardown_session == NULL) {
 		SI_LOG_INFO("Teardown Message, gracefull: %d", graceful);
 
 		// clear watchdog, to prevent watchdog kicking in during teardown
 		client->rtsp.watchdog = 0;
-		
+
 		client->teardown_graceful = graceful;
 		client->teardown_session = &teardown_session;
 		// all ready stopped ?
@@ -687,14 +687,24 @@ static void *thread_work_rtsp(void *arg) {
 											if (setup_rtsp(msg, client, &rtpsession->fe, rtpsession->interface.ip_addr) == -1) {
 												SI_LOG_ERROR("Setup RTSP message failed");
 												client->rtsp.state = Error;
+											} else {
+												// maybe not according to specs here
+												pthread_mutex_lock(&client->mutex);
+												if (client->rtp.state == Stopped) {
+													client->rtp.state = Starting;
+												}
+												if (client->rtcp.state == Stopped) {
+													client->rtcp.state = Starting;
+												}
+												pthread_mutex_unlock(&client->mutex);
 											}
 										} else if (strstr(msg, "PLAY") != NULL) {
 											if (play_rtsp(msg, client, rtpsession->interface.ip_addr) == 1) {
 												pthread_mutex_lock(&client->mutex);
-												if (client->rtp.state != Started) {
+												if (client->rtp.state == Stopped) {
 													client->rtp.state = Starting;
 												}
-												if (client->rtcp.state != Started) {
+												if (client->rtcp.state == Stopped) {
 													client->rtcp.state = Starting;
 												}
 												pthread_mutex_unlock(&client->mutex);
@@ -728,7 +738,7 @@ static void *thread_work_rtsp(void *arg) {
 							case Error:
 								CLOSE_FD(rtpsession->rtsp_server.fd);
 								init_server_socket(&rtpsession->rtsp_server, MAX_CLIENTS, RTSP_PORT, 1);
-								
+
 								setup_teardown_message(client, 0);
 								pfd[i].fd = -1;
 								break;

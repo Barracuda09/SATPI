@@ -298,7 +298,7 @@ static void *thread_work_rtcp(void *arg) {
 				pthread_mutex_lock(&client->mutex);
 				client->rtcp.state = Started;
 				pthread_mutex_unlock(&client->mutex);
-				break;
+//				break;
 			case Started:
 				pthread_mutex_lock(&client->fe_ptr_mutex);
 				if (client->fe) {
@@ -361,6 +361,11 @@ static void *thread_work_rtcp(void *arg) {
 			case Stopped:
 				usleep(500000);
 				break;
+			case Not_Initialized:
+				// fall-through
+			default:
+				SI_LOG_ERROR("Wrong rtcp state %d", state);
+				break;
 		}
 	}
 
@@ -374,7 +379,7 @@ void start_rtcp(RtpSession_t *rtpsession) {
 	size_t i = 0;
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		Client_t *client = &rtpsession->client[i];
-
+		client->rtcp.state = Stopped;
 		if (pthread_create(&client->rtcp.threadID, NULL, &thread_work_rtcp, client) != 0) {
 			SI_LOG_ERROR("thread_work_rtcp");
 		}

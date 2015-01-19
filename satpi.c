@@ -82,7 +82,7 @@ static void daemonize(const char *lockfile, const char *user) {
 		return;
 	}
 
-	
+
 	// create the lock file as the current user
 	// give group 'rw' permission and other users 'r' permissions
 	if (lockfile && lockfile[0]) {
@@ -135,7 +135,7 @@ static void daemonize(const char *lockfile, const char *user) {
 		pause();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	// Change the file mode mask
 	umask(0);
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
 	char *user = NULL;
 
 	exitApp = 0;
-	
+
 	// Check options
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--yes-rtcp") == 0) {
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
 
 	// initialize the logging interface
 	openlog(DAEMON_NAME, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-	
+
 	// open our logging
 	open_satip_log();
 
@@ -230,14 +230,14 @@ int main(int argc, char *argv[]) {
 	if (daemon) {
 		daemonize("/tmp/" LOCK_FILE, user);
 	}
-	
+
 	// notify we are alive
 	SI_LOG_INFO("--- starting ---");
 
 	// detect the attached frontends and get frontend properties
 	if (detect_attached_frontends("/dev/dvb", &rtpsession.fe) == 0) {
 		printf("Error: No frontend found!!\n");
-		return EXIT_FAILURE;
+//		return EXIT_FAILURE;
 	}
 
 	// initialize all variables
@@ -245,14 +245,14 @@ int main(int argc, char *argv[]) {
 
 	// get interface IP and MAC addresses
 	get_interface_properties(&rtpsession.interface);
-	
+
 	// Make UUID with MAC address
 	snprintf(rtpsession.uuid, sizeof(rtpsession.uuid), "50c958a8-e839-4b96-b7ae-%s", rtpsession.interface.mac_addr);
-	
+
 	start_rtsp(&rtpsession);
 	start_http(&rtpsession);
 	start_rtp(&rtpsession);
-	
+
 	if (rtcp) {
 		start_rtcp(&rtpsession);
 	}
@@ -277,10 +277,10 @@ int main(int argc, char *argv[]) {
 	stop_rtp(&rtpsession);
 
 	SI_LOG_INFO("--- stopped ---");
-	
+
 	// close our logging
 	close_satip_log();
-	
+
 	// close logging interface
 	closelog();
 	return retval;

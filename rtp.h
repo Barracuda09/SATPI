@@ -42,7 +42,8 @@ typedef enum {
 	Starting,
 	Started,
 	Stopping,
-	Stopped
+	Stopped,
+	Not_Initialized
 } Session_t;
 
 // RTSP connection properties

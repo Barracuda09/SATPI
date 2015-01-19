@@ -33,7 +33,7 @@ typedef struct {
 	char timestamp[35];
 } LogElem_t;
 
-#define LOG_SIZE 300
+#define LOG_SIZE 350
 
 typedef struct {
 	LogElem_t elem[LOG_SIZE];

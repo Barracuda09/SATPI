@@ -66,7 +66,7 @@ void close_satip_log() {
  */
 void satiplog(int priority, const char *fmt, ...) {
 	pthread_mutex_lock(&mutex);
-	
+
     char txt[1024];
     va_list arglist;
     va_start(arglist, fmt);
@@ -75,12 +75,16 @@ void satiplog(int priority, const char *fmt, ...) {
 
 	struct timespec time_stamp;
 	clock_gettime(CLOCK_REALTIME, &time_stamp);
-	const size_t size = strlen(txt) + 1;
-	const size_t index = satip_log.end;
-	char *ptr = satip_log.elem[index].msg;
-	satip_log.elem[index].msg = realloc(satip_log.elem[index].msg, size);
-	if (satip_log.elem[index].msg) {
+	char *line;
+	size_t ptr_index = 0;
+	while ((line = get_line_from(txt, &ptr_index, "\r\n")) != NULL) {
+		const size_t index = satip_log.end;
+		// already filled free it
+		if (satip_log.elem[index].msg) {
+			FREE_PTR(satip_log.elem[index].msg);
+		}
 		satip_log.elem[index].priority = priority;
+		// set timestamp
 		char asc_time[30];
 		ctime_r(&time_stamp.tv_sec, asc_time);
 		// remove '\n' from string
@@ -89,19 +93,18 @@ void satiplog(int priority, const char *fmt, ...) {
 		// cut line to insert nsec '.000000000'
 		asc_time[19] = 0;
 		snprintf(satip_log.elem[index].timestamp, sizeof(satip_log.elem[index].timestamp), "%s.%09lu %s", &asc_time[0], time_stamp.tv_nsec, &asc_time[20]);
-		memcpy(satip_log.elem[index].msg, txt, size);
+		// set message
+		satip_log.elem[index].msg = line;
 		satip_log.end = (satip_log.end + 1) % LOG_SIZE;
 		if (satip_log.full == 0 && satip_log.end == satip_log.begin) {
 			satip_log.full = 1;
 		} else if (satip_log.full) {
 			satip_log.begin = satip_log.end;
 		}
-	} else {
-		FREE_PTR(ptr);
+		// log to syslog
+		syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
 	}
 	pthread_mutex_unlock(&mutex);
-
-    syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
 }
 
 /*
@@ -127,7 +130,7 @@ char *make_log_xml() {
 		FREE_PTR(line);
 	}
 	pthread_mutex_unlock(&mutex);
-	
+
 	addString(&ptr, "</loglist>\r\n");
 	return ptr;
 }

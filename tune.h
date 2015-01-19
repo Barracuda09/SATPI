@@ -150,4 +150,10 @@ int setup_frontend_and_tune(Frontend_t *frontend);
 
 void monitor_frontend(FE_Monitor_t *monitor, int showStatus);
 
+// Convert Functions
+const char *fec_to_string(int fec);
+const char *delsys_to_string(int delsys);
+const char *modtype_to_sting(int modtype);
+const char *rolloff_to_sting(int rolloff);
+
 #endif
