@@ -5,6 +5,11 @@ Initial working vesion, but a work in progress.
 
 - SATPI provides an web interface for monitoring various things (http port 8875)
 
+Tested
+------
+- Tvheadend: this is a TV streaming server see: https://tvheadend.org/
+- DVBviewer Lite Edition. see http://www.satip.info/products
+
 Build
 -----
 To build SATPI just run these commands::
@@ -16,4 +21,6 @@ To build SATPI just run these commands::
 Usage
 -----
 
-for help of options:  satpi --help
+for help on options:  satpi --help
+
+Normal use:  satpi --yes-ssdp --yes-rtcp
