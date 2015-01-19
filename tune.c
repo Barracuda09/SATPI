@@ -384,7 +384,7 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			fe->array[i]->index = i;
 		}
 		get_attached_frontend_count("/dev/dvb", 0, fe->array);
-		SI_LOG_INFO("Frontends found: %d", fe->max_fe);
+		SI_LOG_INFO("Frontends found: %zu", fe->max_fe);
 
 		size_t nr_dvb_s2 = 0;
 		size_t nr_dvb_t  = 0;
