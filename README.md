@@ -1,5 +1,5 @@
 # SATPI
-SATIP server for Raspberry Pi currently only supports DVB-S and DVB-S2
+SATIP server for example the Raspberry Pi. Currently only supports DVB-S and DVB-S2
 
 Initial working vesion, but a work in progress.
 
