@@ -149,8 +149,6 @@ static void *thread_work_rtp(void *arg) {
 										pthread_mutex_unlock(&client->fe->mutex);
 									}
 									pthread_mutex_unlock(&client->fe_ptr_mutex);
-								} else {
-									SI_LOG_ERROR("Partial Read for client: %s", client->ip_addr);
 								}
 								// inc buffer pointer
 								client->rtp.bufPtr += bytes_read;
