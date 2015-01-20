@@ -259,6 +259,8 @@ static int diseqc_send_msg(int fd_fe, fe_sec_voltage_t v, struct diseqc_cmd *cmd
 		PERROR("FE_SET_TONE failed");
 		return -1;
 	}
+	usleep(15 * 1000);
+	
 	return 1;
 }
 
@@ -269,7 +271,11 @@ static int send_diseqc(int fd_fe, DiSEqc_t *diseqc) {
 	struct diseqc_cmd cmd = {
 		{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
 	};
-
+	// Framing 0x0e: Command from Master, No reply required, First transmission
+	// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
+	// Command 0x38: Write to Port group 0 (Committed switches)
+	// Data 1  0xf0: see below
+	
 	SI_LOG_DEBUG("Sending DiSEqC");
 
 	// param: high nibble: reset bits, low nibble set bits,
@@ -305,7 +311,7 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 			break;
 		case SYS_DVBT:
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel->delsys);
-			FILL_PROP(DTV_FREQUENCY,         channel->freq);
+			FILL_PROP(DTV_FREQUENCY,         channel->freq * 1000UL);
 			FILL_PROP(DTV_MODULATION,        channel->modtype);
 			FILL_PROP(DTV_INVERSION,         channel->inversion);
 			FILL_PROP(DTV_BANDWIDTH_HZ,      channel->bandwidth);
@@ -314,6 +320,8 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 			FILL_PROP(DTV_TRANSMISSION_MODE, channel->transmission);
 			FILL_PROP(DTV_GUARD_INTERVAL,    channel->guard);
 			FILL_PROP(DTV_HIERARCHY,         channel->hierarchy);
+			break;
+		case SYS_DVBC_ANNEX_A:
 			break;
 
 		default:
@@ -442,7 +450,7 @@ int open_fe(const char *path_to_fe, int readonly) {
 	if((fd = open(path_to_fe, (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
 		PERROR("FRONTEND DEVICE");
 	}
-	SI_LOG_INFO("Open FE fd: %d readonly %d", fd, readonly);
+	SI_LOG_DEBUG("Open FE fd: %d readonly %d", fd, readonly);
 	return fd;
 }
 
@@ -497,6 +505,7 @@ int setup_frontend_and_tune(Frontend_t *frontend) {
 		// Check if have already opened a FE
 		if (frontend->fd_fe == -1) {
 			frontend->fd_fe = open_fe(frontend->path_to_fe, 0);
+			SI_LOG_INFO("Frontend: %d, Opened FE fd: %d.", frontend->index, frontend->fd_fe);
 		}
 		// try tuning
 		size_t timeout = 0;
@@ -511,17 +520,17 @@ int setup_frontend_and_tune(Frontend_t *frontend) {
 
 		// check if frontend is locked, if not try a few times
 		timeout = 0;
-		while (timeout < 3) {
+		while (timeout < 4) {
 			fe_status_t status = 0;
 			// first read status
 			if (ioctl(frontend->fd_fe, FE_READ_STATUS, &status) == 0) {
 				if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
 					// We are tuned now
 					frontend->tuned = 1;
-					SI_LOG_INFO("Frontend: %d, Tuned and locked.", frontend->index);
+					SI_LOG_INFO("Frontend: %d, Tuned and locked (FE status %d).", frontend->index, status);
 					break;
 				} else {
-					SI_LOG_INFO("Frontend: %d, Not locked yet (status %d)...", frontend->index, status);
+					SI_LOG_INFO("Frontend: %d, Not locked yet (FE status %d)...", frontend->index, status);
 				}
 			}
 			usleep(25000);
@@ -558,7 +567,6 @@ int clear_pid_filters(Frontend_t *frontend) {
 			reset_pid(&frontend->pid.data[i]);
 		}
 	}
-	CLOSE_FD(frontend->fd_dvr);
 	return 1;
 }
 
