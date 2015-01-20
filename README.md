@@ -1,5 +1,5 @@
 # SATPI
-SATIP server for example the Raspberry Pi. Currently only supports DVB-S and DVB-S2
+SATIP server for example the Raspberry Pi or BeagleBone. Currently only supports DVB-S and DVB-S2
 
 Initial working vesion, but a work in progress.
 
@@ -14,7 +14,7 @@ Build
 -----
 To build SATPI just run these commands::
 
-    git clone https://github.com/Barracuda09/satpi.git
+    git clone git://github.com/Barracuda09/satpi.git
     cd satpi/
     make
 
@@ -23,4 +23,4 @@ Usage
 
 for help on options:  satpi --help
 
-Normal use:  satpi --yes-ssdp --yes-rtcp
+For normal use run:  satpi --yes-ssdp --yes-rtcp
