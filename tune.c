@@ -322,6 +322,12 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 			FILL_PROP(DTV_HIERARCHY,         channel->hierarchy);
 			break;
 		case SYS_DVBC_ANNEX_A:
+			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel->delsys);
+			FILL_PROP(DTV_FREQUENCY,         channel->freq * 1000UL);
+			FILL_PROP(DTV_INVERSION,         channel->inversion);
+			FILL_PROP(DTV_MODULATION,        channel->modtype);
+			FILL_PROP(DTV_SYMBOL_RATE,       channel->srate);
+			FILL_PROP(DTV_INNER_FEC,         channel->fec);
 			break;
 
 		default:

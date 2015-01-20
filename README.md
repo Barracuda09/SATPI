@@ -1,5 +1,6 @@
 # SATPI
-SATIP server for example the Raspberry Pi or BeagleBone. Currently only supports DVB-S and DVB-S2
+SATIP server for example the Raspberry Pi, BeagleBone or any other linux box.
+Currently supporting DVB-S, DVB-S2 and DVB-T
 
 Initial working vesion, but a work in progress.
 

@@ -201,6 +201,8 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 					} else {
 						client->fe->channel.fec = FEC_NONE;
 					}
+				} else if (strcmp(token_id, "specinv") == 0) {
+					client->fe->channel.inversion = atoi(token_id_val);
 				} else if (strcmp(token_id, "msys") == 0) {
 					if (strcmp(token_id_val, "dvbs2") == 0) {
 						client->fe->channel.delsys = SYS_DVBS2;
@@ -210,6 +212,8 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 						client->fe->channel.delsys = SYS_DVBT;
 					} else if (strcmp(token_id_val, "dvbt2") == 0) {
 						client->fe->channel.delsys = SYS_DVBT2;
+					} else if (strcmp(token_id_val, "dvbc") == 0) {
+						client->fe->channel.delsys = SYS_DVBC_ANNEX_A;
 					}
 				} else if (strcmp(token_id, "mtype") == 0) {
 					if (strcmp(token_id_val, "8psk") == 0) {
