@@ -41,18 +41,20 @@
 ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
 #define HTTPC_TIMEOUT 3
 	size_t read_len = 0;
-	size_t msg_size = 500;
+	size_t msg_size = 1024;
 	size_t timeout = HTTPC_TIMEOUT;
 	int found_end = 0;
 	int done = 0;
 
 	// read until we have '\r\n\r\n' (end of HTTP/RTSP message) then check
 	// if the header field 'Content-Length' is present
-	*buf = (char *)malloc(msg_size);
+	*buf = malloc(msg_size + 1);
 	do {
 		const ssize_t size = recv(fd, *buf + read_len, msg_size - read_len, recv_flags);
 		if (size > 0) {
 			read_len += size;
+			// terminate buf
+			*(*buf + read_len) = 0;
 			// reset time out
 			timeout = HTTPC_TIMEOUT;
 			if (found_end && read_len == msg_size) {
@@ -83,7 +85,7 @@ ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
 				} else if (msg_size == read_len) {
 					// increase size
 					msg_size = read_len + 100;
-					*buf = realloc(*buf, msg_size);
+					*buf = realloc(*buf, msg_size + 1);
 				}
 			}
 		} else {
