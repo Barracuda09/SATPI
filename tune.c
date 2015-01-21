@@ -43,18 +43,6 @@
 #include "utils.h"
 #include "applog.h"
 
-#define FULL_DVB_API_VERSION (DVB_API_VERSION << 8 | DVB_API_VERSION_MINOR)
-
-#if FULL_DVB_API_VERSION < 0x0500
-#error Not correct DVB_API_VERSION
-#endif
-
-#if FULL_DVB_API_VERSION < 0x0505
-#define DTV_ENUM_DELSYS     44
-#define SYS_DVBC_ANNEX_A    SYS_DVBC_ANNEX_AC
-#define NOT_PREFERRED_DVB_API 1
-#endif
-
 #define DMX       "/dev/dvb/adapter%d/demux%d"
 #define DVR       "/dev/dvb/adapter%d/dvr%d"
 #define FRONTEND  "/dev/dvb/adapter%d/frontend%d"
