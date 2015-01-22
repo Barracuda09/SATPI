@@ -605,7 +605,11 @@ static void setup_teardown_message(Client_t *client, int graceful) {
 	pthread_mutex_lock(&client->fe_ptr_mutex);
 
 	if (client->teardown_session == NULL) {
-		SI_LOG_INFO("Frontend: %d, Teardown Message, gracefull: %d", client->fe->index, graceful);
+		if (client->fe) {
+			SI_LOG_INFO("Frontend: %d, Teardown Message, gracefull: %d", client->fe->index, graceful);
+		} else {
+			SI_LOG_INFO("Frontend: x, Teardown Message, gracefull: %d", graceful);
+		}
 
 		// clear watchdog, to prevent watchdog kicking in during teardown
 		client->rtsp.watchdog = 0;
