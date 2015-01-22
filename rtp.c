@@ -47,8 +47,6 @@
 static void *thread_work_rtp(void *arg) {
 	struct pollfd pfd[1];
 
-	SI_LOG_INFO("Setting up RTP server");
-
 	Client_t *client = (Client_t *)arg;
 
 	client->rtp.timestamp = getmsec() * 90;
@@ -155,14 +153,18 @@ static void *thread_work_rtp(void *arg) {
 								const int len = client->rtp.bufPtr - client->rtp.buffer;
 
 								// rtp buffer full
-								if (len + TS_PACKET_SIZE > MTU) {
+								const long time_ms = getmsec();
+								if ((len + TS_PACKET_SIZE) > MTU || client->rtp.send_interval < time_ms) {
+									// reset the time interval
+									client->rtp.send_interval = time_ms + 100;
+									
 									// update sequence number
 									++client->rtp.cseq;
 									client->rtp.buffer[2] = ((client->rtp.cseq >> 8) & 0xFF); // sequence number
 									client->rtp.buffer[3] =  (client->rtp.cseq & 0xFF);       // sequence number
 
 									// update timestamp
-									client->rtp.timestamp = getmsec() * 90;
+									client->rtp.timestamp = time_ms * 90;
 									client->rtp.buffer[4] = (client->rtp.timestamp >> 24) & 0xFF; // timestamp
 									client->rtp.buffer[5] = (client->rtp.timestamp >> 16) & 0xFF; // timestamp
 									client->rtp.buffer[6] = (client->rtp.timestamp >>  8) & 0xFF; // timestamp
@@ -239,6 +241,7 @@ void init_rtp(RtpSession_t *rtpsession) {
 	pthread_mutex_init(&rtpsession->mutex, &attr);
 	rtpsession->appStartTime = time(NULL);
 	rtpsession->rtp_payload = 0;
+	rtpsession->ssdp_announce_time_sec = 60; // 60sec default interval 
 
 	// frontend properties
 	for (j = 0; j < rtpsession->fe.max_fe; ++j) {
@@ -337,6 +340,7 @@ void init_rtp(RtpSession_t *rtpsession) {
  */
 void start_rtp(RtpSession_t *rtpsession) {
 	size_t i = 0;
+	SI_LOG_INFO("Setting up %d RTP servers", MAX_CLIENTS);
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		Client_t *client = &rtpsession->client[i];
 		client->rtp.state = Stopped;

@@ -85,26 +85,80 @@ static uint8_t *get_app_packet(uint32_t ssrc, const Client_t *client, size_t *le
 				addString(&pidPtr, ",%d", i);
 			}
 		}
-
+		
 		// add APP payload
-		//"ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>,"
-		//"<system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>",
-		*len = snprintf((char*)&app[16], sizeof(app) - 16,
-				"ver=1.0;src=%d;tuner=%d,%d,%d,%d,%d,%d,%s,%s,%d,%s,%d,%s;pids=%s",
-				client->fe->diseqc.src,
-				client->fe->index+1,
-				client->fe->monitor.strength,
-				(client->fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
-				client->fe->monitor.snr,
-				client->fe->channel.freq,
-				client->fe->diseqc.pol,
-				delsys_to_string(client->fe->channel.delsys),
-				modtype_to_sting(client->fe->channel.modtype),
-				client->fe->channel.pilot,
-				rolloff_to_sting(client->fe->channel.rolloff),
-				client->fe->channel.srate,
-				fec_to_string(client->fe->channel.fec),
-				pidPtr);
+		switch (client->fe->channel.delsys) {
+			case SYS_DVBS:
+			case SYS_DVBS2:
+				// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
+				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
+				*len = snprintf((char*)&app[16], sizeof(app) - 16,
+						"ver=1.0;src=%d;tuner=%d,%d,%d,%d,%d,%d,%s,%s,%d,%s,%d,%s;pids=%s",
+						client->fe->diseqc.src,
+						client->fe->index+1,
+						client->fe->monitor.strength,
+						(client->fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+						client->fe->monitor.snr,
+						client->fe->channel.freq,
+						client->fe->diseqc.pol,
+						delsys_to_string(client->fe->channel.delsys),
+						modtype_to_sting(client->fe->channel.modtype),
+						client->fe->channel.pilot,
+						rolloff_to_sting(client->fe->channel.rolloff),
+						client->fe->channel.srate,
+						fec_to_string(client->fe->channel.fec),
+						pidPtr);
+				break;
+			case SYS_DVBT:
+			case SYS_DVBT2:
+				// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
+				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
+				*len = snprintf((char*)&app[16], sizeof(app) - 16,
+						"ver=1.1;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+						client->fe->index+1,
+						client->fe->monitor.strength,
+						(client->fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+						client->fe->monitor.snr,
+						client->fe->channel.freq,
+						bandwidth_to_string(client->fe->channel.bandwidth),
+						delsys_to_string(client->fe->channel.delsys),
+						transmode_to_string(client->fe->channel.transmission),
+						modtype_to_sting(client->fe->channel.modtype),
+						guardinter_to_string(client->fe->channel.guard),
+						fec_to_string(client->fe->channel.fec),
+						client->fe->channel.plp_id,
+						client->fe->channel.t2_system_id,
+						client->fe->channel.siso_miso,
+						pidPtr);
+				break;
+			case SYS_DVBC_ANNEX_A:
+			case SYS_DVBC_ANNEX_B:
+#if FULL_DVB_API_VERSION >= 0x0505
+			case SYS_DVBC_ANNEX_C:
+#endif
+				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
+				//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
+				*len = snprintf((char*)&app[16], sizeof(app) - 16,
+						"ver=1.2;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+						client->fe->index+1,
+						client->fe->monitor.strength,
+						(client->fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+						client->fe->monitor.snr,
+						client->fe->channel.freq,
+						bandwidth_to_string(client->fe->channel.bandwidth),
+						delsys_to_string(client->fe->channel.delsys),
+						modtype_to_sting(client->fe->channel.modtype),
+						client->fe->channel.srate,
+						client->fe->channel.c2tft,
+						client->fe->channel.data_slice,
+						client->fe->channel.plp_id,
+						client->fe->channel.inversion,
+						pidPtr);
+				break;
+			default:
+				// Not supported
+				break;
+		}
 
 		// free
 		FREE_PTR(pidPtr);
@@ -265,8 +319,6 @@ static uint8_t *get_sdes_packet(uint32_t ssrc, size_t *len) {
 static void *thread_work_rtcp(void *arg) {
 	size_t mon_update = 0;
 
-	SI_LOG_INFO("Setting up RTCP server");
-
 	Client_t *client = (Client_t *)arg;
 
 	// see: http://www4.cs.fau.de/Projects/JRTP/pmt/node82.html
@@ -377,6 +429,7 @@ static void *thread_work_rtcp(void *arg) {
  */
 void start_rtcp(RtpSession_t *rtpsession) {
 	size_t i = 0;
+	SI_LOG_INFO("Setting up %d RTCP servers", MAX_CLIENTS);
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		Client_t *client = &rtpsession->client[i];
 		client->rtcp.state = Stopped;

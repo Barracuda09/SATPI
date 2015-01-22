@@ -366,6 +366,7 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 			} while (timeout < 3);
 		} else {
 			// dynamic alloc a frontend
+			// @TODO: Check the capability of the frontend so it is up to the challenge 
 			size_t i;
 			for (i = 0; i < fe->max_fe; ++i) {
 				if (!fe->array[i]->attached) {
@@ -599,10 +600,12 @@ static int teardown_session(void *arg) {
  *
  */
 static void setup_teardown_message(Client_t *client, int graceful) {
+	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
+	pthread_mutex_lock(&client->fe_ptr_mutex);
 
 	if (client->teardown_session == NULL) {
-		SI_LOG_INFO("Teardown Message, gracefull: %d", graceful);
+		SI_LOG_INFO("Frontend: %d, Teardown Message, gracefull: %d", client->fe->index, graceful);
 
 		// clear watchdog, to prevent watchdog kicking in during teardown
 		client->rtsp.watchdog = 0;
@@ -624,6 +627,8 @@ static void setup_teardown_message(Client_t *client, int graceful) {
 	} else {
 		SI_LOG_INFO("Teardown Message under-way");
 	}
+	// unlock - client data - frontend pointer
+	pthread_mutex_unlock(&client->fe_ptr_mutex);
 	pthread_mutex_unlock(&client->mutex);
 }
 
@@ -634,8 +639,6 @@ static void *thread_work_rtsp(void *arg) {
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
 	struct pollfd pfd[MAX_CLIENTS+1]; // plus 1 for server
 	size_t i;
-
-	SI_LOG_INFO("Setting up RTSP server");
 
 	init_server_socket(&rtpsession->rtsp_server, MAX_CLIENTS, RTSP_PORT, 1);
 	pfd[SERVER_POLL].fd = rtpsession->rtsp_server.fd;
@@ -772,6 +775,8 @@ static void *thread_work_rtsp(void *arg) {
  *
  */
 void start_rtsp(RtpSession_t *rtpsession) {
+	SI_LOG_INFO("Setting up RTSP server");
+
 	if (pthread_create(&(rtpsession->rtsp_threadID), NULL, &thread_work_rtsp, rtpsession) != 0) {
 		PERROR("thread_work_rtsp");
 	}

@@ -58,9 +58,10 @@ typedef struct {
 
 // RTP connection properties
 typedef struct {
-	pthread_t     threadID;       //
+	pthread_t     threadID;       // 
 	Session_t     state;          // show the RTP session state
 	long          timestamp;      //
+	long          send_interval;  // RTP interval time (100ms)
 	uint16_t      cseq;           // RTP sequence number
 	unsigned char buffer[MTU];    // RTP/UDP buffer
 	unsigned char *bufPtr;        // RTP/UDP buffer pointer
@@ -96,7 +97,7 @@ typedef struct {
 
 //
 typedef struct {
-#define MAX_CLIENTS   2
+#define MAX_CLIENTS   8
 	FrontendArray_t  fe;                      //
 	Client_t         client[MAX_CLIENTS];     //
 	SocketAttr_t     rtsp_server;             //
@@ -108,6 +109,7 @@ typedef struct {
 	pthread_mutex_t  mutex;                   // global mutex
 	time_t           appStartTime;            // the application start time (EPOCH)
 	double           rtp_payload;             // Total RTP payload count in MBytes
+	unsigned int    ssdp_announce_time_sec;   // SSDP announce interval
 } RtpSession_t;
 
 // Initialize RTP/RTCP connection data

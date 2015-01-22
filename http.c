@@ -51,6 +51,7 @@
 						"\r\n"
 
 #define HTML_OK            "200 OK"
+#define HTML_NO_RESPONSE   "204 No Response"
 #define HTML_NOT_FOUND     "404 Not Found"
 #define HTML_MOVED_PERMA   "301 Moved Permanently"
 
@@ -213,6 +214,28 @@ static char * read_file(const char *file, int *file_size) {
 /*
  *
  */
+static int post_http(int fd, const char *msg, const RtpSession_t *session) {
+	char htmlBody[500];
+	
+	SI_LOG_DEBUG("%s", msg);
+	
+	// @TODO: Make compiler happy
+	if (msg[0] == '1') {;}
+	UNUSED(session);
+
+	snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0);
+
+	// send 'htmlBody' to client
+	if (send(fd, htmlBody, strlen(htmlBody), MSG_NOSIGNAL) == -1) {
+		PERROR("send htmlBody");
+		return -1;
+	}
+	return 1;
+}
+
+/*
+ *
+ */
 static int get_http(int fd, const char *msg, const RtpSession_t *rtpsession) {
 	char htmlBody[500];
 	char *docType = NULL;
@@ -327,8 +350,6 @@ static int get_http(int fd, const char *msg, const RtpSession_t *rtpsession) {
  *
  */
 static void * thread_work_http(void *arg) {
-	SI_LOG_INFO("Setting up HTTP server");
-
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
 
 	// Clear
@@ -372,6 +393,8 @@ static void * thread_work_http(void *arg) {
 							// parse HTML
 							if (strstr(msg, "GET /") != NULL) {
 								get_http(tcp_conn.pfd[i].fd, msg, rtpsession);
+							} else if (strstr(msg, "POST /") != NULL) {
+								post_http(tcp_conn.pfd[i].fd, msg, rtpsession);
 							} else {
 								SI_LOG_ERROR("Unknown HTML message connection: %s", msg);
 							}
@@ -403,6 +426,8 @@ static void * thread_work_http(void *arg) {
  *
  */
 void start_http(RtpSession_t *rtpsession) {
+	SI_LOG_INFO("Setting up HTTP server");
+
 	if (pthread_create(&threadID, NULL, &thread_work_http, rtpsession) != 0) {
 		SI_LOG_ERROR("thread_work_http");
 	}

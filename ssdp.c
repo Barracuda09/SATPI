@@ -35,8 +35,7 @@
 #include "utils.h"
 #include "applog.h"
 
-#define UTIME_DEL         200000
-#define ANNOUNCE_TIME_SEC 60
+#define UTIME_DEL    200000
 
 static SocketAttr_t udp_conn;
 static pthread_t threadID;
@@ -146,7 +145,8 @@ static void * thread_work_ssdp(void *arg) {
 			PERROR("send");
 			return NULL;
 		}
-		sleep(ANNOUNCE_TIME_SEC);
+		// wait
+		sleep(rtpsession->ssdp_announce_time_sec);
 	}
 	return NULL;
 }

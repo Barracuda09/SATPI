@@ -106,11 +106,16 @@ typedef struct {
     int pilot;               // pilot tones (on/off)
     int inversion;           //
 
+	int c2tft;               // DVB-C2
+	int data_slice;          // DVB-C2
+	
 	int transmission;        // DVB-T(2)
 	int guard;               // DVB-T(2)
 	int hierarchy;           // DVB-T(2)
-	int bandwidth;           // DVB-T(2)
-	int plp_id;              // DVB-T2
+	int bandwidth;           // DVB-T(2)/C2
+	int plp_id;              // DVB-T2/C2
+	int t2_system_id;        // DVB-T2
+	int siso_miso;           // DVB-T2
 } ChannelData_t;
 
 // Frontend properties
@@ -168,5 +173,8 @@ const char *fec_to_string(int fec);
 const char *delsys_to_string(int delsys);
 const char *modtype_to_sting(int modtype);
 const char *rolloff_to_sting(int rolloff);
+const char *transmode_to_string(int transmission_mode);
+const char *guardinter_to_string(int guard_interval);
+const char *bandwidth_to_string(int bandwidth);
 
 #endif

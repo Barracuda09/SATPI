@@ -310,6 +310,7 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 			FILL_PROP(DTV_HIERARCHY,         channel->hierarchy);
 			break;
 		case SYS_DVBC_ANNEX_A:
+		case SYS_DVBC_ANNEX_B:
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel->delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel->freq * 1000UL);
 			FILL_PROP(DTV_INVERSION,         channel->inversion);
@@ -707,4 +708,85 @@ const char *rolloff_to_sting(int rolloff) {
 			return "UNKNOWN ROLLOFF";
 	}
 }
+
+/*
+ *
+ */
+const char *transmode_to_string(int transmission_mode) {
+	switch (transmission_mode) {
+		case TRANSMISSION_MODE_2K:
+			return "2k";
+		case TRANSMISSION_MODE_8K:
+			return "8k";
+		case TRANSMISSION_MODE_AUTO:
+			return "auto";
+		case TRANSMISSION_MODE_4K:
+			return "4k";
+		case TRANSMISSION_MODE_1K:
+			return "1k";
+		case TRANSMISSION_MODE_16K:
+			return "16k";
+		case TRANSMISSION_MODE_32K:
+			return "32k";
+#if FULL_DVB_API_VERSION >= 0x0505
+		case TRANSMISSION_MODE_C1:
+			return "c1";
+		case TRANSMISSION_MODE_C3780:
+			return "c3780";
+#endif
+		default:
+			return "UNKNOWN TRANSMISSION MODE";
+	}
+}
+
+/*
+ *
+ */
+const char *bandwidth_to_string(int bandwidth) {
+	switch (bandwidth) {
+		case BANDWIDTH_8_MHZ:
+			return "8";
+		case BANDWIDTH_7_MHZ:
+			return "7";
+		case BANDWIDTH_6_MHZ:
+			return "6";
+		case BANDWIDTH_AUTO:
+			return "auto";
+		case BANDWIDTH_5_MHZ:
+			return "5";
+		case BANDWIDTH_10_MHZ:
+			return "10";
+		case BANDWIDTH_1_712_MHZ:
+			return "1.712";
+		default:
+			return "UNKNOWN BANDWIDTH";
+	}
+}
+
+/*
+ *
+ */
+const char *guardinter_to_string(int guard_interval) {
+	switch (guard_interval) {
+		case GUARD_INTERVAL_1_32:
+			return "132";
+		case GUARD_INTERVAL_1_16:
+			return "116";
+		case GUARD_INTERVAL_1_8:
+			return "18";
+		case GUARD_INTERVAL_1_4:
+			return "14";
+		case GUARD_INTERVAL_AUTO:
+			return "auto";
+		case GUARD_INTERVAL_1_128:
+			return "1128";
+		case GUARD_INTERVAL_19_128:
+			return "19128";
+		case GUARD_INTERVAL_19_256:
+			return "19256";
+		default:
+			return "UNKNOWN GUARD INTERVAL";
+	}
+}
+
 
