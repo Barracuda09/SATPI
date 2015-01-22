@@ -5,6 +5,10 @@ Currently supporting DVB-S, DVB-S2 and DVB-T
 Initial working vesion, but a work in progress.
 
 - SATPI provides an web interface for monitoring various things (http port 8875)
+	- http://ip.of.your.box:8875
+
+- The Description xml can be found like:
+	- http://ip.of.your.box:8875/desc.xml
 
 Tested Programs
 ---------------
