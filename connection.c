@@ -73,7 +73,7 @@ ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
 						char *val;
 						strtok_r(line, ":", &val);
 						msg_size = header_size + atoi(val);
-						free(line);
+						FREE_PTR(line);
 						// check already finished?
 						if (read_len == msg_size) {
 							done = 1;

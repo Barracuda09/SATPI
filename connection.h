@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
 #define SERVER_POLL     0                 // server poll pos
 #define CLIENT_POLL_OFF 1                 // poll offset for clients
-#define MAX_TCP_CONN    5                 // max connections
+#define MAX_TCP_CONN    10                // max connections
 #define MAX_POLL_CNT    MAX_TCP_CONN + 1  // max poll (client + server)
 	SocketAttr_t server;                  //
 	SocketAttr_t client[MAX_TCP_CONN];    //

@@ -214,15 +214,21 @@ static char * read_file(const char *file, int *file_size) {
 /*
  *
  */
-static int post_http(int fd, const char *msg, const RtpSession_t *session) {
+static int post_http(int fd, const char *msg, RtpSession_t *session) {
 	char htmlBody[500];
 	
 	SI_LOG_DEBUG("%s", msg);
 	
-	// @TODO: Make compiler happy
-	if (msg[0] == '1') {;}
-	UNUSED(session);
-
+	char *cont = get_content_type_from(msg);
+	if (cont) {
+		char *val;
+		char *id = strtok_r(cont, "=", &val);
+		if (strcmp(id, "ssdp_interval") == 0) {
+			session->ssdp_announce_time_sec = atoi(val);
+		}
+		FREE_PTR(cont);
+	}
+	// setup reply
 	snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0);
 
 	// send 'htmlBody' to client

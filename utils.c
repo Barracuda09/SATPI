@@ -93,6 +93,32 @@ char *get_header_field_from(const char *buf, const char *header_field) {
 /*
  *
  */
+char *get_content_type_from(const char *msg) {
+	// find 'content-length' first to see if there is something
+	char *line = get_header_field_from(msg, "Content-Length");
+	if (line) {
+		char *val;
+		strtok_r(line, ":", &val);
+		size_t size = atoi(val);
+		FREE_PTR(line);
+		if (size > 0) {
+			const char *begin = strstr(msg, "\r\n\r\n");
+			if (begin) {
+				char *ptr = malloc(size + 1);
+				if (ptr) {
+					memcpy(ptr, (begin + 4), size);
+					*(ptr + size) = 0;
+					return ptr;
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ *
+ */
 char *make_xml_string(char *str) {
 	char *newStr = NULL;
 	char *begin = str;

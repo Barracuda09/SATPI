@@ -212,7 +212,6 @@ static int set_demux_filter(int fd, uint16_t pid) {
 		PERROR("DMX_SET_PES_FILTER");
 		return -1;
 	}
-	SI_LOG_DEBUG("Set filter PID %d - fd %d", pid, fd);
 	return 1;
 }
 
@@ -393,7 +392,9 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 		size_t nr_dvb_t  = 0;
 		size_t nr_dvb_t2 = 0;
 		size_t nr_dvb_c  = 0;
+#if FULL_DVB_API_VERSION >= 0x0505
 		size_t nr_dvb_c2 = 0;
+#endif
 
 		// Get all Frontend properties
 		for (i = 0; i < fe->max_fe; ++i) {
@@ -429,8 +430,13 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			}
 		}
 		// make xml delivery system string
+#if FULL_DVB_API_VERSION >= 0x0505
 		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
 		               nr_dvb_s2, nr_dvb_t, nr_dvb_t2, nr_dvb_c, nr_dvb_c2);
+#elsif
+		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu", 
+		               nr_dvb_s2, nr_dvb_t, nr_dvb_t2, nr_dvb_c);
+#endif
 	} else {
 		SI_LOG_ERROR("No Frontends found!!", fe->max_fe);
 	}
@@ -481,10 +487,11 @@ int update_pid_filters(Frontend_t *frontend) {
 							return -1;
 						}
 					}
+					SI_LOG_DEBUG("Frontend: %d, Set filter PID %d - fd %d",frontend->index, i, frontend->pid.data[i].fd_dmx);
 				}
 			} else if (frontend->pid.data[i].fd_dmx != -1) {
 				// We have a DMX but no PID anymore, so reset it
-				SI_LOG_DEBUG("Remove filter PID %d - Packet Count: %d", i, frontend->pid.data[i].count);
+				SI_LOG_DEBUG("Frontend: %d, Remove filter PID %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].count);
 				reset_pid(&frontend->pid.data[i]);
 			}
 		}
