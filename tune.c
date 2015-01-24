@@ -128,6 +128,12 @@ static int get_fe_info(Frontend_t *frontend) {
 	}
 
 	size_t i;
+
+	// clear delsys
+	for (i = 0; i < MAX_DELSYS; ++i) {
+		frontend->info_del_sys[i] = SYS_UNDEFINED;
+	}
+	// get capability of fe and save it
 	frontend->del_sys_size = dtvProperty.u.buffer.len;
 	for (i = 0; i < dtvProperty.u.buffer.len; i++) {
 		switch (dtvProperty.u.buffer.data[i]) {
@@ -162,6 +168,7 @@ static int get_fe_info(Frontend_t *frontend) {
 				break;
 #endif
 			default:
+				frontend->info_del_sys[i] = SYS_UNDEFINED;
 				SI_LOG_DEBUG("Frontend Type Unknown: %d", dtvProperty.u.buffer.data[i]);
 				break;
 		}
@@ -433,7 +440,7 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 #if FULL_DVB_API_VERSION >= 0x0505
 		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
 		               nr_dvb_s2, nr_dvb_t, nr_dvb_t2, nr_dvb_c, nr_dvb_c2);
-#elsif
+#else
 		snprintf(fe->del_sys_str, sizeof(fe->del_sys_str), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu", 
 		               nr_dvb_s2, nr_dvb_t, nr_dvb_t2, nr_dvb_c);
 #endif

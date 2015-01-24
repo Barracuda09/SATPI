@@ -96,7 +96,7 @@ typedef struct {
 
 // Channel data
 typedef struct {
-    int delsys;              // modulation system i.e. (SYS_DVBS/SYS_DVBS2)
+    fe_delivery_system_t delsys; // modulation system i.e. (SYS_DVBS/SYS_DVBS2)
     uint32_t freq;           // frequency in MHZ
     uint32_t ifreq;          // intermediate frequency in kHZ
     int modtype;             // modulation type i.e. (QPSK/PSK_8)
@@ -133,11 +133,12 @@ typedef struct {
 	Lnb_t lnb_array[MAX_LNB];// lnb that can be connected to this frontend
 	
 #define FE_PATH_LEN 255
+#define MAX_DELSYS  5
 	char path_to_fe[FE_PATH_LEN];
 	char path_to_dvr[FE_PATH_LEN];
 	char path_to_dmx[FE_PATH_LEN];
 	struct dvb_frontend_info fe_info;
-	fe_delivery_system_t     info_del_sys[5];
+	fe_delivery_system_t     info_del_sys[MAX_DELSYS];
 	size_t                   del_sys_size;
 } Frontend_t;
 
