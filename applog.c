@@ -30,6 +30,7 @@
 
 static LogBuffer_t satip_log;
 static pthread_mutex_t mutex;
+int syslog_on = 1;
 
 /*
  *
@@ -102,7 +103,9 @@ void satiplog(int priority, const char *fmt, ...) {
 			satip_log.begin = satip_log.end;
 		}
 		// log to syslog
-		syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
+		if (syslog_on != 0) {
+			syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
+		}
 	}
 	pthread_mutex_unlock(&mutex);
 }

@@ -216,15 +216,25 @@ static char * read_file(const char *file, int *file_size) {
  */
 static int post_http(int fd, const char *msg, RtpSession_t *session) {
 	char htmlBody[500];
+	extern int syslog_on;
 	
-	SI_LOG_DEBUG("%s", msg);
+//	SI_LOG_DEBUG("%s", msg);
 	
 	char *cont = get_content_type_from(msg);
 	if (cont) {
 		char *val;
 		char *id = strtok_r(cont, "=", &val);
-		if (strcmp(id, "ssdp_interval") == 0) {
+		if (strncmp(id, "ssdp_interval", 13) == 0) {
 			session->ssdp_announce_time_sec = atoi(val);
+			SI_LOG_INFO("Setting SSDP annouce interval to: %d", session->ssdp_announce_time_sec);
+		} else if (strncmp(id, "syslog_on", 9) == 0) {
+			if (strncmp(val, "true", 4) == 0) {
+				syslog_on = 1;
+				SI_LOG_INFO("Logging to syslog: %s", val);
+			} else {
+				SI_LOG_INFO("Logging to syslog: %s", val);
+				syslog_on = 0;
+			}
 		}
 		FREE_PTR(cont);
 	}

@@ -3,43 +3,31 @@
 <head>
 <link rel="stylesheet" type="text/css" href="stylesheet.css">
 
-<title>SAT>IP Log Page</title>
+<title>SAT>IP Config Page</title>
 
 <script src="loadxmldoc.js"></script>
+<script src="postxmldoc.js"></script>
 <script>
     function buildcontent(xmlDoc) {
 		page = "";
-		logdata = xmlDoc.getElementsByTagName("log");
-		for (i = 0; i < logdata.length; i++) {
-			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
-			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
-			prio = logdata[i].getElementsByTagName("prio")[0].childNodes[0].nodeValue;
-			
-			page +=  i;
-			page += "&nbsp;  ";
-			page +=  timestamp;
-			page += "&nbsp;  ";
-			page +=  prio;
-			page += "&nbsp;  ";
-			page +=  msg;
-			page += "\n";
-		}
 		return page;
 	}
     function updatePage() {
-		loadXMLDoc("log.xml");
+		// @TODO: should get the current value's via XML
+//		loadXMLDoc("config.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
 		document.getElementById("txt").innerHTML = buildcontent(xml);
 	}
+	
 </script>
 
 </head>
 <body>
 
 <div id="header">
-<h3>Main Log Page</h3>
+<h3>Main Configure Page</h3>
 </div>
 
 <div id="nav">
@@ -55,9 +43,27 @@
 </div>
 
 <div id="content" class="log">
-	<textarea id="txt" class="logtext" readOnly>
-	</textarea>
+	<form>
+		<label for="syslog_on">Log to syslog:</label>
+		<input type="checkbox" checked="true" name="syslog_on" id="syslog_on" onclick="postData(id, document.getElementById(id).checked)" />
+	</form>
+	<form>
+		<label for="ssdp_interval">SSDP Interval (sec):</label>
+		<input type="number" value="60" min="5" name="ssdp_interval" id="ssdp_interval" onclick="postData(id, document.getElementById(id).value)"/>
+	</form>
 </div>
+
+<script>
+    (function() {
+        var obj = document.getElementById("ssdp_interval");
+        obj.addEventListener('keypress', function(event) {
+//            if (event.keyCode == 13) {
+                event.preventDefault();
+				postData("ssdp_interval", obj.value);
+//            }
+        });
+    }());
+</script>
 
 <script>
     // Call the ajax refresh each refresh_time seconds
@@ -68,7 +74,6 @@
 <div id="footer">
  Copyright &#169; 2014 Marc Postema
 </div>
-
 
 </body>
 </html>
