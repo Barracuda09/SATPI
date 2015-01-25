@@ -48,12 +48,13 @@ typedef enum {
 
 // RTSP connection properties
 typedef struct {
-	SocketAttr_t    socket;      //
-	time_t          watchdog;    // watchdog
-	int             sessionID;   // session ID
-	int             streamID;    // stream ID
-	int             cseq;        // sequence number
-	enum Rtsp_State state;       //
+	SocketAttr_t    socket;         //
+	time_t          watchdog;       // watchdog
+	unsigned int    check_watchdog; // check watchdog
+	int             sessionID;      // session ID
+	int             streamID;       // stream ID
+	int             cseq;           // sequence number
+	enum Rtsp_State state;          //
 } RTSP_t;
 
 // RTP connection properties

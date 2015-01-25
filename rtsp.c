@@ -114,6 +114,27 @@ static double get_double_parameter_from(const char *msg, const char *header_fiel
 /*
  *
  */
+static fe_delivery_system_t get_msys_parameter_from(const char *msg, const char *header_field) {
+	char val[20];
+	if (get_string_parameter_from(msg, header_field, "msys", val, sizeof(val)) == 1) {
+		if (strcmp(val, "dvbs2") == 0) {
+			return SYS_DVBS2;
+		} else if (strcmp(val, "dvbs") == 0) {
+			return SYS_DVBS;
+		} else if (strcmp(val, "dvbt") == 0) {
+			return SYS_DVBT;
+		} else if (strcmp(val, "dvbt2") == 0) {
+			return SYS_DVBT2;
+		} else if (strcmp(val, "dvbc") == 0) {
+			return SYS_DVBC_ANNEX_A;
+		}
+	}
+	return SYS_UNDEFINED;
+}
+
+/*
+ *
+ */
 static int parse_stream_string(const char *msg, const char *header_field, const char *delim1, const char *delim2, Client_t *client) {
 	char *ptr;
     char *token_id_val;
@@ -121,6 +142,7 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 	int  val_int;
 	double val_double;
 	char val_str[1024];
+	fe_delivery_system_t msys;
 
 	if ((val_double = get_double_parameter_from(msg, header_field, "freq")) != -1) {
 		client->fe->channel.freq = (uint32_t)(val_double * 1000.0);
@@ -136,7 +158,10 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 			client->fe->diseqc.pol = 1;
 		}
 	}
-
+	if ((msys = get_msys_parameter_from(msg, header_field)) != SYS_UNDEFINED) {
+		client->fe->channel.delsys = msys;
+	}
+	
 	char *line = get_header_field_from(msg, header_field);
 
 	if (line) {
@@ -203,18 +228,6 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 					}
 				} else if (strcmp(token_id, "specinv") == 0) {
 					client->fe->channel.inversion = atoi(token_id_val);
-				} else if (strcmp(token_id, "msys") == 0) {
-					if (strcmp(token_id_val, "dvbs2") == 0) {
-						client->fe->channel.delsys = SYS_DVBS2;
-					} else if (strcmp(token_id_val, "dvbs") == 0) {
-						client->fe->channel.delsys = SYS_DVBS;
-					} else if (strcmp(token_id_val, "dvbt") == 0) {
-						client->fe->channel.delsys = SYS_DVBT;
-					} else if (strcmp(token_id_val, "dvbt2") == 0) {
-						client->fe->channel.delsys = SYS_DVBT2;
-					} else if (strcmp(token_id_val, "dvbc") == 0) {
-						client->fe->channel.delsys = SYS_DVBC_ANNEX_A;
-					}
 				} else if (strcmp(token_id, "mtype") == 0) {
 					if (strcmp(token_id_val, "8psk") == 0) {
 						client->fe->channel.modtype = PSK_8;
@@ -322,24 +335,27 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 /*
  *
  */
-static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, const char *server_ip_addr) {
-#define RTSP_SETUP_OK	"RTSP/1.0 200 OK\r\n" \
-						"CSeq: %d\r\n" \
-						"Session: %08X;timeout=%d\r\n" \
-						"Transport: RTP/AVP;unicast;client_port=%d-%d;source=%s;server_port=%d-%d\r\n" \
-						"com.ses.streamID: %d\r\n" \
-						"\r\n"
-	char rtsp[500];
-	int ret = 1;
+static int parse_channel_info_from(const char *msg, Client_t *client, FrontendArray_t *fe) {
 
 	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
 	pthread_mutex_lock(&client->fe_ptr_mutex);
 
-	SI_LOG_INFO("Setup Message");
+	fe_delivery_system_t msys = SYS_UNDEFINED;
+	
+	// Check if we have msys
+	if (strstr(msg, "SETUP") != NULL) {
+		msys = get_msys_parameter_from(msg, "SETUP");
+	} else if (strstr(msg, "PLAY") != NULL) {
+		msys = get_msys_parameter_from(msg, "PLAY");
+	} else if (strstr(msg, "OPTIONS") != NULL) {
+		msys = get_msys_parameter_from(msg, "OPTIONS");
+	} else if (strstr(msg, "DESCRIBE") != NULL) {
+		msys = get_msys_parameter_from(msg, "DESCRIBE");
+	}
 
 	// Do we have an frontend attached, check for requested one or find a free one
-	if (client->fe == NULL) {
+	if (msys != SYS_UNDEFINED && client->fe == NULL) {
 		const int fe_nr = get_int_parameter_from(msg, "SETUP", "fe");
 		if (fe_nr != -1 && fe_nr > 0 && (size_t)(fe_nr - 1) < fe->max_fe) {
 			size_t timeout = 0;
@@ -347,7 +363,8 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 				if (!fe->array[fe_nr-1]->attached) {
 					client->fe = fe->array[fe_nr-1];
 					client->fe->attached = 1;
-					SI_LOG_INFO("Frontend: %d, Attaching to client %s as requested", client->fe->index, client->ip_addr);
+					SI_LOG_INFO("Frontend: %d, With %s Attaching to client %s as requested", client->fe->index,
+						delsys_to_string(msys), client->ip_addr);
 					break;
 				} else {
 					// if frontend is busy try again...
@@ -365,34 +382,75 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 				}
 			} while (timeout < 3);
 		} else {
-			// dynamic alloc a frontend
-			// @TODO: Check the capability of the frontend so it is up to the challenge 
-			size_t i;
+			// dynamically alloc a frontend
+			size_t i, j;
 			for (i = 0; i < fe->max_fe; ++i) {
 				if (!fe->array[i]->attached) {
-					client->fe = fe->array[i];
-					client->fe->attached = 1;
-					SI_LOG_INFO("Frontend: %d, Attaching to client %s", client->fe->index, client->ip_addr);
-					break;
+					// check the capability of the frontend, is it up to the challenge?
+					for (j = 0; j < MAX_DELSYS; ++j) {
+						if (msys == fe->array[i]->info_del_sys[j])
+							client->fe = fe->array[i];
+							client->fe->attached = 1;
+							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s", client->fe->index, 
+								delsys_to_string(msys), client->ip_addr);
+							break;
+						}
+				} else {
+					continue;
 				}
+				break;
 			}
 		}
 	}
+	// now we should have an frontend
+	if (client->fe != NULL) {
+		if (strstr(msg, "SETUP") != NULL) {
+			parse_stream_string(msg, "SETUP", "?", "& ", client);
+		} else if (strstr(msg, "PLAY") != NULL) {
+			parse_stream_string(msg, "PLAY", "?", "& ", client);
+		} else if (strstr(msg, "OPTIONS") != NULL) {
+			parse_stream_string(msg, "OPTIONS", "?", "& ", client);
+		} else if (strstr(msg, "DESCRIBE") != NULL) {
+			parse_stream_string(msg, "DESCRIBE", "?", "& ", client);
+		}
+		parse_stream_string(msg, "Transport", ":", ";\r", client);
+	}
+	
+	// unlock - client data - frontend pointer
+	pthread_mutex_unlock(&client->mutex);
+	pthread_mutex_unlock(&client->fe_ptr_mutex);
+	return 1;
+}
+
+/*
+ *
+ */
+static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_addr) {
+#define RTSP_SETUP_OK	"RTSP/1.0 200 OK\r\n" \
+						"CSeq: %d\r\n" \
+						"Session: %08X;timeout=%d\r\n" \
+						"Transport: RTP/AVP;unicast;client_port=%d-%d;source=%s;server_port=%d-%d\r\n" \
+						"com.ses.streamID: %d\r\n" \
+						"\r\n"
+	char rtsp[500];
+	int ret = 1;
+
+	// lock - client data - frontend pointer
+	pthread_mutex_lock(&client->mutex);
+	pthread_mutex_lock(&client->fe_ptr_mutex);
+
+	SI_LOG_INFO("Setup Message");
+
 	// now we should have an frontend if not give 503 error
 	if (client->fe != NULL) {
 		// init variables for 'new' stream ?
 		if (strstr(msg, "/stream=") == NULL) {
-			client->rtsp.cseq = 1;
 			client->rtsp.streamID += 1;
 			client->rtsp.sessionID += 2;
 		} else {
 			SI_LOG_INFO("Modify Transport Parameters");
-			++client->rtsp.cseq;
 		}
-
-		parse_stream_string(msg, "SETUP", "?", "& ", client);
-		parse_stream_string(msg, "Transport", ":", ";\r", client);
-
+		// Setup, tune and set PID Filters
 		if (setup_frontend_and_tune(client->fe) == 1) {
 			if (update_pid_filters(client->fe) == 1) {
 				// set bufPtr to begin of RTP data (after Header)
@@ -439,7 +497,7 @@ static int setup_rtsp(const char *msg, Client_t *client, FrontendArray_t *fe, co
 /*
  *
  */
-static int play_rtsp(const char *msg, Client_t *client, const char *server_ip_addr) {
+static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 #define RTSP_PLAY_OK	"RTSP/1.0 200 OK\r\n" \
 						"RTP-Info: url=rtsp://%s/stream=%d\r\n" \
 						"CSeq: %d\r\n" \
@@ -458,9 +516,6 @@ static int play_rtsp(const char *msg, Client_t *client, const char *server_ip_ad
 		// lock - frontend data
 		pthread_mutex_lock(&client->fe->mutex);
 
-		parse_stream_string(msg, "PLAY", "?", "& ", client);
-
-		++client->rtsp.cseq;
 		if (setup_frontend_and_tune(client->fe) == 1) {
 			if (update_pid_filters(client->fe) == 1) {
 				// set bufPtr to begin of RTP data (after Header)
@@ -510,21 +565,58 @@ static int play_rtsp(const char *msg, Client_t *client, const char *server_ip_ad
 /*
  *
  */
+static int describe_rtsp(Client_t *client, const char *server_ip_addr) {
+#define RTSP_DESCRIBE_OK "RTSP/1.0 200 OK\r\n" \
+						 "CSeq: %d\r\n" \
+						 "Content-Type: application/sdp\r\n" \
+						 "Content-Base: rtsp://%s/\r\n" \
+						 "Content-Length: %d\r\n" \
+						 "\r\n" \
+						 "%s"
+						 
+#define RTSP_DESCRIBE_CONT "v=0\r\n" \
+						   "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
+						   "s=SatIPServer:1 2\r\n" \
+						   "t=0 0\r\n" \
+						   "m=video 0 RTP/AVP 33\r\n" \
+						   "c=IN IP4 0.0.0.0\r\n" \
+						   "a=control:stream=99\r\n" \
+						   "a=fmtp:33 \r\n" \
+						   "a=inactive"
+						 
+	char rtspOk[500];
+	char rtspCont[500];
+	
+	snprintf(rtspCont, sizeof(rtspCont), RTSP_DESCRIBE_CONT, server_ip_addr);
+	
+	snprintf(rtspOk, sizeof(rtspOk), RTSP_DESCRIBE_OK, client->rtsp.cseq, server_ip_addr, strlen(rtspCont), rtspCont);
+//	SI_LOG_DEBUG("%s", rtspOk);
+
+	// send reply to client
+	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
+		PERROR("error sending: RTSP_DESCRIBE_OK");
+		return -1;
+	}
+	return 1;
+}
+
+/*
+ *
+ */
 static int options_rtsp(Client_t *client) {
 #define RTSP_OPTIONS_OK	"RTSP/1.0 200 OK\r\n" \
 						"CSeq: %d\r\n" \
-						"Public: OPTIONS, SETUP, PLAY, TEARDOWN\r\n" \
+						"Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
 						"Session: %08X\r\n" \
 						"\r\n"
 	char rtspOk[100];
 
-	++client->rtsp.cseq;
 	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, client->rtsp.sessionID);
-//	SI_LOG_INFO("%s", rtspOk);
+//	SI_LOG_DEBUG("%s", rtspOk);
 
 	// send reply to client
 	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
-		PERROR("error sending: RTSP_TEARDOWN_OK");
+		PERROR("error sending: RTSP_OPTIONS_OK");
 		return -1;
 	}
 	return 1;
@@ -569,7 +661,6 @@ static int teardown_session(void *arg) {
 		// Need to send reply
 		if (client->teardown_graceful) {
 			char rtspOk[100];
-			++client->rtsp.cseq;
 			snprintf(rtspOk, sizeof(rtspOk), RTSP_TEARDOWN_OK, client->rtsp.cseq, client->rtsp.sessionID);
 //			SI_LOG_INFO("%s", rtspOk);
 
@@ -675,6 +766,7 @@ static void *thread_work_rtsp(void *arg) {
 									// clear watchdog
 									rtpsession->client[j].rtsp.watchdog = 0;
 									rtpsession->client[j].rtsp.state = Connected;
+									rtpsession->client[j].rtsp.check_watchdog = 1;
 								}
 								break;
 							}
@@ -694,8 +786,23 @@ static void *thread_work_rtsp(void *arg) {
 									if (dataSize > 0) {
 										SI_LOG_DEBUG("%s", msg);
 
+										// find 'CSeq'
+										char *line = get_header_field_from(msg, "CSeq");
+										if (line) {
+											char *val;
+											strtok_r(line, ":", &val);
+											client->rtsp.cseq = atoi(val);
+											FREE_PTR(line);
+										}
+										parse_channel_info_from(msg, client, &rtpsession->fe);
+										
+										// Check do we have a VLC client (disable watchdog check)
+										if (strstr(msg, "LIVE555") != NULL) {
+											client->rtsp.check_watchdog = 0;
+										}
+										
 										if (strstr(msg, "SETUP") != NULL) {
-											if (setup_rtsp(msg, client, &rtpsession->fe, rtpsession->interface.ip_addr) == -1) {
+											if (setup_rtsp(msg, client, rtpsession->interface.ip_addr) == -1) {
 												SI_LOG_ERROR("Setup RTSP message failed");
 												client->rtsp.state = Error;
 											} else {
@@ -710,7 +817,7 @@ static void *thread_work_rtsp(void *arg) {
 												pthread_mutex_unlock(&client->mutex);
 											}
 										} else if (strstr(msg, "PLAY") != NULL) {
-											if (play_rtsp(msg, client, rtpsession->interface.ip_addr) == 1) {
+											if (play_rtsp(client, rtpsession->interface.ip_addr) == 1) {
 												pthread_mutex_lock(&client->mutex);
 												if (client->rtp.state == Stopped) {
 													client->rtp.state = Starting;
@@ -720,6 +827,8 @@ static void *thread_work_rtsp(void *arg) {
 												}
 												pthread_mutex_unlock(&client->mutex);
 											}
+										} else if (strstr(msg, "DESCRIBE") != NULL) {
+											describe_rtsp(client, rtpsession->interface.ip_addr);
 										} else if (strstr(msg, "TEARDOWN") != NULL) {
 											setup_teardown_message(client, 1);
 											pfd[i].fd = -1;
@@ -763,7 +872,7 @@ static void *thread_work_rtsp(void *arg) {
 			for (i = 0; i < MAX_CLIENTS; ++i) {
 				Client_t *client = &rtpsession->client[i];
 				// check watchdog
-				if (client->rtsp.watchdog != 0 && client->rtsp.watchdog < time(NULL)) {
+				if (client->rtsp.check_watchdog == 1 && client->rtsp.watchdog != 0 && client->rtsp.watchdog < time(NULL)) {
 					SI_LOG_INFO("RTSP Connection Watchdog kicked-in, for client %s", client->ip_addr);
 					setup_teardown_message(client, 0);
 					pfd[i+1].fd = -1;

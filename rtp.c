@@ -241,7 +241,7 @@ void init_rtp(RtpSession_t *rtpsession) {
 	pthread_mutex_init(&rtpsession->mutex, &attr);
 	rtpsession->appStartTime = time(NULL);
 	rtpsession->rtp_payload = 0;
-	rtpsession->ssdp_announce_time_sec = 60; // 60sec default interval 
+	rtpsession->ssdp_announce_time_sec = 60; // 60sec default interval
 
 	// frontend properties
 	for (j = 0; j < rtpsession->fe.max_fe; ++j) {
@@ -306,20 +306,20 @@ void init_rtp(RtpSession_t *rtpsession) {
 		pthread_mutex_init(&rtpsession->client[i].fe_ptr_mutex, &attr);
 		
 		// RTSP properties
-		rtpsession->client[i].rtsp.state = NotConnected;
-		rtpsession->client[i].rtsp.socket.fd = -1;
-		rtpsession->client[i].rtsp.watchdog = 0;
-		rtpsession->client[i].rtsp.sessionID = 0;
-		rtpsession->client[i].rtsp.streamID = 0;
-		rtpsession->client[i].rtsp.cseq = 0;
+		rtpsession->client[i].rtsp.state          = NotConnected;
+		rtpsession->client[i].rtsp.socket.fd      = -1;
+		rtpsession->client[i].rtsp.watchdog       = 0;
+		rtpsession->client[i].rtsp.sessionID      = 0;
+		rtpsession->client[i].rtsp.streamID       = 0;
+		rtpsession->client[i].rtsp.cseq           = 0;
 		
 		// RTP properties
-		rtpsession->client[i].rtp.state = Not_Initialized;
+		rtpsession->client[i].rtp.state     = Not_Initialized;
 		rtpsession->client[i].rtp.client.fd = -1;
 		rtpsession->client[i].rtp.server.fd = -1;
 		
 		// RTCP properties
-		rtpsession->client[i].rtcp.state = Not_Initialized;
+		rtpsession->client[i].rtcp.state     = Not_Initialized;
 		rtpsession->client[i].rtcp.client.fd = -1;
 		rtpsession->client[i].rtcp.server.fd = -1;
 
