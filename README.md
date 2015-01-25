@@ -35,4 +35,4 @@ Usage
 
 for help on options:  satpi --help
 
-For normal use run:  satpi --yes-ssdp --yes-rtcp
+For normal use just run:  satpi

@@ -184,16 +184,16 @@ static void printUsage(const char *prog_name) {
            "\t--help         show this help and exit\r\n" \
            "\t--user xx      run as user\r\n" \
            "\t--no-daemon    do not daemonize\r\n" \
-           "\t--yes-rtcp     do send RTCP packets\r\n"
-           "\t--yes-ssdp     do advertise server\r\n", prog_name);
+           "\t--no-rtcp      do NOT send RTCP packets\r\n"
+           "\t--no-ssdp      do NOT advertise server\r\n", prog_name);
 }
 
 /*
  *
  */
 int main(int argc, char *argv[]) {
-	int ssdp = 0;
-	int rtcp = 0;
+	int ssdp = 1;
+	int rtcp = 1;
 	int daemon = 1;
 	int i;
 	char *user = NULL;
@@ -202,9 +202,9 @@ int main(int argc, char *argv[]) {
 
 	// Check options
 	for (i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "--yes-rtcp") == 0) {
+		if (strcmp(argv[i], "--no-rtcp") == 0) {
 			rtcp = 1;
-		} else if (strcmp(argv[i], "--yes-ssdp") == 0) {
+		} else if (strcmp(argv[i], "--no-ssdp") == 0) {
 			ssdp = 1;
 		} else if (strcmp(argv[i], "--user") == 0) {
 			user = argv[i+1];
