@@ -203,9 +203,9 @@ int main(int argc, char *argv[]) {
 	// Check options
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-rtcp") == 0) {
-			rtcp = 1;
+			rtcp = 0;
 		} else if (strcmp(argv[i], "--no-ssdp") == 0) {
-			ssdp = 1;
+			ssdp = 0;
 		} else if (strcmp(argv[i], "--user") == 0) {
 			user = argv[i+1];
 			++i; // because next was the user-name
