@@ -628,6 +628,107 @@ void monitor_frontend(FE_Monitor_t *monitor, int showStatus) {
 /*
  *
  */
+char *attribute_describe_string(const Frontend_t *fe) {
+	// lock - frontend data - monitor data
+	pthread_mutex_lock(&((Frontend_t *)fe)->mutex);
+	pthread_mutex_lock(&((Frontend_t *)fe)->monitor.mutex);
+	
+	// make PID csv
+	char *pidPtr = NULL;
+	addString(&pidPtr, "");
+	size_t i = 0;
+	if (fe->pid.data[i].used) {
+		addString(&pidPtr, "%d", i);
+	}
+	for (i = 1; i < MAX_PIDS; ++i) {
+		if (fe->pid.data[i].used) {
+			addString(&pidPtr, ",%d", i);
+		}
+	}
+	char *attr_desc_str = NULL;
+	addString(&attr_desc_str, "");
+	switch (fe->channel.delsys) {
+		case SYS_DVBS:
+		case SYS_DVBS2:
+			// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
+			//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
+			addString(&attr_desc_str, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%d,%d,%s,%s,%d,%s,%d,%s;pids=%s",
+					fe->diseqc.src,
+					fe->index+1,
+					fe->monitor.strength,
+					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+					fe->monitor.snr,
+					fe->channel.freq,
+					fe->diseqc.pol,
+					delsys_to_string(fe->channel.delsys),
+					modtype_to_sting(fe->channel.modtype),
+					fe->channel.pilot,
+					rolloff_to_sting(fe->channel.rolloff),
+					fe->channel.srate,
+					fec_to_string(fe->channel.fec),
+					pidPtr);
+			break;
+		case SYS_DVBT:
+		case SYS_DVBT2:
+			// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
+			//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
+			addString(&attr_desc_str, "ver=1.1;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+					fe->index+1,
+					fe->monitor.strength,
+					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+					fe->monitor.snr,
+					fe->channel.freq,
+					bandwidth_to_string(fe->channel.bandwidth),
+					delsys_to_string(fe->channel.delsys),
+					transmode_to_string(fe->channel.transmission),
+					modtype_to_sting(fe->channel.modtype),
+					guardinter_to_string(fe->channel.guard),
+					fec_to_string(fe->channel.fec),
+					fe->channel.plp_id,
+					fe->channel.t2_system_id,
+					fe->channel.siso_miso,
+					pidPtr);
+			break;
+		case SYS_DVBC_ANNEX_A:
+		case SYS_DVBC_ANNEX_B:
+#if FULL_DVB_API_VERSION >= 0x0505
+		case SYS_DVBC_ANNEX_C:
+#endif
+			// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
+			//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
+			addString(&attr_desc_str, "ver=1.2;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+					fe->index+1,
+					fe->monitor.strength,
+					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
+					fe->monitor.snr,
+					fe->channel.freq,
+					bandwidth_to_string(fe->channel.bandwidth),
+					delsys_to_string(fe->channel.delsys),
+					modtype_to_sting(fe->channel.modtype),
+					fe->channel.srate,
+					fe->channel.c2tft,
+					fe->channel.data_slice,
+					fe->channel.plp_id,
+					fe->channel.inversion,
+					pidPtr);
+			break;
+		default:
+			// Not supported
+			break;
+	}
+	// free
+	FREE_PTR(pidPtr);
+	
+	// unlock - frontend data - monitor data
+	pthread_mutex_unlock(&((Frontend_t *)fe)->mutex);
+	pthread_mutex_unlock(&((Frontend_t *)fe)->monitor.mutex);
+	
+	return attr_desc_str;
+}
+
+/*
+ *
+ */
 const char *fec_to_string(int fec) {
 	switch (fec) {
 		case FEC_1_2:

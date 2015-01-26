@@ -336,27 +336,18 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
  *
  */
 static int parse_channel_info_from(const char *msg, Client_t *client, FrontendArray_t *fe) {
+	char method[15];
 
 	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
 	pthread_mutex_lock(&client->fe_ptr_mutex);
-
-	fe_delivery_system_t msys = SYS_UNDEFINED;
 	
-	// Check if we have msys
-	if (strstr(msg, "SETUP") != NULL) {
-		msys = get_msys_parameter_from(msg, "SETUP");
-	} else if (strstr(msg, "PLAY") != NULL) {
-		msys = get_msys_parameter_from(msg, "PLAY");
-	} else if (strstr(msg, "OPTIONS") != NULL) {
-		msys = get_msys_parameter_from(msg, "OPTIONS");
-	} else if (strstr(msg, "DESCRIBE") != NULL) {
-		msys = get_msys_parameter_from(msg, "DESCRIBE");
-	}
+	get_method_from(msg, method);
+	const fe_delivery_system_t msys = get_msys_parameter_from(msg, method);
 
 	// Do we have an frontend attached, check for requested one or find a free one
 	if (msys != SYS_UNDEFINED && client->fe == NULL) {
-		const int fe_nr = get_int_parameter_from(msg, "SETUP", "fe");
+		const int fe_nr = get_int_parameter_from(msg, method, "fe");
 		if (fe_nr != -1 && fe_nr > 0 && (size_t)(fe_nr - 1) < fe->max_fe) {
 			size_t timeout = 0;
 			do {
@@ -402,17 +393,9 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 			}
 		}
 	}
-	// now we should have an frontend
+	// now we should have an frontend get the rest
 	if (client->fe != NULL) {
-		if (strstr(msg, "SETUP") != NULL) {
-			parse_stream_string(msg, "SETUP", "?", "& ", client);
-		} else if (strstr(msg, "PLAY") != NULL) {
-			parse_stream_string(msg, "PLAY", "?", "& ", client);
-		} else if (strstr(msg, "OPTIONS") != NULL) {
-			parse_stream_string(msg, "OPTIONS", "?", "& ", client);
-		} else if (strstr(msg, "DESCRIBE") != NULL) {
-			parse_stream_string(msg, "DESCRIBE", "?", "& ", client);
-		}
+		parse_stream_string(msg, method, "?", "& ", client);
 		parse_stream_string(msg, "Transport", ":", ";\r", client);
 	}
 	
@@ -445,7 +428,7 @@ static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_a
 	if (client->fe != NULL) {
 		// init variables for 'new' stream ?
 		if (strstr(msg, "/stream=") == NULL) {
-			client->rtsp.streamID += 1;
+			client->rtsp.streamID = client->fe->index;
 			client->rtsp.sessionID += 2;
 		} else {
 			SI_LOG_INFO("Modify Transport Parameters");
@@ -565,45 +548,66 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 /*
  *
  */
-static int describe_rtsp(Client_t *client, const char *server_ip_addr) {
+static int describe_rtsp(const Client_t *client, const RtpSession_t *rtpsession) {
 #define RTSP_DESCRIBE_OK "RTSP/1.0 200 OK\r\n" \
 						 "CSeq: %d\r\n" \
 						 "Content-Type: application/sdp\r\n" \
 						 "Content-Base: rtsp://%s/\r\n" \
-						 "Content-Length: %d\r\n" \
+						 "Content-Length: %zu\r\n" \
 						 "\r\n" \
 						 "%s"
 						 
-#define RTSP_DESCRIBE_CONT "v=0\r\n" \
-						   "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
-						   "s=SatIPServer:1 2\r\n" \
-						   "t=0 0\r\n" \
-						   "m=video 0 RTP/AVP 33\r\n" \
-						   "c=IN IP4 0.0.0.0\r\n" \
-						   "a=control:stream=99\r\n" \
-						   "a=fmtp:33 \r\n" \
-						   "a=inactive"
+#define RTSP_DESCRIBE_CONT1 "v=0\r\n" \
+						    "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
+						    "s=SatIPServer:1 %d\r\n" \
+						    "t=0 0\r\n"
+							
+#define RTSP_DESCRIBE_CONT2 "m=video 0 RTP/AVP 33\r\n" \
+						    "c=IN IP4 0.0.0.0\r\n" \
+						    "a=control:stream=%d\r\n" \
+						    "a=fmtp:33 %s\r\n" \
+						    "a=%s\r\n"
 						 
-	char rtspOk[500];
-	char rtspCont[500];
+	char *rtspOk = NULL;
+	char *rtspCont = NULL;
+
+	addString(&rtspCont, RTSP_DESCRIBE_CONT1, rtpsession->interface.ip_addr, rtpsession->fe.max_fe);
 	
-	snprintf(rtspCont, sizeof(rtspCont), RTSP_DESCRIBE_CONT, server_ip_addr);
-	
-	snprintf(rtspOk, sizeof(rtspOk), RTSP_DESCRIBE_OK, client->rtsp.cseq, server_ip_addr, strlen(rtspCont), rtspCont);
-//	SI_LOG_DEBUG("%s", rtspOk);
+	size_t i;
+	for (i = 0; i < rtpsession->fe.max_fe; ++i) {
+		Frontend_t *fe = rtpsession->fe.array[i];
+		
+		// lock - frontend data
+		pthread_mutex_lock(&fe->mutex);
+		
+		char *attr_desc_str = attribute_describe_string(fe);
+		addString(&rtspCont, RTSP_DESCRIBE_CONT2, fe->index, attr_desc_str, (fe->attached && fe->tuned) ? "sendonly" : "inactive");
+		
+		// unlock - frontend data
+		pthread_mutex_unlock(&fe->mutex);
+		
+		FREE_PTR(attr_desc_str);
+	}
+
+	addString(&rtspOk, RTSP_DESCRIBE_OK, client->rtsp.cseq, rtpsession->interface.ip_addr, strlen(rtspCont), rtspCont);
+	FREE_PTR(rtspCont);
+
+	SI_LOG_DEBUG("%s", rtspOk);
 
 	// send reply to client
 	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
 		PERROR("error sending: RTSP_DESCRIBE_OK");
+		FREE_PTR(rtspOk);
 		return -1;
 	}
+	FREE_PTR(rtspOk);
 	return 1;
 }
 
 /*
  *
  */
-static int options_rtsp(Client_t *client) {
+static int options_rtsp(const Client_t *client) {
 #define RTSP_OPTIONS_OK	"RTSP/1.0 200 OK\r\n" \
 						"CSeq: %d\r\n" \
 						"Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
@@ -671,7 +675,7 @@ static int teardown_session(void *arg) {
 			}
 		}
 		// clear rtsp session state
-		client->rtsp.streamID  = 0;
+		client->rtsp.streamID  = 99;
 		client->rtsp.sessionID = 0;
 		// clear callback
 		client->teardown_session = NULL;
@@ -828,7 +832,7 @@ static void *thread_work_rtsp(void *arg) {
 												pthread_mutex_unlock(&client->mutex);
 											}
 										} else if (strstr(msg, "DESCRIBE") != NULL) {
-											describe_rtsp(client, rtpsession->interface.ip_addr);
+											describe_rtsp(client, rtpsession);
 										} else if (strstr(msg, "TEARDOWN") != NULL) {
 											setup_teardown_message(client, 1);
 											pfd[i].fd = -1;

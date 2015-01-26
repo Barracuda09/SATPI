@@ -310,7 +310,7 @@ void init_rtp(RtpSession_t *rtpsession) {
 		rtpsession->client[i].rtsp.socket.fd      = -1;
 		rtpsession->client[i].rtsp.watchdog       = 0;
 		rtpsession->client[i].rtsp.sessionID      = 0;
-		rtpsession->client[i].rtsp.streamID       = 0;
+		rtpsession->client[i].rtsp.streamID       = 99;
 		rtpsession->client[i].rtsp.cseq           = 0;
 		
 		// RTP properties

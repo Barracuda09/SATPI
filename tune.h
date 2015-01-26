@@ -167,7 +167,11 @@ int clear_pid_filters(Frontend_t *frontend);
 //
 int setup_frontend_and_tune(Frontend_t *frontend);
 
+//
 void monitor_frontend(FE_Monitor_t *monitor, int showStatus);
+
+//
+char *attribute_describe_string(const Frontend_t *fe);
 
 // Convert Functions
 const char *fec_to_string(int fec);

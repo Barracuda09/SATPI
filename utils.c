@@ -67,6 +67,31 @@ char *get_line_from(const char *buf, size_t *ptr_index, const char *line_delim) 
 /*
  *
  */
+void get_method_from(const char *buf, char *method) {
+	char *line = NULL;
+	size_t ptr_index = 0;
+	size_t i;
+	// request line should be in the first line (method)
+	line = get_line_from(buf, &ptr_index, "\r\n");
+	if (line) {
+		i = 0;
+		// remove any leading whitespace
+		while (line[i] == ' ') ++i;
+
+		// copy method (upper case)
+		while (line[i] != ' ') {
+			*method = toupper(line[i]);
+			++method;
+			++i;
+		}
+		*method = 0;
+		FREE_PTR(line);
+	}
+}
+
+/*
+ *
+ */
 char *get_header_field_from(const char *buf, const char *header_field) {
 	char *line = NULL;
 	size_t ptr_index = 0;
@@ -75,13 +100,19 @@ char *get_header_field_from(const char *buf, const char *header_field) {
 		line = get_line_from(buf, &ptr_index, "\r\n");
 		if (line) {
 			i = 0;
+			// remove any leading whitespace
+			while (line[i] == ' ') ++i;
+			
+			int found = 1;
 			while (line[i] != ':' && line[i] != ' ') {
-				if (toupper(line[i]) != toupper(header_field[i])) {
+				if (toupper(line[i]) != toupper(*header_field)) {
+					found = 0;
 					break;
 				}
 				++i;
+				++header_field;
 			}
-			if (i == strlen(header_field)) {
+			if (found) {
 				break;
 			}
 			free(line); // Do not use FREE_PTR (it will do line = NULL)
