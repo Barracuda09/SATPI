@@ -95,22 +95,23 @@ void get_method_from(const char *buf, char *method) {
 char *get_header_field_from(const char *buf, const char *header_field) {
 	char *line = NULL;
 	size_t ptr_index = 0;
-	size_t i;
+	size_t i, j;
 	do {
 		line = get_line_from(buf, &ptr_index, "\r\n");
 		if (line) {
 			i = 0;
+			j = 0;
 			// remove any leading whitespace
 			while (line[i] == ' ') ++i;
 			
 			int found = 1;
 			while (line[i] != ':' && line[i] != ' ') {
-				if (toupper(line[i]) != toupper(*header_field)) {
+				if (toupper(line[i]) != toupper(header_field[j])) {
 					found = 0;
 					break;
 				}
 				++i;
-				++header_field;
+				++j;
 			}
 			if (found) {
 				break;
