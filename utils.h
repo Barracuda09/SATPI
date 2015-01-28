@@ -43,6 +43,9 @@ char *get_line_from(const char *buf, size_t *ptr_index, const char *line_delim);
 char *get_header_field_from(const char *buf, const char *header_field);
 
 //
+char *get_header_field_parameter_from(const char *buf, const char *header_field);
+
+//
 void get_method_from(const char *buf, char *method);
 
 //

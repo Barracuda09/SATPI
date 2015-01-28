@@ -294,15 +294,29 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 				} else if (strcmp(token_id, "sm") == 0) {
 					SI_LOG_ERROR("sm = %s", token_id_val);
 
-				} else if (strcmp(token_id, "pids") == 0 ||
-						   strcmp(token_id, "addpids") == 0 ||
-						   strcmp(token_id, "delpids") == 0) {
+				} else if (strncmp(token_id, "pids", 4) == 0 ||
+						   strncmp(token_id, "addpids", 7) == 0 ||
+						   strncmp(token_id, "delpids", 7) == 0) {
 					char *val, *val_ptr;
-					const int pid = (strcmp(token_id, "delpids") == 0) ? 0 : 1;
+					const int pid = (strncmp(token_id, "delpids", 7) == 0) ? 0 : 1;
 					val = strtok_r(token_id_val, ",", &val_ptr);
-					while (val != NULL) {
-						client->fe->pid.data[atoi(val)].used = pid;
-						val = strtok_r(NULL, ",", &val_ptr);
+					if (strncmp(val, "all", 3) == 0) {
+//						size_t p;
+//						for (p = 0; p < MAX_PIDS; ++p) {
+//							client->fe->pid.data[p].used = pid;
+//						}
+						if (pid) {
+							SI_LOG_INFO("pid=all -> UNDER DEVELOPMENT");
+//							client->fe->pid.all = 1;
+						} else {
+							SI_LOG_ERROR("delpid=all ->UNDER DEVELOPMENT");
+//							client->fe->pid.all = 0;
+						}
+					} else {
+						while (val != NULL) {
+							client->fe->pid.data[atoi(val)].used = pid;
+							val = strtok_r(NULL, ",", &val_ptr);
+						}
 					}
 					client->fe->pid.changed = 1;
 				} else if (strcmp(token_id, "client_port") == 0) {
@@ -353,9 +367,13 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 			do {
 				if (!fe->array[fe_nr-1]->attached) {
 					client->fe = fe->array[fe_nr-1];
+					// lock - frontend data
+					pthread_mutex_lock(&client->fe->mutex);
 					client->fe->attached = 1;
 					SI_LOG_INFO("Frontend: %d, With %s Attaching to client %s as requested", client->fe->index,
 						delsys_to_string(msys), client->ip_addr);
+					// unlock - frontend data
+					pthread_mutex_unlock(&client->fe->mutex);
 					break;
 				} else {
 					// if frontend is busy try again...
@@ -379,11 +397,16 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 				if (!fe->array[i]->attached) {
 					// check the capability of the frontend, is it up to the challenge?
 					for (j = 0; j < MAX_DELSYS; ++j) {
-						if (msys == fe->array[i]->info_del_sys[j])
+						// we no not like SYS_UNDEFINED
+						if (fe->array[i]->info_del_sys[j] != SYS_UNDEFINED && msys == fe->array[i]->info_del_sys[j])
 							client->fe = fe->array[i];
+							// lock - frontend data
+							pthread_mutex_lock(&client->fe->mutex);
 							client->fe->attached = 1;
 							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s", client->fe->index, 
 								delsys_to_string(msys), client->ip_addr);
+							// unlock - frontend data
+							pthread_mutex_unlock(&client->fe->mutex);
 							break;
 						}
 				} else {
@@ -767,10 +790,11 @@ static void *thread_work_rtsp(void *arg) {
 									pfd[j+1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 									pfd[j+1].revents = 0;
 
-									// clear watchdog
-									rtpsession->client[j].rtsp.watchdog = 0;
-									rtpsession->client[j].rtsp.state = Connected;
+									// clear watchdog and some other things
+									rtpsession->client[j].rtsp.watchdog       = 0;
+									rtpsession->client[j].rtsp.state          = Connected;
 									rtpsession->client[j].rtsp.check_watchdog = 1;
+									rtpsession->client[j].rtsp.shall_close    = 0;
 								}
 								break;
 							}
@@ -791,13 +815,22 @@ static void *thread_work_rtsp(void *arg) {
 										SI_LOG_DEBUG("%s", msg);
 
 										// find 'CSeq'
-										char *line = get_header_field_from(msg, "CSeq");
-										if (line) {
-											char *val;
-											strtok_r(line, ":", &val);
-											client->rtsp.cseq = atoi(val);
-											FREE_PTR(line);
+										char *param = get_header_field_parameter_from(msg, "CSeq");
+										if (param) {
+											client->rtsp.cseq = atoi(param);
+											FREE_PTR(param);
 										}
+										
+										// Close connection or keep-alive
+										param = get_header_field_parameter_from(msg, "Connection");
+										if (param) {
+											if (strncasecmp(param, "Close", 5) == 0) {
+												client->rtsp.shall_close = 1;
+												SI_LOG_INFO("RTSP Requested Connection closed by Client: %s", client->ip_addr);
+											}
+											FREE_PTR(param);
+										}
+										// get parameters from command
 										parse_channel_info_from(msg, client, &rtpsession->fe);
 										
 										// Check do we have a VLC client (disable watchdog check)
@@ -844,14 +877,15 @@ static void *thread_work_rtsp(void *arg) {
 											SI_LOG_ERROR("Unknown RTSP message (%s)", msg);
 											client->rtsp.state = Error;
 										}
-										// Close connection or keep-alive
-										if (strstr(msg, "close") != NULL) {
-											SI_LOG_INFO("RTSP Requested Connection closed by Client: %s", client->ip_addr);
-										}
-
 									} else if (dataSize == 0) {
-										SI_LOG_ERROR("RTSP Connection closed by Client: %s ??", client->ip_addr);
-										client->rtsp.state = Error;
+										if (client->rtsp.shall_close) {
+											SI_LOG_DEBUG("RTSP Connection closed as expected by Client: %s ??", client->ip_addr);
+											pfd[i].fd = -1;
+											CLOSE_FD(client->rtsp.socket.fd);
+										} else {
+											SI_LOG_ERROR("RTSP Connection closed unexpectedly by Client: %s ??", client->ip_addr);
+											client->rtsp.state = Error;
+										}
 									}
 									FREE_PTR(msg);
 								}

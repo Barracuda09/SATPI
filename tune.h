@@ -91,6 +91,7 @@ typedef struct {
 typedef struct {
 #define MAX_PIDS 8192
 	int       changed;       // if something changed to 'pid' array
+	int       all;           // if all pid are requested
     PidData_t data[MAX_PIDS];// used pids
 } Pid_t;
 

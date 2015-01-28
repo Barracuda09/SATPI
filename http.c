@@ -158,9 +158,11 @@ static char *make_data_xml(const RtpSession_t *rtpsession) {
 		addString(&ptr, "<pidlist>");
 
 		pthread_mutex_lock(&((Frontend_t *)fe)->mutex);
-		for (j = 0; j < MAX_PIDS; ++j) {
-			if (fe->pid.data[j].used) {
-				addString(&ptr, "<pid>%d</pid><cc>%d</cc><count>%d</count>", j, fe->pid.data[j].cc_error, fe->pid.data[j].count);
+		if (!fe->pid.all) {
+			for (j = 0; j < MAX_PIDS; ++j) {
+				if (fe->pid.data[j].used) {
+					addString(&ptr, "<pid>%d</pid><cc>%d</cc><count>%d</count>", j, fe->pid.data[j].cc_error, fe->pid.data[j].count);
+				}
 			}
 		}
 		pthread_mutex_unlock(&((Frontend_t *)fe)->mutex);

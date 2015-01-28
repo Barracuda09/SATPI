@@ -125,6 +125,27 @@ char *get_header_field_from(const char *buf, const char *header_field) {
 /*
  *
  */
+char *get_header_field_parameter_from(const char *buf, const char *header_field) {
+	char *line = get_header_field_from(buf, header_field);
+	if (line) {
+		char *val;
+		strtok_r(line, ":", &val);
+		// remove any leading whitespace
+		while (*val == ' ') ++val;
+		// copy
+		size_t param_size = strlen(val);
+		char *param = malloc(param_size);
+		memcpy(param, val, param_size);
+		FREE_PTR(line);
+		return param;
+	}
+	return NULL;
+}
+
+
+/*
+ *
+ */
 char *get_content_type_from(const char *msg) {
 	// find 'content-length' first to see if there is something
 	char *line = get_header_field_from(msg, "Content-Length");

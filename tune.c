@@ -169,7 +169,7 @@ static int get_fe_info(Frontend_t *frontend) {
 #endif
 			default:
 				frontend->info_del_sys[i] = SYS_UNDEFINED;
-				SI_LOG_DEBUG("Frontend Type Unknown: %d", dtvProperty.u.buffer.data[i]);
+				SI_LOG_DEBUG("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
 				break;
 		}
 	}
@@ -261,7 +261,7 @@ static int diseqc_send_msg(int fd_fe, fe_sec_voltage_t v, struct diseqc_cmd *cmd
 /* Digital Satellite Equipment Control,
  * specification is available from http://www.eutelsat.com/
  */
-static int send_diseqc(int fd_fe, DiSEqc_t *diseqc) {
+static int send_diseqc(int fd_fe, int fe_index, DiSEqc_t *diseqc) {
 	struct diseqc_cmd cmd = {
 		{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
 	};
@@ -270,7 +270,7 @@ static int send_diseqc(int fd_fe, DiSEqc_t *diseqc) {
 	// Command 0x38: Write to Port group 0 (Committed switches)
 	// Data 1  0xf0: see below
 	
-	SI_LOG_DEBUG("Sending DiSEqC");
+	SI_LOG_DEBUG("Frontend: %d, Sending DiSEqC", fe_index);
 
 	// param: high nibble: reset bits, low nibble set bits,
 	// bits are: option, position, polarizaion, band
@@ -278,7 +278,7 @@ static int send_diseqc(int fd_fe, DiSEqc_t *diseqc) {
 		0xf0 | (((diseqc->src * 4) & 0x0f) | (diseqc->hiband ? 1 : 0) | (diseqc->pol ? 0 : 2));
 
 	return diseqc_send_msg(fd_fe, diseqc->pol ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
-		      &cmd, diseqc->hiband ? SEC_TONE_ON : SEC_TONE_OFF, ((diseqc->src / 4) % 2) ? SEC_MINI_B : SEC_MINI_A);
+		      &cmd, diseqc->hiband ? SEC_TONE_ON : SEC_TONE_OFF, (diseqc->src % 2) ? SEC_MINI_B : SEC_MINI_A);
 }
 
 /*
@@ -294,14 +294,14 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 	switch (channel->delsys) {
 		case SYS_DVBS:
 		case SYS_DVBS2:
-			FILL_PROP(DTV_DELIVERY_SYSTEM, channel->delsys);
-			FILL_PROP(DTV_FREQUENCY,       channel->ifreq);
-			FILL_PROP(DTV_MODULATION,      channel->modtype);
-			FILL_PROP(DTV_SYMBOL_RATE,     channel->srate);
-			FILL_PROP(DTV_INNER_FEC,       channel->fec);
-			FILL_PROP(DTV_INVERSION,       INVERSION_AUTO);
-			FILL_PROP(DTV_ROLLOFF,         channel->rolloff);
-			FILL_PROP(DTV_PILOT,           PILOT_AUTO);
+			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel->delsys);
+			FILL_PROP(DTV_FREQUENCY,         channel->ifreq);
+			FILL_PROP(DTV_MODULATION,        channel->modtype);
+			FILL_PROP(DTV_SYMBOL_RATE,       channel->srate);
+			FILL_PROP(DTV_INNER_FEC,         channel->fec);
+			FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
+			FILL_PROP(DTV_ROLLOFF,           channel->rolloff);
+			FILL_PROP(DTV_PILOT,             channel->pilot);
 			break;
 		case SYS_DVBT:
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel->delsys);
@@ -344,9 +344,9 @@ static int tune(int fd_fe, const ChannelData_t *channel) {
 /*
  *
  */
-static int tune_it(int fd, ChannelData_t *channel, DiSEqc_t *diseqc) {
+static int tune_it(int fd, int fe_index, ChannelData_t *channel, DiSEqc_t *diseqc) {
 
-	SI_LOG_DEBUG("Start tuning");
+	SI_LOG_DEBUG("Frontend: %d, Start tuning process", fe_index);
 
 	if (channel->delsys == SYS_DVBS || channel->delsys == SYS_DVBS2) {
 		diseqc->hiband = 0;
@@ -364,7 +364,7 @@ static int tune_it(int fd, ChannelData_t *channel, DiSEqc_t *diseqc) {
 			}
 		}
 		// set diseqc
-		if (send_diseqc(fd, diseqc) == -1) {
+		if (send_diseqc(fd, fe_index, diseqc) == -1) {
 			return 0;
 		}
 	}
@@ -392,7 +392,7 @@ size_t detect_attached_frontends(const char *path, FrontendArray_t *fe) {
 			fe->array[i] = malloc(sizeof(Frontend_t));;
 			fe->array[i]->index = i;
 		}
-		get_attached_frontend_count("/dev/dvb", 0, fe->array);
+		get_attached_frontend_count(path, 0, fe->array);
 		SI_LOG_INFO("Frontends found: %zu", fe->max_fe);
 
 		size_t nr_dvb_s2 = 0;
@@ -518,7 +518,7 @@ int setup_frontend_and_tune(Frontend_t *frontend) {
 		}
 		// try tuning
 		size_t timeout = 0;
-		while (tune_it(frontend->fd_fe, &frontend->channel, &frontend->diseqc) != 1) {
+		while (tune_it(frontend->fd_fe, frontend->index, &frontend->channel, &frontend->diseqc) != 1) {
 			usleep(350000);
 			++timeout;
 			if (timeout > 3) {
@@ -569,10 +569,10 @@ int clear_pid_filters(Frontend_t *frontend) {
 	size_t i;
 	for (i = 0; i < MAX_PIDS; ++i) {
 		if (frontend->pid.data[i].used) {
-			SI_LOG_DEBUG("Remove filter PID %d - Packet Count: %d", i, frontend->pid.data[i].count);
+			SI_LOG_DEBUG("Frontend: %d, Remove filter PID %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].count);
 			reset_pid(&frontend->pid.data[i]);
 		} else if (frontend->pid.data[i].fd_dmx != -1) {
-			SI_LOG_ERROR("!! No PID %d but still open DMX !!", i);
+			SI_LOG_ERROR("Frontend: %d, !! No PID %d but still open DMX !!", frontend->index, i);
 			reset_pid(&frontend->pid.data[i]);
 		}
 	}
@@ -635,14 +635,18 @@ char *attribute_describe_string(const Frontend_t *fe) {
 	
 	// make PID csv
 	char *pidPtr = NULL;
-	addString(&pidPtr, "");
-	size_t i = 0;
-	if (fe->pid.data[i].used) {
-		addString(&pidPtr, "%d", i);
-	}
-	for (i = 1; i < MAX_PIDS; ++i) {
+	if (fe->pid.all) {
+		addString(&pidPtr, "all");		
+	} else {
+		addString(&pidPtr, "");
+		size_t i = 0;
 		if (fe->pid.data[i].used) {
-			addString(&pidPtr, ",%d", i);
+			addString(&pidPtr, "%d", i);
+		}
+		for (i = 1; i < MAX_PIDS; ++i) {
+			if (fe->pid.data[i].used) {
+				addString(&pidPtr, ",%d", i);
+			}
 		}
 	}
 	char *attr_desc_str = NULL;

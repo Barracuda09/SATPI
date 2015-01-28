@@ -198,8 +198,6 @@ int main(int argc, char *argv[]) {
 	int i;
 	char *user = NULL;
 
-	exitApp = 0;
-
 	// Check options
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-rtcp") == 0) {

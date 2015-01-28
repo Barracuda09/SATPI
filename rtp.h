@@ -54,6 +54,7 @@ typedef struct {
 	int             sessionID;      // session ID
 	int             streamID;       // stream ID
 	int             cseq;           // sequence number
+	int             shall_close;    // If the connection shall be closed by client
 	enum Rtsp_State state;          //
 } RTSP_t;
 
