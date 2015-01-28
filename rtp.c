@@ -289,6 +289,8 @@ void init_rtp(RtpSession_t *rtpsession) {
 		}
 
 		// PID properties
+		rtpsession->fe.array[j]->pid.changed              = 0;
+		rtpsession->fe.array[j]->pid.all                  = 0;
 		for (i = 0; i < MAX_PIDS; ++i) {
 			rtpsession->fe.array[j]->pid.data[i].used     = 0;
 			rtpsession->fe.array[j]->pid.data[i].cc       = 0x80;
