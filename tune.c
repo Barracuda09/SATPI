@@ -265,18 +265,19 @@ static int send_diseqc(int fd_fe, int fe_index, DiSEqc_t *diseqc) {
 	struct diseqc_cmd cmd = {
 		{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
 	};
-	// Framing 0x0e: Command from Master, No reply required, First transmission
+	// Framing 0xe0: Command from Master, No reply required, First transmission
 	// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
 	// Command 0x38: Write to Port group 0 (Committed switches)
 	// Data 1  0xf0: see below
-	
-	SI_LOG_DEBUG("Frontend: %d, Sending DiSEqC", fe_index);
 
 	// param: high nibble: reset bits, low nibble set bits,
 	// bits are: option, position, polarizaion, band
 	cmd.cmd.msg[3] =
-		0xf0 | (((diseqc->src * 4) & 0x0f) | (diseqc->hiband ? 1 : 0) | (diseqc->pol ? 0 : 2));
+		0xf0 | (((diseqc->src * 4) & 0x0f) | (diseqc->pol ? 0 : 2) | (diseqc->hiband ? 1 : 0));
 
+	SI_LOG_DEBUG("Frontend: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", fe_index, cmd.cmd.msg[0],
+              cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
+	
 	return diseqc_send_msg(fd_fe, diseqc->pol ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
 		      &cmd, diseqc->hiband ? SEC_TONE_ON : SEC_TONE_OFF, (diseqc->src % 2) ? SEC_MINI_B : SEC_MINI_A);
 }
