@@ -208,7 +208,7 @@ char *make_xml_string(char *str) {
  *
  */
 size_t addString(char **str, const char *fmt, ...) {
-    char txt[1024];
+    char txt[2048];
     va_list arglist;
     va_start(arglist, fmt);
     const size_t cnt = vsnprintf(txt, sizeof(txt)-1, fmt, arglist);

@@ -110,7 +110,7 @@ static char *make_frontend_xml(const RtpSession_t *rtpsession) {
 		addString(&ptr, "<tunesymbol>%d</tunesymbol>", fe->channel.srate);
 		addString(&ptr, "<rolloff>%s</rolloff>", rolloff_to_sting(fe->channel.rolloff));
 		addString(&ptr, "<src>%d</src>", fe->diseqc.src);
-		addString(&ptr, "<pol>%c</pol>", fe->diseqc.pol ? 'V' : 'H');
+		addString(&ptr, "<pol>%c</pol>", (fe->diseqc.pol_v == POL_V) ? 'V' : 'H');
 
 		// monitor
 		pthread_mutex_lock(&((Frontend_t *)fe)->monitor.mutex);

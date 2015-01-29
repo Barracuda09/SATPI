@@ -40,13 +40,17 @@
 
 #define LNB_UNIVERSAL 0
 #define LNB_STANDARD  1
-// slof: switch frequency of LNB */
+
+// slof: switch frequency of LNB
 #define DEFAULT_SLOF (11700*1000UL)
+
 // lofLow: local frequency of lower LNB band
-#define DEFAULT_LOF1_UNIVERSAL (9750*1000UL)
-// lofHigh: local frequency of upper LNB band */
-#define DEFAULT_LOF2_UNIVERSAL (10600*1000UL)
-// Lnb standard Local oscillator frequency*/
+#define DEFAULT_LOF_LOW_UNIVERSAL (9750*1000UL)
+
+// lofHigh: local frequency of upper LNB band
+#define DEFAULT_LOF_HIGH_UNIVERSAL (10600*1000UL)
+
+// Lnb standard Local oscillator frequency
 #define DEFAULT_LOF_STANDARD (10750*1000UL)
 
 // LNB properties
@@ -61,10 +65,12 @@ typedef struct {
 
 // DiSEqc properties
 typedef struct {
-    int src;                 // DiSEqC (1-4)
-    int pol;                 // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
+#define POL_H 0
+#define POL_V 1
+	int src;                 // Source (1-4) => DiSEqC switch position (0-3)
+	int pol_v;               // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
 	int hiband;              //
-    Lnb_t *LNB;              // LNB properties
+	Lnb_t *LNB;              // LNB properties
 } DiSEqc_t;
 
 // Frontend Monitor

@@ -153,9 +153,9 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 	}
 	if (get_string_parameter_from(msg, header_field, "pol", val_str, sizeof(val_str)) == 1) {
 		if (strcmp(val_str, "h") == 0) {
-			client->fe->diseqc.pol = 0;
+			client->fe->diseqc.pol_v = POL_H;
 		} else if (strcmp(val_str, "v") == 0) {
-			client->fe->diseqc.pol = 1;
+			client->fe->diseqc.pol_v = POL_V;
 		}
 	}
 	if ((msys = get_msys_parameter_from(msg, header_field)) != SYS_UNDEFINED) {

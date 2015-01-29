@@ -279,13 +279,13 @@ void init_rtp(RtpSession_t *rtpsession) {
 
 		// DiSEqc properties
 		rtpsession->fe.array[j]->diseqc.src      = 0;
-		rtpsession->fe.array[j]->diseqc.pol      = 1;
+		rtpsession->fe.array[j]->diseqc.pol_v    = POL_V;
 		for (i = 0; i < MAX_LNB; ++i) {
 			rtpsession->fe.array[j]->lnb_array[i].type        = LNB_UNIVERSAL;
 			rtpsession->fe.array[j]->lnb_array[i].lofStandard = DEFAULT_LOF_STANDARD;
 			rtpsession->fe.array[j]->lnb_array[i].switchlof   = DEFAULT_SLOF;
-			rtpsession->fe.array[j]->lnb_array[i].lofLow      = DEFAULT_LOF1_UNIVERSAL;
-			rtpsession->fe.array[j]->lnb_array[i].lofHigh     = DEFAULT_LOF2_UNIVERSAL;
+			rtpsession->fe.array[j]->lnb_array[i].lofLow      = DEFAULT_LOF_LOW_UNIVERSAL;
+			rtpsession->fe.array[j]->lnb_array[i].lofHigh     = DEFAULT_LOF_HIGH_UNIVERSAL;
 		}
 
 		// PID properties
