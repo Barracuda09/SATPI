@@ -71,7 +71,7 @@ void satiplog(int priority, const char *fmt, ...) {
     char txt[1024];
     va_list arglist;
     va_start(arglist, fmt);
-    vsnprintf(txt, sizeof(txt), fmt, arglist);
+    vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
     va_end(arglist);
 
 	struct timespec time_stamp;

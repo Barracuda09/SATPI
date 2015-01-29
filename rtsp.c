@@ -161,7 +161,7 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 	if ((msys = get_msys_parameter_from(msg, header_field)) != SYS_UNDEFINED) {
 		client->fe->channel.delsys = msys;
 	}
-	
+
 	char *line = get_header_field_from(msg, header_field);
 
 	if (line) {
@@ -180,8 +180,8 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 				if (strcmp(token_id, "src") == 0) {
 					const int src = atoi(token_id_val);
 					client->fe->diseqc.src = src;
-					if (src < MAX_LNB) {
-						client->fe->diseqc.LNB = &client->fe->lnb_array[src];
+					if (src >= 1 && src < MAX_LNB) {
+						client->fe->diseqc.LNB = &client->fe->lnb_array[src - 1];
 					} else {
 						SI_LOG_ERROR("src to big: %d", src);
 					}
@@ -355,7 +355,7 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
 	pthread_mutex_lock(&client->fe_ptr_mutex);
-	
+
 	get_method_from(msg, method);
 	const fe_delivery_system_t msys = get_msys_parameter_from(msg, method);
 
@@ -398,17 +398,20 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 					// check the capability of the frontend, is it up to the challenge?
 					for (j = 0; j < MAX_DELSYS; ++j) {
 						// we no not like SYS_UNDEFINED
-						if (fe->array[i]->info_del_sys[j] != SYS_UNDEFINED && msys == fe->array[i]->info_del_sys[j])
+						if (fe->array[i]->info_del_sys[j] != SYS_UNDEFINED && msys == fe->array[i]->info_del_sys[j]) {
 							client->fe = fe->array[i];
 							// lock - frontend data
 							pthread_mutex_lock(&client->fe->mutex);
+
 							client->fe->attached = 1;
-							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s", client->fe->index, 
+							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s", client->fe->index,
 								delsys_to_string(msys), client->ip_addr);
+
 							// unlock - frontend data
 							pthread_mutex_unlock(&client->fe->mutex);
 							break;
 						}
+					}
 				} else {
 					continue;
 				}
@@ -421,7 +424,7 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 		parse_stream_string(msg, method, "?", "& ", client);
 		parse_stream_string(msg, "Transport", ":", ";\r", client);
 	}
-	
+
 	// unlock - client data - frontend pointer
 	pthread_mutex_unlock(&client->mutex);
 	pthread_mutex_unlock(&client->fe_ptr_mutex);
@@ -579,36 +582,36 @@ static int describe_rtsp(const Client_t *client, const RtpSession_t *rtpsession)
 						 "Content-Length: %zu\r\n" \
 						 "\r\n" \
 						 "%s"
-						 
+
 #define RTSP_DESCRIBE_CONT1 "v=0\r\n" \
 						    "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
 						    "s=SatIPServer:1 %d\r\n" \
 						    "t=0 0\r\n"
-							
+
 #define RTSP_DESCRIBE_CONT2 "m=video 0 RTP/AVP 33\r\n" \
 						    "c=IN IP4 0.0.0.0\r\n" \
 						    "a=control:stream=%d\r\n" \
 						    "a=fmtp:33 %s\r\n" \
 						    "a=%s\r\n"
-						 
+
 	char *rtspOk = NULL;
 	char *rtspCont = NULL;
 
 	addString(&rtspCont, RTSP_DESCRIBE_CONT1, rtpsession->interface.ip_addr, rtpsession->fe.max_fe);
-	
+
 	size_t i;
 	for (i = 0; i < rtpsession->fe.max_fe; ++i) {
 		Frontend_t *fe = rtpsession->fe.array[i];
-		
+
 		// lock - frontend data
 		pthread_mutex_lock(&fe->mutex);
-		
+
 		char *attr_desc_str = attribute_describe_string(fe);
 		addString(&rtspCont, RTSP_DESCRIBE_CONT2, fe->index, attr_desc_str, (fe->attached && fe->tuned) ? "sendonly" : "inactive");
-		
+
 		// unlock - frontend data
 		pthread_mutex_unlock(&fe->mutex);
-		
+
 		FREE_PTR(attr_desc_str);
 	}
 
@@ -820,7 +823,7 @@ static void *thread_work_rtsp(void *arg) {
 											client->rtsp.cseq = atoi(param);
 											FREE_PTR(param);
 										}
-										
+
 										// Close connection or keep-alive
 										param = get_header_field_parameter_from(msg, "Connection");
 										if (param) {
@@ -832,12 +835,12 @@ static void *thread_work_rtsp(void *arg) {
 										}
 										// get parameters from command
 										parse_channel_info_from(msg, client, &rtpsession->fe);
-										
+
 										// Check do we have a VLC client (disable watchdog check)
 										if (strstr(msg, "LIVE555") != NULL) {
 											client->rtsp.check_watchdog = 0;
 										}
-										
+
 										if (strstr(msg, "SETUP") != NULL) {
 											if (setup_rtsp(msg, client, rtpsession->interface.ip_addr) == -1) {
 												SI_LOG_ERROR("Setup RTSP message failed");
@@ -879,7 +882,7 @@ static void *thread_work_rtsp(void *arg) {
 										}
 									} else if (dataSize == 0) {
 										if (client->rtsp.shall_close) {
-											SI_LOG_DEBUG("RTSP Connection closed as expected by Client: %s ??", client->ip_addr);
+											SI_LOG_DEBUG("RTSP Connection closed as expected by Client: %s", client->ip_addr);
 											pfd[i].fd = -1;
 											CLOSE_FD(client->rtsp.socket.fd);
 										} else {
