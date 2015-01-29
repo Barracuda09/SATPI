@@ -301,16 +301,12 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 					const int pid = (strncmp(token_id, "delpids", 7) == 0) ? 0 : 1;
 					val = strtok_r(token_id_val, ",", &val_ptr);
 					if (strncmp(val, "all", 3) == 0) {
-//						size_t p;
-//						for (p = 0; p < MAX_PIDS; ++p) {
-//							client->fe->pid.data[p].used = pid;
-//						}
 						if (pid) {
 							SI_LOG_INFO("pid=all -> UNDER DEVELOPMENT");
-//							client->fe->pid.all = 1;
+							client->fe->pid.all = 1;
 						} else {
 							SI_LOG_ERROR("delpid=all ->UNDER DEVELOPMENT");
-//							client->fe->pid.all = 0;
+							client->fe->pid.all = 0;
 						}
 					} else {
 						while (val != NULL) {
