@@ -154,7 +154,7 @@ void close_connection(TcpConnection_t *connection) {
  */
 int init_udp_socket(SocketAttr_t *server, int port, in_addr_t s_addr) {
 	// fill in the socket structure with host information
-	memset(server, 0, sizeof(server));
+	memset(server, 0, sizeof(*server));
 	server->addr.sin_family      = AF_INET;
 	server->addr.sin_addr.s_addr = s_addr;
 	server->addr.sin_port        = htons(port);
