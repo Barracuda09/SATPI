@@ -38,10 +38,10 @@
 /*
  *
  */
-ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
+static ssize_t recv_recvfrom_httpc_message(int fd, char **buf, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
 #define HTTPC_TIMEOUT 3
 	size_t read_len = 0;
-	size_t msg_size = 1024;
+	size_t msg_size = 2048;
 	size_t timeout = HTTPC_TIMEOUT;
 	int found_end = 0;
 	int done = 0;
@@ -50,7 +50,7 @@ ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
 	// if the header field 'Content-Length' is present
 	*buf = malloc(msg_size + 1);
 	do {
-		const ssize_t size = recv(fd, *buf + read_len, msg_size - read_len, recv_flags);
+		const ssize_t size = recvfrom(fd, *buf + read_len, msg_size - read_len, recv_flags, (struct sockaddr *)si_other, addrlen);
 		if (size > 0) {
 			read_len += size;
 			// terminate buf
@@ -108,6 +108,20 @@ ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
 /*
  *
  */
+ssize_t recv_httpc_message(int fd, char **buf, int recv_flags) {
+	return recv_recvfrom_httpc_message(fd, buf, recv_flags, NULL, NULL);
+}
+
+/*
+ *
+ */
+ssize_t recvfrom_httpc_message(int fd, char **buf, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
+	return recv_recvfrom_httpc_message(fd, buf, recv_flags, si_other, addrlen);
+}
+
+/*
+ *
+ */
 void clear_connection_properties(TcpConnection_t *connection) {
 	size_t i;
 
@@ -133,6 +147,65 @@ void close_connection(TcpConnection_t *connection) {
 	}
 	CLOSE_FD(connection->server.fd);
 	clear_connection_properties(connection);
+}
+
+/*
+ *
+ */
+int init_udp_socket(SocketAttr_t *server, int port, in_addr_t s_addr) {
+	// fill in the socket structure with host information
+	memset(server, 0, sizeof(server));
+	server->addr.sin_family      = AF_INET;
+	server->addr.sin_addr.s_addr = s_addr;
+	server->addr.sin_port        = htons(port);
+
+	if ((server->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		PERROR("socket send");
+		return -1;
+	}
+	int val = 1;
+	if (setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+		PERROR("Server setsockopt SO_REUSEADDR");
+		return -1;
+	}
+	return 1;
+}
+
+/*
+ *
+ */
+int init_mutlicast_udp_socket(SocketAttr_t *server, int port, char *ip_addr) {
+	// fill in the socket structure with host information
+	memset(server, 0, sizeof(*server));
+	server->addr.sin_family      = AF_INET;
+	server->addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	server->addr.sin_port        = htons(port);
+
+	if ((server->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		PERROR("socket listen");
+		return -1;
+	}
+
+	int val = 1;
+	if (setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+		PERROR("Server setsockopt SO_REUSEADDR");
+		return -1;
+	}
+
+	struct ip_mreq mreq;
+	mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");
+	mreq.imr_interface.s_addr = inet_addr(ip_addr);
+	if (setsockopt(server->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
+		PERROR("IP_ADD_MEMBERSHIP");
+		return -1;
+	}
+
+	// bind the socket to the port number 
+	if (bind(server->fd, (struct sockaddr *) &server->addr, sizeof(server->addr)) == -1) {
+		PERROR("udp multi bind");
+		return -1;
+	}
+	return 1;
 }
 
 /*

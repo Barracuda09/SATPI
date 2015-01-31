@@ -202,6 +202,7 @@ static void *thread_work_rtp(void *arg) {
 				pthread_mutex_lock(&client->mutex);
 				pthread_mutex_lock(&client->fe_ptr_mutex);
 				if (client->fe) {
+					client->fe->pid.all = 0;
 					SI_LOG_INFO("Frontend: %d, Stop streaming to %s (%d - %d) (Streamed %.3f MBytes)", client->fe->index, client->ip_addr,
 									ntohs(client->rtp.client.addr.sin_port), ntohs(client->rtcp.client.addr.sin_port),
 									(client->rtp_payload / (1024.0 * 1024.0)));

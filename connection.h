@@ -59,10 +59,19 @@ typedef struct {
 ssize_t recv_httpc_message(int fd, char **buf, int recv_flags);
 
 //
+ssize_t recvfrom_httpc_message(int fd, char **buf, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen);
+
+//
 void clear_connection_properties(TcpConnection_t *connection);
 
 //
 void close_connection(TcpConnection_t *connection);
+
+//
+int init_udp_socket(SocketAttr_t *server, int port, in_addr_t s_addr);
+
+//
+int init_mutlicast_udp_socket(SocketAttr_t *server, int port, char *ip_addr);
 
 //
 int init_server_socket(SocketAttr_t *server, int backlog, int port, int nonblock);

@@ -180,10 +180,11 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 				if (strcmp(token_id, "src") == 0) {
 					const int src = atoi(token_id_val);
 					client->fe->diseqc.src = src;
-					if (src >= 1 && src < MAX_LNB) {
+					if (src >= 1 && src <= MAX_LNB) {
 						client->fe->diseqc.LNB = &client->fe->lnb_array[src - 1];
 					} else {
 						SI_LOG_ERROR("src to big: %d", src);
+						client->fe->diseqc.LNB = &client->fe->lnb_array[0];
 					}
 				} else if (strcmp(token_id, "ro") == 0) {
 					// "0.35", "0.25", "0.20"
