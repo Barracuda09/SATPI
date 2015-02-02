@@ -8,17 +8,60 @@
 <script src="loadxmldoc.js"></script>
 <script src="postxmldoc.js"></script>
 <script>
+	function addCheckboxInput(labelstring, input) {
+		entry  = "<form>";
+		entry += "<label for=\"";
+		entry += input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
+		entry += "\">" + labelstring + "</label>";
+		entry += "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
+		if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
+			entry += "checked=\"true\"";
+		}
+		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+		entry += "onclick=\"postData(id, document.getElementById(id).checked)\"/>"
+		entry += "</form>";
+		return entry;
+	}
+
+	function addNumberInput(labelstring, input) {
+		entry  = "<form>";
+		entry += "<label for=\"";
+		entry += input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
+		entry += "\">" + labelstring + "</label>";
+		entry += "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
+		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
+		entry += "\" min=\"5\"";
+		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+		entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
+		entry += "</form>";
+		return entry;
+	}
+	
+	function addInput(labelstring, input) {
+		if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
+			return addCheckboxInput(labelstring, input);
+		} else {
+			return addNumberInput(labelstring, input);
+		}
+	}
+	
     function buildcontent(xmlDoc) {
 		page = "";
+
+		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
+		page += addInput("Log to syslog:", xmlDoc.getElementsByTagName("input2")[0]);
+		
 		return page;
 	}
     function updatePage() {
 		// @TODO: should get the current value's via XML
-//		loadXMLDoc("config.xml");
+		loadXMLDoc("config.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
-		document.getElementById("txt").innerHTML = buildcontent(xml);
+		document.getElementById("content").innerHTML = buildcontent(xml);
 	}
 	
 </script>
@@ -43,14 +86,6 @@
 </div>
 
 <div id="content" class="log">
-	<form>
-		<label for="syslog_on">Log to syslog:</label>
-		<input type="checkbox" checked="true" name="syslog_on" id="syslog_on" onclick="postData(id, document.getElementById(id).checked)" />
-	</form>
-	<form>
-		<label for="ssdp_interval">SSDP Interval (sec):</label>
-		<input type="number" value="60" min="5" name="ssdp_interval" id="ssdp_interval" onclick="postData(id, document.getElementById(id).value)"/>
-	</form>
 </div>
 
 <script>

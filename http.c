@@ -63,6 +63,9 @@
 #define CONTENT_TYPE_PNG   "image/png"
 #define CONTENT_TYPE_ICO   "image/x-icon"
 
+#define SSDP_INTERVAL_VAR  "ssdp_interval"
+#define SYSLOG_ON_VAR      "syslog_on"
+
 static TcpConnection_t tcp_conn;
 static pthread_t threadID;
 
@@ -195,10 +198,33 @@ static char *make_data_xml(const RtpSession_t *rtpsession) {
 /*
  *
  */
+static char *make_config_xml(const RtpSession_t *rtpsession) {
+	extern int syslog_on;
+	char *ptr = NULL;
+	// make data xml
+	addString(&ptr, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
+	addString(&ptr, "<data>\r\n");
+	
+	pthread_mutex_lock(&((RtpSession_t *)rtpsession)->mutex);
+	addString(&ptr, "<configdata>");
+	
+		addString(&ptr, "<input1><id>"SSDP_INTERVAL_VAR"</id><inputtype>number</inputtype><value>%d</value></input1>", rtpsession->ssdp_announce_time_sec);
+		addString(&ptr, "<input2><id>"SYSLOG_ON_VAR"</id><inputtype>checkbox</inputtype><value>%s</value></input2>", syslog_on ? "true" : "false");
+
+	addString(&ptr, "</configdata>");
+	pthread_mutex_unlock(&((RtpSession_t *)rtpsession)->mutex);
+	
+	addString(&ptr, "</data>\r\n");
+	return ptr;
+}
+
+/*
+ *
+ */
 static char * read_file(const char *file, int *file_size) {
 	int fd;
 	if ((fd = open(file, O_RDONLY | O_NONBLOCK)) < 0) {
-		SI_LOG_INFO("GET %s", file);
+		SI_LOG_ERROR("GET %s", file);
 		PERROR("File not found");
 		return NULL;
 	}
@@ -226,10 +252,13 @@ static int post_http(int fd, const char *msg, RtpSession_t *session) {
 	if (cont) {
 		char *val;
 		char *id = strtok_r(cont, "=", &val);
-		if (strncmp(id, "ssdp_interval", 13) == 0) {
+		// lock
+		pthread_mutex_lock(&session->mutex);
+		
+		if (strncmp(id, SSDP_INTERVAL_VAR, sizeof(SSDP_INTERVAL_VAR)) == 0) {
 			session->ssdp_announce_time_sec = atoi(val);
 			SI_LOG_INFO("Setting SSDP annouce interval to: %d", session->ssdp_announce_time_sec);
-		} else if (strncmp(id, "syslog_on", 9) == 0) {
+		} else if (strncmp(id, SYSLOG_ON_VAR, sizeof(SYSLOG_ON_VAR)) == 0) {
 			if (strncmp(val, "true", 4) == 0) {
 				syslog_on = 1;
 				SI_LOG_INFO("Logging to syslog: %s", val);
@@ -238,6 +267,8 @@ static int post_http(int fd, const char *msg, RtpSession_t *session) {
 				syslog_on = 0;
 			}
 		}
+		// unlock
+		pthread_mutex_unlock(&session->mutex);
 		FREE_PTR(cont);
 	}
 	// setup reply
@@ -310,6 +341,11 @@ static int get_http(int fd, const char *msg, const RtpSession_t *rtpsession) {
 			snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize);
 		} else if (strstr(file, "log.xml") != NULL) {
 			docType = make_log_xml();
+			docTypeSize = strlen(docType);
+			
+			snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize);
+		} else if (strstr(file, "config.xml") != NULL) {
+			docType = make_config_xml(rtpsession);
 			docTypeSize = strlen(docType);
 			
 			snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize);

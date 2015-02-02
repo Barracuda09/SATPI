@@ -309,13 +309,14 @@ void init_rtp(RtpSession_t *rtpsession) {
 		pthread_mutex_init(&rtpsession->client[i].fe_ptr_mutex, &attr);
 		
 		// RTSP properties
-		rtpsession->client[i].rtsp.state          = NotConnected;
-		rtpsession->client[i].rtsp.socket.fd      = -1;
-		rtpsession->client[i].rtsp.watchdog       = 0;
-		rtpsession->client[i].rtsp.sessionID      = 0;
-		rtpsession->client[i].rtsp.streamID       = 99;
-		rtpsession->client[i].rtsp.cseq           = 0;
-		rtpsession->client[i].rtsp.shall_close    = 0;
+		rtpsession->client[i].rtsp.state           = NotConnected;
+		rtpsession->client[i].rtsp.socket.fd       = -1;
+		rtpsession->client[i].rtsp.watchdog        = 0;
+		rtpsession->client[i].rtsp.sessionID       = 0;
+		rtpsession->client[i].rtsp.streamID        = 99;
+		rtpsession->client[i].rtsp.cseq            = 0;
+		rtpsession->client[i].rtsp.shall_close     = 0;
+		rtpsession->client[i].rtsp.session_timeout = 60;
 		
 		// RTP properties
 		rtpsession->client[i].rtp.state     = Not_Initialized;

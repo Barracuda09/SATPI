@@ -462,7 +462,7 @@ static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_a
 				// set bufPtr to begin of RTP data (after Header)
 				client->rtp.bufPtr = client->rtp.buffer + RTP_HEADER_LEN;
 				// setup reply
-				snprintf(rtsp, sizeof(rtsp), RTSP_SETUP_OK, client->rtsp.cseq, client->rtsp.sessionID, SESSION_TIMEOUT,
+				snprintf(rtsp, sizeof(rtsp), RTSP_SETUP_OK, client->rtsp.cseq, client->rtsp.sessionID, client->rtsp.session_timeout,
 					ntohs(client->rtp.client.addr.sin_port), ntohs(client->rtcp.client.addr.sin_port),
 					server_ip_addr,
 					ntohs(client->rtp.server.addr.sin_port), ntohs(client->rtcp.server.addr.sin_port),
@@ -527,7 +527,7 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 				// set bufPtr to begin of RTP data (after Header)
 				client->rtp.bufPtr = client->rtp.buffer + RTP_HEADER_LEN;
 				// setup watchdog
-				client->rtsp.watchdog = time(NULL) + SESSION_TIMEOUT + 5;
+				client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 				snprintf(rtsp, sizeof(rtsp), RTSP_PLAY_OK, server_ip_addr, client->rtsp.streamID, client->rtsp.cseq, client->rtsp.sessionID);
 				ret = 1;
 			} else {
@@ -826,7 +826,7 @@ static void *thread_work_rtsp(void *arg) {
 										if (param) {
 											if (strncasecmp(param, "Close", 5) == 0) {
 												client->rtsp.shall_close = 1;
-												SI_LOG_INFO("RTSP Requested Connection closed by Client: %s", client->ip_addr);
+												SI_LOG_INFO("RTSP Client %s: Requested Connection closed", client->ip_addr);
 											}
 											FREE_PTR(param);
 										}
@@ -840,7 +840,7 @@ static void *thread_work_rtsp(void *arg) {
 
 										if (strstr(msg, "SETUP") != NULL) {
 											if (setup_rtsp(msg, client, rtpsession->interface.ip_addr) == -1) {
-												SI_LOG_ERROR("Setup RTSP message failed");
+												SI_LOG_ERROR("RTSP Client %s: Setup message failed", client->ip_addr);
 												client->rtsp.state = Error;
 											} else {
 												// maybe not according to specs here
@@ -872,18 +872,18 @@ static void *thread_work_rtsp(void *arg) {
 										} else if (strstr(msg, "OPTIONS") != NULL) {
 											options_rtsp(client);
 											// reset watchdog and give some extra timeout
-											client->rtsp.watchdog = time(NULL) + SESSION_TIMEOUT + 5;
+											client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 										} else {
 											SI_LOG_ERROR("Unknown RTSP message (%s)", msg);
 											client->rtsp.state = Error;
 										}
 									} else if (dataSize == 0) {
 										if (client->rtsp.shall_close) {
-											SI_LOG_DEBUG("RTSP Connection closed as expected by Client: %s", client->ip_addr);
+											SI_LOG_DEBUG("RTSP Client %s: Connection closed as expected", client->ip_addr);
 											pfd[i].fd = -1;
 											CLOSE_FD(client->rtsp.socket.fd);
 										} else {
-											SI_LOG_ERROR("RTSP Connection closed unexpectedly by Client: %s ??", client->ip_addr);
+											SI_LOG_ERROR("RTSP Client %s: Connection closed unexpectedly ??", client->ip_addr);
 											client->rtsp.state = Error;
 										}
 									}
@@ -911,7 +911,7 @@ static void *thread_work_rtsp(void *arg) {
 				Client_t *client = &rtpsession->client[i];
 				// check watchdog
 				if (client->rtsp.check_watchdog == 1 && client->rtsp.watchdog != 0 && client->rtsp.watchdog < time(NULL)) {
-					SI_LOG_INFO("RTSP Connection Watchdog kicked-in, for client %s", client->ip_addr);
+					SI_LOG_INFO("RTSP Client %s: Connection Watchdog kicked-in", client->ip_addr);
 					setup_teardown_message(client, 0);
 					pfd[i+1].fd = -1;
 				}

@@ -25,8 +25,6 @@
 #include "connection.h"
 #include "rtp.h"
 
-#define SESSION_TIMEOUT 60
-
 // Start RTSP
 void start_rtsp(RtpSession_t *rtpsession);
 

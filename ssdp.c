@@ -206,7 +206,7 @@ static void * thread_work_ssdp(void *arg) {
 
 								// check server found with clashing DEVICEID
 								if (deviceId == other_deviceId) {
-									SI_LOG_INFO("Found SAT>IP Server %s : with clashing DEVICEID: %d", ip_addr, other_deviceId);
+									SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d", ip_addr, other_deviceId);
 									SocketAttr_t udp_send;
 									init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 									char msg[500];
@@ -217,7 +217,7 @@ static void * thread_work_ssdp(void *arg) {
 									}
 									CLOSE_FD(udp_send.fd);
 								} else {
-									SI_LOG_INFO("Found SAT>IP Server %s : with DEVICEID: %d", ip_addr, other_deviceId);
+									SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr, other_deviceId);
 								}
 							}
 						} else if (strncmp(method, "M-SEARCH", 8) == 0) {
@@ -230,7 +230,7 @@ static void * thread_work_ssdp(void *arg) {
 								init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 
 								// send directly to us, so this should mean we have the same DEVICEID
-								SI_LOG_INFO("SAT>IP Server %s : contacted  us because of clashing DEVICEID", ip_addr);
+								SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID", ip_addr);
 								
 								// send message back
 								char msg[500];

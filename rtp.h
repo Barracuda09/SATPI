@@ -51,6 +51,7 @@ typedef struct {
 	SocketAttr_t    socket;         //
 	time_t          watchdog;       // watchdog
 	unsigned int    check_watchdog; // check watchdog
+	unsigned int    session_timeout;//
 	int             sessionID;      // session ID
 	int             streamID;       // stream ID
 	int             cseq;           // sequence number
