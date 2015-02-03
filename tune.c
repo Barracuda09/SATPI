@@ -656,6 +656,8 @@ char *attribute_describe_string(const Frontend_t *fe) {
 			}
 		}
 	}
+	uint32_t freq = fe->channel.freq / 1000;
+	int srate = fe->channel.srate / 1000;
 	char *attr_desc_str = NULL;
 	addString(&attr_desc_str, "");
 	switch (fe->channel.delsys) {
@@ -669,13 +671,13 @@ char *attribute_describe_string(const Frontend_t *fe) {
 					fe->monitor.strength,
 					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
 					fe->monitor.snr,
-					fe->channel.freq,
+					freq,
 					fe->diseqc.pol_v,
 					delsys_to_string(fe->channel.delsys),
 					modtype_to_sting(fe->channel.modtype),
 					fe->channel.pilot,
 					rolloff_to_sting(fe->channel.rolloff),
-					fe->channel.srate,
+					srate,
 					fec_to_string(fe->channel.fec),
 					pidPtr);
 			break;
@@ -688,7 +690,7 @@ char *attribute_describe_string(const Frontend_t *fe) {
 					fe->monitor.strength,
 					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
 					fe->monitor.snr,
-					fe->channel.freq,
+					freq,
 					bandwidth_to_string(fe->channel.bandwidth),
 					delsys_to_string(fe->channel.delsys),
 					transmode_to_string(fe->channel.transmission),
@@ -712,19 +714,22 @@ char *attribute_describe_string(const Frontend_t *fe) {
 					fe->monitor.strength,
 					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
 					fe->monitor.snr,
-					fe->channel.freq,
+					freq,
 					bandwidth_to_string(fe->channel.bandwidth),
 					delsys_to_string(fe->channel.delsys),
 					modtype_to_sting(fe->channel.modtype),
-					fe->channel.srate,
+					srate,
 					fe->channel.c2tft,
 					fe->channel.data_slice,
 					fe->channel.plp_id,
 					fe->channel.inversion,
 					pidPtr);
 			break;
+		case SYS_UNDEFINED:
+			// Not setup yet
+			break;
 		default:
-			// Not supported
+			// Not supported/
 			break;
 	}
 	// free
@@ -743,29 +748,29 @@ char *attribute_describe_string(const Frontend_t *fe) {
 const char *fec_to_string(int fec) {
 	switch (fec) {
 		case FEC_1_2:
-			return "FEC_1_2";
+			return "12";
 		case FEC_2_3:
-			return "FEC_2_3";
+			return "23";
 		case FEC_3_4:
-			return "FEC_3_4";
+			return "34";
 		case FEC_3_5:
-			return "FEC_3_5";
+			return "35";
 		case FEC_4_5:
-			return "FEC_4_5";
+			return "45";
 		case FEC_5_6:
-			return "FEC_5_6";
+			return "56";
 		case FEC_6_7:
-			return "FEC_6_7";
+			return "67";
 		case FEC_7_8:
-			return "FEC_7_8";
+			return "78";
 		case FEC_8_9:
-			return "FEC_8_9";
+			return "89";
 		case FEC_9_10:
-			return "FEC_9_10";
+			return "910";
 		case FEC_AUTO:
-			return "FEC_AUTO";
+			return "auto";
 		case FEC_NONE:
-			return "FEC_NONE";
+			return "none";
 		default:
 			return "UNKNOWN FEC";
 	}
@@ -777,17 +782,17 @@ const char *fec_to_string(int fec) {
 const char *delsys_to_string(int delsys) {
 	switch (delsys) {
 		case SYS_DVBS2:
-			return "SYS_DVBS2";
+			return "dvbs2";
 		case SYS_DVBS:
-			return "SYS_DVBS";
+			return "dvbs";
 		case SYS_DVBT:
-			return "SYS_DVBT";
+			return "dvbt";
 		case SYS_DVBT2:
-			return "SYS_DVBT2";
+			return "dvbt2";
 		case SYS_DVBC_ANNEX_A:
-			return "SYS_DVBC_ANNEX_A";
+			return "dvbc";
 		case SYS_DVBC_ANNEX_B:
-			return "SYS_DVBC_ANNEX_B";
+			return "dvbc";
 		default:
 			return "UNKNOWN DELSYS";
 	}
@@ -799,19 +804,19 @@ const char *delsys_to_string(int delsys) {
 const char *modtype_to_sting(int modtype) {
 	switch (modtype) {
 		case QAM_16:
-			return "QAM_16";
+			return "16qam";
 		case QAM_32:
-			return "QAM_32";
+			return "32qam";
 		case QAM_64:
-			return "QAM_64";
+			return "64qam";
 		case QAM_128:
-			return "QAM_128";
+			return "128qam";
 		case QAM_256:
-			return "QAM_256";
+			return "256qam";
 		case QPSK:
-			return "QPSK";
+			return "qpsk";
 		case PSK_8:
-			return "PSK_8";
+			return "8psk";
 		default:
 			return "UNKNOWN MODTYPE";
 	}

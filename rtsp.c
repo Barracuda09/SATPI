@@ -42,6 +42,10 @@
 #include "utils.h"
 #include "applog.h"
 
+#define RTSP_200_OK     "RTSP/1.0 200 OK\r\n"
+
+#define RTSP_404_ERROR  "RTSP/1.0 404 Not Found\r\n"
+
 #define RTSP_503_ERROR  "RTSP/1.0 503 Service Unavailable\r\n" \
                         "CSeq: %d\r\n" \
                         "Content-Type: text/parameters\r\n" \
@@ -557,7 +561,7 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 	pthread_mutex_unlock(&client->fe_ptr_mutex);
 	pthread_mutex_unlock(&client->mutex);
 
-//	SI_LOG_INFO("%s", rtsp);
+//	SI_LOG_DEBUG("%s", rtsp);
 
 	// send reply to client
 	if (send(client->rtsp.socket.fd, rtsp, strlen(rtsp), MSG_NOSIGNAL) == -1) {
@@ -571,31 +575,39 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 /*
  *
  */
-static int describe_rtsp(const Client_t *client, const RtpSession_t *rtpsession) {
-#define RTSP_DESCRIBE_OK "RTSP/1.0 200 OK\r\n" \
-						 "CSeq: %d\r\n" \
-						 "Content-Type: application/sdp\r\n" \
-						 "Content-Base: rtsp://%s/\r\n" \
-						 "Content-Length: %zu\r\n" \
-						 "\r\n" \
-						 "%s"
+static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
+#define RTSP_DESCRIBE  "%s" \
+                       "CSeq: %d\r\n" \
+                       "Content-Type: application/sdp\r\n" \
+                       "Content-Base: rtsp://%s/\r\n" \
+                       "Content-Length: %zu\r\n" \
+                       "%s" \
+                       "\r\n" \
+                       "%s"
+
+#define RTSP_DESCRIBE_IN_SESSION "Session: %08X\r\n"
 
 #define RTSP_DESCRIBE_CONT1 "v=0\r\n" \
-						    "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
-						    "s=SatIPServer:1 %d\r\n" \
-						    "t=0 0\r\n"
+                            "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
+                            "s=SatIPServer:1 %d\r\n" \
+                            "t=0 0\r\n"
 
 #define RTSP_DESCRIBE_CONT2 "m=video 0 RTP/AVP 33\r\n" \
-						    "c=IN IP4 0.0.0.0\r\n" \
-						    "a=control:stream=%d\r\n" \
-						    "a=fmtp:33 %s\r\n" \
-						    "a=%s\r\n"
+                            "c=IN IP4 0.0.0.0\r\n" \
+                            "a=control:stream=%d\r\n" \
+                            "a=fmtp:33 %s\r\n" \
+                            "a=%s\r\n"
 
-	char *rtspOk = NULL;
+	char *rtsp_reply = NULL;
 	char *rtspCont = NULL;
+	unsigned int streams_setup = 0;
 
+	// lock - client data - frontend pointer
+	pthread_mutex_lock(&client->mutex);
+	pthread_mutex_lock(&client->fe_ptr_mutex);
+
+	// Describe streams
 	addString(&rtspCont, RTSP_DESCRIBE_CONT1, rtpsession->interface.ip_addr, rtpsession->fe.max_fe);
-
 	size_t i;
 	for (i = 0; i < rtpsession->fe.max_fe; ++i) {
 		Frontend_t *fe = rtpsession->fe.array[i];
@@ -604,7 +616,10 @@ static int describe_rtsp(const Client_t *client, const RtpSession_t *rtpsession)
 		pthread_mutex_lock(&fe->mutex);
 
 		char *attr_desc_str = attribute_describe_string(fe);
-		addString(&rtspCont, RTSP_DESCRIBE_CONT2, fe->index, attr_desc_str, (fe->attached && fe->tuned) ? "sendonly" : "inactive");
+		if (strlen(attr_desc_str) > 0) {
+			++streams_setup;
+			addString(&rtspCont, RTSP_DESCRIBE_CONT2, fe->index, attr_desc_str, (fe->attached && fe->tuned) ? "sendonly" : "inactive");
+		}
 
 		// unlock - frontend data
 		pthread_mutex_unlock(&fe->mutex);
@@ -612,34 +627,52 @@ static int describe_rtsp(const Client_t *client, const RtpSession_t *rtpsession)
 		FREE_PTR(attr_desc_str);
 	}
 
-	addString(&rtspOk, RTSP_DESCRIBE_OK, client->rtsp.cseq, rtpsession->interface.ip_addr, strlen(rtspCont), rtspCont);
+	// Check if we are in session, then we need to send the Session ID
+	char sessionID[50] = "";
+	if (client->fe) {
+		snprintf(sessionID, sizeof(sessionID), RTSP_DESCRIBE_IN_SESSION, client->rtsp.sessionID);
+	}
+
+	// Are there any streams setup already
+	if (streams_setup) {
+		addString(&rtsp_reply, RTSP_DESCRIBE, RTSP_200_OK, client->rtsp.cseq, rtpsession->interface.ip_addr, strlen(rtspCont), sessionID, rtspCont);
+	} else {
+		addString(&rtsp_reply, RTSP_DESCRIBE, RTSP_404_ERROR, client->rtsp.cseq, rtpsession->interface.ip_addr, 0, sessionID, "");
+	}
 	FREE_PTR(rtspCont);
 
-	SI_LOG_DEBUG("%s", rtspOk);
+	// unlock - client data - frontend pointer
+	pthread_mutex_unlock(&client->fe_ptr_mutex);
+	pthread_mutex_unlock(&client->mutex);
+
+	SI_LOG_DEBUG("%s", rtsp_reply);
 
 	// send reply to client
-	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
-		PERROR("error sending: RTSP_DESCRIBE_OK");
-		FREE_PTR(rtspOk);
+	if (send(client->rtsp.socket.fd, rtsp_reply, strlen(rtsp_reply), MSG_NOSIGNAL) == -1) {
+		PERROR("error sending: RTSP_DESCRIBE");
+		FREE_PTR(rtsp_reply);
 		return -1;
 	}
-	FREE_PTR(rtspOk);
+	FREE_PTR(rtsp_reply);
 	return 1;
 }
 
 /*
  *
  */
-static int options_rtsp(const Client_t *client) {
+static int options_rtsp(Client_t *client) {
 #define RTSP_OPTIONS_OK	"RTSP/1.0 200 OK\r\n" \
-						"CSeq: %d\r\n" \
-						"Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
-						"Session: %08X\r\n" \
-						"\r\n"
-	char rtspOk[100];
+                        "CSeq: %d\r\n" \
+                        "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
+                        "Session: %08X\r\n" \
+                        "\r\n"
+	char rtspOk[150];
 
 	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, client->rtsp.sessionID);
 //	SI_LOG_DEBUG("%s", rtspOk);
+
+	// reset watchdog and give some extra timeout
+	client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 
 	// send reply to client
 	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
@@ -656,10 +689,10 @@ static int teardown_session(void *arg) {
 	int ret = 1;
 	Client_t *client = (Client_t *)arg;
 
-#define RTSP_TEARDOWN_OK	"RTSP/1.0 200 OK\r\n" \
-							"CSeq: %d\r\n" \
-							"Session: %08X\r\n" \
-							"\r\n"
+#define RTSP_TEARDOWN_OK "RTSP/1.0 200 OK\r\n" \
+                         "CSeq: %d\r\n" \
+                         "Session: %08X\r\n" \
+                         "\r\n"
 
 	// lock - client data - frontend pointer
 	pthread_mutex_lock(&client->mutex);
@@ -871,8 +904,6 @@ static void *thread_work_rtsp(void *arg) {
 											pfd[i].fd = -1;
 										} else if (strstr(msg, "OPTIONS") != NULL) {
 											options_rtsp(client);
-											// reset watchdog and give some extra timeout
-											client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 										} else {
 											SI_LOG_ERROR("Unknown RTSP message (%s)", msg);
 											client->rtsp.state = Error;
