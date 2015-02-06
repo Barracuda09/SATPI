@@ -65,6 +65,7 @@
 
 #define SSDP_INTERVAL_VAR  "ssdp_interval"
 #define SYSLOG_ON_VAR      "syslog_on"
+#define RESET_FRONTEND     "reset_fe"
 
 static TcpConnection_t tcp_conn;
 static pthread_t threadID;
@@ -94,6 +95,9 @@ static char *make_frontend_xml(const RtpSession_t *rtpsession) {
 		const Frontend_t *fe = rtpsession->fe.array[i];
 		addString(&ptr, "<frontenddata>");
 
+		// reset frontend button
+		addString(&ptr, "<"RESET_FRONTEND"><inputtype>submit</inputtype><value>%zu</value></"RESET_FRONTEND">", i);
+		
 		// frontend info
 		pthread_mutex_lock(&((Frontend_t *)fe)->mutex);
 		addString(&ptr, "<frontendindex>%d</frontendindex>", fe->index);
@@ -181,6 +185,8 @@ static char *make_data_xml(const RtpSession_t *rtpsession) {
 		pthread_mutex_lock(&((Client_t *)cl)->mutex);
 		addString(&ptr, "<rtpdata>");
 		addString(&ptr, "<ip>%s</ip>", inet_ntoa(cl->rtp.client.addr.sin_addr));
+		addString(&ptr, "<sessionid>%s</sessionid>", cl->rtsp.sessionID);
+		addString(&ptr, "<streamid>%d</streamid>", cl->rtsp.streamID);
 		addString(&ptr, "<rtpport>%d</rtpport>", ntohs(cl->rtp.client.addr.sin_port));
 		addString(&ptr, "<rtcpport>%d</rtcpport>", ntohs(cl->rtcp.client.addr.sin_port));
 		addString(&ptr, "<spc>%d</spc>", cl->spc);
@@ -246,7 +252,7 @@ static int post_http(int fd, const char *msg, RtpSession_t *session) {
 	char htmlBody[500];
 	extern int syslog_on;
 	
-//	SI_LOG_DEBUG("%s", msg);
+	SI_LOG_DEBUG("%s", msg);
 	
 	char *cont = get_content_type_from(msg);
 	if (cont) {

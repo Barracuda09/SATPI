@@ -137,6 +137,10 @@ static int get_fe_info(Frontend_t *frontend) {
 	frontend->del_sys_size = dtvProperty.u.buffer.len;
 	for (i = 0; i < dtvProperty.u.buffer.len; i++) {
 		switch (dtvProperty.u.buffer.data[i]) {
+			case SYS_DSS:
+				frontend->info_del_sys[i] = SYS_DSS;
+				SI_LOG_DEBUG("Frontend Type: DSS");
+				break;
 			case SYS_DVBS:
 				frontend->info_del_sys[i] = SYS_DVBS;
 				SI_LOG_DEBUG("Frontend Type: Satellite (DVB-S)");
@@ -356,23 +360,27 @@ static int tune_it(int fd, int fe_index, ChannelData_t *channel, DiSEqc_t *diseq
 	SI_LOG_DEBUG("Frontend: %d, Start tuning process", fe_index);
 
 	if (channel->delsys == SYS_DVBS || channel->delsys == SYS_DVBS2) {
-		diseqc->hiband = 0;
-		if (diseqc->LNB->switchlof && diseqc->LNB->lofHigh && channel->freq >= diseqc->LNB->switchlof) {
-			diseqc->hiband = 1;
-		}
-
-		if (diseqc->hiband) {
-			channel->ifreq = channel->freq - diseqc->LNB->lofHigh;
-		} else {
-			if (channel->freq < diseqc->LNB->lofLow) {
-				channel->ifreq = diseqc->LNB->lofLow - channel->freq;
-			} else {
-				channel->ifreq = channel->freq - diseqc->LNB->lofLow;
+		if (diseqc->LNB) {
+			diseqc->hiband = 0;
+			if (diseqc->LNB->switchlof && diseqc->LNB->lofHigh && channel->freq >= diseqc->LNB->switchlof) {
+				diseqc->hiband = 1;
 			}
-		}
-		// set diseqc
-		if (send_diseqc(fd, fe_index, diseqc) == -1) {
-			return 0;
+
+			if (diseqc->hiband) {
+				channel->ifreq = channel->freq - diseqc->LNB->lofHigh;
+			} else {
+				if (channel->freq < diseqc->LNB->lofLow) {
+					channel->ifreq = diseqc->LNB->lofLow - channel->freq;
+				} else {
+					channel->ifreq = channel->freq - diseqc->LNB->lofLow;
+				}
+			}
+			// set diseqc
+			if (send_diseqc(fd, fe_index, diseqc) == -1) {
+				return 0;
+			}
+		} else {
+			SI_LOG_DEBUG("Frontend: %d, No LNB attached (no src string?)", fe_index);
 		}
 	}
 	// Now tune
@@ -526,7 +534,7 @@ int setup_frontend_and_tune(Frontend_t *frontend) {
 		// try tuning
 		size_t timeout = 0;
 		while (tune_it(frontend->fd_fe, frontend->index, &frontend->channel, &frontend->diseqc) != 1) {
-			usleep(350000);
+			usleep(450000);
 			++timeout;
 			if (timeout > 3) {
 				return -1;

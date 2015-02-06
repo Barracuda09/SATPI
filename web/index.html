@@ -23,7 +23,7 @@
 		page = "";
 		
 		appdata = xmlDoc.getElementsByTagName("appdata");
-		page +=  "<table border='5' style=\"width:70%\">";
+		page +=  "<table border='5' style=\"width:85%\">";
 		page +=  "<tr>";
 			uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
 			min = Math.round((uptime/60) - 0.5);
@@ -57,7 +57,7 @@
 		pidlist = xmlDoc.getElementsByTagName("pidlist");
 		for (j = 0; j < pidlist.length; j++) {
 			if (pidlist[j].getElementsByTagName("pid")) {
-				page +=  "<table border='5' style=\"width:70%\">";
+				page +=  "<table border='5' style=\"width:85%\">";
 				page += "<tr class=\"separator\"><th colspan=\"" + (pidlist[j].getElementsByTagName("pid").length+1) + "\">PID Frontend " + j + "</th></tr>";
 				page += addTableLineEntry(pidlist[j].getElementsByTagName("pid"), "PID");
 				page += addTableLineEntry(pidlist[j].getElementsByTagName("cc"), "CC");
@@ -67,11 +67,13 @@
 		}
 		
 		rtpdata = xmlDoc.getElementsByTagName("rtpdata");
-		page +=  "<table border='5' style=\"width:70%\">";
-		page += "<tr class=\"separator\"><th></th><th>IP</th><th>RTP</th><th>RTCP</th><th>Packets</th></tr>";
+		page +=  "<table border='5' style=\"width:85%\">";
+		page += "<tr class=\"separator\"><th></th><th>IP</th><th>Session ID</th><th>Stream ID</th><th>RTP</th><th>RTCP</th><th>Packets</th></tr>";
 		for (i = 0; i < rtpdata.length; i++) {
 			page += "<tr><td>Connection " + i + "</td>";
 			page += "<td>" + rtpdata[i].getElementsByTagName("ip")[0].childNodes[0].nodeValue + "</td>";
+			page += "<td>" + rtpdata[i].getElementsByTagName("sessionid")[0].childNodes[0].nodeValue + "</td>";
+			page += "<td>" + rtpdata[i].getElementsByTagName("streamid")[0].childNodes[0].nodeValue + "</td>";
 			page += "<td>" + rtpdata[i].getElementsByTagName("rtpport")[0].childNodes[0].nodeValue + "</td>";
 			page += "<td>" + rtpdata[i].getElementsByTagName("rtcpport")[0].childNodes[0].nodeValue + "</td>";
 			page += "<td>" + rtpdata[i].getElementsByTagName("spc")[0].childNodes[0].nodeValue + "</td>";

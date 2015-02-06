@@ -32,12 +32,6 @@
 #define MTU             1500
 #define TS_PACKET_SIZE  188
 
-enum Rtsp_State {
-	NotConnected,
-	Connected,
-	Error
-};
-
 typedef enum {
 	Starting,
 	Started,
@@ -48,15 +42,14 @@ typedef enum {
 
 // RTSP connection properties
 typedef struct {
-	SocketAttr_t    socket;         //
-	time_t          watchdog;       // watchdog
-	unsigned int    check_watchdog; // check watchdog
-	unsigned int    session_timeout;//
-	int             sessionID;      // session ID
-	int             streamID;       // stream ID
-	int             cseq;           // sequence number
-	int             shall_close;    // If the connection shall be closed by client
-	enum Rtsp_State state;          //
+	SocketAttr_t    socket;           //
+	time_t          watchdog;         // watchdog
+	unsigned int    check_watchdog;   // check watchdog
+	unsigned int    session_timeout;  //
+	char            sessionID[15];    // session ID
+	int             streamID;         // stream ID
+	int             cseq;             // sequence number
+	int             shall_close;      // If the connection shall be closed by client
 } RTSP_t;
 
 // RTP connection properties

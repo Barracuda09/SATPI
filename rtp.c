@@ -309,14 +309,13 @@ void init_rtp(RtpSession_t *rtpsession) {
 		pthread_mutex_init(&rtpsession->client[i].fe_ptr_mutex, &attr);
 		
 		// RTSP properties
-		rtpsession->client[i].rtsp.state           = NotConnected;
 		rtpsession->client[i].rtsp.socket.fd       = -1;
 		rtpsession->client[i].rtsp.watchdog        = 0;
-		rtpsession->client[i].rtsp.sessionID       = 0;
-		rtpsession->client[i].rtsp.streamID        = 99;
-		rtpsession->client[i].rtsp.cseq            = 0;
+		rtpsession->client[i].rtsp.streamID        = -1;
+		rtpsession->client[i].rtsp.cseq            = -1;
 		rtpsession->client[i].rtsp.shall_close     = 0;
 		rtpsession->client[i].rtsp.session_timeout = 60;
+		sprintf(rtpsession->client[i].rtsp.sessionID, "-1");
 		
 		// RTP properties
 		rtpsession->client[i].rtp.state     = Not_Initialized;
@@ -329,8 +328,8 @@ void init_rtp(RtpSession_t *rtpsession) {
 		rtpsession->client[i].rtcp.server.fd = -1;
 
 		// client properties
-		srand(i+1);
-		rtpsession->client[i].ssrc = (uint32_t)(rand() % 0xffff);
+		static unsigned int seedp = 0xFEED;
+		rtpsession->client[i].ssrc = (uint32_t)(rand_r(&seedp) % 0xffff);
 		rtpsession->client[i].rtp_payload = 0.0;
 		rtpsession->client[i].spc = 0;
 		rtpsession->client[i].soc = 0;
@@ -352,7 +351,9 @@ void start_rtp(RtpSession_t *rtpsession) {
 		if (pthread_create(&client->rtp.threadID, NULL, &thread_work_rtp, client) != 0) {
 			SI_LOG_ERROR("thread_work_rtp");
 		}
-		pthread_setname_np(client->rtp.threadID, "thread_rtp");
+		char np[16];
+		snprintf(np, sizeof(np), "thread_rtp%d", i);
+		pthread_setname_np(client->rtp.threadID, np);
 	}
 }
 

@@ -3,13 +3,25 @@
 <head>
 <link rel="stylesheet" type="text/css" href="stylesheet.css">
 <title>SAT>IP - Frontend info Page</title>
+
 <script src="loadxmldoc.js"></script>
+<script src="postxmldoc.js"></script>
 <script>
     function addTableLineEntry(data, name, valname) {
 		entry =  "<tr><td>" + name + "</td>";
 		for (en = 0; en < data.length; en++) {
 			entry +=  "<td>";
-			entry += data[en].getElementsByTagName(valname)[0].childNodes[0].nodeValue;
+			value  = data[en].getElementsByTagName(valname)[0].childNodes[0].nodeValue;
+			if (value == "submit") {
+				nr     = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+				entry += "<form>";
+				entry += "<input type=\"" + value + "\" name=\"" + valname + "\" value=\"" + nr + "\"";
+				entry += "id=\"" + value + nr + "\"";
+				entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
+				entry += "</form>";
+			} else {
+				entry += value;
+			}
 			entry +=  "</td>";
 		}
 		page +=  "</tr>";
@@ -20,7 +32,7 @@
 		page = "";
 		
 		appdata = xmlDoc.getElementsByTagName("appdata");
-		page +=  "<table border='5' style=\"width:70%\">";
+		page +=  "<table border='5' style=\"width:85%\">";
 			page +=  "<tr>";
 			uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
 			min = Math.round((uptime/60) - 0.5);
@@ -50,14 +62,15 @@
 			page +=  "</td>";
 			page +=  "</tr>";
 		page +=  "</table><br>";
-		
+
 		frontend = xmlDoc.getElementsByTagName("frontend");
 		if (frontend.length > 0) {
 			frontenddata = frontend[0].getElementsByTagName("frontenddata");
 			if (frontenddata.length > 0) {
-				page +=  "<table border='5' style=\"width:70%\">";
+				page +=  "<table border='5' style=\"width:85%\">";
 				page += "<tr class=\"separator\"><th colspan=\"" + (frontenddata.length+1) + "\">Frontend Info</th></tr>";
 				page += addTableLineEntry(frontenddata, "Frontend Index", "frontendindex");
+//				page += addTableLineEntry(frontenddata, "Reset", "inputtype");
 				page += addTableLineEntry(frontenddata, "Name", "frontendname");
 				page += addTableLineEntry(frontenddata, "Path", "pathname");
 				page += addTableLineEntry(frontenddata, "Attached", "attached");
@@ -82,8 +95,7 @@
 				
 				page +=  "</table><br>";
 			}
-		}
-		
+		}		
 		return page;
 	}
     function updatePage() {

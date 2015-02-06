@@ -342,6 +342,8 @@ void start_rtcp(RtpSession_t *rtpsession) {
 		if (pthread_create(&client->rtcp.threadID, NULL, &thread_work_rtcp, client) != 0) {
 			SI_LOG_ERROR("thread_work_rtcp");
 		}
-		pthread_setname_np(client->rtcp.threadID, "thread_rtcp");
+		char np[16];
+		snprintf(np, sizeof(np), "thread_rtcp%d", i);
+		pthread_setname_np(client->rtcp.threadID, np);
 	}
 }

@@ -41,7 +41,7 @@
 static ssize_t recv_recvfrom_httpc_message(int fd, char **buf, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
 #define HTTPC_TIMEOUT 3
 	size_t read_len = 0;
-	size_t msg_size = 2048;
+	size_t msg_size = 1024 * 4;
 	size_t timeout = HTTPC_TIMEOUT;
 	int found_end = 0;
 	int done = 0;
@@ -90,7 +90,7 @@ static ssize_t recv_recvfrom_httpc_message(int fd, char **buf, int recv_flags, s
 			}
 		} else {
 			if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-				usleep(50000);
+				usleep(150000);
 				--timeout;
 			} else {
 				FREE_PTR(*buf);
@@ -260,9 +260,11 @@ int accept_connection(const SocketAttr_t *server, SocketAttr_t *client, char *ip
 		// Show who is connected
 		if (show_log_info) {
 			if (ntohs(server->addr.sin_port) == RTSP_PORT) {
-				SI_LOG_INFO("RTSP Connection from %s Port %d", ip_addr, ntohs(client->addr.sin_port));
+				SI_LOG_INFO("RTSP Connection from %s Port %d (fd: %d)", ip_addr, ntohs(client->addr.sin_port), fd_conn);
+			} else if (ntohs(server->addr.sin_port) == HTTP_PORT) {
+				SI_LOG_INFO("HTTP Connection from %s Port %d (fd: %d)", ip_addr, ntohs(client->addr.sin_port), fd_conn);
 			} else {
-				SI_LOG_INFO("Connection from %s Port %d", ip_addr, ntohs(client->addr.sin_port));
+				SI_LOG_INFO("Connection from %s Port %d (fd: %d)", ip_addr, ntohs(client->addr.sin_port), fd_conn);
 			}
 		}
 		return 1;

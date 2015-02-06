@@ -371,8 +371,8 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 					// lock - frontend data
 					pthread_mutex_lock(&client->fe->mutex);
 					client->fe->attached = 1;
-					SI_LOG_INFO("Frontend: %d, With %s Attaching to client %s as requested", client->fe->index,
-						delsys_to_string(msys), client->ip_addr);
+					SI_LOG_INFO("Frontend: %d, With %s Attaching to client %s as requested with session ID: %s", client->fe->index,
+						delsys_to_string(msys), client->ip_addr, client->rtsp.sessionID);
 					// unlock - frontend data
 					pthread_mutex_unlock(&client->fe->mutex);
 					break;
@@ -405,8 +405,8 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 							pthread_mutex_lock(&client->fe->mutex);
 
 							client->fe->attached = 1;
-							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s", client->fe->index,
-								delsys_to_string(msys), client->ip_addr);
+							SI_LOG_INFO("Frontend: %d, With %s Attaching dynamically to client %s with session ID: %s", client->fe->index,
+								delsys_to_string(msys), client->ip_addr, client->rtsp.sessionID);
 
 							// unlock - frontend data
 							pthread_mutex_unlock(&client->fe->mutex);
@@ -424,6 +424,9 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 	if (client->fe != NULL) {
 		parse_stream_string(msg, method, "?", "& ", client);
 		parse_stream_string(msg, "Transport", ":", ";\r", client);
+
+		// set stream id
+		client->rtsp.streamID = client->fe->index;
 	}
 
 	// unlock - client data - frontend pointer
@@ -435,10 +438,10 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 /*
  *
  */
-static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_addr) {
+static int setup_rtsp(Client_t *client, const char *server_ip_addr) {
 #define RTSP_SETUP_OK	"RTSP/1.0 200 OK\r\n" \
 						"CSeq: %d\r\n" \
-						"Session: %08X;timeout=%d\r\n" \
+						"Session: %s;timeout=%d\r\n" \
 						"Transport: RTP/AVP;unicast;client_port=%d-%d;source=%s;server_port=%d-%d\r\n" \
 						"com.ses.streamID: %d\r\n" \
 						"\r\n"
@@ -453,13 +456,6 @@ static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_a
 
 	// now we should have an frontend if not give 503 error
 	if (client->fe != NULL) {
-		// init variables for 'new' stream ?
-		if (strstr(msg, "/stream=") == NULL) {
-			client->rtsp.streamID = client->fe->index;
-			client->rtsp.sessionID += 2;
-		} else {
-			SI_LOG_INFO("Modify Transport Parameters");
-		}
 		// Setup, tune and set PID Filters
 		if (setup_frontend_and_tune(client->fe) == 1) {
 			if (update_pid_filters(client->fe) == 1) {
@@ -485,6 +481,7 @@ static int setup_rtsp(const char *msg, Client_t *client, const char *server_ip_a
 			ret = -1;
 		}
 	} else {
+		SI_LOG_ERROR("Frontend: x, Setup message but no frontend attached.");
 		// setup reply
 		snprintf(rtsp, sizeof(rtsp), RTSP_503_ERROR, client->rtsp.cseq, 0);
 		ret = -1;
@@ -511,7 +508,7 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 #define RTSP_PLAY_OK	"RTSP/1.0 200 OK\r\n" \
 						"RTP-Info: url=rtsp://%s/stream=%d\r\n" \
 						"CSeq: %d\r\n" \
-						"Session: %08X\r\n" \
+						"Session: %s\r\n" \
 						"\r\n"
 	char rtsp[100];
 	int ret = 1;
@@ -585,7 +582,7 @@ static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
                        "\r\n" \
                        "%s"
 
-#define RTSP_DESCRIBE_IN_SESSION "Session: %08X\r\n"
+#define RTSP_DESCRIBE_IN_SESSION "Session: %s\r\n"
 
 #define RTSP_DESCRIBE_CONT1 "v=0\r\n" \
                             "o=- 5678901234 7890123456 IN IP4 %s\r\n" \
@@ -627,6 +624,7 @@ static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
 		FREE_PTR(attr_desc_str);
 	}
 
+// @TODO: Check if client thinks we are in Session??
 	// Check if we are in session, then we need to send the Session ID
 	char sessionID[50] = "";
 	if (client->fe) {
@@ -660,19 +658,17 @@ static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
 /*
  *
  */
-static int options_rtsp(Client_t *client) {
+static int options_rtsp(const Client_t *client) {
 #define RTSP_OPTIONS_OK	"RTSP/1.0 200 OK\r\n" \
                         "CSeq: %d\r\n" \
                         "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
-                        "Session: %08X\r\n" \
+                        "Session: %s\r\n" \
                         "\r\n"
 	char rtspOk[150];
 
 	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, client->rtsp.sessionID);
+	
 //	SI_LOG_DEBUG("%s", rtspOk);
-
-	// reset watchdog and give some extra timeout
-	client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 
 	// send reply to client
 	if (send(client->rtsp.socket.fd, rtspOk, strlen(rtspOk), MSG_NOSIGNAL) == -1) {
@@ -691,7 +687,7 @@ static int teardown_session(void *arg) {
 
 #define RTSP_TEARDOWN_OK "RTSP/1.0 200 OK\r\n" \
                          "CSeq: %d\r\n" \
-                         "Session: %08X\r\n" \
+                         "Session: %s\r\n" \
                          "\r\n"
 
 	// lock - client data - frontend pointer
@@ -699,10 +695,9 @@ static int teardown_session(void *arg) {
 	pthread_mutex_lock(&client->fe_ptr_mutex);
 
 	// stop: RTP - RTCP
-	if (client->rtp.state == Stopped && client->rtcp.state == Stopped) {
+	if (client->rtp.state == Stopped && (client->rtcp.state == Stopped || client->rtcp.state == Not_Initialized)) {
 		// clear rtsp state
 		client->rtsp.watchdog  = 0;
-		client->rtsp.state     = NotConnected;
 
 		if (client->fe) {
 			// clear frontend
@@ -711,11 +706,16 @@ static int teardown_session(void *arg) {
 
 			clear_pid_filters(client->fe);
 
+			// Close frontend fd's
+			CLOSE_FD(client->fe->fd_dvr);
+			CLOSE_FD(client->fe->monitor.fd_fe);
+			CLOSE_FD(client->fe->fd_fe);
+
 			// Detaching Frontend
-			SI_LOG_INFO("Frontend: %d, Detached from client %s", client->fe->index, client->ip_addr);
+			SI_LOG_INFO("Frontend: %d, Detached from client %s with session ID: %s", client->fe->index, client->ip_addr, client->rtsp.sessionID);
 			client->fe = NULL;
 		} else {
-			SI_LOG_ERROR("Frontend: x, Not attached anymore to client %s", client->ip_addr);
+			SI_LOG_ERROR("Frontend: x, Not attached anymore to client %s with session ID: %s", client->ip_addr, client->rtsp.sessionID);
 		}
 
 		// Need to send reply
@@ -731,8 +731,8 @@ static int teardown_session(void *arg) {
 			}
 		}
 		// clear rtsp session state
-		client->rtsp.streamID  = 99;
-		client->rtsp.sessionID = 0;
+		client->rtsp.streamID  = -1;
+		sprintf(client->rtsp.sessionID, "-1");
 		// clear callback
 		client->teardown_session = NULL;
 
@@ -787,150 +787,192 @@ static void setup_teardown_message(Client_t *client, int graceful) {
 	pthread_mutex_unlock(&client->mutex);
 }
 
+typedef struct {
+	SocketAttr_t socket;
+	char ip_addr[20];
+} rtspfd_t;
+
 /*
  *
  */
 static void *thread_work_rtsp(void *arg) {
+#define MAX_POLL_RTSP (MAX_CLIENTS + 1)
+	static unsigned int seedp = 0xBEEF;
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
-	struct pollfd pfd[MAX_CLIENTS+1]; // plus 1 for server
+	struct pollfd pfd[MAX_POLL_RTSP]; // plus 1 for server
+	rtspfd_t rtspfd[MAX_POLL_RTSP]; // plus 1 for server
 	size_t i;
 
 	init_server_socket(&rtpsession->rtsp_server, MAX_CLIENTS, RTSP_PORT, 1);
 	pfd[SERVER_POLL].fd = rtpsession->rtsp_server.fd;
 	pfd[SERVER_POLL].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 	pfd[SERVER_POLL].revents = 0;
-	for (i = 0; i < MAX_CLIENTS; ++i) {
-		pfd[i+1].fd = -1;
-		pfd[i+1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-		pfd[i+1].revents = 0;
+	for (i = 1; i < MAX_POLL_RTSP; ++i) {
+		pfd[i].fd = -1;
+		pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+		pfd[i].revents = 0;
+		
+		rtspfd[i].socket.fd = -1;
 	}
 
 	for (;;) {
 		// call poll with a timeout of 500 ms
-		const int pollRet = poll(pfd, MAX_CLIENTS+1, 500);
+		const int pollRet = poll(pfd, MAX_POLL_RTSP, 500);
 		if (pollRet > 0) {
 			// Check who is sending data, so iterate over pfd
-			for (i = 0; i < MAX_CLIENTS+1; ++i) {
+			for (i = 0; i < MAX_POLL_RTSP; ++i) {
 				if (pfd[i].revents != 0) {
 					if (i == SERVER_POLL) {
-						// Server -> connection from client?
 						size_t j;
+						// Try to find a free poll entry
 						for (j = 0; j < MAX_CLIENTS; ++j) {
-							if (rtpsession->client[j].rtsp.socket.fd == -1) {
-								if (accept_connection(&rtpsession->rtsp_server, &rtpsession->client[j].rtsp.socket, rtpsession->client[j].ip_addr, 1) == 1) {
+							if (pfd[j].fd == -1) {
+								if (accept_connection(&rtpsession->rtsp_server, &rtspfd[j].socket, rtspfd[j].ip_addr, 1) == 1) {
 									// setup polling
-									pfd[j+1].fd = rtpsession->client[j].rtsp.socket.fd;
-									pfd[j+1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-									pfd[j+1].revents = 0;
-
-									// clear watchdog and some other things
-									rtpsession->client[j].rtsp.watchdog       = 0;
-									rtpsession->client[j].rtsp.state          = Connected;
-									rtpsession->client[j].rtsp.check_watchdog = 1;
-									rtpsession->client[j].rtsp.shall_close    = 0;
+									pfd[j].fd = rtspfd[j].socket.fd;
+									pfd[j].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+									pfd[j].revents = 0;
+									break;
 								}
-								break;
 							}
 						}
 					} else {
-						// client sends data to us, get client
-						Client_t *client = &rtpsession->client[i-1];
-						switch (client->rtsp.state) {
-							case NotConnected:
-								// Do nothing here
-								break;
-							case Connected:
-								{
-									char *msg = NULL;
-									// receive rtsp message
-									const int dataSize = recv_httpc_message(client->rtsp.socket.fd, &msg, MSG_DONTWAIT);
-									if (dataSize > 0) {
-										SI_LOG_DEBUG("%s", msg);
-
-										// find 'CSeq'
-										char *param = get_header_field_parameter_from(msg, "CSeq");
-										if (param) {
-											client->rtsp.cseq = atoi(param);
-											FREE_PTR(param);
-										}
-
-										// Close connection or keep-alive
-										param = get_header_field_parameter_from(msg, "Connection");
-										if (param) {
-											if (strncasecmp(param, "Close", 5) == 0) {
-												client->rtsp.shall_close = 1;
-												SI_LOG_INFO("RTSP Client %s: Requested Connection closed", client->ip_addr);
-											}
-											FREE_PTR(param);
-										}
-										// get parameters from command
-										parse_channel_info_from(msg, client, &rtpsession->fe);
-
-										// Check do we have a VLC client (disable watchdog check)
-										if (strstr(msg, "LIVE555") != NULL) {
-											client->rtsp.check_watchdog = 0;
-										}
-
-										if (strstr(msg, "SETUP") != NULL) {
-											if (setup_rtsp(msg, client, rtpsession->interface.ip_addr) == -1) {
-												SI_LOG_ERROR("RTSP Client %s: Setup message failed", client->ip_addr);
-												client->rtsp.state = Error;
-											} else {
-												// maybe not according to specs here
-												pthread_mutex_lock(&client->mutex);
-												if (client->rtp.state == Stopped) {
-													client->rtp.state = Starting;
-												}
-												if (client->rtcp.state == Stopped) {
-													client->rtcp.state = Starting;
-												}
-												pthread_mutex_unlock(&client->mutex);
-											}
-										} else if (strstr(msg, "PLAY") != NULL) {
-											if (play_rtsp(client, rtpsession->interface.ip_addr) == 1) {
-												pthread_mutex_lock(&client->mutex);
-												if (client->rtp.state == Stopped) {
-													client->rtp.state = Starting;
-												}
-												if (client->rtcp.state == Stopped) {
-													client->rtcp.state = Starting;
-												}
-												pthread_mutex_unlock(&client->mutex);
-											}
-										} else if (strstr(msg, "DESCRIBE") != NULL) {
-											describe_rtsp(client, rtpsession);
-										} else if (strstr(msg, "TEARDOWN") != NULL) {
-											setup_teardown_message(client, 1);
-											pfd[i].fd = -1;
-										} else if (strstr(msg, "OPTIONS") != NULL) {
-											options_rtsp(client);
-										} else {
-											SI_LOG_ERROR("Unknown RTSP message (%s)", msg);
-											client->rtsp.state = Error;
-										}
-									} else if (dataSize == 0) {
-										if (client->rtsp.shall_close) {
-											SI_LOG_DEBUG("RTSP Client %s: Connection closed as expected", client->ip_addr);
-											pfd[i].fd = -1;
-											CLOSE_FD(client->rtsp.socket.fd);
-										} else {
-											SI_LOG_ERROR("RTSP Client %s: Connection closed unexpectedly ??", client->ip_addr);
-											client->rtsp.state = Error;
+						char *msg;
+						// receive rtsp message
+						const int dataSize = recv_httpc_message(pfd[i].fd, &msg, MSG_DONTWAIT);
+						if (dataSize > 0) {
+							Client_t *client = NULL;
+							unsigned int found = 0;
+							// Look for 'Session' to see if we need to find the correct client
+							char *sessionID = get_header_field_parameter_from(msg, "Session");
+							if (sessionID) {
+								SI_LOG_INFO("Client connection with sessionID %s", sessionID);
+								size_t j;
+								for (j = 0; j < MAX_CLIENTS; ++j) {
+									client = &rtpsession->client[j];
+									if (strncasecmp(client->rtsp.sessionID, sessionID, strlen(client->rtsp.sessionID)) == 0) {
+										SI_LOG_INFO("Found Client with sessionID %s", client->rtsp.sessionID);
+										found = 1;
+										break;
+									}
+								}
+								FREE_PTR(sessionID);
+							} else {
+								size_t j;
+								// Try to find already open client
+								for (j = 0; j < MAX_CLIENTS; ++j) {
+									client = &rtpsession->client[j];
+									if (client->rtsp.socket.fd == pfd[i].fd) {
+										SI_LOG_INFO("Found client fd: %d with Session ID: %s", client->rtsp.socket.fd, client->rtsp.sessionID);
+										found = 1;
+										break;
+									}
+								}
+								if (!found) {
+									// Try to find a free client
+									for (j = 0; j < MAX_CLIENTS; ++j) {
+										client = &rtpsession->client[j];
+										if (client->rtsp.socket.fd == -1) {
+											// Generate a new 'random' session ID
+											sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
+											SI_LOG_INFO("Found empty client slot giving Session ID: %s", client->rtsp.sessionID);
+											found = 1;
+											break;
 										}
 									}
-									FREE_PTR(msg);
 								}
-								break;
-							default:
-								SI_LOG_ERROR("Wrong RTSP State");
-								// Fall-through
-							case Error:
-								CLOSE_FD(rtpsession->rtsp_server.fd);
-								init_server_socket(&rtpsession->rtsp_server, MAX_CLIENTS, RTSP_PORT, 1);
+							}
+							// Did we find a client
+							if (client && found) {
+								// copy 'poll' data to client
+								memcpy(&client->rtsp.socket, &rtspfd[i].socket, sizeof(SocketAttr_t));
+								memcpy(&client->ip_addr, rtspfd[i].ip_addr, 20);
 
-								setup_teardown_message(client, 0);
-								pfd[i].fd = -1;
-								break;
+								// clear some other things and reset watchdog and give some extra timeout
+								client->rtsp.check_watchdog = 1;
+								client->rtsp.shall_close    = 0;
+								client->rtsp.watchdog       = time(NULL) + client->rtsp.session_timeout + 5;
+								
+								// now take action
+								SI_LOG_DEBUG("%s", msg);
+								
+								// find 'CSeq'
+								char *param = get_header_field_parameter_from(msg, "CSeq");
+								if (param) {
+									client->rtsp.cseq = atoi(param);
+									FREE_PTR(param);
+								}
+
+								// Close connection or keep-alive
+								param = get_header_field_parameter_from(msg, "Connection");
+								if (param) {
+									if (strncasecmp(param, "Close", 5) == 0) {
+										client->rtsp.shall_close = 1;
+										SI_LOG_INFO("RTSP Client %s: Requested Connection closed with session ID: %s", client->ip_addr, client->rtsp.sessionID);
+									}
+									FREE_PTR(param);
+								}
+								// get parameters from command
+								parse_channel_info_from(msg, client, &rtpsession->fe);
+
+/* @TODO: Probably not a good idea to do this
+								// Check do we have a VLC client (disable watchdog check)
+								if (strstr(msg, "LIVE555") != NULL) {
+									client->rtsp.check_watchdog = 0;
+								}*/
+								if (strstr(msg, "SETUP") != NULL) {
+									if (setup_rtsp(client, rtpsession->interface.ip_addr) == -1) {
+										SI_LOG_ERROR("RTSP Client %s: Setup message failed", client->ip_addr);
+									} else {
+										// maybe not according to specs here
+										pthread_mutex_lock(&client->mutex);
+										if (client->rtp.state == Stopped) {
+											client->rtp.state = Starting;
+										}
+										if (client->rtcp.state == Stopped) {
+											client->rtcp.state = Starting;
+										}
+										pthread_mutex_unlock(&client->mutex);
+									}
+								} else if (strstr(msg, "PLAY") != NULL) {
+									if (play_rtsp(client, rtpsession->interface.ip_addr) == 1) {
+										pthread_mutex_lock(&client->mutex);
+										if (client->rtp.state == Stopped) {
+											client->rtp.state = Starting;
+										}
+										if (client->rtcp.state == Stopped) {
+											client->rtcp.state = Starting;
+										}
+										pthread_mutex_unlock(&client->mutex);
+									}
+								} else if (strstr(msg, "DESCRIBE") != NULL) {
+									describe_rtsp(client, rtpsession);
+								} else if (strstr(msg, "TEARDOWN") != NULL) {
+									setup_teardown_message(client, 1);
+									pfd[i].fd = -1;
+									rtspfd[i].socket.fd = -1;
+								} else if (strstr(msg, "OPTIONS") != NULL) {
+									options_rtsp(client);
+								} else {
+									SI_LOG_ERROR("Unknown RTSP message (%s)", msg);
+								}
+								FREE_PTR(msg);
+							} else {
+								SI_LOG_ERROR("No Client found!!!!");
+							}
+						} else if (dataSize == 0) {
+							// Try to find the client
+							size_t j;
+							for (j = 0; j < MAX_CLIENTS; ++j) {
+								Client_t *client = &rtpsession->client[j];
+								if (client->rtsp.socket.fd == pfd[i].fd) {
+									SI_LOG_DEBUG("RTSP Client %s: Connection closed with session ID: %s (fd: %d)", client->ip_addr, client->rtsp.sessionID, client->rtsp.socket.fd);
+									CLOSE_FD(client->rtsp.socket.fd);
+									break;
+								}
+							}
+							pfd[i].fd = -1;
+							rtspfd[i].socket.fd = -1;
 						}
 					}
 				}
@@ -942,13 +984,22 @@ static void *thread_work_rtsp(void *arg) {
 				Client_t *client = &rtpsession->client[i];
 				// check watchdog
 				if (client->rtsp.check_watchdog == 1 && client->rtsp.watchdog != 0 && client->rtsp.watchdog < time(NULL)) {
-					SI_LOG_INFO("RTSP Client %s: Connection Watchdog kicked-in", client->ip_addr);
+					SI_LOG_INFO("RTSP Client %s: Connection Watchdog kicked-in with session ID: %s", client->ip_addr, client->rtsp.sessionID);
+					// try to find 
+					size_t j;
+					for (j = 0; j < MAX_CLIENTS; ++j) {
+						if (pfd[j].fd == client->rtsp.socket.fd) {
+							pfd[j].fd = -1;
+							rtspfd[j].socket.fd = -1;
+							break;
+						}
+					}
+					// teardown because of time-out
 					setup_teardown_message(client, 0);
-					pfd[i+1].fd = -1;
 				}
 			}
 		}
-//		usleep(10000);
+		usleep(5000);
 	}
 	return NULL;
 }

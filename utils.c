@@ -134,14 +134,16 @@ char *get_header_field_parameter_from(const char *buf, const char *header_field)
 		while (*val == ' ') ++val;
 		// copy
 		size_t param_size = strlen(val);
-		char *param = malloc(param_size);
-		memcpy(param, val, param_size);
+		char *param = malloc(param_size + 1);
+		if (param) {
+			memcpy(param, val, param_size);
+			param[param_size] = 0;
+		}
 		FREE_PTR(line);
 		return param;
 	}
 	return NULL;
 }
-
 
 /*
  *
