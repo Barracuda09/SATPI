@@ -352,7 +352,7 @@ void start_rtp(RtpSession_t *rtpsession) {
 			SI_LOG_ERROR("thread_work_rtp");
 		}
 		char np[16];
-		snprintf(np, sizeof(np), "thread_rtp%d", i);
+		snprintf(np, sizeof(np), "thread_rtp%zu", i);
 		pthread_setname_np(client->rtp.threadID, np);
 	}
 }
