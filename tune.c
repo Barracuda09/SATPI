@@ -485,6 +485,10 @@ void reset_pid(PidData_t *pid) {
 	pid->cc       = 0x80;
 	pid->cc_error = 0;
 	pid->count    = 0;
+	
+	if (ioctl(pid->fd_dmx, DMX_STOP) != 0) {
+		PERROR("DMX_STOP");
+	}
 	CLOSE_FD(pid->fd_dmx);
 }
 
@@ -509,11 +513,11 @@ int update_pid_filters(Frontend_t *frontend) {
 							return -1;
 						}
 					}
-					SI_LOG_DEBUG("Frontend: %d, Set filter PID %d - fd %d",frontend->index, i, frontend->pid.data[i].fd_dmx);
+					SI_LOG_DEBUG("Frontend: %d, Set filter PID: %d - fd: %d",frontend->index, i, frontend->pid.data[i].fd_dmx);
 				}
 			} else if (frontend->pid.data[i].fd_dmx != -1) {
 				// We have a DMX but no PID anymore, so reset it
-				SI_LOG_DEBUG("Frontend: %d, Remove filter PID %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].count);
+				SI_LOG_DEBUG("Frontend: %d, Remove filter PID: %d - fd: %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].fd_dmx, frontend->pid.data[i].count);
 				reset_pid(&frontend->pid.data[i]);
 			}
 		}
@@ -584,7 +588,7 @@ int clear_pid_filters(Frontend_t *frontend) {
 	size_t i;
 	for (i = 0; i < MAX_PIDS; ++i) {
 		if (frontend->pid.data[i].used) {
-			SI_LOG_DEBUG("Frontend: %d, Remove filter PID %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].count);
+			SI_LOG_DEBUG("Frontend: %d, Remove filter PID: %d - fd: %d - Packet Count: %d", frontend->index, i, frontend->pid.data[i].fd_dmx, frontend->pid.data[i].count);
 			reset_pid(&frontend->pid.data[i]);
 		} else if (frontend->pid.data[i].fd_dmx != -1) {
 			SI_LOG_ERROR("Frontend: %d, !! No PID %d but still open DMX !!", frontend->index, i);

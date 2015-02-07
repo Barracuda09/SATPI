@@ -336,6 +336,7 @@ void init_rtp(RtpSession_t *rtpsession) {
 		rtpsession->client[i].fe = NULL;
 		rtpsession->client[i].teardown_session = NULL;
 		rtpsession->client[i].teardown_graceful = 1;
+		sprintf(rtpsession->client[i].ip_addr, "0.0.0.0");
 	}
 }
 

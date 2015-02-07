@@ -250,7 +250,7 @@ int accept_connection(const SocketAttr_t *server, SocketAttr_t *client, char *ip
 	// check if we have a client?
 	socklen_t addrlen = sizeof(client->addr);
 	const int fd_conn = accept(server->fd, (struct sockaddr *) &client->addr, &addrlen);
-	if (fd_conn != -1) {
+	if (fd_conn > 0) {
 		// save connected file descriptor
 		client->fd = fd_conn;
 

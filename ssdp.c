@@ -253,13 +253,14 @@ static void * thread_work_ssdp(void *arg) {
 									init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 
 									// send directly to us, so this should mean we have the same DEVICEID
-									SI_LOG_INFO("SAT>IP Client %s : contacted us sending reply", ip_addr);
+									SI_LOG_INFO("SAT>IP Client %s : contacted us sending reply fd: %d", ip_addr, udp_send.fd);
 									// send message back
 									char msg[500];
 									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
 									if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 										PERROR("send");
 									}
+									CLOSE_FD(udp_send.fd);
 								}
 								FREE_PTR(st_param);
 							}

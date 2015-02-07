@@ -184,9 +184,10 @@ static char *make_data_xml(const RtpSession_t *rtpsession) {
 		const Client_t *cl = &rtpsession->client[i];
 		pthread_mutex_lock(&((Client_t *)cl)->mutex);
 		addString(&ptr, "<rtpdata>");
-		addString(&ptr, "<ip>%s</ip>", inet_ntoa(cl->rtp.client.addr.sin_addr));
+		addString(&ptr, "<ip>%s</ip>", cl->ip_addr);
 		addString(&ptr, "<sessionid>%s</sessionid>", cl->rtsp.sessionID);
 		addString(&ptr, "<streamid>%d</streamid>", cl->rtsp.streamID);
+		addString(&ptr, "<fd>%d</fd>", cl->rtsp.socket.fd);
 		addString(&ptr, "<rtpport>%d</rtpport>", ntohs(cl->rtp.client.addr.sin_port));
 		addString(&ptr, "<rtcpport>%d</rtcpport>", ntohs(cl->rtcp.client.addr.sin_port));
 		addString(&ptr, "<spc>%d</spc>", cl->spc);

@@ -733,6 +733,12 @@ static int teardown_session(void *arg) {
 		// clear rtsp session state
 		client->rtsp.streamID  = -1;
 		sprintf(client->rtsp.sessionID, "-1");
+		sprintf(client->ip_addr, "0.0.0.0");
+		client->rtcp.client.addr.sin_port = 0;
+		client->rtp.client.addr.sin_port = 0;
+		client->spc = 0;
+		client->soc = 0;
+		
 		// clear callback
 		client->teardown_session = NULL;
 
@@ -851,7 +857,7 @@ static void *thread_work_rtsp(void *arg) {
 								for (j = 0; j < MAX_CLIENTS; ++j) {
 									client = &rtpsession->client[j];
 									if (strncasecmp(client->rtsp.sessionID, sessionID, strlen(client->rtsp.sessionID)) == 0) {
-										SI_LOG_INFO("Found Client with sessionID %s", client->rtsp.sessionID);
+										SI_LOG_INFO("RTSP Client %s: Found by sessionID %s with fd: %d", client->ip_addr, client->rtsp.sessionID, pfd[i].fd);
 										found = 1;
 										break;
 									}
@@ -863,7 +869,7 @@ static void *thread_work_rtsp(void *arg) {
 								for (j = 0; j < MAX_CLIENTS; ++j) {
 									client = &rtpsession->client[j];
 									if (client->rtsp.socket.fd == pfd[i].fd) {
-										SI_LOG_INFO("Found client fd: %d with Session ID: %s", client->rtsp.socket.fd, client->rtsp.sessionID);
+										SI_LOG_INFO("RTSP Client %s: Found by fd: %d with Session ID: %s", client->ip_addr, pfd[i].fd, client->rtsp.sessionID);
 										found = 1;
 										break;
 									}
@@ -875,7 +881,7 @@ static void *thread_work_rtsp(void *arg) {
 										if (client->rtsp.socket.fd == -1) {
 											// Generate a new 'random' session ID
 											sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
-											SI_LOG_INFO("Found empty client slot giving Session ID: %s", client->rtsp.sessionID);
+											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
 											found = 1;
 											break;
 										}
@@ -908,7 +914,7 @@ static void *thread_work_rtsp(void *arg) {
 								if (param) {
 									if (strncasecmp(param, "Close", 5) == 0) {
 										client->rtsp.shall_close = 1;
-										SI_LOG_INFO("RTSP Client %s: Requested Connection closed with session ID: %s", client->ip_addr, client->rtsp.sessionID);
+										SI_LOG_INFO("RTSP Client %s: Requested Connection closed with fd: %d and Session ID: %s", client->ip_addr, client->rtsp.socket.fd, client->rtsp.sessionID);
 									}
 									FREE_PTR(param);
 								}
@@ -922,7 +928,7 @@ static void *thread_work_rtsp(void *arg) {
 								}*/
 								if (strstr(msg, "SETUP") != NULL) {
 									if (setup_rtsp(client, rtpsession->interface.ip_addr) == -1) {
-										SI_LOG_ERROR("RTSP Client %s: Setup message failed", client->ip_addr);
+										SI_LOG_ERROR("RTSP Client %s: Setup message failed with fd: %d and Session ID: %s", client->ip_addr, client->rtsp.socket.fd, client->rtsp.sessionID);
 									} else {
 										// maybe not according to specs here
 										pthread_mutex_lock(&client->mutex);
@@ -960,17 +966,17 @@ static void *thread_work_rtsp(void *arg) {
 							} else {
 								SI_LOG_ERROR("No Client found!!!!");
 							}
-						} else if (dataSize == 0) {
+						} else {
 							// Try to find the client
 							size_t j;
 							for (j = 0; j < MAX_CLIENTS; ++j) {
 								Client_t *client = &rtpsession->client[j];
 								if (client->rtsp.socket.fd == pfd[i].fd) {
-									SI_LOG_DEBUG("RTSP Client %s: Connection closed with session ID: %s (fd: %d)", client->ip_addr, client->rtsp.sessionID, client->rtsp.socket.fd);
-									CLOSE_FD(client->rtsp.socket.fd);
+									SI_LOG_DEBUG("RTSP Client %s: Connection closed with fd: %d and Session ID: %s", client->ip_addr, client->rtsp.socket.fd, client->rtsp.sessionID);
 									break;
 								}
 							}
+							CLOSE_FD(pfd[i].fd);
 							pfd[i].fd = -1;
 							rtspfd[i].socket.fd = -1;
 						}
@@ -984,8 +990,8 @@ static void *thread_work_rtsp(void *arg) {
 				Client_t *client = &rtpsession->client[i];
 				// check watchdog
 				if (client->rtsp.check_watchdog == 1 && client->rtsp.watchdog != 0 && client->rtsp.watchdog < time(NULL)) {
-					SI_LOG_INFO("RTSP Client %s: Connection Watchdog kicked-in with session ID: %s", client->ip_addr, client->rtsp.sessionID);
-					// try to find 
+					SI_LOG_INFO("RTSP Client %s: Connection Watchdog kicked-in with fd: %d and Session ID: %s", client->ip_addr, client->rtsp.socket.fd, client->rtsp.sessionID);
+					// try to find 'poll' for this client
 					size_t j;
 					for (j = 0; j < MAX_CLIENTS; ++j) {
 						if (pfd[j].fd == client->rtsp.socket.fd) {
