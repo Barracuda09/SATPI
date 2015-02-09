@@ -47,10 +47,27 @@
 #define DVR       "/dev/dvb/adapter%d/dvr%d"
 #define FRONTEND  "/dev/dvb/adapter%d/frontend%d"
 
+#define SIMULATE_DVB_SYSTEMS 3
+
 /*
  *
  */
 static size_t get_attached_frontend_count(const char *path, size_t count, Frontend_t **fe_array) {
+#ifdef SIMU
+	UNUSED(count);
+	UNUSED(path);
+	int i;
+	for (i = 0; i < SIMULATE_DVB_SYSTEMS; ++i) {
+		// check if we have an array we can fill in
+		if (fe_array && fe_array[i]) {
+			snprintf(fe_array[i]->path_to_fe,  FE_PATH_LEN, FRONTEND, i, 0);
+			snprintf(fe_array[i]->path_to_dvr, FE_PATH_LEN, DVR, i, 0);
+			snprintf(fe_array[i
+			]->path_to_dmx, FE_PATH_LEN, DMX, i, 0);
+		}
+	}
+	return SIMULATE_DVB_SYSTEMS;
+#else
 	struct dirent **file_list;
 	const int n = scandir(path, &file_list, NULL, alphasort);
 	if (n > 0) {
@@ -91,12 +108,30 @@ static size_t get_attached_frontend_count(const char *path, size_t count, Fronte
 		}
 	}
 	return count;
+#endif
 }
 
 /*
  *
  */
 static int get_fe_info(Frontend_t *frontend) {
+#ifdef SIMU
+	switch (frontend->index) {
+		case 0:
+			snprintf(frontend->fe_info.name, sizeof(frontend->fe_info.name), "Simulation DVB-S2");
+			frontend->info_del_sys[0] = SYS_DVBS2;
+			break;
+		case 1:
+			snprintf(frontend->fe_info.name, sizeof(frontend->fe_info.name), "Simulation DVB-T");
+			frontend->info_del_sys[0] = SYS_DVBT;
+			break;
+		case 2:
+			snprintf(frontend->fe_info.name, sizeof(frontend->fe_info.name), "Simulation DVB-C");
+			frontend->info_del_sys[0] = SYS_DVBC_ANNEX_A;
+			break;
+	}
+	return 1;
+#else
 	struct dtv_properties dtvProperties;
 	struct dtv_property dtvProperty;
 	int fd_fe;
@@ -183,6 +218,7 @@ static int get_fe_info(Frontend_t *frontend) {
 
 	CLOSE_FD(fd_fe);
 	return 1;
+#endif
 }
 
 /*
@@ -668,7 +704,7 @@ char *attribute_describe_string(const Frontend_t *fe) {
 			}
 		}
 	}
-	uint32_t freq = fe->channel.freq / 1000;
+	double freq = fe->channel.freq / 1000.0;
 	int srate = fe->channel.srate / 1000;
 	char *attr_desc_str = NULL;
 	addString(&attr_desc_str, "");
@@ -677,7 +713,7 @@ char *attribute_describe_string(const Frontend_t *fe) {
 		case SYS_DVBS2:
 			// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
 			//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
-			addString(&attr_desc_str, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%d,%d,%s,%s,%d,%s,%d,%s;pids=%s",
+			addString(&attr_desc_str, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%d,%s,%s,%d,%s,%d,%s;pids=%s",
 					fe->diseqc.src,
 					fe->index+1,
 					fe->monitor.strength,
@@ -697,7 +733,7 @@ char *attribute_describe_string(const Frontend_t *fe) {
 		case SYS_DVBT2:
 			// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
 			//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
-			addString(&attr_desc_str, "ver=1.1;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+			addString(&attr_desc_str, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%s,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
 					fe->index+1,
 					fe->monitor.strength,
 					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,
@@ -721,7 +757,7 @@ char *attribute_describe_string(const Frontend_t *fe) {
 #endif
 			// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
 			//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
-			addString(&attr_desc_str, "ver=1.2;tuner=%d,%d,%d,%d,%d,%s,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+			addString(&attr_desc_str, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%s,%s,%s,%d,%d,%d,%d,%d;pids=%s",
 					fe->index+1,
 					fe->monitor.strength,
 					(fe->monitor.status & FE_HAS_LOCK) ? 1 : 0,

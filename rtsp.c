@@ -192,13 +192,13 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 					}
 				} else if (strcmp(token_id, "ro") == 0) {
 					// "0.35", "0.25", "0.20"
-					if (strcmp(token_id_val, "0.35") == 0) {
+					if (strncmp(token_id_val, "0.35", 4) == 0) {
 						client->fe->channel.rolloff = ROLLOFF_35;
-					} else if (strcmp(token_id_val, "0.25") == 0) {
+					} else if (strncmp(token_id_val, "0.25", 4) == 0) {
 						client->fe->channel.rolloff = ROLLOFF_25;
-					} else if (strcmp(token_id_val, "0.20") == 0) {
+					} else if (strncmp(token_id_val, "0.20", 4) == 0) {
 						client->fe->channel.rolloff = ROLLOFF_20;
-					} else if (strcmp(token_id_val, "auto") == 0) {
+					} else if (strncmp(token_id_val, "auto", 4) == 0) {
 						client->fe->channel.rolloff = ROLLOFF_AUTO;
 					} else {
 						SI_LOG_ERROR("Unknown Rolloff [%s]", token_id_val);
@@ -234,43 +234,43 @@ static int parse_stream_string(const char *msg, const char *header_field, const 
 				} else if (strcmp(token_id, "specinv") == 0) {
 					client->fe->channel.inversion = atoi(token_id_val);
 				} else if (strcmp(token_id, "mtype") == 0) {
-					if (strcmp(token_id_val, "8psk") == 0) {
+					if (strncmp(token_id_val, "8psk", 4) == 0) {
 						client->fe->channel.modtype = PSK_8;
-					} else if (strcmp(token_id_val, "qpsk") == 0) {
+					} else if (strncmp(token_id_val, "qpsk", 4) == 0) {
 						client->fe->channel.modtype = QPSK;
-					} else if (strcmp(token_id_val, "16qam") == 0) {
+					} else if (strncmp(token_id_val, "16qam", 5) == 0) {
 						client->fe->channel.modtype = QAM_16;
-					} else if (strcmp(token_id_val, "64qam") == 0) {
+					} else if (strncmp(token_id_val, "64qam", 5) == 0) {
 						client->fe->channel.modtype = QAM_64;
-					} else if (strcmp(token_id_val, "256qam") == 0) {
+					} else if (strncmp(token_id_val, "256qam", 6) == 0) {
 						client->fe->channel.modtype = QAM_256;
 					}
-				} else if (strcmp(token_id, "bw") == 0) {
+				} else if (strncmp(token_id, "bw", 2) == 0) {
 					//	"5", "6", "7", "8", "10", "1.712"
-					if (strcmp(token_id_val, "5") == 0) {
+					if (strncmp(token_id_val, "5", 1) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_5_MHZ;
-					} else if (strcmp(token_id_val, "6") == 0) {
+					} else if (strncmp(token_id_val, "6", 1) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_6_MHZ;
-					} else if (strcmp(token_id_val, "7") == 0) {
+					} else if (strncmp(token_id_val, "7", 1) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_7_MHZ;
-					} else if (strcmp(token_id_val, "8") == 0) {
+					} else if (strncmp(token_id_val, "8", 1) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_8_MHZ;
-					} else if (strcmp(token_id_val, "10") == 0) {
+					} else if (strncmp(token_id_val, "10", 2) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_10_MHZ;
-					} else if (strcmp(token_id_val, "1.712") == 0) {
+					} else if (strncmp(token_id_val, "1.712", 5) == 0) {
 						client->fe->channel.bandwidth = BANDWIDTH_1_712_MHZ;
 					}
 				} else if (strcmp(token_id, "tmode") == 0) {
 					// "2k", "4k", "8k", "1k", "16k", "32k"
 					if (strcmp(token_id_val, "2k") == 0) {
 						client->fe->channel.transmission = TRANSMISSION_MODE_2K;
-					} else if (strcmp(token_id_val, "4k") == 0) {
+					} else if (strncmp(token_id_val, "4k", 2) == 0) {
 						client->fe->channel.transmission = TRANSMISSION_MODE_4K;
-					} else if (strcmp(token_id_val, "1k") == 0) {
+					} else if (strncmp(token_id_val, "1k", 2) == 0) {
 						client->fe->channel.transmission = TRANSMISSION_MODE_1K;
-					} else if (strcmp(token_id_val, "16k") == 0) {
+					} else if (strncmp(token_id_val, "16k", 3) == 0) {
 						client->fe->channel.transmission = TRANSMISSION_MODE_16K;
-					} else if (strcmp(token_id_val, "32k") == 0) {
+					} else if (strncmp(token_id_val, "32k", 3) == 0) {
 						client->fe->channel.transmission = TRANSMISSION_MODE_32K;
 					}
 				} else if (strcmp(token_id, "gi") == 0) {
@@ -393,6 +393,7 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 			} while (timeout < 3);
 		} else {
 			// dynamically alloc a frontend
+			int found = 0;
 			size_t i, j;
 			for (i = 0; i < fe->max_fe; ++i) {
 				if (!fe->array[i]->attached) {
@@ -410,13 +411,14 @@ static int parse_channel_info_from(const char *msg, Client_t *client, FrontendAr
 
 							// unlock - frontend data
 							pthread_mutex_unlock(&client->fe->mutex);
+							found = 1;
 							break;
 						}
 					}
-				} else {
-					continue;
 				}
-				break;
+				if (found) {
+					break;
+				}
 			}
 		}
 	}
@@ -527,8 +529,6 @@ static int play_rtsp(Client_t *client, const char *server_ip_addr) {
 			if (update_pid_filters(client->fe) == 1) {
 				// set bufPtr to begin of RTP data (after Header)
 				client->rtp.bufPtr = client->rtp.buffer + RTP_HEADER_LEN;
-				// setup watchdog
-				client->rtsp.watchdog = time(NULL) + client->rtsp.session_timeout + 5;
 				snprintf(rtsp, sizeof(rtsp), RTSP_PLAY_OK, server_ip_addr, client->rtsp.streamID, client->rtsp.cseq, client->rtsp.sessionID);
 				ret = 1;
 			} else {
@@ -667,7 +667,7 @@ static int options_rtsp(const Client_t *client) {
 	char rtspOk[150];
 
 	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, client->rtsp.sessionID);
-	
+
 //	SI_LOG_DEBUG("%s", rtspOk);
 
 	// send reply to client
@@ -738,7 +738,7 @@ static int teardown_session(void *arg) {
 		client->rtp.client.addr.sin_port = 0;
 		client->spc = 0;
 		client->soc = 0;
-		
+
 		// clear callback
 		client->teardown_session = NULL;
 
@@ -817,7 +817,7 @@ static void *thread_work_rtsp(void *arg) {
 		pfd[i].fd = -1;
 		pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 		pfd[i].revents = 0;
-		
+
 		rtspfd[i].socket.fd = -1;
 	}
 
@@ -898,10 +898,10 @@ static void *thread_work_rtsp(void *arg) {
 								client->rtsp.check_watchdog = 1;
 								client->rtsp.shall_close    = 0;
 								client->rtsp.watchdog       = time(NULL) + client->rtsp.session_timeout + 5;
-								
+
 								// now take action
 								SI_LOG_DEBUG("%s", msg);
-								
+
 								// find 'CSeq'
 								char *param = get_header_field_parameter_from(msg, "CSeq");
 								if (param) {
@@ -967,7 +967,7 @@ static void *thread_work_rtsp(void *arg) {
 								SI_LOG_ERROR("No Client found!!!!");
 							}
 						} else {
-							// Try to find the client
+							// Try to find the client that requested to close
 							size_t j;
 							for (j = 0; j < MAX_CLIENTS; ++j) {
 								Client_t *client = &rtpsession->client[j];

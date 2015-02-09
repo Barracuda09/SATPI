@@ -14,14 +14,19 @@ LDFLAGS = -lpthread -lrt
 # Set Compiler Flags
 CFLAGS = -Wall -Wextra -Winit-self $(INCLUDES)
 
-# Build "debug" or "release"
-ifeq ($(BUILD),debug)   
-# "Debug" build - no optimization, and debugging symbols
-#CFLAGS += -O0 -g
-CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
+# Build "debug", "release" or simu
+ifeq ($(BUILD),debug)
+  # "Debug" build - no optimization, with debugging symbols
+  #CFLAGS += -O0 -g
+  CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
 else
-# "Release" build - optimization, and no debug symbols
-CFLAGS += -O2 -s -DNDEBUG
+  ifeq ($(BUILD),simu)
+    # "Debug Simu" build - no optimization, with debugging symbols
+    CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
+  else
+    # "Release" build - optimization, and no debug symbols
+    CFLAGS += -O2 -s -DNDEBUG
+  endif
 endif
 
 # List of source to be compiled
@@ -56,10 +61,13 @@ $(EXECUTABLE): $(OBJECTS)
 # $< represents the first item in the dependencies list
 # $@ represents the targetname
 %.o: %.c $(HEADERS)
-	$(CC) -c $(CFLAGS) $< 
+	$(CC) -c $(CFLAGS) $<
 
 debug:
 	make "BUILD=debug"
+
+simu:
+	make "BUILD=simu"
 
 .PHONY: clean
 clean:
