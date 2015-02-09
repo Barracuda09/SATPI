@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -45,13 +46,13 @@ static pthread_t threadID;
 /*
  *
  */
-static int send_byebye(const char *uuid) {
+static int send_byebye(unsigned int bootId, const char *uuid) {
 #define UPNP_ROOTDEVICE_BB "NOTIFY * HTTP/1.1\r\n" \
                            "HOST: 239.255.255.250:1900\r\n" \
                            "NT: upnp:rootdevice\r\n" \
                            "NTS: ssdp:byebye\r\n" \
                            "USN: uuid:%s::upnp:rootdevice\r\n" \
-                           "BOOTID.UPNP.ORG: 2318\r\n" \
+                           "BOOTID.UPNP.ORG: %d\r\n" \
                            "CONFIGID.UPNP.ORG: 0\r\n" \
                            "\r\n"
 
@@ -60,7 +61,7 @@ static int send_byebye(const char *uuid) {
                     "NT: uuid:%s\r\n" \
                     "NTS: ssdp:byebye\r\n" \
                     "USN: uuid:%s\r\n" \
-                    "BOOTID.UPNP.ORG: 2318\r\n" \
+                    "BOOTID.UPNP.ORG: %d\r\n" \
                     "CONFIGID.UPNP.ORG: 0\r\n" \
                     "\r\n"
 
@@ -69,13 +70,13 @@ static int send_byebye(const char *uuid) {
                        "NT: urn:ses-com:device:SatIPServer:1\r\n" \
                        "NTS: ssdp:byebye\r\n" \
                        "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-                       "BOOTID.UPNP.ORG: 2318\r\n" \
+                       "BOOTID.UPNP.ORG: %d\r\n" \
                        "CONFIGID.UPNP.ORG: 0\r\n" \
                        "\r\n"
 	char msg[500];
 
 	// broadcast message
-	snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE_BB, uuid);
+	snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE_BB, uuid, bootId);
 	if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 		PERROR("send");
 		return -1;
@@ -83,7 +84,7 @@ static int send_byebye(const char *uuid) {
 	usleep(UTIME_DEL);
 
 	// broadcast message
-	snprintf(msg, sizeof(msg), UPNP_BYEBYE, uuid, uuid);
+	snprintf(msg, sizeof(msg), UPNP_BYEBYE, uuid, uuid, bootId);
 	if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 		PERROR("send");
 		return -1;
@@ -91,7 +92,7 @@ static int send_byebye(const char *uuid) {
 	usleep(UTIME_DEL);
 
 	// broadcast message
-	snprintf(msg, sizeof(msg), UPNP_DEVICE_BB, uuid);
+	snprintf(msg, sizeof(msg), UPNP_DEVICE_BB, uuid, bootId);
 	if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 		PERROR("send");
 		return -1;
@@ -112,7 +113,7 @@ static void * thread_work_ssdp(void *arg) {
 						"NTS: ssdp:alive\r\n" \
 						"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
 						"USN: uuid:%s::upnp:rootdevice\r\n" \
-						"BOOTID.UPNP.ORG: 2318\r\n" \
+						"BOOTID.UPNP.ORG: %d\r\n" \
 						"CONFIGID.UPNP.ORG: 0\r\n" \
 						"DEVICEID.SES.COM: %d\r\n" \
 						"\r\n"
@@ -125,7 +126,7 @@ static void * thread_work_ssdp(void *arg) {
 					"NTS: ssdp:alive\r\n" \
 					"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
 					"USN: uuid:%s\r\n" \
-					"BOOTID.UPNP.ORG: 2318\r\n" \
+					"BOOTID.UPNP.ORG: %d\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
 					"DEVICEID.SES.COM: %d\r\n" \
 					"\r\n"
@@ -138,7 +139,7 @@ static void * thread_work_ssdp(void *arg) {
 					"NTS: ssdp:alive\r\n" \
 					"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
 					"USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-					"BOOTID.UPNP.ORG: 2318\r\n" \
+					"BOOTID.UPNP.ORG: %d\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
 					"DEVICEID.SES.COM: %d\r\n" \
 					"\r\n"
@@ -158,22 +159,44 @@ static void * thread_work_ssdp(void *arg) {
                          "SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
                          "ST: urn:ses-com:device:SatIPServer:1\r\n" \
                          "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-                         "BOOTID.UPNP.ORG: 2318\r\n" \
+                         "BOOTID.UPNP.ORG: %d\r\n" \
                          "CONFIGID.UPNP.ORG: 0\r\n" \
                          "DEVICEID.SES.COM: %d\r\n" \
                          "\r\n"
 
+#define BOOTID_STR       "bootID=%d"
+
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
 	unsigned int deviceId = 0x01; // just for now a different value
+	unsigned int bootId = 0;
 	time_t repeat_time = 0;
 
-	SI_LOG_INFO("Setting up SSDP server");
+	// Get BOOTID from file
+	int fd_bootId = -1;
+	char content[50];
+	if ((fd_bootId = open("bootID", O_RDWR | O_CREAT)) > 0) {
+		if (read(fd_bootId, content, sizeof(content)) >= 0) {
+			if (strlen(content) != 0) {
+				sscanf(content, BOOTID_STR, &bootId);
+				lseek(fd_bootId, 0, SEEK_SET);
+			}
+		} else {
+			PERROR("Unable to read file: bootID");
+		}
+		++bootId;
+		sprintf(content, BOOTID_STR, bootId);
+		write(fd_bootId, content, strlen(content));
+		CLOSE_FD(fd_bootId);
+	} else {
+		PERROR("Unable to open file: bootID");
+	}
 
-	struct pollfd pfd[1];
+	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", bootId);
 
 	init_udp_socket(&udp_multi_send, SSDP_PORT, inet_addr("239.255.255.250"));
 	init_mutlicast_udp_socket(&udp_multi_listen, SSDP_PORT, rtpsession->interface.ip_addr);
 
+	struct pollfd pfd[1];
 	pfd[0].fd = udp_multi_listen.fd;
 	pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 	pfd[0].revents = 0;
@@ -224,23 +247,23 @@ static void * thread_work_ssdp(void *arg) {
 							char *param = get_header_field_parameter_from(recv_msg, "DEVICEID.SES.COM");
 							if (param) {
 								FREE_PTR(param);
-								
+
 								// setup reply socket
 								SocketAttr_t udp_send;
 								init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 
 								// send directly to us, so this should mean we have the same DEVICEID
 								SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID", ip_addr);
-								
+
 								// send message back
 								char msg[500];
-								snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
+								snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
 								if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 									PERROR("send");
 								}
 								// we should increment DEVICEID and send bye bye
 								++deviceId;
-								send_byebye(rtpsession->uuid);
+								send_byebye(bootId, rtpsession->uuid);
 								// reset repeat time to annouce new DEVICEID
 								repeat_time =  time(NULL) + 5;
 								CLOSE_FD(udp_send.fd);
@@ -256,7 +279,7 @@ static void * thread_work_ssdp(void *arg) {
 									SI_LOG_INFO("SAT>IP Client %s : contacted us sending reply fd: %d", ip_addr, udp_send.fd);
 									// send message back
 									char msg[500];
-									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
+									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
 									if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 										PERROR("send");
 									}
@@ -278,7 +301,7 @@ static void * thread_work_ssdp(void *arg) {
 			repeat_time = rtpsession->ssdp_announce_time_sec + curr_time;
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 				PERROR("send");
 				return NULL;
@@ -286,7 +309,7 @@ static void * thread_work_ssdp(void *arg) {
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, rtpsession->uuid, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, rtpsession->uuid, bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 				PERROR("send");
 				return NULL;
@@ -294,7 +317,7 @@ static void * thread_work_ssdp(void *arg) {
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
 				PERROR("send");
 				return NULL;
