@@ -31,6 +31,7 @@ endif
 
 # List of source to be compiled
 SOURCES = tune.c \
+	version.c \
 	ssdp.c \
 	rtsp.c \
 	rtp.c \
@@ -63,6 +64,12 @@ $(EXECUTABLE): $(OBJECTS)
 %.o: %.c $(HEADERS)
 	$(CC) -c $(CFLAGS) $<
 
+# Create version
+version.o: version.c
+version.c: 
+	./version.sh $@ > /dev/null
+#FORCE:
+
 debug:
 	make "BUILD=debug"
 
@@ -71,4 +78,4 @@ simu:
 
 .PHONY: clean
 clean:
-	rm -rf *.o $(EXECUTABLE) *.*~ *~ /web/*.*~
+	rm -rf *.o $(EXECUTABLE) version.c *.*~ *~ /web/*.*~

@@ -182,6 +182,7 @@ static void daemonize(const char *lockfile, const char *user) {
 static void printUsage(const char *prog_name) {
 	printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
            "\t--help         show this help and exit\r\n" \
+           "\t--version      show the version number\r\n" \
            "\t--user xx      run as user\r\n" \
            "\t--no-daemon    do not daemonize\r\n" \
            "\t--no-rtcp      do NOT send RTCP packets\r\n"
@@ -197,7 +198,7 @@ int main(int argc, char *argv[]) {
 	int daemon = 1;
 	int i;
 	char *user = NULL;
-
+	extern const char *satpi_version;
 	exitApp = 0;
 
 	// Check options
@@ -211,6 +212,9 @@ int main(int argc, char *argv[]) {
 			++i; // because next was the user-name
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
 			daemon = 0;
+		} else if (strcmp(argv[i], "--version") == 0) {
+			printf("SatPI version: %s\r\n", satpi_version);
+			return EXIT_SUCCESS;
 		} else if (strcmp(argv[i], "--help") == 0) {
 			printUsage(argv[0]);
 			return EXIT_SUCCESS;
@@ -232,7 +236,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// notify we are alive
-	SI_LOG_INFO("--- starting ---");
+	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
 
 	// detect the attached frontends and get frontend properties
 	if (detect_attached_frontends("/dev/dvb", &rtpsession.fe) == 0) {

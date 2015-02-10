@@ -174,7 +174,7 @@ static void * thread_work_ssdp(void *arg) {
 	// Get BOOTID from file
 	int fd_bootId = -1;
 	char content[50];
-	if ((fd_bootId = open("bootID", O_RDWR | O_CREAT)) > 0) {
+	if ((fd_bootId = open("bootID", O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH)) > 0) {
 		if (read(fd_bootId, content, sizeof(content)) >= 0) {
 			if (strlen(content) != 0) {
 				sscanf(content, BOOTID_STR, &bootId);
@@ -185,7 +185,9 @@ static void * thread_work_ssdp(void *arg) {
 		}
 		++bootId;
 		sprintf(content, BOOTID_STR, bootId);
-		write(fd_bootId, content, strlen(content));
+		if (write(fd_bootId, content, strlen(content)) == -1) {
+			PERROR("Unable to write file: bootID");
+		}
 		CLOSE_FD(fd_bootId);
 	} else {
 		PERROR("Unable to open file: bootID");
