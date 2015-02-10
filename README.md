@@ -33,8 +33,10 @@ To build SATPI just run these commands::
 Usage
 -----
 
-for help on options:
+For help on options:
+
     ./satpi --help
 
 For normal use just run:
+
     ./satpi   (!!Note you should have the appropriate privilege to open tcp/udp port 554!!)
