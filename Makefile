@@ -65,8 +65,11 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $<
 
 # Create version.c
-version.c: 
+version.c: FORCE
 	./version.sh $@ > /dev/null
+
+FORCE:
+
 
 debug:
 	make "BUILD=debug"
