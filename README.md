@@ -1,5 +1,5 @@
 # SatPI
-SATIP server for example the Raspberry Pi, BeagleBone or any other linux box.
+SatPI server for example the Raspberry Pi, BeagleBone or any other linux box.
 Currently supporting DVB-S, DVB-S2 and DVB-T
 
 Initial working vesion, but a work in progress.
@@ -14,7 +14,7 @@ Contact
 -------
 If you feel the need to contact me, you can do so by sending an email to:
 
-  m.a.postema -at- alice.nl
+    m.a.postema -at- alice.nl
 
 Tested Programs
 ---------------
