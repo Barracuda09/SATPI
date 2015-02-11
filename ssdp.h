@@ -28,6 +28,6 @@
 // Start SSDP
 void start_ssdp(RtpSession_t *rtpsession);
 
-int stop_ssdp();
+int stop_ssdp(const RtpSession_t *rtpsession);
 
 #endif

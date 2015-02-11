@@ -358,13 +358,14 @@ static int get_http(int fd, const char *msg, const RtpSession_t *rtpsession) {
 			snprintf(htmlBody, sizeof(htmlBody), HTML_BODY_CONT, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize);
 		} else if ((docType = read_file(path, &docTypeSize))) {
 			if (strstr(file, ".xml") != NULL) {
-				// check if the request is the SAT>IP description xml then fill in the UUID and tuner string
+				// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
 				if (strstr(docType, "urn:ses-com:device") != NULL) {
-					docTypeSize -= 4; // minus 2x %s
+					docTypeSize -= 3 * 2; // minus 3x %s
 					docTypeSize += strlen(rtpsession->fe.del_sys_str);
 					docTypeSize += strlen(rtpsession->uuid);
+					docTypeSize += strlen(rtpsession->satpi_version);
 					char *doc_desc_xml = malloc(docTypeSize+1);
-					snprintf(doc_desc_xml, docTypeSize+1, docType, rtpsession->uuid, rtpsession->fe.del_sys_str);
+					snprintf(doc_desc_xml, docTypeSize+1, docType, rtpsession->satpi_version, rtpsession->uuid, rtpsession->fe.del_sys_str);
 					FREE_PTR(docType);
 					docType = doc_desc_xml;
 				}

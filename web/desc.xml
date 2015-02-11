@@ -7,12 +7,14 @@
 	</specVersion>
 	<device>
 		<deviceType>urn:ses-com:device:SatIPServer:1</deviceType>
-		<friendlyName>SATPI Server</friendlyName>
+		<friendlyName>SatPI Server is an SAT&gt;IP Server</friendlyName>
 		<manufacturer>Marc Postema</manufacturer>
 		<manufacturerURL>https://github.com/Barracuda09/SATPI</manufacturerURL>
-		<modelDescription>SATIPBOX 500 4.0</modelDescription>
-		<modelName>SATPI Server</modelName>
-		<modelNumber>1.0</modelNumber>
+		<modelDescription>SatPI Server</modelDescription>
+		<modelName>SatPI Server</modelName>
+		<!-- filled in by server -->
+		<modelNumber>%s</modelNumber>
+		<!-- filled in by server -->
 		<modelURL>https://github.com/Barracuda09/SATPI</modelURL>
 		<serialNumber>1S81A31231000007</serialNumber>
 		<!-- filled in by server -->

@@ -240,9 +240,10 @@ void init_rtp(RtpSession_t *rtpsession) {
 
 	// start time of programm
 	pthread_mutex_init(&rtpsession->mutex, &attr);
-	rtpsession->appStartTime = time(NULL);
-	rtpsession->rtp_payload = 0;
+	rtpsession->appStartTime           = time(NULL);
+	rtpsession->rtp_payload            = 0;
 	rtpsession->ssdp_announce_time_sec = 60; // 60sec default interval
+	rtpsession->bootId                 = 0;
 
 	// frontend properties
 	for (j = 0; j < rtpsession->fe.max_fe; ++j) {

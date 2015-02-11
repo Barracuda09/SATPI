@@ -1,6 +1,6 @@
 /* satpi.c
 
-   Copyright (C) 2014 Marc Postema (m.a.postema@alice.nl)
+   Copyright (C) 2014 Marc Postema (m.a.postema -at- alice.nl)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -265,6 +265,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// initialize all variables
+	rtpsession.satpi_version = satpi_version;
 	init_rtp(&rtpsession);
 
 	// get interface IP and MAC addresses
@@ -296,7 +297,7 @@ int main(int argc, char *argv[]) {
 	// cleanup threads
 	stop_http();
 	if (ssdp) {
-		stop_ssdp();
+		stop_ssdp(&rtpsession);
 	}
 	stop_rtp(&rtpsession);
 

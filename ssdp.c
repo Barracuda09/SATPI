@@ -46,6 +46,37 @@ static pthread_t threadID;
 /*
  *
  */
+static unsigned int read_bootID_from_file(const char *file) {
+#define BOOTID_STR "bootID=%d"
+
+	// Get BOOTID from file, increment and save it again
+	unsigned int bootId = 0;
+	int fd_bootId = -1;
+	char content[50];
+	if ((fd_bootId = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH)) > 0) {
+		if (read(fd_bootId, content, sizeof(content)) >= 0) {
+			if (strlen(content) != 0) {
+				sscanf(content, BOOTID_STR, &bootId);
+				lseek(fd_bootId, 0, SEEK_SET);
+			}
+		} else {
+			PERROR("Unable to read file: bootID");
+		}
+		++bootId;
+		sprintf(content, BOOTID_STR, bootId);
+		if (write(fd_bootId, content, strlen(content)) == -1) {
+			PERROR("Unable to write file: bootID");
+		}
+		CLOSE_FD(fd_bootId);
+	} else {
+		PERROR("Unable to open file: bootID");
+	}
+	return bootId;
+}
+
+/*
+ *
+ */
 static int send_byebye(unsigned int bootId, const char *uuid) {
 #define UPNP_ROOTDEVICE_BB "NOTIFY * HTTP/1.1\r\n" \
                            "HOST: 239.255.255.250:1900\r\n" \
@@ -111,7 +142,7 @@ static void * thread_work_ssdp(void *arg) {
 						"LOCATION: http://%s:%d/desc.xml\r\n" \
 						"NT: upnp:rootdevice\r\n" \
 						"NTS: ssdp:alive\r\n" \
-						"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
+						"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 						"USN: uuid:%s::upnp:rootdevice\r\n" \
 						"BOOTID.UPNP.ORG: %d\r\n" \
 						"CONFIGID.UPNP.ORG: 0\r\n" \
@@ -124,7 +155,7 @@ static void * thread_work_ssdp(void *arg) {
 					"LOCATION: http://%s:%d/desc.xml\r\n" \
 					"NT: uuid:%s\r\n" \
 					"NTS: ssdp:alive\r\n" \
-					"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
+					"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 					"USN: uuid:%s\r\n" \
 					"BOOTID.UPNP.ORG: %d\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
@@ -137,7 +168,7 @@ static void * thread_work_ssdp(void *arg) {
 					"LOCATION: http://%s:%d/desc.xml\r\n" \
 					"NT: urn:ses-com:device:SatIPServer:1\r\n" \
 					"NTS: ssdp:alive\r\n" \
-					"SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
+					"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 					"USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
 					"BOOTID.UPNP.ORG: %d\r\n" \
 					"CONFIGID.UPNP.ORG: 0\r\n" \
@@ -148,7 +179,7 @@ static void * thread_work_ssdp(void *arg) {
                       "HOST: %s:%d\r\n" \
                       "MAN: \"ssdp:discover\"\r\n" \
                       "ST: urn:ses-com:device:SatIPServer:1\r\n" \
-                      "USER-AGENT: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
+                      "USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
                       "DEVICEID.SES.COM: %d\r\n" \
                       "\r\n"
 
@@ -156,7 +187,7 @@ static void * thread_work_ssdp(void *arg) {
                          "CACHE-CONTROL: max-age=1800\r\n" \
                          "EXT:\r\n" \
                          "LOCATION: http://%s:%d/desc.xml\r\n" \
-                         "SERVER: Linux/1.0 UPnP/1.1 SAT>IP/1.0\r\n" \
+                         "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
                          "ST: urn:ses-com:device:SatIPServer:1\r\n" \
                          "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
                          "BOOTID.UPNP.ORG: %d\r\n" \
@@ -164,36 +195,15 @@ static void * thread_work_ssdp(void *arg) {
                          "DEVICEID.SES.COM: %d\r\n" \
                          "\r\n"
 
-#define BOOTID_STR       "bootID=%d"
-
 	RtpSession_t *rtpsession = (RtpSession_t *)arg;
-	unsigned int deviceId = 0x01; // just for now a different value
-	unsigned int bootId = 0;
+	unsigned int deviceId = 0x01; // start with 1
 	time_t repeat_time = 0;
 
-	// Get BOOTID from file
-	int fd_bootId = -1;
-	char content[50];
-	if ((fd_bootId = open("bootID", O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH)) > 0) {
-		if (read(fd_bootId, content, sizeof(content)) >= 0) {
-			if (strlen(content) != 0) {
-				sscanf(content, BOOTID_STR, &bootId);
-				lseek(fd_bootId, 0, SEEK_SET);
-			}
-		} else {
-			PERROR("Unable to read file: bootID");
-		}
-		++bootId;
-		sprintf(content, BOOTID_STR, bootId);
-		if (write(fd_bootId, content, strlen(content)) == -1) {
-			PERROR("Unable to write file: bootID");
-		}
-		CLOSE_FD(fd_bootId);
-	} else {
-		PERROR("Unable to open file: bootID");
-	}
+	rtpsession->bootId = read_bootID_from_file("bootID");
 
-	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", bootId);
+	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", rtpsession->bootId);
+
+return NULL;
 
 	init_udp_socket(&udp_multi_send, SSDP_PORT, inet_addr("239.255.255.250"));
 	init_mutlicast_udp_socket(&udp_multi_listen, SSDP_PORT, rtpsession->interface.ip_addr);
@@ -217,6 +227,7 @@ static void * thread_work_ssdp(void *arg) {
 					char ip_addr[25];
 					// save client ip address
 					strcpy(ip_addr, (char *)inet_ntoa(si_other.sin_addr));
+					// @TODO we should probably listen to only one message
 					// check do we hear our echo
 					if (strcmp(rtpsession->interface.ip_addr, ip_addr) != 0 && strcmp("127.0.0.1", ip_addr) != 0) {
 						// get method from message
@@ -236,7 +247,7 @@ static void * thread_work_ssdp(void *arg) {
 									init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 									char msg[500];
 									// send message back
-									snprintf(msg, sizeof(msg), UPNP_M_SEARCH, rtpsession->interface.ip_addr, SSDP_PORT, deviceId);
+									snprintf(msg, sizeof(msg), UPNP_M_SEARCH, rtpsession->interface.ip_addr, SSDP_PORT, rtpsession->satpi_version, deviceId);
 									if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 										PERROR("send");
 									}
@@ -255,17 +266,22 @@ static void * thread_work_ssdp(void *arg) {
 								init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 
 								// send directly to us, so this should mean we have the same DEVICEID
-								SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID", ip_addr);
+								SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, deviceId);
 
 								// send message back
 								char msg[500];
-								snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
+								snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->satpi_version, rtpsession->uuid, rtpsession->bootId, deviceId);
 								if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 									PERROR("send");
 								}
 								// we should increment DEVICEID and send bye bye
 								++deviceId;
-								send_byebye(bootId, rtpsession->uuid);
+								send_byebye(rtpsession->bootId, rtpsession->uuid);
+
+								// now increment bootID
+								rtpsession->bootId = read_bootID_from_file("bootID");
+								SI_LOG_INFO("Changing BOOTID to: %d", rtpsession->bootId);
+
 								// reset repeat time to annouce new DEVICEID
 								repeat_time =  time(NULL) + 5;
 								CLOSE_FD(udp_send.fd);
@@ -277,11 +293,12 @@ static void * thread_work_ssdp(void *arg) {
 									SocketAttr_t udp_send;
 									init_udp_socket(&udp_send, SSDP_PORT, inet_addr(ip_addr));
 
-									// send directly to us, so this should mean we have the same DEVICEID
-									SI_LOG_INFO("SAT>IP Client %s : contacted us sending reply fd: %d", ip_addr, udp_send.fd);
+									// client is sending a discover
+									SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending an reply fd: %d", ip_addr, udp_send.fd);
+
 									// send message back
 									char msg[500];
-									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
+									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->satpi_version, rtpsession->uuid, rtpsession->bootId, deviceId);
 									if (sendto(udp_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_send.addr, sizeof(udp_send.addr)) == -1) {
 										PERROR("send");
 									}
@@ -303,26 +320,23 @@ static void * thread_work_ssdp(void *arg) {
 			repeat_time = rtpsession->ssdp_announce_time_sec + curr_time;
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->satpi_version, rtpsession->uuid, rtpsession->bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
-				PERROR("send");
-				return NULL;
+				PERROR("send UPNP_ROOTDEVICE");
 			}
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, rtpsession->uuid, bootId, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_ALIVE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->satpi_version, rtpsession->uuid, rtpsession->uuid, rtpsession->bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
-				PERROR("send");
-				return NULL;
+				PERROR("send UPNP_ALIVE");
 			}
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->uuid, bootId, deviceId);
+			snprintf(msg, sizeof(msg), UPNP_DEVICE, rtpsession->interface.ip_addr, HTTP_PORT, rtpsession->satpi_version, rtpsession->uuid, rtpsession->bootId, deviceId);
 			if (sendto(udp_multi_send.fd, msg, strlen(msg), 0, (struct sockaddr *)&udp_multi_send.addr, sizeof(udp_multi_send.addr)) == -1) {
-				PERROR("send");
-				return NULL;
+				PERROR("send UPNP_DEVICE");
 			}
 		}
 	}
@@ -342,10 +356,13 @@ void start_ssdp(RtpSession_t *rtpsession) {
 /*
  *
  */
-int stop_ssdp() {
+int stop_ssdp(const RtpSession_t *rtpsession) {
 	// Cancel and Join threads
 	pthread_cancel(threadID);
 	pthread_join(threadID, NULL);
+
+	// thread is closed, send bye bye
+	send_byebye(rtpsession->bootId, rtpsession->uuid);
 
 	// last close fd
 	CLOSE_FD(udp_multi_listen.fd);

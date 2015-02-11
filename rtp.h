@@ -103,9 +103,11 @@ typedef struct {
 	char             uuid[40];                //
 
 	pthread_mutex_t  mutex;                   // global mutex
+	const char       *satpi_version;          // version string
 	time_t           appStartTime;            // the application start time (EPOCH)
 	double           rtp_payload;             // Total RTP payload count in MBytes
 	unsigned int     ssdp_announce_time_sec;  // SSDP announce interval
+	unsigned int     bootId;                  // amount of boots untill installation
 } RtpSession_t;
 
 // Initialize RTP/RTCP connection data
