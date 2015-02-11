@@ -203,8 +203,6 @@ static void * thread_work_ssdp(void *arg) {
 
 	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", rtpsession->bootId);
 
-return NULL;
-
 	init_udp_socket(&udp_multi_send, SSDP_PORT, inet_addr("239.255.255.250"));
 	init_mutlicast_udp_socket(&udp_multi_listen, SSDP_PORT, rtpsession->interface.ip_addr);
 
