@@ -12,7 +12,7 @@ Initial working vesion, but a work in progress.
 
 Contact
 -------
-If feel the need to contact me, you can do so by sending an email to:
+If you feel the need to contact me, you can do so by sending an email to:
 
   m.a.postema -at- alice.nl
 
