@@ -874,33 +874,22 @@ static void *thread_work_rtsp(void *arg) {
 								FREE_PTR(sessionID);
 							} else {
 								size_t j;
-								// Try to find already open client
+								// Try to find a free client
 								for (j = 0; j < MAX_CLIENTS; ++j) {
 									client = &rtpsession->client[j];
-									if (client->rtsp.socket.fd == pfd[i].fd) {
-										SI_LOG_INFO("RTSP Client %s: Found by fd: %d with Session ID: %s", client->ip_addr, pfd[i].fd, client->rtsp.sessionID);
+									if (client->rtsp.socket.fd == -1) {
+										// We know that this client gave us no sessionID, check if we need to make a new one
+										if (strcmp(method, "OPTIONS") != 0 && strcmp(method, "DESCRIBE") != 0) {
+											// Generate a new 'random' session ID
+											sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
+											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
+										} else {
+											// Generate an 'empty' session ID to indicate that this client is outside an session 
+											sprintf(client->rtsp.sessionID, "0");
+											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d outide Session", rtspfd[i].ip_addr, pfd[i].fd);
+										}
 										found = 1;
 										break;
-									}
-								}
-								if (!found) {
-									// Try to find a free client
-									for (j = 0; j < MAX_CLIENTS; ++j) {
-										client = &rtpsession->client[j];
-										if (client->rtsp.socket.fd == -1) {
-											// We know that this client gave us no sessionID, check if we need to make a new one
-											if (strcmp(method, "OPTIONS") != 0 && strcmp(method, "DESCRIBE") != 0) {
-												// Generate a new 'random' session ID
-												sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
-												SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
-											} else {
-												// Generate an 'empty' session ID to indicate that this client is outside an session 
-												sprintf(client->rtsp.sessionID, "0");
-												SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d outide Session", rtspfd[i].ip_addr, pfd[i].fd);
-											}
-											found = 1;
-											break;
-										}
 									}
 								}
 							}
@@ -992,6 +981,7 @@ static void *thread_work_rtsp(void *arg) {
 								Client_t *client = &rtpsession->client[j];
 								if (client->rtsp.socket.fd == pfd[i].fd) {
 									SI_LOG_DEBUG("RTSP Client %s: Connection closed with fd: %d and Session ID: %s", client->ip_addr, client->rtsp.socket.fd, client->rtsp.sessionID);
+									client->rtsp.socket.fd = -1;
 									break;
 								}
 							}
