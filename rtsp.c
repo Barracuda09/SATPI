@@ -624,10 +624,9 @@ static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
 		FREE_PTR(attr_desc_str);
 	}
 
-// @TODO: Check if client thinks we are in Session??
-	// Check if we are in session, then we need to send the Session ID
+	// check if we are in session, then we need to send the Session ID
 	char sessionID[50] = "";
-	if (client->fe) {
+	if (strlen(client->rtsp.sessionID) > 2) {
 		snprintf(sessionID, sizeof(sessionID), RTSP_DESCRIBE_IN_SESSION, client->rtsp.sessionID);
 	}
 
@@ -659,14 +658,21 @@ static int describe_rtsp(Client_t *client, const RtpSession_t *rtpsession) {
  *
  */
 static int options_rtsp(const Client_t *client) {
-#define RTSP_OPTIONS_OK	"RTSP/1.0 200 OK\r\n" \
-                        "CSeq: %d\r\n" \
-                        "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
-                        "Session: %s\r\n" \
-                        "\r\n"
-	char rtspOk[150];
+#define RTSP_OPTIONS_OK      "RTSP/1.0 200 OK\r\n" \
+                             "CSeq: %d\r\n" \
+                             "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
+                             "%s" \
+                             "\r\n"
 
-	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, client->rtsp.sessionID);
+#define RTSP_OPTIONS_SESSION "Session: %s\r\n"
+	char rtspOk[150];
+	char sessionID[50] = "";
+
+	// check if we are in session, then we need to send the Session ID
+	if (strlen(client->rtsp.sessionID) > 2) {
+		snprintf(sessionID, sizeof(sessionID), RTSP_OPTIONS_SESSION, client->rtsp.sessionID);
+	}
+	snprintf(rtspOk, sizeof(rtspOk), RTSP_OPTIONS_OK, client->rtsp.cseq, sessionID);
 
 //	SI_LOG_DEBUG("%s", rtspOk);
 
@@ -849,6 +855,9 @@ static void *thread_work_rtsp(void *arg) {
 						if (dataSize > 0) {
 							Client_t *client = NULL;
 							unsigned int found = 0;
+							// get method
+							char method[15];
+							get_method_from(msg, method);
 							// Look for 'Session' to see if we need to find the correct client
 							char *sessionID = get_header_field_parameter_from(msg, "Session");
 							if (sessionID) {
@@ -879,9 +888,16 @@ static void *thread_work_rtsp(void *arg) {
 									for (j = 0; j < MAX_CLIENTS; ++j) {
 										client = &rtpsession->client[j];
 										if (client->rtsp.socket.fd == -1) {
-											// Generate a new 'random' session ID
-											sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
-											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
+											// We know that this client gave us no sessionID, check if we need to make a new one
+											if (strcmp(method, "OPTIONS") != 0 && strcmp(method, "DESCRIBE") != 0) {
+												// Generate a new 'random' session ID
+												sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
+												SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
+											} else {
+												// Generate an 'empty' session ID to indicate that this client is outside an session 
+												sprintf(client->rtsp.sessionID, "0");
+												SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d outide Session", rtspfd[i].ip_addr, pfd[i].fd);
+											}
 											found = 1;
 											break;
 										}
@@ -918,8 +934,11 @@ static void *thread_work_rtsp(void *arg) {
 									}
 									FREE_PTR(param);
 								}
-								// get parameters from command
-								parse_channel_info_from(msg, client, &rtpsession->fe);
+
+								// get parameters from command, only SETUP and PLAY should have transport parameters
+								if (strcmp(method, "SETUP") == 0 || strcmp(method, "PLAY") == 0) {
+									parse_channel_info_from(msg, client, &rtpsession->fe);
+								}
 
 /* @TODO: Probably not a good idea to do this
 								// Check do we have a VLC client (disable watchdog check)
