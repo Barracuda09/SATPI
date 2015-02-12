@@ -855,9 +855,6 @@ static void *thread_work_rtsp(void *arg) {
 						if (dataSize > 0) {
 							Client_t *client = NULL;
 							unsigned int found = 0;
-							// get method
-							char method[15];
-							get_method_from(msg, method);
 							// Look for 'Session' to see if we need to find the correct client
 							char *sessionID = get_header_field_parameter_from(msg, "Session");
 							if (sessionID) {
@@ -867,29 +864,31 @@ static void *thread_work_rtsp(void *arg) {
 									client = &rtpsession->client[j];
 									if (strncasecmp(client->rtsp.sessionID, sessionID, strlen(client->rtsp.sessionID)) == 0) {
 										SI_LOG_INFO("RTSP Client %s: Found by sessionID %s with fd: %d", client->ip_addr, client->rtsp.sessionID, pfd[i].fd);
-										found = 1;
+										found = 2;
 										break;
 									}
 								}
 								FREE_PTR(sessionID);
 							} else {
 								size_t j;
-								// Try to find a free client
+								// Try to find already open client
 								for (j = 0; j < MAX_CLIENTS; ++j) {
 									client = &rtpsession->client[j];
-									if (client->rtsp.socket.fd == -1) {
-										// We know that this client gave us no sessionID, check if we need to make a new one
-										if (strcmp(method, "OPTIONS") != 0 && strcmp(method, "DESCRIBE") != 0) {
-											// Generate a new 'random' session ID
-											sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
-											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d giving Session ID: %s", rtspfd[i].ip_addr, pfd[i].fd, client->rtsp.sessionID);
-										} else {
-											// Generate an 'empty' session ID to indicate that this client is outside an session 
-											sprintf(client->rtsp.sessionID, "0");
-											SI_LOG_INFO("RTSP Client %s: Found empty slot with fd: %d outide Session", rtspfd[i].ip_addr, pfd[i].fd);
-										}
+									if (client->rtsp.socket.fd == pfd[i].fd) {
+										SI_LOG_INFO("RTSP Client %s: Found by fd: %d", rtspfd[i].ip_addr, pfd[i].fd);
 										found = 1;
 										break;
+									}
+								}
+								if (!found) {
+									// Try to find a free client
+									for (j = 0; j < MAX_CLIENTS; ++j) {
+										client = &rtpsession->client[j];
+										if (client->rtsp.socket.fd == -1) {
+											SI_LOG_INFO("RTSP Client %s: Found empty slot for fd: %d", rtspfd[i].ip_addr, pfd[i].fd);
+											found = 1;
+											break;
+										}
 									}
 								}
 							}
@@ -898,6 +897,21 @@ static void *thread_work_rtsp(void *arg) {
 								// copy 'poll' data to client
 								memcpy(&client->rtsp.socket, &rtspfd[i].socket, sizeof(SocketAttr_t));
 								memcpy(&client->ip_addr, rtspfd[i].ip_addr, 20);
+
+								// get method
+								char method[15];
+								get_method_from(msg, method);
+								if (found == 1) {
+									if (strcmp(method, "OPTIONS") != 0 && strcmp(method, "DESCRIBE") != 0) {
+										// We know that this client gave us no sessionID, now generate a new 'random' session ID
+										sprintf(client->rtsp.sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
+										SI_LOG_INFO("RTSP Client %s: With fd: %d giving Session ID: %s", client->ip_addr, pfd[i].fd, client->rtsp.sessionID);
+									} else {
+										// Generate an 'empty' session ID to indicate that this client is outside an session
+										sprintf(client->rtsp.sessionID, "0");
+										SI_LOG_INFO("RTSP Client %s: With fd: %d is outide Session", client->ip_addr, pfd[i].fd);
+									}
+								}
 
 								// clear some other things and reset watchdog and give some extra timeout
 								client->rtsp.check_watchdog = 1;
