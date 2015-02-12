@@ -661,8 +661,8 @@ void monitor_frontend(FE_Monitor_t *monitor, int showStatus) {
 			if (ioctl(monitor->fd_fe, FE_READ_UNCORRECTED_BLOCKS, &monitor->ublocks) != 0) {
 				monitor->ublocks = -2;
 			}
-			monitor->strength = (monitor->strength * 100) / 0xffff;
-			monitor->snr = (monitor->snr * 100) / 0xffff;
+			monitor->strength = (monitor->strength * 240) / 0xffff;
+			monitor->snr = (monitor->snr * 15) / 0xffff;
 
 			pthread_mutex_unlock(&monitor->mutex);
 

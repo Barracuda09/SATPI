@@ -163,6 +163,9 @@ static void *thread_work_rtp(void *arg) {
 									client->rtp.buffer[2] = ((client->rtp.cseq >> 8) & 0xFF); // sequence number
 									client->rtp.buffer[3] =  (client->rtp.cseq & 0xFF);       // sequence number
 
+									// lock - client data
+									pthread_mutex_lock(&client->mutex);
+									
 									// update timestamp
 									client->rtp.timestamp = time_ms * 90;
 									client->rtp.buffer[4] = (client->rtp.timestamp >> 24) & 0xFF; // timestamp
@@ -179,6 +182,9 @@ static void *thread_work_rtp(void *arg) {
 									// RTP payload in Bytes
 									client->rtp_payload += byte;
 
+									// unlock - client data
+									pthread_mutex_unlock(&client->mutex);
+									
 									// send the RTP packet
 									if (sendto(client->rtp.client.fd, client->rtp.buffer, len, MSG_DONTWAIT,
 												(struct sockaddr *)&client->rtp.client.addr,
@@ -190,6 +196,7 @@ static void *thread_work_rtp(void *arg) {
 								}
 							}
 						} else {
+							// unlock - client data and frontend pointer
 							pthread_mutex_unlock(&client->fe_ptr_mutex);
 							pthread_mutex_unlock(&client->mutex);
 							SI_LOG_ERROR("RTP - No Frontend for client %s (%d - %d) ???", client->ip_addr,
@@ -199,6 +206,7 @@ static void *thread_work_rtp(void *arg) {
 				}
 				break;
 			case Stopping:
+				// lock - client data and frontend pointer
 				pthread_mutex_lock(&client->mutex);
 				pthread_mutex_lock(&client->fe_ptr_mutex);
 				if (client->fe) {
@@ -207,12 +215,14 @@ static void *thread_work_rtp(void *arg) {
 									ntohs(client->rtp.client.addr.sin_port), ntohs(client->rtcp.client.addr.sin_port),
 									(client->rtp_payload / (1024.0 * 1024.0)));
 				}
+				// unlock - frontend pointer
 				pthread_mutex_unlock(&client->fe_ptr_mutex);
 				client->rtp_payload = 0.0;
 				client->rtp.state = Stopped; // first stop, teardown checks this
 				if (client->teardown_session) {
 					client->teardown_session(client);
 				}
+				// unlock - client data
 				pthread_mutex_unlock(&client->mutex);
 				break;
 			case Stopped:

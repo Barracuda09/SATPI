@@ -67,12 +67,13 @@ static uint8_t *get_app_packet(uint32_t ssrc, const Client_t *client, size_t *le
 	app[15] = 0;                   // string length
 	                               // Now the App defined data is added
 
-	// lock - frontend pointer - frontend data - monitor data
+	// lock - frontend pointer
 	pthread_mutex_lock(&((Client_t *)client)->fe_ptr_mutex);
 	if (client->fe) {
 		const char *attr_desc_str = attribute_describe_string(client->fe);
 		*len = snprintf((char*)&app[16], sizeof(app) - 16, "%s", attr_desc_str);
 	}
+	// unlock - frontend pointer
 	pthread_mutex_unlock(&((Client_t *)client)->fe_ptr_mutex);
 
 	// total length and align on 32 bits
@@ -110,20 +111,26 @@ static uint8_t *get_sr_packet(uint32_t ssrc, const Client_t *client, size_t *len
 	sr[5]  = (ssrc >> 16) & 0xff;          // synchronization source
 	sr[6]  = (ssrc >>  8) & 0xff;          // synchronization source
 	sr[7]  = (ssrc >>  0) & 0xff;          // synchronization source
-	sr[8]  = 0;                            // NTP most sign word
-	sr[9]  = 0;                            // NTP most sign word
-	sr[10] = 0;                            // NTP most sign word
-	sr[11] = 0;                            // NTP most sign word
+	
+	const time_t ntp = time(NULL);
+	                                       // NTP integer part
+	sr[8]  = (ntp >> 24) & 0xff;           // NTP most sign word
+	sr[9]  = (ntp >> 16) & 0xff;           // NTP most sign word
+	sr[10] = (ntp >>  8) & 0xff;           // NTP most sign word
+	sr[11] = (ntp >>  0) & 0xff;           // NTP most sign word
+	                                       // NTP fractional part
 	sr[12] = 0;                            // NTP least sign word
 	sr[13] = 0;                            // NTP least sign word
 	sr[14] = 0;                            // NTP least sign word
 	sr[15] = 0;                            // NTP least sign word
-	sr[16] = 0;                            // RTP timestamp RTS
-	sr[17] = 0;                            // RTP timestamp RTS
-	sr[18] = 0;                            // RTP timestamp RTS
-	sr[19] = 0;                            // RTP timestamp RTS
 
+	// lock - client data
 	pthread_mutex_lock(&((Client_t *)client)->mutex);
+	sr[16] = (client->rtp.timestamp >> 24) & 0xff; // RTP timestamp RTS
+	sr[17] = (client->rtp.timestamp >> 16) & 0xff; // RTP timestamp RTS
+	sr[18] = (client->rtp.timestamp >>  8) & 0xff; // RTP timestamp RTS
+	sr[19] = (client->rtp.timestamp >>  0) & 0xff; // RTP timestamp RTS
+
 	sr[20] = (client->spc >> 24) & 0xff;   // sender's packet count SPC
 	sr[21] = (client->spc >> 16) & 0xff;   // sender's packet count SPC
 	sr[22] = (client->spc >>  8) & 0xff;   // sender's packet count SPC
@@ -132,6 +139,7 @@ static uint8_t *get_sr_packet(uint32_t ssrc, const Client_t *client, size_t *len
 	sr[25] = (client->soc >> 16) & 0xff;   // sender's octet count SOC
 	sr[26] = (client->soc >>  8) & 0xff;   // sender's octet count SOC
 	sr[27] = (client->soc >>  0) & 0xff;   // sender's octet count SOC
+	// unlock - client data
 	pthread_mutex_unlock(&((Client_t *)client)->mutex);
 
 	// Sender Report Block n (SR Packet)
@@ -192,19 +200,19 @@ static uint8_t *get_sdes_packet(uint32_t ssrc, size_t *len) {
 	sdes[8]  = 1;                              // CNAME: 1
 	sdes[9]  = 6;                              // length: 6
 	sdes[10] = 'S';                            // data
-	sdes[11] = 'A';                            // data
-	sdes[12] = 'T';                            // data
-	sdes[13] = '>';                            // data
+	sdes[11] = 'a';                            // data
+	sdes[12] = 't';                            // data
+	sdes[13] = 'P';                            // data
 	sdes[14] = 'I';                            // data
-	sdes[15] = 'P';                            // data
+	sdes[15] = 0;                              // data
 	sdes[16] = 2;                              // NAME: 2
 	sdes[17] = 6;                              // length: 6
 	sdes[18] = 'S';                            // data
-	sdes[19] = 'A';                            // data
-	sdes[20] = 'T';                            // data
-	sdes[21] = '>';                            // data
+	sdes[19] = 'a';                            // data
+	sdes[20] = 't';                            // data
+	sdes[21] = 'P';                            // data
 	sdes[22] = 'I';                            // data
-	sdes[23] = 'P';                            // data
+	sdes[23] = 0;                              // data
 
 	*len = sizeof(sdes);
 

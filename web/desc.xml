@@ -7,10 +7,10 @@
 	</specVersion>
 	<device>
 		<deviceType>urn:ses-com:device:SatIPServer:1</deviceType>
-		<friendlyName>SatPI Server is an SAT&gt;IP Server</friendlyName>
+		<friendlyName>SatPI Server</friendlyName>
 		<manufacturer>Marc Postema</manufacturer>
 		<manufacturerURL>https://github.com/Barracuda09/SATPI</manufacturerURL>
-		<modelDescription>SatPI Server</modelDescription>
+		<modelDescription>SatPI is a SAT&gt;IP Server for Linux</modelDescription>
 		<modelName>SatPI Server</modelName>
 		<!-- filled in by server -->
 		<modelNumber>%s</modelNumber>
