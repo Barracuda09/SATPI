@@ -18,7 +18,8 @@ textarea.logtext {
 	width: 85%;
     height: 100%;
     overflow: scroll;
-	white-space: nowrap;
+//	white-space: nowrap;
+	white-space: pre;
     border: 2px outset CadetBlue;
 }
 

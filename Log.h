@@ -1,6 +1,6 @@
-/* applog.h
+/* Log.h
 
-   Copyright (C) 2014 Marc Postema
+   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,21 +16,21 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-
 */
+#ifndef LOG_H_INCLUDE
+#define LOG_H_INCLUDE
 
-#ifndef _APPLOG_H
-#define _APPLOG_H
-
-#include <syslog.h>
+#include <stdio.h>
 #include <errno.h>
+#include <syslog.h>
 #include <string.h>
-#include <stdarg.h>
+
+#include <string>
 
 typedef struct {
 	int priority;
-	char *msg;
-	char timestamp[35];
+	std::string msg;
+	std::string timestamp;
 } LogElem_t;
 
 #define LOG_SIZE 350
@@ -42,23 +42,23 @@ typedef struct {
 	int full;
 } LogBuffer_t;
 
-void satiplog(int priority, const char *fmt, ...);
+void applog(int priority, const char *fmt, ...);
 
-char *make_log_xml();
+std::string make_log_xml();
 
 void open_satip_log();
 void close_satip_log();
 
 #ifdef NDEBUG
-#define PERROR(str)             satiplog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
-#define SI_LOG_INFO(...)        satiplog(LOG_INFO, __VA_ARGS__)
-#define SI_LOG_ERROR(...)       satiplog(LOG_ERR, __VA_ARGS__)
+#define PERROR(str)             applog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
+#define SI_LOG_INFO(...)        applog(LOG_INFO, __VA_ARGS__)
+#define SI_LOG_ERROR(...)       applog(LOG_ERR, __VA_ARGS__)
 #define SI_LOG_DEBUG(...)
 #else
-#define PERROR(str)             satiplog(LOG_ERR, "[%s:%d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
-#define SI_LOG_INFO(fmt, ...)   satiplog(LOG_INFO, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_ERROR(fmt, ...)  satiplog(LOG_ERR, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(fmt, ...)  satiplog(LOG_DEBUG, "[%s:%d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define PERROR(str)             applog(LOG_ERR,   "[%17s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
+#define SI_LOG_INFO(fmt, ...)   applog(LOG_INFO,  "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_ERROR(fmt, ...)  applog(LOG_ERR,   "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(fmt, ...)  applog(LOG_DEBUG, "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
-#endif
+#endif // LOG_H_INCLUDE

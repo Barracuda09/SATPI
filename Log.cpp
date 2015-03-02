@@ -1,6 +1,6 @@
-/* applog.c
+/* Log.cpp
 
-   Copyright (C) 2014 Marc Postema
+   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,17 +16,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-
 */
+#include "Log.h"
+#include "StringConverter.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
-#include <pthread.h>
-
-#include "applog.h"
-#include "utils.h"
+#include <stdarg.h>
+#include <iostream>
 
 static LogBuffer_t satip_log;
 static pthread_mutex_t mutex;
@@ -47,25 +44,15 @@ void open_satip_log() {
 	satip_log.end = 0;
 	satip_log.full = 0;
 	for (i = 0; i < LOG_SIZE; ++i) {
-		satip_log.elem[i].msg = NULL;
 		satip_log.elem[i].priority = 0;
 	}
 }
 
 void close_satip_log() {
-	size_t i;
-	for (i = 0; i < LOG_SIZE; ++i) {
-		if (satip_log.elem[i].msg) {
-			FREE_PTR(satip_log.elem[i].msg);
-			satip_log.elem[i].priority = 0;
-		}
-	}
+	// @TODO destroy mutex??
 }
 
-/*
- *
- */
-void satiplog(int priority, const char *fmt, ...) {
+void applog(int priority, const char *fmt, ...) {
 	pthread_mutex_lock(&mutex);
 
     char txt[1024];
@@ -73,17 +60,15 @@ void satiplog(int priority, const char *fmt, ...) {
     va_start(arglist, fmt);
     vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
     va_end(arglist);
-
+	
 	struct timespec time_stamp;
 	clock_gettime(CLOCK_REALTIME, &time_stamp);
-	char *line;
-	size_t ptr_index = 0;
-	while ((line = get_line_from(txt, &ptr_index, "\r\n")) != NULL) {
+	std::string msg(txt);
+	std::string line;
+	std::string::size_type index = 0;
+	
+	while (StringConverter::getline(msg, index, line, "\r\n")) {
 		const size_t index = satip_log.end;
-		// already filled free it
-		if (satip_log.elem[index].msg) {
-			FREE_PTR(satip_log.elem[index].msg);
-		}
 		satip_log.elem[index].priority = priority;
 		// set timestamp
 		char asc_time[30];
@@ -93,7 +78,9 @@ void satiplog(int priority, const char *fmt, ...) {
 		asc_time[l-1] = 0;
 		// cut line to insert nsec '.000000000'
 		asc_time[19] = 0;
-		snprintf(satip_log.elem[index].timestamp, sizeof(satip_log.elem[index].timestamp), "%s.%09lu %s", &asc_time[0], time_stamp.tv_nsec, &asc_time[20]);
+		char time[100];
+		snprintf(time, sizeof(time), "%s.%09lu %s", &asc_time[0], time_stamp.tv_nsec, &asc_time[20]);
+		satip_log.elem[index].timestamp = time;
 		// set message
 		satip_log.elem[index].msg = line;
 		satip_log.end = (satip_log.end + 1) % LOG_SIZE;
@@ -104,36 +91,41 @@ void satiplog(int priority, const char *fmt, ...) {
 		}
 		// log to syslog
 		if (syslog_on != 0) {
-			syslog(priority, "%zu %s", index, satip_log.elem[index].msg);
+			syslog(priority, "%zu %s", index, satip_log.elem[index].msg.c_str());
 		}
+
+/////////////////////////////////////////////			
+			std::cout << satip_log.elem[index].msg << "\r\n";
+			std::flush(std::cout);
+/////////////////////////////////////////////			
 	}
 	pthread_mutex_unlock(&mutex);
 }
 
-/*
- *
- */
-char *make_log_xml() {
-	char *ptr = NULL;
-
+std::string make_log_xml() {
+	std::string log;
+	
 	// make data xml
-	addString(&ptr, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
-	addString(&ptr, "<loglist>\r\n");
+	log  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n";
 
 	pthread_mutex_lock(&mutex);
 	const size_t size = satip_log.full ? LOG_SIZE :
 	                   ((satip_log.end < satip_log.begin) ? (satip_log.end + LOG_SIZE - satip_log.begin) :
 	                                                        (satip_log.end - satip_log.begin));
+
 	size_t i;
 	size_t l = satip_log.begin;
 	for (i = 0; i < size; ++i) {
-		char *line = make_xml_string(satip_log.elem[l].msg);
-		addString(&ptr, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n", satip_log.elem[l].timestamp, line, satip_log.elem[l].priority);
+		std::string line = StringConverter::makeXMLString(satip_log.elem[l].msg);
+		const size_t size = line.size() + satip_log.elem[l].timestamp.size() + 100;
+		char *tmp = new char[size+1];
+		snprintf(tmp, size, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n", satip_log.elem[l].timestamp.c_str(), line.c_str(), satip_log.elem[l].priority);
+		log += tmp;
+		delete[] tmp;
 		l = (l + 1) % LOG_SIZE;
-		FREE_PTR(line);
 	}
 	pthread_mutex_unlock(&mutex);
 
-	addString(&ptr, "</loglist>\r\n");
-	return ptr;
+	log += "</loglist>";
+	return log;
 }

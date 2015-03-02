@@ -1,6 +1,6 @@
-/* rtsp.h
+/* Properties.cpp
 
-   Copyright (C) 2014 Marc Postema
+   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,19 +16,28 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-
 */
+#include "Properties.h"
+#include "Log.h"
+#include "Utils.h"
 
-#ifndef _RTSP_H
-#define _RTSP_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "connection.h"
-#include "rtp.h"
+extern const char *satpi_version;
 
-// Start RTSP
-void start_rtsp(RtpSession_t *rtpsession);
+Properties::Properties(const std::string &uuid, const std::string &delsysString) :
+		_delsysString(delsysString),
+		_uuid(uuid),
+		_versionString(satpi_version),
+		_bootID(1),
+		_deviceID(1),
+		_ssdpAnnounceTimeSec(60),
+		_appStartTime(time(NULL)) {;}
 
-// Stop RTSP
-int stop_rtsp(RtpSession_t *rtpsession);
+Properties::~Properties() {;}
 
-#endif

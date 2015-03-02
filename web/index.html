@@ -25,6 +25,15 @@
 		appdata = xmlDoc.getElementsByTagName("appdata");
 		page +=  "<table border='5' style=\"width:85%\">";
 		page +=  "<tr>";
+			page +=  "<tr>";
+			page +=  "<td>";
+			page +=  "Version";
+			page +=  "</td>";
+			page +=  "<td colspan=2>";
+			page +=  appdata[0].getElementsByTagName("appversion")[0].childNodes[0].nodeValue;
+			page +=  "</td>";
+			page +=  "</tr>";
+			
 			uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
 			min = Math.round((uptime/60) - 0.5);
 			hours = Math.round((min/60) - 0.5);
@@ -44,16 +53,35 @@
 			page +=  min + " min ";
 			page +=  sec + " sec";
 			page +=  "</td></tr>";
+			
 			page +=  "<tr>";
 			page +=  "<td>";
-			page +=  "RTP Payload";
+			page +=  "UUID";
 			page +=  "</td>";
 			page +=  "<td colspan=2>";
-			page +=  appdata[0].getElementsByTagName("rtppayload")[0].childNodes[0].nodeValue;
+			page +=  appdata[0].getElementsByTagName("uuid")[0].childNodes[0].nodeValue;
+			page +=  "</td>";
+			page +=  "</tr>";
+
+			page +=  "<tr>";
+			page +=  "<td>";
+			page +=  "Boot ID";
+			page +=  "</td>";
+			page +=  "<td colspan=2>";
+			page +=  appdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
+			page +=  "</td>";
+			page +=  "</tr>";
+			page +=  "<tr>";
+			
+			page +=  "<td>";
+			page +=  "Device ID";
+			page +=  "</td>";
+			page +=  "<td colspan=2>";
+			page +=  appdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
 		page +=  "</table><br>";
-
+/*
 		pidlist = xmlDoc.getElementsByTagName("pidlist");
 		for (j = 0; j < pidlist.length; j++) {
 			if (pidlist[j].getElementsByTagName("pid")) {
@@ -81,7 +109,7 @@
 			page += "</tr>";
 		}
 		page +=  "</table><br>";
-		
+	*/	
 		return page;
 	}
     function updatePage() {

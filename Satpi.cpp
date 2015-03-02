@@ -18,36 +18,26 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 
 */
-#define _GNU_SOURCE
+#include "RtspServer.h"
+#include "HttpServer.h"
+#include "SsdpServer.h"
+#include "Streams.h"
+#include "InterfaceAttr.h"
+#include "Properties.h"
+#include "Log.h"
+#include "StringConverter.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
-#include <pthread.h>
-
-#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/mman.h>
+#include <fcntl.h>
 
-#include <linux/types.h>
-
-#include "tune.h"
-#include "ssdp.h"
-#include "rtsp.h"
-#include "rtp.h"
-#include "rtcp.h"
-#include "http.h"
-#include "utils.h"
-#include "applog.h"
-
-#define DAEMON_NAME "SatPI Server"
+#define DAEMON_NAME "SatPI"
 #define LOCK_FILE   "SatPI.lock"
 
 #define EXIT_SUCCESS 0
@@ -56,8 +46,6 @@
 int exitApp;
 static int retval;
 static int otherSig;
-
-static RtpSession_t rtpsession;
 
 /*
  *
@@ -204,8 +192,7 @@ static void printUsage(const char *prog_name) {
            "\t--help         show this help and exit\r\n" \
            "\t--version      show the version number\r\n" \
            "\t--user xx      run as user\r\n" \
-           "\t--no-daemon    do not daemonize\r\n" \
-           "\t--no-rtcp      do NOT send RTCP packets\r\n"
+           "\t--no-daemon    do NOT daemonize\r\n" \
            "\t--no-ssdp      do NOT advertise server\r\n", prog_name);
 }
 
@@ -213,25 +200,22 @@ static void printUsage(const char *prog_name) {
  *
  */
 int main(int argc, char *argv[]) {
-	int ssdp = 1;
-	int rtcp = 1;
-	int daemon = 1;
+	bool ssdp = true;
+	bool daemon = true;
 	int i;
 	char *user = NULL;
 	extern const char *satpi_version;
 	exitApp = 0;
-
+	
 	// Check options
 	for (i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "--no-rtcp") == 0) {
-			rtcp = 0;
-		} else if (strcmp(argv[i], "--no-ssdp") == 0) {
-			ssdp = 0;
+		if (strcmp(argv[i], "--no-ssdp") == 0) {
+			ssdp = false;
 		} else if (strcmp(argv[i], "--user") == 0) {
 			user = argv[i+1];
 			++i; // because next was the user-name
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
-			daemon = 0;
+			daemon = false;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			printf("SatPI version: %s\r\n", satpi_version);
 			return EXIT_SUCCESS;
@@ -256,59 +240,38 @@ int main(int argc, char *argv[]) {
 	}
 
 	// notify we are alive
-	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
+	SI_LOG_INFO("--- starting SatPI version: %s ---", "1.2");
 
-	// detect the attached frontends and get frontend properties
-	if (detect_attached_frontends("/dev/dvb", &rtpsession.fe) == 0) {
-		printf("Error: No frontend found!!\n");
-//		return EXIT_FAILURE;
-	}
+	char msg[] = "SETUP rtsp://10.201.2.191/stream=0 RTSP/1.0";
+	int streamID = StringConverter::getIntParameter(msg, "SETUP", "stream");
+	SI_LOG_INFO("streamID %d", streamID);
 
-	// initialize all variables
-	rtpsession.satpi_version = satpi_version;
-	init_rtp(&rtpsession);
+	
+	InterfaceAttr interface;
+	Streams streams;
+	streams.enumerateFrontends("/dev/dvb");
+	
+	Properties properties(interface.getUUID(), streams.getXMLDeliveryString());
 
-	// get interface IP and MAC addresses
-	get_interface_properties(&rtpsession.interface);
+	RtspServer server(streams, interface.getIPAddress());
 
-	// Make UUID with MAC address
-	snprintf(rtpsession.uuid, sizeof(rtpsession.uuid), "50c958a8-e839-4b96-b7ae-%s", rtpsession.interface.mac_addr);
+	HttpServer httpserver(streams, interface, properties);
 
-	start_rtsp(&rtpsession);
-	start_http(&rtpsession);
-	start_rtp(&rtpsession);
-
-	if (rtcp) {
-		start_rtcp(&rtpsession);
-	}
-
-	// as last start server advertisements if requested
+	SsdpServer ssdpserver(interface, properties);
 	if (ssdp) {
-		start_ssdp(&rtpsession);
+		ssdpserver.startThread();
 	}
-
+	
 	// Loop
 	while (!exitApp) {
-		usleep(150000);
+		usleep(12000);
 	}
-
-	stop_rtsp(&rtpsession);
-
-	// cleanup threads
-	stop_http();
-	if (ssdp) {
-		stop_ssdp(&rtpsession);
-	}
-	stop_rtp(&rtpsession);
-
 	SI_LOG_INFO("--- stopped ---");
-
-	// close our logging
-	close_satip_log();
 
 	// close logging interface
 	closelog();
-	return retval;
+
+	return EXIT_SUCCESS;
 }
 
 

@@ -1,6 +1,6 @@
-/* utils.h
+/* Utils.h
 
-   Copyright (C) 2014 Marc Postema
+   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,48 +16,25 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-
 */
+#ifndef UTILS_H_INCLUDE
+#define UTILS_H_INCLUDE
 
-#ifndef _UTILS_H
-#define _UTILS_H
+#include <unistd.h>
+#include <stdlib.h>
 
 #define UNUSED(x) (void)x;
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))
 
-#define CLOSE_FD(x) if (x != -1) { if (close(x) == -1) { PERROR("close error"); } x = -1; }
+#define CLOSE_FD(x) if (x != -1) { if (::close(x) == -1) { PERROR("close error"); } x = -1; }
 
 #define FREE_PTR(x) \
 	{ \
 		if (x != NULL) { \
-			free(x); \
+			::free(x); \
 			x = NULL; \
 		} \
 	}
-
-// 
-char *get_line_from(const char *buf, size_t *ptr_index, const char *line_delim);
-
-//
-char *get_header_field_from(const char *buf, const char *header_field);
-
-//
-char *get_header_field_parameter_from(const char *buf, const char *header_field);
-
-//
-void get_method_from(const char *buf, char *method);
-
-//
-char *get_content_type_from(const char *msg);
-
-//
-char *make_xml_string(char *str);
-
-// 
-size_t addString(char **str, const char *fmt, ...);
-
-// get time of day in ms
-long getmsec();
-
-#endif
+	
+#endif // UTILS_H_INCLUDE

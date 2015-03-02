@@ -30,76 +30,52 @@
 	
     function buildcontent(xmlDoc) {
 		page = "";
-		
-		appdata = xmlDoc.getElementsByTagName("appdata");
-		page +=  "<table border='5' style=\"width:85%\">";
-			page +=  "<tr>";
-			uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
-			min = Math.round((uptime/60) - 0.5);
-			hours = Math.round((min/60) - 0.5);
-			days = Math.round((hours/24) - 0.5);
-			sec = uptime % 60;
-			min -= (hours * 60);
-			hours -= (days * 24);
-			page +=  "<td>";
-			page +=  "Uptime";
-			page +=  "</td>";
-			page +=  "<td>";
-			page +=  uptime;
-			page +=  "</td>";
-			page +=  "<td>";
-			page +=  days + " days ";
-			page +=  hours + " hours ";
-			page +=  min + " min ";
-			page +=  sec + " sec";
-			page +=  "</td></tr>";
-			page +=  "<tr>";
-			page +=  "<td>";
-			page +=  "RTP Payload";
-			page +=  "</td>";
-			page +=  "<td colspan=2>";
-			page +=  appdata[0].getElementsByTagName("rtppayload")[0].childNodes[0].nodeValue;
-			page +=  "</td>";
-			page +=  "</tr>";
-		page +=  "</table><br>";
 
-		frontend = xmlDoc.getElementsByTagName("frontend");
-		if (frontend.length > 0) {
-			frontenddata = frontend[0].getElementsByTagName("frontenddata");
-			if (frontenddata.length > 0) {
+		streams = xmlDoc.getElementsByTagName("streams");
+		if (streams.length > 0) {
+			stream = streams[0].getElementsByTagName("stream");
+			if (stream.length > 0) {
 				page +=  "<table border='5' style=\"width:85%\">";
-				page += "<tr class=\"separator\"><th colspan=\"" + (frontenddata.length+1) + "\">Frontend Info</th></tr>";
-				page += addTableLineEntry(frontenddata, "Frontend Index", "frontendindex");
-//				page += addTableLineEntry(frontenddata, "Reset", "inputtype");
-				page += addTableLineEntry(frontenddata, "Name", "frontendname");
-				page += addTableLineEntry(frontenddata, "Path", "pathname");
-				page += addTableLineEntry(frontenddata, "Attached", "attached");
-				page += addTableLineEntry(frontenddata, "Freq Range", "freq");
-				page += addTableLineEntry(frontenddata, "Symbol Rate Range", "symbol");
-				page += "<tr class=\"separator\"><th colspan=\"" + (frontenddata.length+1) + "\">Channel Info</th></tr>";
-				delsys = addTableLineEntry(frontenddata, "Delivery System", "delsys");
+				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Frontend Info</th></tr>";
+				page += addTableLineEntry(stream, "Stream Index", "streamindex");
+				page += addTableLineEntry(stream, "Attached", "attached");
+				page += addTableLineEntry(stream, "Name", "frontendname");
+				page += addTableLineEntry(stream, "Path", "pathname");
+				page += addTableLineEntry(stream, "Freq Range", "freq");
+				page += addTableLineEntry(stream, "Symbol Rate Range", "symbol");
+
+				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Stream Info</th></tr>";
+				page += addTableLineEntry(stream, "Owner", "owner");
+				page += addTableLineEntry(stream, "Session ID", "ownerSessionID");
+				page += addTableLineEntry(stream, "RTP packet count", "spc");
+				page += addTableLineEntry(stream, "RTP streamed", "payload");				
+
+				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
+				delsys = addTableLineEntry(stream, "Delivery System", "delsys");
 				page += delsys;
-				page += addTableLineEntry(frontenddata, "Tune Freq", "tunefreq");
-				page += addTableLineEntry(frontenddata, "Modulation", "modulation");
-				page += addTableLineEntry(frontenddata, "Fec", "fec");
-				page += addTableLineEntry(frontenddata, "Symbol Rate", "tunesymbol");
-				page += addTableLineEntry(frontenddata, "Rolloff", "rolloff");
-				page += addTableLineEntry(frontenddata, "Source", "src");
-				page += addTableLineEntry(frontenddata, "Polarization", "pol");
-				page += "<tr class=\"separator\"><th colspan=\"" + (frontenddata.length+1) + "\">Monitor Info</th></tr>";
-				page += addTableLineEntry(frontenddata, "Status", "status");
-				page += addTableLineEntry(frontenddata, "Signal Strength", "signal");
-				page += addTableLineEntry(frontenddata, "snr", "snr");
-				page += addTableLineEntry(frontenddata, "ber", "ber");
-				page += addTableLineEntry(frontenddata, "unc", "unc");
-				
+				page += addTableLineEntry(stream, "Tune Freq", "tunefreq");
+				page += addTableLineEntry(stream, "Modulation", "modulation");
+				page += addTableLineEntry(stream, "Fec", "fec");
+
+				page += addTableLineEntry(stream, "Symbol Rate", "tunesymbol");
+				page += addTableLineEntry(stream, "Rolloff", "rolloff");
+				page += addTableLineEntry(stream, "Source", "src");
+				page += addTableLineEntry(stream, "Polarization", "pol");
+
+				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Monitor Info</th></tr>";
+				page += addTableLineEntry(stream, "Status", "status");
+				page += addTableLineEntry(stream, "Signal Strength", "signal");
+				page += addTableLineEntry(stream, "snr", "snr");
+				page += addTableLineEntry(stream, "ber", "ber");
+				page += addTableLineEntry(stream, "unc", "unc");
+
 				page +=  "</table><br>";
 			}
 		}		
 		return page;
 	}
     function updatePage() {
-		loadXMLDoc("frontend.xml");
+		loadXMLDoc("streams.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {

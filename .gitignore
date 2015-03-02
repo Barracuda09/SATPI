@@ -1,4 +1,4 @@
-version.c
+version.cpp
 *.o
 satpi
 *.*~

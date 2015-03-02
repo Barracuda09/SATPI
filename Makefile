@@ -3,7 +3,7 @@
 ###############################################################################
 
 # Set the compiler being used.
-CC = $(CCPREFIX)gcc
+CC = $(CCPREFIX)g++
 
 # Includes needed for proper compilation
 INCLUDES =
@@ -30,24 +30,32 @@ else
 endif
 
 # List of source to be compiled
-SOURCES = tune.c \
-	version.c \
-	ssdp.c \
-	rtsp.c \
-	rtp.c \
-	rtcp.c \
-	http.c \
-	utils.c \
-	connection.c \
-	applog.c \
-	satpi.c
+SOURCES = Version.cpp \
+	Satpi.cpp \
+	ChannelData.cpp \
+	StreamProperties.cpp \
+	Properties.cpp \
+	StringConverter.cpp \
+	Log.cpp \
+	HttpcSocket.cpp \
+	TcpSocket.cpp \
+	UdpSocket.cpp \
+	Frontend.cpp \
+	StreamClient.cpp \
+	Streams.cpp \
+	Stream.cpp \
+	HttpServer.cpp \
+	RtspServer.cpp \
+	SsdpServer.cpp \
+	RtpThread.cpp \
+	RtcpThread.cpp
 
 # use wildcard expansion when the variable is assigned.
 # (otherwise the variable will just contain the string '*.h' instead of the complete file list)
 HEADERS = $(wildcard *.h)
 
 #Objectlist is identical to Sourcelist except that all .c extensions need to be replaced by .o extension.
-OBJECTS = $(SOURCES:.c=.o)
+OBJECTS = $(SOURCES:.cpp=.o)
 
 #Resulting Executable name
 EXECUTABLE = satpi
@@ -61,11 +69,11 @@ $(EXECUTABLE): $(OBJECTS)
 # A pattern rule is used to build objects from 'cpp' files
 # $< represents the first item in the dependencies list
 # $@ represents the targetname
-%.o: %.c $(HEADERS)
+%.o: %.cpp $(HEADERS)
 	$(CC) -c $(CFLAGS) $<
 
-# Create version.c
-version.c: FORCE
+# Create version.cpp
+Version.cpp: FORCE
 	./version.sh $@ > /dev/null
 
 FORCE:
@@ -79,4 +87,4 @@ simu:
 
 .PHONY: clean
 clean:
-	rm -rf *.o $(EXECUTABLE) version.c *.*~ *~ /web/*.*~
+	rm -rf *.o $(EXECUTABLE) version.cpp *.*~ *~ /web/*.*~
