@@ -71,7 +71,7 @@ static uint8_t *get_app_packet(uint32_t ssrc, const Client_t *client, size_t *le
 	pthread_mutex_lock(&((Client_t *)client)->fe_ptr_mutex);
 	if (client->fe) {
 		const char *attr_desc_str = attribute_describe_string(client->fe);
-		*len = snprintf((char*)&app[16], sizeof(app) - 16, "%s", attr_desc_str);
+		*len = snprintf(app + 16, sizeof(app) - 16, "%s", attr_desc_str);
 	}
 	// unlock - frontend pointer
 	pthread_mutex_unlock(&((Client_t *)client)->fe_ptr_mutex);
