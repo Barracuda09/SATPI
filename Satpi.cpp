@@ -240,12 +240,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// notify we are alive
-	SI_LOG_INFO("--- starting SatPI version: %s ---", "1.2");
-
-	char msg[] = "SETUP rtsp://10.201.2.191/stream=0 RTSP/1.0";
-	int streamID = StringConverter::getIntParameter(msg, "SETUP", "stream");
-	SI_LOG_INFO("streamID %d", streamID);
-
+	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
 	
 	InterfaceAttr interface;
 	Streams streams;
