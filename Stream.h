@@ -69,6 +69,10 @@ class Stream  {
 		                     const std::string &method,
 		                     int &clientID);
 
+		///
+		void copySocketClientAttr(const SocketClient &socketClient);
+
+		///
 		bool streamInUse() const { return _streamInUse; }
 
 	

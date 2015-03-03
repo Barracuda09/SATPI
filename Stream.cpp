@@ -83,6 +83,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	return false;
 }
 
+void Stream::copySocketClientAttr(const SocketClient &socketClient) {
+	_client[0].copySocketClientAttr(socketClient);
+}
+
 void Stream::checkStreamClientsWithTimeout() {
 // @TODO Should close connection to client!!!
 	for (size_t i = 0; i < MAX_CLIENTS; ++i) {

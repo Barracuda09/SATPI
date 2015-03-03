@@ -213,6 +213,7 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 		} else {
 			SI_LOG_INFO("Found message outside session");
 			socketClient.setSessionID("-1");
+			_dummyStream.copySocketClientAttr(socketClient);
 			return &_dummyStream;
 		}
 	}
