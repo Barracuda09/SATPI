@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="stylesheet.css">
 <title>SAT>IP - Frontend info Page</title>
 
@@ -27,7 +30,7 @@
 		page +=  "</tr>";
 		return entry;
 	}
-	
+
     function buildcontent(xmlDoc) {
 		page = "";
 
@@ -35,7 +38,7 @@
 		if (streams.length > 0) {
 			stream = streams[0].getElementsByTagName("stream");
 			if (stream.length > 0) {
-				page +=  "<table border='5' style=\"width:85%\">";
+				page +=  "<table class='table table-bordered table-striped'>";
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Frontend Info</th></tr>";
 				page += addTableLineEntry(stream, "Stream Index", "streamindex");
 				page += addTableLineEntry(stream, "Attached", "attached");
@@ -48,7 +51,7 @@
 				page += addTableLineEntry(stream, "Owner", "owner");
 				page += addTableLineEntry(stream, "Session ID", "ownerSessionID");
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
-				page += addTableLineEntry(stream, "RTP streamed", "payload");				
+				page += addTableLineEntry(stream, "RTP streamed", "payload");
 
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
 				delsys = addTableLineEntry(stream, "Delivery System", "delsys");
@@ -71,7 +74,7 @@
 
 				page +=  "</table><br>";
 			}
-		}		
+		}
 		return page;
 	}
     function updatePage() {
@@ -85,24 +88,38 @@
 
 </head>
 <body>
-<div id="header">
+<nav class="navbar navbar-inverse navbar-fixed-top">
+     <div class="container">
+       <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+           <span class="sr-only">Toggle navigation</span>
+           <span class="icon-bar"></span>
+           <span class="icon-bar"></span>
+           <span class="icon-bar"></span>
+         </button>
+         <a class="navbar-brand" href="#">SAT>IP</a>
+       </div>
+       <div id="navbar" class="collapse navbar-collapse">
+         <ul class="nav navbar-nav">
+           <li><a href="index.html">Home</a></li>
+           <li><a href="log.html">Log</a></li>
+           <li class="active"><a href="frontend.html">Frontend</a></li>
+           <li><a href="config.html">Configure</a></li>
+           <li><a href="#contact">Contact</a></li>
+           <li><a href="#about">About</a></li>
+           <li><a href="STOP">Stop</a></li>
+         </ul>
+       </div>
+     </div>
+</nav><!-- nav end -->
+
+<div class="container-fluid">
+<div class="start">
 <h3>SAT>IP Frontend Info Page</h3>
-</div>
-
-<div id="nav">
-<ul class="menu_ul">
-  <li class="menu_il"><a href="index.html">Home</a></li>
-  <li class="menu_il"><a href="log.html">Log</a></li>
-  <li class="menu_il"><a href="frontend.html">Frontend</a></li>
-  <li class="menu_il"><a href="config.html">Configure</a></li>
-  <li class="menu_il"><a href="#contact">Contact</a></li>
-  <li class="menu_il"><a href="#about">About</a></li>
-  <li class="menu_il"><a href="STOP">Stop</a></li>
-</ul>
-</div>
-
-<div id="content" class="log">
+<div class="table-responsive">
+<div id="content">
 <div id="content"></div>
+</div>
 </div>
 
 <script>
@@ -110,9 +127,12 @@
     updatePage();
     setInterval("updatePage()", refresh_time);
 </script>
+</div>
+</div>
 
-<div id="footer">
- Copyright &#169; 2014 Marc Postema
+<div class="navbar navbar-default navbar-fixed-bottom">
+  <div class="container">
+    <p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
 </div>
 
 </body>
