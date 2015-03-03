@@ -3,6 +3,7 @@ version.cpp
 satpi
 *.*~
 /web/*.*~
+/web/Thumbs.db
 *~
 bootID
 

@@ -25,7 +25,7 @@ textarea.logtext {
 
 tr.separator {
     color: white;
-    background-color: LightGray;
+    background-color: Gray;
 }
 
 ul.menu_ul {
@@ -86,7 +86,6 @@ a:hover, a:active {
 
 body {
 	background-image: url("grid_noise.png");
-//    background-color: DarkSalmon ;
     height: auto;
     padding: 5px;
 }
