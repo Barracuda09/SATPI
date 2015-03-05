@@ -38,12 +38,12 @@ class ThreadBase {
 			return (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
 		}
 
-		/// Cancel the running thread
+		/// Is thread still running
 		bool running() const {
 			return _run;
 		}
 		
-		/// Cancel the running thread
+		/// Stop the running thread
 		void stopThread() {
 			_run = false;
 		}
