@@ -88,7 +88,8 @@ int TcpSocket::poll(int timeout) {
 								break;
 							}
 						}
-						CLOSE_FD(_pfd[i].fd);
+						close(_pfd[i].fd);
+						_pfd[i].fd = -1;
 					}
 				}
 			}

@@ -36,16 +36,13 @@ class StreamClient {
 		// =======================================================================
 		StreamClient();
 		virtual ~StreamClient();
-	
-		///
-		void close();
-		
+
 		///
 		void teardown(bool gracefull);
-		
+
 		///
 		void restartWatchDog();
-		
+
 		///
 		bool checkWatchDogTimeout();
 
@@ -82,7 +79,7 @@ class StreamClient {
 
 		const struct sockaddr_in &getRtpSockAddr() const;
 		const struct sockaddr_in &getRtcpSockAddr() const;
-		
+
 		// =======================================================================
 		// Data members
 		// =======================================================================

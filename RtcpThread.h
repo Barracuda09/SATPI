@@ -77,7 +77,6 @@ class RtcpThread :
 		uint8_t  _srb[24];              // Sender Report Block n (SR Packet)
 		uint8_t  _sdes[24];             // Source Description (SDES Packet)
 		uint8_t  _app[500];             // Application Defined packet (APP Packet)
-
 }; // class RtcpThread
 
 #endif // RTCP_THREAD_H_INCLUDE

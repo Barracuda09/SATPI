@@ -39,21 +39,18 @@ StreamClient::StreamClient() :
 
 StreamClient::~StreamClient() {;}
 
-void StreamClient::setCanClose(bool close)    {
+void StreamClient::setCanClose(bool close) {
 	SI_LOG_DEBUG("Connection can close: %d", close);
 	_canClose = close;
-}
-
-void StreamClient::close() {
-	_sessionID = "-1";
-	_ip_addr = "0.0.0.0";
 }
 
 void StreamClient::teardown(bool gracefull) {
 	_watchdog = 0;
 	_canClose = true;
 	if (!gracefull) {
-		close();
+		_sessionID = "-1";
+		_ip_addr = "0.0.0.0";
+
 		CLOSE_FD(_rtspFD);
 	}
 	_rtspFD = -1;

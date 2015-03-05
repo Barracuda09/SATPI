@@ -113,8 +113,8 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 
 int Streams::enumerateFrontends(const std::string &path) {
 #ifdef NOT_PREFERRED_DVB_API
-	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
-	SI_LOG_ERROR("current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
+	SI_LOG_DEBUG("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 #endif
 
 	SI_LOG_INFO("Detecting frontends in: %s", path.c_str());

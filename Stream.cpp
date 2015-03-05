@@ -1,4 +1,4 @@
-/* tream.cpp
+/* Stream.cpp
 
    Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
@@ -61,10 +61,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != SYS_UNDEFINED) {
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s for %s", 
-							_properties.getStreamID(), i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
+				            _properties.getStreamID(), i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 			} else {
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s", 
-							_properties.getStreamID(), i, sessionID.c_str());
+				            _properties.getStreamID(), i, sessionID.c_str());
 			}
 			_client[i].copySocketClientAttr(socketClient);
 			_client[i].setSessionID(sessionID);
@@ -75,10 +75,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	}
 	if (msys != SYS_UNDEFINED) {
 		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s for %s",
-					_properties.getStreamID(), sessionID.c_str(), StringConverter::delsys_to_string(msys));
+		            _properties.getStreamID(), sessionID.c_str(), StringConverter::delsys_to_string(msys));
 	} else {
 		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s",
-					_properties.getStreamID(), sessionID.c_str());
+		            _properties.getStreamID(), sessionID.c_str());
 	}
 	return false;
 }
@@ -88,7 +88,6 @@ void Stream::copySocketClientAttr(const SocketClient &socketClient) {
 }
 
 void Stream::checkStreamClientsWithTimeout() {
-// @TODO Should close connection to client!!!
 	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].checkWatchDogTimeout()) {
 			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
@@ -108,12 +107,16 @@ void Stream::startStreaming() {
 void Stream::close(int clientID) {
 	if (_client[clientID].canClose()) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
-					_properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
+		            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
+
+		processStopStream(clientID, false);
+/*
 		_client[clientID].close();
 		if (clientID == 0) {
-	// @TODO Stop all other StreamClients here??
+// @TODO Stop all other StreamClients here??
 			_streamInUse = false;
 		}
+*/
 	}
 }
 
@@ -121,6 +124,11 @@ bool Stream::teardown(int clientID, bool gracefull) {
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
 
+	processStopStream(clientID, gracefull);
+	return true;
+}
+
+void Stream::processStopStream(int clientID, bool gracefull) {
 	_rtpThread.stopStreaming(clientID);
 	_rtcpThread.stopStreaming(clientID);
 	_frontend.teardown(_properties.getChannelData(), _properties.getStreamID());
@@ -133,7 +141,6 @@ bool Stream::teardown(int clientID, bool gracefull) {
 		_properties.setStreamActive(false);
 		_streamInUse = false;
 	}
-	return true;
 }
 
 bool Stream::updateFrontend() {
@@ -175,6 +182,14 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	}
 	_client[clientID].setCanClose(canClose);
 
+/*
+	// Close connection or keep-alive
+	std::string connState;
+	const bool foundConnection = StringConverter::getHeaderFieldParameter(msg, "Connection:", connState);
+	const bool connectionClose = foundConnection && (strncasecmp(connState.c_str(), "Close", 5) == 0);
+	_client[clientID].setCanClose(!connectionClose);
+*/
+
 	_client[clientID].restartWatchDog();
 	return true;
 }
@@ -206,8 +221,21 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	if ((intVal = StringConverter::getIntParameter(msg, method, "src=")) != -1) {
 		setLNBSource(intVal);
 	}
+	if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
+		// "on", "off"[, "auto"]
+		if (strVal.compare("on") == 0) {
+			setPilotTones(PILOT_ON);
+		} else if (strVal.compare("off") == 0) {
+			setPilotTones(PILOT_OFF);
+		} else if (strVal.compare("auto") == 0) {
+			setPilotTones(PILOT_AUTO);
+		} else {
+			SI_LOG_ERROR("Unknown Pilot Tone [%s]", strVal.c_str());
+			setPilotTones(PILOT_AUTO);
+		}
+	}
 	if (StringConverter::getStringParameter(msg, method, "ro=", strVal) == true) {
-		// "0.35", "0.25", "0.20"
+		// "0.35", "0.25", "0.20"[, "auto"]
 		if (strVal.compare("0.35") == 0) {
 			setRollOff(ROLLOFF_35);
 		} else if (strVal.compare("0.25") == 0) {
@@ -283,7 +311,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 		}
 	}
 	if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
-		// "2k", "4k", "8k", "1k", "16k", "32k"
+		// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
 		if (strVal.compare("1k") == 0) {
 			setTransmissionMode(TRANSMISSION_MODE_1K);
 		} else if (strVal.compare("2k") == 0) {
@@ -317,6 +345,8 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 			setGuardInverval(GUARD_INTERVAL_19_128);
 		} else if (gi == 19256) {
 			setGuardInverval(GUARD_INTERVAL_19_256);
+		} else {
+			setGuardInverval(GUARD_INTERVAL_AUTO);
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "plp=")) != -1) {
