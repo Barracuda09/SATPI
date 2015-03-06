@@ -259,11 +259,11 @@ uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
 	sdes[13] = 'P';                            // data
 	sdes[14] = 'I';                            // data
 	sdes[15] = 0;                              // data
-
+	
+	sdes[16] = 0;                              // data
 	sdes[17] = 0;                              // data
 	sdes[18] = 0;                              // data
 	sdes[19] = 0;                              // data
-	sdes[20] = 0;                              // data
 
 	*len = sizeof(sdes);
 
