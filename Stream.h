@@ -114,6 +114,7 @@ class Stream  {
 		void setLNBSource(int source)                       { _properties.getChannelData().src = source; 	}
 		void setRollOff(int rolloff)                        { _properties.getChannelData().rolloff = rolloff; }
 		void setFEC(int fec)                                { _properties.getChannelData().fec = fec; }
+		void setPilotTones(int pilot)                       { _properties.getChannelData().pilot = pilot; }
 		void setSpectralInversion(int specinv)              { _properties.getChannelData().inversion = specinv; }
 		void setBandwidth(int bandwidth)                    { _properties.getChannelData().bandwidth = bandwidth; }
 		void setTransmissionMode(int transmission)          { _properties.getChannelData().transmission = transmission; }
@@ -129,6 +130,9 @@ class Stream  {
 	
 		///
 		void processPID(const std::string &pids, bool add);
+		
+		///
+		void processStopStream(int clientID, bool gracefull);
 
 		// =======================================================================
 		// Data members

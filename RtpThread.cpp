@@ -62,7 +62,7 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 }
 
 RtpThread::~RtpThread() {
-	cancelThread();
+	stopThread();
 	joinThread();
 }
 
@@ -82,23 +82,23 @@ bool RtpThread::startStreaming(int fd_dvr) {
 	}
 	if (!startThread()) {
 		SI_LOG_ERROR("Stream: %d, ERROR RTP Start streaming to %s (%d - %d)", _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-											  _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+		             _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
 		return false;
 	}
 	SI_LOG_INFO("Stream: %d, Start RTP streaming to %s (%d - %d)", _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-										  _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+	            _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
 	return true;
 }
 
 void RtpThread::stopStreaming(int clientID) {
-// @TODO maybe not cancelThread, but use a controlled shutdown?
-	cancelThread();
-	joinThread();
-	
-	SI_LOG_INFO("Stream: %d, Stop RTP streaming to %s (%d - %d) (Streamed %.3f MBytes)", 
-	            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-	            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort(),
-				(_properties.getRtpPayload() / (1024.0 * 1024.0)));
+	if (running()) {
+		stopThread();
+		joinThread();
+		SI_LOG_INFO("Stream: %d, Stop RTP streaming to %s (%d - %d) (Streamed %.3f MBytes)", 
+		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
+		            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort(),
+		            (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+	}
 }
 
 long RtpThread::getmsec() {
@@ -119,7 +119,7 @@ void RtpThread::threadEntry() {
 	pfd[0].events = POLLIN | POLLPRI;
 	pfd[0].revents = 0;
 
-	for (;;) {
+	while (running()) {
 		// call poll with a timeout of 100 ms
 		const int pollRet = poll(pfd, 1, 100);
 		if (pollRet > 0) {

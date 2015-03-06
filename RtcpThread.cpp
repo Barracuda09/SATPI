@@ -44,7 +44,7 @@ RtcpThread::RtcpThread(StreamClient *clients, StreamProperties &properties) :
 }
 
 RtcpThread::~RtcpThread() {
-	cancelThread();
+	stopThread();
 	joinThread();
 }
 
@@ -75,54 +75,48 @@ bool RtcpThread::startStreaming(int fd_fe) {
 }
 
 void RtcpThread::stopStreaming(int clientID) {
-// @TODO maybe not cancelThread, but use a controlled shutdown?
-	cancelThread();
-	joinThread();
-
-	SI_LOG_INFO("Stream: %d, Stop RTCP stream to %s (%d - %d)", 
-	            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-	            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort());
+	if (running()) {
+		stopThread();
+		joinThread();
+		SI_LOG_INFO("Stream: %d, Stop RTCP stream to %s (%d - %d)", 
+		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
+		            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort());
+	}
 }
 
 void RtcpThread::monitorFrontend(bool showStatus) {
 	fe_status_t status = FE_REINIT;
-	uint16_t    strength;
-	uint16_t    snr;
-	uint32_t    ber;
-	uint32_t    ublocks;
 	
 	// first read status
 	if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-		// check status OK, then read the rest (OR keep previous result)
-		if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
+		uint16_t strength;
+		uint16_t snr;
+		uint32_t ber;
+		uint32_t ublocks;
 
-			// update monitor status with new one
-			status = status;
-			// some frontends might not support all these ioctls, thus we
-			// avoid printing errors
-			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
-				strength = 0;
-			}
-			if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
-				snr = 0;
-			}
-			if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
-				ber = -2;
-			}
-			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
-				ublocks = -2;
-			}
-			strength = (strength * 240) / 0xffff;
-			snr = (snr * 15) / 0xffff;
-			
-			_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+		// some frontends might not support all these ioctls
+		if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
+			strength = 0;
+		}
+		if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
+			snr = 0;
+		}
+		if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
+			ber = -2;
+		}
+		if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
+			ublocks = -2;
+		}
+		strength = (strength * 255) / 0xffff;
+		snr = (snr * 15) / 0xffff;
+		
+		_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
 
-			// Print Status
-			if (showStatus) {
-				SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
-					status, strength, snr, ber, ublocks,
-					(status & FE_HAS_LOCK) ? 1 : 0);
-			}
+		// Print Status
+		if (showStatus) {
+			SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
+				status, strength, snr, ber, ublocks,
+				(status & FE_HAS_LOCK) ? 1 : 0);
 		}
 	} else {
 		PERROR("FE_READ_STATUS failed");
@@ -288,7 +282,7 @@ void RtcpThread::threadEntry() {
 	size_t mon_update = 0;
 	const StreamClient &client = _clients[0];
 
-	for (;;) {
+	while (running()) {
 		// RTCP compound packets must start with a SR, SDES then APP
 		size_t srlen   = 0;
 		size_t sdeslen = 0;

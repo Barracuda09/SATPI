@@ -319,7 +319,7 @@ const char *StringConverter::transmode_to_string(int transmission_mode) {
 			return "16k";
 		case TRANSMISSION_MODE_32K:
 			return "32k";
-#if FULL_DVB_API_VERSION >= 0x0505
+#if FULL_DVB_API_VERSION >= 0x0509
 		case TRANSMISSION_MODE_C1:
 			return "c1";
 		case TRANSMISSION_MODE_C3780:

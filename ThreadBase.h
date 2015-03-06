@@ -28,13 +28,24 @@ class ThreadBase {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		ThreadBase() {}
+		ThreadBase() : _run(false) {}
 		virtual ~ThreadBase() {}
 
 		/// Start the Thread
 		/// @return true if thread is running false if there was an error
 		bool startThread() {
+			_run = true;
 			return (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
+		}
+
+		/// Is thread still running
+		bool running() const {
+			return _run;
+		}
+		
+		/// Stop the running thread
+		void stopThread() {
+			_run = false;
 		}
 
 		/// Cancel the running thread
@@ -58,6 +69,7 @@ class ThreadBase {
 		// Data members
 		// =======================================================================
 		pthread_t _thread;
+		bool      _run;
 }; // class ThreadBase
 
 #endif // THREAD_BASE_H_INCLUDE
