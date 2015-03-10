@@ -169,7 +169,8 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
 	}
 
-	if (method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) {
+	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
+	     StringConverter::hasTransportParameters(msg)) {
 		parseStreamString(msg, method);
 	}
 
@@ -202,8 +203,13 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	
 	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _properties.getStreamID());
 
+	// Do this before [pids] [addpids] !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		setFrequency(doubleVal * 1000.0);
+		// new frequency so delete all used PIDS
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			setPID(i, false);
+		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
 		setSymbolRate(intVal * 1000);
@@ -289,6 +295,31 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 			setModulationType(QAM_64);
 		} else if (strVal.compare("256qam") == 0) {
 			setModulationType(QAM_256);
+		}
+	} else {
+		// no 'mtype' set so guess one according to 'msys'
+		switch (msys) {
+			case SYS_DVBS:
+				setModulationType(QPSK);
+				break;
+			case SYS_DVBS2:
+				setModulationType(PSK_8);
+				break;
+			case SYS_DVBT:
+			case SYS_DVBT2:
+#if FULL_DVB_API_VERSION >= 0x0505
+			case SYS_DVBC_ANNEX_A:
+			case SYS_DVBC_ANNEX_B:
+			case SYS_DVBC_ANNEX_C:
+#else
+			case SYS_DVBC_ANNEX_AC:
+			case SYS_DVBC_ANNEX_B:
+#endif
+				setModulationType(QAM_AUTO);
+				break;
+			default:
+				SI_LOG_ERROR("Not supported delivery system");
+				break;
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {

@@ -146,13 +146,16 @@ int Streams::enumerateFrontends(const std::string &path) {
 					case SYS_DVBT2:
 						++_nr_dvb_t2;
 						break;
+#if FULL_DVB_API_VERSION >= 0x0505
 					case SYS_DVBC_ANNEX_A:
 					case SYS_DVBC_ANNEX_B:
+					case SYS_DVBC_ANNEX_C:
 						++_nr_dvb_c;
 						break;
-#if FULL_DVB_API_VERSION >= 0x0505
-					case SYS_DVBC_ANNEX_C:
-						++_nr_dvb_c2;
+#else
+					case SYS_DVBC_ANNEX_AC:
+					case SYS_DVBC_ANNEX_B:
+						++_nr_dvb_c;
 						break;
 #endif
 					default:

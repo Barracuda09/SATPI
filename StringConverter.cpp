@@ -191,7 +191,11 @@ fe_delivery_system_t StringConverter::getMSYSParameter(const std::string &msg, c
 		} else if (val.compare("dvbt2") == 0) {
 			return SYS_DVBT2;
 		} else if (val.compare("dvbc") == 0) {
+#if FULL_DVB_API_VERSION >= 0x0505
 			return SYS_DVBC_ANNEX_A;
+#else
+			return SYS_DVBC_ANNEX_AC;
+#endif
 		}
 	}
 	return SYS_UNDEFINED;
@@ -258,10 +262,16 @@ const char *StringConverter::delsys_to_string(int delsys) {
 			return "dvbt";
 		case SYS_DVBT2:
 			return "dvbt2";
+#if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_A:
+		case SYS_DVBC_ANNEX_B:
+		case SYS_DVBC_ANNEX_C:
 			return "dvbc";
+#else
+		case SYS_DVBC_ANNEX_AC:
 		case SYS_DVBC_ANNEX_B:
 			return "dvbc";
+#endif
 		default:
 			return "UNKNOWN DELSYS";
 	}

@@ -86,6 +86,8 @@ bool RtpThread::startStreaming(int fd_dvr) {
 		             _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
 		return false;
 	}
+	// Set priority above normal for RTP Thread
+	setPriority(AboveNormal);
 	SI_LOG_INFO("Stream: %d, Start RTP streaming to %s (%d - %d)", _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
 	            _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
 	return true;

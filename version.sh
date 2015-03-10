@@ -15,7 +15,7 @@ if [ -d ".git" ]; then
 	fi
 	VER=$(echo $VER | sed "s/^v//" | sed "s/-\([0-9]*\)-\(g[0-9a-f]*\)/.\1~\2/")
 else
-  VER="0.0.0~unknown"
+  VER="1.5.0~unknown"
 fi
 
 # update version?
