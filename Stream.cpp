@@ -295,6 +295,28 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 		} else if (strVal.compare("256qam") == 0) {
 			setModulationType(QAM_256);
 		}
+	} else {
+		// no 'mtype' set so guess one according to 'msys'
+		switch (msys) {
+			case SYS_DVBS:
+				setModulationType(QPSK);
+				break;
+			case SYS_DVBS2:
+				setModulationType(PSK_8);
+				break;
+			case SYS_DVBT:
+			case SYS_DVBT2:
+			case SYS_DVBC_ANNEX_A:
+			case SYS_DVBC_ANNEX_B:
+#if FULL_DVB_API_VERSION >= 0x0505
+			case SYS_DVBC_ANNEX_C:
+#endif
+				setModulationType(QAM_AUTO);
+				break;
+			default:
+				SI_LOG_ERROR("Not supported delivery system");
+				break;
+		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
 		setSpectralInversion(intVal);
