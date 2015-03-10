@@ -168,10 +168,12 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 					_channelData.siso_miso,
 					csv.c_str());
 			break;
-		case SYS_DVBC_ANNEX_A:
 		case SYS_DVBC_ANNEX_B:
 #if FULL_DVB_API_VERSION >= 0x0505
+		case SYS_DVBC_ANNEX_A:
 		case SYS_DVBC_ANNEX_C:
+#else
+		case SYS_DVBC_ANNEX_AC:
 #endif
 			// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
 			//               <plp>,<specinv>;pids=<pid0>,…,<pidn>

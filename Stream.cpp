@@ -169,7 +169,8 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
 	}
 
-	if (method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) {
+	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
+	     StringConverter::hasTransportParameters(msg)) {
 		parseStreamString(msg, method);
 	}
 
@@ -306,10 +307,13 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 				break;
 			case SYS_DVBT:
 			case SYS_DVBT2:
+#if FULL_DVB_API_VERSION >= 0x0505
 			case SYS_DVBC_ANNEX_A:
 			case SYS_DVBC_ANNEX_B:
-#if FULL_DVB_API_VERSION >= 0x0505
 			case SYS_DVBC_ANNEX_C:
+#else
+			case SYS_DVBC_ANNEX_AC:
+			case SYS_DVBC_ANNEX_B:
 #endif
 				setModulationType(QAM_AUTO);
 				break;

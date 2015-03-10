@@ -31,8 +31,6 @@
 
 #if FULL_DVB_API_VERSION < 0x0505
 #define DTV_ENUM_DELSYS     44
-#define SYS_DVBC_ANNEX_A    SYS_DVBC_ANNEX_AC
-#define SYS_DVBC_ANNEX_C    18
 #define NOT_PREFERRED_DVB_API 1
 #endif
 

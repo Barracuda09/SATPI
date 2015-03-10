@@ -176,7 +176,11 @@ bool Frontend::setFrontendInfo() {
 				}
 				break;
 			case FE_QAM:
+#if FULL_DVB_API_VERSION >= 0x0505
 				dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_A;
+#else
+				dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_AC;
+#endif
 				break;
 			case FE_ATSC:
 				if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
@@ -220,21 +224,24 @@ bool Frontend::setFrontendInfo() {
 				_info_del_sys[i] = SYS_DVBT2;
 				SI_LOG_DEBUG("Frontend Type: Terrestrial (DVB-T2)");
 				break;
+#if FULL_DVB_API_VERSION >= 0x0505
 			case SYS_DVBC_ANNEX_A:
 				_info_del_sys[i] = SYS_DVBC_ANNEX_A;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex A)");
 				break;
+			case SYS_DVBC_ANNEX_C:
+				_info_del_sys[i] = SYS_DVBC_ANNEX_C;
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+				break;
+#else
+			case SYS_DVBC_ANNEX_AC:
+				_info_del_sys[i] = SYS_DVBC_ANNEX_AC;
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+				break;
+#endif
 			case SYS_DVBC_ANNEX_B:
 				_info_del_sys[i] = SYS_DVBC_ANNEX_B;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex B)");
-				break;
-			case SYS_DVBC_ANNEX_C:
-#if FULL_DVB_API_VERSION >= 0x0505
-				_info_del_sys[i] = SYS_DVBC_ANNEX_C;
-				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
-#else
-				SI_LOG_DEBUG("Frontend Type: Cable (Annex C) BUT UNUSABLE");
-#endif
 				break;
 			default:
 				_info_del_sys[i] = SYS_UNDEFINED;
@@ -279,10 +286,13 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			FILL_PROP(DTV_GUARD_INTERVAL,    channel.guard);
 			FILL_PROP(DTV_HIERARCHY,         channel.hierarchy);
 			break;
+#if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_A:
 		case SYS_DVBC_ANNEX_B:
-#if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_C:
+#else
+		case SYS_DVBC_ANNEX_AC:
+		case SYS_DVBC_ANNEX_B:
 #endif
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
