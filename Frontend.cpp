@@ -229,8 +229,12 @@ bool Frontend::setFrontendInfo() {
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex B)");
 				break;
 			case SYS_DVBC_ANNEX_C:
+#if FULL_DVB_API_VERSION >= 0x0505
 				_info_del_sys[i] = SYS_DVBC_ANNEX_C;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+#else
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex C) BUT UNUSABLE ");
+#endif
 				break;
 			default:
 				_info_del_sys[i] = SYS_UNDEFINED;
@@ -277,7 +281,9 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			break;
 		case SYS_DVBC_ANNEX_A:
 		case SYS_DVBC_ANNEX_B:
+#if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_C:
+#endif
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
 			FILL_PROP(DTV_INVERSION,         channel.inversion);
@@ -484,8 +490,7 @@ bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {
 }
 
 bool Frontend::teardown(ChannelData &channel, int streamID) {
-	size_t i;
-	for (i = 0; i < MAX_PIDS; ++i) {
+	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		if (channel.pid.data[i].used) {
 			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d", streamID, i, channel.pid.data[i].fd_dmx, channel.pid.data[i].count);
 			reset_pid(channel.pid.data[i]);

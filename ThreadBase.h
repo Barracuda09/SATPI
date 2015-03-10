@@ -20,12 +20,22 @@
 #ifndef THREAD_BASE_H_INCLUDE
 #define THREAD_BASE_H_INCLUDE
 
+#include "Log.h"
+
 #include <pthread.h>
 #include <string>
 
 /// ThreadBase can be use to implement thread functionality
 class ThreadBase {
 	public:
+		enum Priority {
+			High,
+			AboveNormal,
+			Normal,
+			BelowNormal,
+			Idle
+		};
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
@@ -61,6 +71,43 @@ class ThreadBase {
 		/// Will not return until the internal thread has exited.
 		void joinThread() {
 			(void) pthread_join(_thread, NULL);
+		}
+
+		/// Set the thread priority of the current thread.
+		/// @param priority The priority to set.
+		/// @return @c true if the function was successful, otherwise @c false is
+		/// returned.
+		bool setPriority(const Priority priority) {
+			double factor = 0.5;
+			switch (priority) {
+				case High:
+					factor = 1.0;
+					break;
+				case AboveNormal:
+					factor = 0.75;
+					break;
+				case Normal:
+					factor = 0.5;
+					break;
+				case BelowNormal:
+					factor = 0.25;
+					break;
+				case Idle:
+					factor = 0.0;
+					break;
+				default:
+					SI_LOG_ERROR("setPriority: Unknown case");
+					return false;
+			}
+			int policy = 0;
+			pthread_attr_t threadAttributes;
+			pthread_attr_init(&threadAttributes);
+			pthread_attr_getschedpolicy(&threadAttributes, &policy);
+			pthread_attr_destroy(&threadAttributes);
+			const int minPriority = sched_get_priority_min(policy);
+			const int maxPriority = sched_get_priority_max(policy);
+			const int linuxPriority = minPriority + ((maxPriority - minPriority) * factor);
+			return (pthread_setschedprio(_thread, linuxPriority) == 0);
 		}
 
 	protected:

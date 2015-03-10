@@ -202,8 +202,13 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	
 	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _properties.getStreamID());
 
+	// Do this before [pids] [addpids] !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		setFrequency(doubleVal * 1000.0);
+		// new frequency so delete all used PIDS
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			setPID(i, false);
+		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
 		setSymbolRate(intVal * 1000);
