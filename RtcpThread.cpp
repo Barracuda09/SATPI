@@ -37,6 +37,7 @@
 
 
 RtcpThread::RtcpThread(StreamClient *clients, StreamProperties &properties) :
+		ThreadBase("RtcpThread"),
 		_socket_fd(-1),
 		_clients(clients),
 		_properties(properties),
