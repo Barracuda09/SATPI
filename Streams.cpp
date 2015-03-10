@@ -162,15 +162,13 @@ int Streams::enumerateFrontends(const std::string &path) {
 			}
 		}
 		// make xml delivery system string
-		char tmp[100];
 #if FULL_DVB_API_VERSION >= 0x0505
-		snprintf(tmp, sizeof(tmp), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
+		StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
 				   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
 #else
-		snprintf(tmp, sizeof(tmp), "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu",
+		StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu",
 				   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c);
 #endif
-		_del_sys_str = tmp;
 	} else {
 		_del_sys_str = "Noting Found";
 	}

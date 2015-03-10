@@ -33,6 +33,7 @@
 
 SsdpServer::SsdpServer(const InterfaceAttr &interface,
                        Properties &properties) :
+		ThreadBase("SsdpServer"),
 		_interface(interface),
 		_properties(properties) {;}
 

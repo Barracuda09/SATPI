@@ -21,6 +21,7 @@
 #define THREAD_BASE_H_INCLUDE
 
 #include <pthread.h>
+#include <string>
 
 /// ThreadBase can be use to implement thread functionality
 class ThreadBase {
@@ -28,14 +29,18 @@ class ThreadBase {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		ThreadBase() : _run(false) {}
+		ThreadBase(const std::string &name) : _run(false), _name(name) {}
 		virtual ~ThreadBase() {}
 
 		/// Start the Thread
 		/// @return true if thread is running false if there was an error
 		bool startThread() {
 			_run = true;
-			return (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
+			const bool ok = (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
+			if (ok) {
+				pthread_setname_np(_thread, _name.c_str());
+			}
+			return ok;
 		}
 
 		/// Is thread still running
@@ -68,8 +73,9 @@ class ThreadBase {
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		pthread_t _thread;
-		bool      _run;
+		pthread_t   _thread;
+		bool        _run;
+		std::string _name;
 }; // class ThreadBase
 
 #endif // THREAD_BASE_H_INCLUDE

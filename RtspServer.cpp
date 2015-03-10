@@ -43,6 +43,7 @@
                         "\r\n"
 
 RtspServer::RtspServer(Streams &streams, const std::string &server_ip_addr) :
+		ThreadBase("RtspServer"),
 		TcpSocket(5, RTSP_PORT, true),
 		_streams(streams),
 		_server_ip_addr(server_ip_addr) {

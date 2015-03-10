@@ -157,9 +157,38 @@ bool Frontend::setFrontendInfo() {
 	dtvProperties.num = 1; // size
 	dtvProperties.props = &dtvProperty;
 	if (ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
-		PERROR("ioctl FE_GET_PROPERTY");
-		CLOSE_FD(fd_fe);
-		return false;
+		// If we are here it can mean we have an DVB-API <= 5.4
+		SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
+		dtvProperty.u.buffer.len = 1;
+		switch (_fe_info.type) {
+			case FE_QPSK:
+				if (_fe_info.caps & FE_CAN_2G_MODULATION) {
+					dtvProperty.u.buffer.data[0] = SYS_DVBS2;
+				} else {
+					dtvProperty.u.buffer.data[0] = SYS_DVBS;
+				}
+				break;
+			case FE_OFDM:
+				if (_fe_info.caps & FE_CAN_2G_MODULATION) {
+					dtvProperty.u.buffer.data[0] = SYS_DVBT2;
+				} else {
+					dtvProperty.u.buffer.data[0] = SYS_DVBT;
+				}
+				break;
+			case FE_QAM:
+				dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_A;
+				break;
+			case FE_ATSC:
+				if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
+					dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_B;
+					break;
+				}
+				// Fall-through
+			default:
+				SI_LOG_ERROR("Frontend does not have any known delivery systems");
+				CLOSE_FD(fd_fe);
+				return false;
+		}
 	}
 	CLOSE_FD(fd_fe);
 #endif
@@ -199,12 +228,10 @@ bool Frontend::setFrontendInfo() {
 				_info_del_sys[i] = SYS_DVBC_ANNEX_B;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex B)");
 				break;
-#if FULL_DVB_API_VERSION >= 0x0505
 			case SYS_DVBC_ANNEX_C:
 				_info_del_sys[i] = SYS_DVBC_ANNEX_C;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
 				break;
-#endif
 			default:
 				_info_del_sys[i] = SYS_UNDEFINED;
 				SI_LOG_DEBUG("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
@@ -250,6 +277,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			break;
 		case SYS_DVBC_ANNEX_A:
 		case SYS_DVBC_ANNEX_B:
+		case SYS_DVBC_ANNEX_C:
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
 			FILL_PROP(DTV_INVERSION,         channel.inversion);
@@ -391,7 +419,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 
 		// check if frontend is locked, if not try a few times
 		timeout = 0;
-		while (timeout < 4) {
+		while (timeout < 8) {
 			fe_status_t status = FE_REINIT;
 			// first read status
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
