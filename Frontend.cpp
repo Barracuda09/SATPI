@@ -233,7 +233,7 @@ bool Frontend::setFrontendInfo() {
 				_info_del_sys[i] = SYS_DVBC_ANNEX_C;
 				SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
 #else
-				SI_LOG_DEBUG("Frontend Type: Cable (Annex C) BUT UNUSABLE ");
+				SI_LOG_DEBUG("Frontend Type: Cable (Annex C) BUT UNUSABLE");
 #endif
 				break;
 			default:
