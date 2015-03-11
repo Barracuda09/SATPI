@@ -22,14 +22,6 @@
 #include <stdio.h>
 
 ChannelData::ChannelData() {
-	delsys = SYS_UNDEFINED;
-	freq = 0;
-	ifreq = 0;
-	modtype = QAM_64;
-	srate = 0;
-	fec = FEC_1_2;
-	rolloff = ROLLOFF_35;
-	inversion = INVERSION_AUTO;
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		pid.data[i].used     = 0;
 		pid.data[i].cc       = 0x80;
@@ -39,6 +31,20 @@ ChannelData::ChannelData() {
 	}
 	pid.changed = false;
 	pid.all = false;
+	initialize();
+}
+
+ChannelData::~ChannelData() {;}
+
+void ChannelData::initialize() {
+	delsys = SYS_UNDEFINED;
+	freq = 0;
+	ifreq = 0;
+	modtype = QAM_64;
+	srate = 0;
+	fec = FEC_AUTO;
+	rolloff = ROLLOFF_AUTO;
+	inversion = INVERSION_AUTO;
 
 	// =======================================================================
 	// DVB-S(2) Data members
@@ -52,12 +58,12 @@ ChannelData::ChannelData() {
 	// =======================================================================
 	c2tft = 0;
 	data_slice = 0;
-	
+
 	// =======================================================================
 	// DVB-T(2) Data members
 	// =======================================================================
-	transmission = TRANSMISSION_MODE_8K;
-	guard = GUARD_INTERVAL_1_4;
+	transmission = TRANSMISSION_MODE_AUTO;
+	guard = GUARD_INTERVAL_AUTO;
 	hierarchy = HIERARCHY_AUTO;;
 	bandwidth = BANDWIDTH_8_MHZ;
 	plp_id = 0;
@@ -65,4 +71,3 @@ ChannelData::ChannelData() {
 	siso_miso = 0;
 }
 
-ChannelData::~ChannelData() {;}

@@ -370,7 +370,7 @@ bool Frontend::sendDiseqc(int fd_fe, int streamID) {
 	// param: high nibble: reset bits, low nibble set bits,
 	// bits are: option, position, polarizaion, band
 	cmd.cmd.msg[3] =
-		0xf0 | (((_diseqc.src * 4) & 0x0f) | ((_diseqc.pol_v == POL_V) ? 0 : 2) | (_diseqc.hiband ? 1 : 0));
+		0xf0 | (((_diseqc.src << 2) & 0x0f) | ((_diseqc.pol_v == POL_V) ? 0 : 2) | (_diseqc.hiband ? 1 : 0));
 
 	SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", streamID, cmd.cmd.msg[0],
               cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
