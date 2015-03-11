@@ -313,6 +313,17 @@ const char *StringConverter::rolloff_to_sting(int rolloff) {
 	}
 }
 
+const char *StringConverter::pilot_tone_to_string(int pilot) {
+	switch (pilot) {
+		case PILOT_ON:
+			return "on";
+		case PILOT_OFF:
+			return "off";
+		default:
+			return "UNKNOWN PILOT";
+	}
+}
+
 const char *StringConverter::transmode_to_string(int transmission_mode) {
 	switch (transmission_mode) {
 		case TRANSMISSION_MODE_2K:
