@@ -50,7 +50,7 @@ Frontend::Frontend() :
 
 Frontend::~Frontend() {;}
 
-int Frontend::open_fe(const std::string &path, int readonly) const {
+int Frontend::open_fe(const std::string &path, bool readonly) const {
 	int fd;
 	if((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
 		PERROR("FRONTEND DEVICE");
@@ -129,7 +129,7 @@ bool Frontend::setFrontendInfo() {
 #else
 	int fd_fe;
 	// open frondend in readonly mode
-	if((fd_fe = open_fe(_path_to_fe, 1)) < 0){
+	if((fd_fe = open_fe(_path_to_fe, true)) < 0){
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
 		PERROR("open_fe");
 		return false;
@@ -417,9 +417,9 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 
 bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 	if (_tuned == 0) {
-		// Check if have already opened a FE
+		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
-			_fd_fe = open_fe(_path_to_fe, 0);
+			_fd_fe = open_fe(_path_to_fe, false);
 			SI_LOG_INFO("Stream: %d, Opened FE fd: %d.", streamID, _fd_fe);
 		}
 		// try tuning

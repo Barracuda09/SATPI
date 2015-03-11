@@ -94,7 +94,7 @@ class Frontend  {
 		int get_dvr_fd() const { return _fd_dvr; }
 
 		/// caller should release fd
-		int get_monitor_fd() const  { return open_fe(_path_to_fe, 0); }
+		int get_monitor_fd() const  { return open_fe(_path_to_fe, true); }
 
 		///
 		bool capableOf(fe_delivery_system_t msys);
@@ -112,7 +112,7 @@ class Frontend  {
 
 	protected:
 		///
-		int open_fe(const std::string &path, int readonly) const;
+		int open_fe(const std::string &path, bool readonly) const;
 
 		///
 		int open_dvr(const std::string &path);
