@@ -244,9 +244,9 @@ const char *StringConverter::fec_to_string(int fec) {
 		case FEC_9_10:
 			return "910";
 		case FEC_AUTO:
-			return "auto";
+			return " ";
 		case FEC_NONE:
-			return "none";
+			return " ";
 		default:
 			return "UNKNOWN FEC";
 	}
@@ -293,6 +293,8 @@ const char *StringConverter::modtype_to_sting(int modtype) {
 			return "qpsk";
 		case PSK_8:
 			return "8psk";
+		case QAM_AUTO:
+			return " ";
 		default:
 			return "UNKNOWN MODTYPE";
 	}
@@ -307,7 +309,7 @@ const char *StringConverter::rolloff_to_sting(int rolloff) {
 		case ROLLOFF_20:
 			return "0.20";
 		case ROLLOFF_AUTO:
-			return "auto";
+			return " ";
 		default:
 			return "UNKNOWN ROLLOFF";
 	}
@@ -320,7 +322,7 @@ const char *StringConverter::pilot_tone_to_string(int pilot) {
 		case PILOT_OFF:
 			return "off";
 		case PILOT_AUTO:
-			return "auto";
+			return " ";
 		default:
 			return "UNKNOWN PILOT";
 	}
@@ -333,7 +335,7 @@ const char *StringConverter::transmode_to_string(int transmission_mode) {
 		case TRANSMISSION_MODE_8K:
 			return "8k";
 		case TRANSMISSION_MODE_AUTO:
-			return "auto";
+			return " ";
 		case TRANSMISSION_MODE_4K:
 			return "4k";
 		case TRANSMISSION_MODE_1K:
@@ -362,7 +364,7 @@ const char *StringConverter::bandwidth_to_string(int bandwidth) {
 		case BANDWIDTH_6_MHZ:
 			return "6";
 		case BANDWIDTH_AUTO:
-			return "auto";
+			return " ";
 		case BANDWIDTH_5_MHZ:
 			return "5";
 		case BANDWIDTH_10_MHZ:
@@ -385,7 +387,7 @@ const char *StringConverter::guardinter_to_string(int guard_interval) {
 		case GUARD_INTERVAL_1_4:
 			return "14";
 		case GUARD_INTERVAL_AUTO:
-			return "auto";
+			return " ";
 		case GUARD_INTERVAL_1_128:
 			return "1128";
 		case GUARD_INTERVAL_19_128:
