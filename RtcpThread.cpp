@@ -21,6 +21,7 @@
 #include "StreamClient.h"
 #include "StreamProperties.h"
 #include "Log.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,14 +65,12 @@ bool RtcpThread::startStreaming(int fd_fe) {
 		}
 	}
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, ERROR Start RTCP streaming to %s (%d - %d)", 
-		             _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-		             _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+		SI_LOG_ERROR("Stream: %d, ERROR Start RTCP stream to %s:%d", _properties.getStreamID(),
+		             _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
 		return false;
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP streaming to %s (%d - %d)", 
-	            _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-	            _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d", _properties.getStreamID(),
+	            _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
 	return true;
 }
 
@@ -79,15 +78,15 @@ void RtcpThread::stopStreaming(int clientID) {
 	if (running()) {
 		stopThread();
 		joinThread();
-		SI_LOG_INFO("Stream: %d, Stop RTCP stream to %s (%d - %d)", 
-		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-		            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort());
+		CLOSE_FD(_fd_fe);
+		SI_LOG_INFO("Stream: %d, Stop RTCP stream to %s:%d", _properties.getStreamID(),
+		            _clients[clientID].getIPAddress().c_str(), _clients[clientID].getRtcpSocketPort());
 	}
 }
 
 void RtcpThread::monitorFrontend(bool showStatus) {
-	fe_status_t status = FE_REINIT;
-	
+	fe_status_t status = FE_TIMEDOUT;
+
 	// first read status
 	if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 		uint16_t strength;
@@ -110,7 +109,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 		}
 		strength = (strength * 255) / 0xffff;
 		snr = (snr * 15) / 0xffff;
-		
+
 		_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
 
 		// Print Status
@@ -126,7 +125,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 
 uint8_t *RtcpThread::get_app_packet(size_t *len) {
 	uint8_t app[1024 * 2];
-	
+
 	uint32_t ssrc = _properties.getSSRC();
 
 	// Application Defined packet  (APP Packet)
@@ -152,6 +151,16 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 	std::string desc = _properties.attribute_describe_string(active);
 	const char *attr_desc_str = desc.c_str();
 	memcpy(app + 16, attr_desc_str, desc.size());
+
+#ifdef DEBUG
+	static unsigned int t = 0;
+	if (t > 3) {
+		t = 0;
+		SI_LOG_INFO("%s", attr_desc_str);
+	} else {
+		++t;
+	}
+#endif
 
 	// total length and align on 32 bits
 	*len = 16 + desc.size();
@@ -193,9 +202,8 @@ uint8_t *RtcpThread::get_sr_packet(size_t *len) {
 	sr[5]  = (ssrc >> 16) & 0xff;          // synchronization source
 	sr[6]  = (ssrc >>  8) & 0xff;          // synchronization source
 	sr[7]  = (ssrc >>  0) & 0xff;          // synchronization source
-	
-//	const time_t ntp = time(NULL);
-	const time_t ntp = 0;
+
+	const time_t ntp = time(NULL);
 	                                       // NTP integer part
 	sr[8]  = (ntp >> 24) & 0xff;           // NTP most sign word
 	sr[9]  = (ntp >> 16) & 0xff;           // NTP most sign word
@@ -245,22 +253,22 @@ uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
 	sdes[1]  = 202;                            // payload type: 202 (0xca) (SDES)
 	sdes[2]  = 0;                              // length (total in 32-bit words minus one)
 	sdes[3]  = 3;                              // length (total in 32-bit words minus one)
-	
+
 	sdes[4]  = (ssrc >> 24) & 0xff;            // synchronization source
 	sdes[5]  = (ssrc >> 16) & 0xff;            // synchronization source
 	sdes[6]  = (ssrc >>  8) & 0xff;            // synchronization source
 	sdes[7]  = (ssrc >>  0) & 0xff;            // synchronization source
-	
+
 	sdes[8]  = 1;                              // CNAME: 1
 	sdes[9]  = 6;                              // length: 6
 	sdes[10] = 'S';                            // data
 	sdes[11] = 'a';                            // data
-	
+
 	sdes[12] = 't';                            // data
 	sdes[13] = 'P';                            // data
 	sdes[14] = 'I';                            // data
 	sdes[15] = 0;                              // data
-	
+
 	sdes[16] = 0;                              // data
 	sdes[17] = 0;                              // data
 	sdes[18] = 0;                              // data

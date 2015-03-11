@@ -82,14 +82,14 @@ bool RtpThread::startStreaming(int fd_dvr) {
 		}
 	}
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, ERROR RTP Start streaming to %s (%d - %d)", _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-		             _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+		SI_LOG_ERROR("Stream: %d, ERROR  RTP Start stream to %s:%d", _properties.getStreamID(),
+		             _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort());
 		return false;
 	}
 	// Set priority above normal for RTP Thread
 	setPriority(AboveNormal);
-	SI_LOG_INFO("Stream: %d, Start RTP streaming to %s (%d - %d)", _properties.getStreamID(), _clients[0].getIPAddress().c_str(),
-	            _clients[0].getRtpSocketPort(), _clients[0].getRtcpSocketPort());
+	SI_LOG_INFO("Stream: %d, Start  RTP stream to %s:%d", _properties.getStreamID(),
+	            _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort());
 	return true;
 }
 
@@ -97,10 +97,9 @@ void RtpThread::stopStreaming(int clientID) {
 	if (running()) {
 		stopThread();
 		joinThread();
-		SI_LOG_INFO("Stream: %d, Stop RTP streaming to %s (%d - %d) (Streamed %.3f MBytes)", 
+		SI_LOG_INFO("Stream: %d, Stop  RTP stream to %s:%d (Streamed %.3f MBytes)",
 		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-		            _clients[clientID].getRtpSocketPort(), _clients[clientID].getRtcpSocketPort(),
-		            (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
 	}
 }
 
@@ -147,7 +146,7 @@ void RtpThread::threadEntry() {
 				if ((len + TS_PACKET_SIZE) > MTU || _send_interval < time_ms) {
 					// reset the time interval
 					_send_interval = time_ms + 100;
-					
+
 					// update sequence number
 					++_cseq;
 					_buffer[2] = ((_cseq >> 8) & 0xFF); // sequence number

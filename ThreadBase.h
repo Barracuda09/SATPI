@@ -21,8 +21,10 @@
 #define THREAD_BASE_H_INCLUDE
 
 #include "Log.h"
+#include "Mutex.h"
 
 #include <pthread.h>
+#include <unistd.h>
 #include <string>
 
 /// ThreadBase can be use to implement thread functionality
@@ -55,12 +57,24 @@ class ThreadBase {
 
 		/// Is thread still running
 		bool running() const {
+			MutexLock lock(_mutex);
 			return _run;
 		}
 		
-		/// Stop the running thread
+		/// Stop the running thread give 1.5 sec to stop else cancel it
 		void stopThread() {
+			MutexLock lock(_mutex);
 			_run = false;
+			size_t timeout = 0;
+			while (!_exit) {
+				usleep(10000);
+				++timeout;
+				if (timeout > 150) {
+					cancelThread();
+					SI_LOG_DEBUG("Thread did not stop within timeout?");
+					break;
+				}
+			}
 		}
 
 		/// Cancel the running thread
@@ -115,14 +129,24 @@ class ThreadBase {
 		virtual void threadEntry() = 0;
 
 	private:
-		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntry(); return NULL;}
+		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return NULL;}
 
+		void threadEntryBase() {
+			threadEntry();
+			{
+				MutexLock lock(_mutex);
+				_exit = true;
+			}
+		}
+		
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		pthread_t   _thread;
 		bool        _run;
+		bool        _exit;
 		std::string _name;
+		Mutex       _mutex;
 }; // class ThreadBase
 
 #endif // THREAD_BASE_H_INCLUDE

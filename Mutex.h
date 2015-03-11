@@ -61,4 +61,21 @@ class Mutex {
 		mutable pthread_mutex_t mutex;
 }; // class Mutex
 
+/// The class @c MutexLock can be used for @c Mutex to 'auto' lock and unlock
+class MutexLock {
+	public:
+		// =======================================================================
+		// Constructors and destructor
+		// =======================================================================
+		MutexLock(const Mutex &mutex) : _mutex(mutex) { _mutex.lock(); }
+		virtual ~MutexLock() { _mutex.unlock();	}
+	protected:
+
+	private:
+		// =======================================================================
+		// Data members
+		// =======================================================================
+		const Mutex &_mutex;
+}; // class Mutex
+
 #endif // MUTEX_H_INCLUDE

@@ -83,46 +83,46 @@ class Frontend  {
 			_path_to_dvr = dvr;
 			_path_to_dmx = dmx;
 		}
-		
+
 		///
 		void addToXML(std::string &xml) const;
-		
+
 		///
 		bool setFrontendInfo();
-		
+
 		///
 		int get_dvr_fd() const { return _fd_dvr; }
-		
-		///
-		int get_fe_fd() const  { return _fd_fe; }
-		
+
+		/// caller should release fd
+		int get_monitor_fd() const  { return open_fe(_path_to_fe, 0); }
+
 		///
 		bool capableOf(fe_delivery_system_t msys);
-		
+
 		///
-		bool updateFrontend(ChannelData &channel, int streamID);
-		
+		bool update(ChannelData &channel, int streamID);
+
 		///
 		bool teardown(ChannelData &channel, int streamID);
-	
+
 		///
 		size_t getDeliverySystemSize() const { return _del_sys_size; }
-		
+
 		const fe_delivery_system_t *getDeliverySystem() const { return _info_del_sys; }
 
 	protected:
 		///
-		int open_fe(const std::string &path, int readonly);
-		
+		int open_fe(const std::string &path, int readonly) const;
+
 		///
 		int open_dvr(const std::string &path);
-		
+
 		///
 		int open_dmx(const std::string &path);
-		
+
 		///
 		bool set_demux_filter(int fd, uint16_t pid);
-		
+
 		///
 		void reset_pid(PidData_t &pid);
 
@@ -135,16 +135,16 @@ class Frontend  {
 
 		///
 		bool sendDiseqc(int fd_fe, int streamID);
-							 
+
 		///
 		bool tune_it(int fd, ChannelData &channel, int streamID);
-		
+
 		///
 		bool updatePIDFilters(ChannelData &channel, int streamID);
-		
+
 		///
 		bool setupAndTune(ChannelData &channel, int streamID);
-		
+
 	private:
 		// =======================================================================
 		// Data members
@@ -163,7 +163,7 @@ class Frontend  {
 		// =======================================================================
 		Lnb_t    _lnb[MAX_LNB];   // lnb that can be connected to this frontend
 		DiSEqc_t _diseqc;         //
-		
+
 }; // class Frontend
 
 #endif // FRONTEND_H_INCLUDE

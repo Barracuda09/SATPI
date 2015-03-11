@@ -75,7 +75,7 @@ class Stream  {
 		///
 		bool streamInUse() const { return _streamInUse; }
 
-	
+
 		///
 		void close(int clientID);
 
@@ -84,7 +84,7 @@ class Stream  {
 
 		///
 		void checkStreamClientsWithTimeout();
-		
+
 		///
 		void addToXML(std::string &xml) const;
 
@@ -104,7 +104,6 @@ class Stream  {
 	protected:
 
 	private:
-// @TODO When freq is change should we also remove all used PIDs?
 		/// Set functions for @c ChannelData
 		void setFrequency(uint32_t freq)                    { _properties.getChannelData().freq = freq; _properties.getChannelData().changed = true; }
 		void setSymbolRate(int srate)                       { _properties.getChannelData().srate = srate;	}
@@ -127,10 +126,10 @@ class Stream  {
 
 		///
 		void parseStreamString(const std::string &msg, const std::string &method);
-	
+
 		///
 		void processPID(const std::string &pids, bool add);
-		
+
 		///
 		void processStopStream(int clientID, bool gracefull);
 

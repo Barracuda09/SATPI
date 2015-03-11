@@ -60,10 +60,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		// If we have a new session we like to find an empty slot so '-1'
 		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != SYS_UNDEFINED) {
-				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s for %s", 
+				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s for %s",
 				            _properties.getStreamID(), i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 			} else {
-				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s", 
+				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s",
 				            _properties.getStreamID(), i, sessionID.c_str());
 			}
 			_client[i].copySocketClientAttr(socketClient);
@@ -71,7 +71,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			_streamInUse = true;
 			clientID = i;
 			return true;
-		}			
+		}
 	}
 	if (msys != SYS_UNDEFINED) {
 		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s for %s",
@@ -97,10 +97,15 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
+bool Stream::updateFrontend() {
+//	_properties.printChannelInfo();
+	return _frontend.update(_properties.getChannelData(), _properties.getStreamID());
+}
+
 void Stream::startStreaming() {
 	if (!_properties.getStreamActive()) {
 		_properties.setStreamActive(_rtpThread.startStreaming(_frontend.get_dvr_fd()));
-		_rtcpThread.startStreaming(_frontend.get_fe_fd());
+		_rtcpThread.startStreaming(_frontend.get_monitor_fd());
 	}
 }
 
@@ -110,13 +115,6 @@ void Stream::close(int clientID) {
 		            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
 
 		processStopStream(clientID, false);
-/*
-		_client[clientID].close();
-		if (clientID == 0) {
-// @TODO Stop all other StreamClients here??
-			_streamInUse = false;
-		}
-*/
 	}
 }
 
@@ -132,7 +130,7 @@ void Stream::processStopStream(int clientID, bool gracefull) {
 	_rtpThread.stopStreaming(clientID);
 	_rtcpThread.stopStreaming(clientID);
 	_frontend.teardown(_properties.getChannelData(), _properties.getStreamID());
-	
+
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);
 
@@ -141,11 +139,6 @@ void Stream::processStopStream(int clientID, bool gracefull) {
 		_properties.setStreamActive(false);
 		_streamInUse = false;
 	}
-}
-
-bool Stream::updateFrontend() {
-//	_properties.printChannelInfo();
-	return _frontend.updateFrontend(_properties.getChannelData(), _properties.getStreamID());
 }
 
 void Stream::addToXML(std::string &xml) const {
@@ -163,7 +156,7 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 		_client[clientID].setRtpSocketPort(port);
 		_client[clientID].setRtcpSocketPort(port+1);
 	}
-	
+
 	std::string cseq;
 	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
@@ -200,7 +193,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	int    intVal = 0;
 	std::string strVal;
 	fe_delivery_system_t msys;
-	
+
 	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _properties.getStreamID());
 
 	// Do this before [pids] [addpids] !! else we will delete it again here !!
@@ -296,7 +289,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 		} else if (strVal.compare("256qam") == 0) {
 			setModulationType(QAM_256);
 		}
-	} else {
+	} else if (msys != SYS_UNDEFINED) {
 		// no 'mtype' set so guess one according to 'msys'
 		switch (msys) {
 			case SYS_DVBS:
