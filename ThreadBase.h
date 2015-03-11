@@ -41,13 +41,14 @@ class ThreadBase {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		ThreadBase(const std::string &name) : _run(false), _name(name) {}
+		ThreadBase(const std::string &name) : _run(false), _exit(false), _name(name) {}
 		virtual ~ThreadBase() {}
 
 		/// Start the Thread
 		/// @return true if thread is running false if there was an error
 		bool startThread() {
 			_run = true;
+			_exit = false;
 			const bool ok = (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
 			if (ok) {
 				pthread_setname_np(_thread, _name.c_str());
@@ -80,6 +81,10 @@ class ThreadBase {
 		/// Cancel the running thread
 		void cancelThread() {
 			pthread_cancel(_thread);
+			{
+				MutexLock lock(_mutex);
+				_exit = true;
+			}
 		}
 
 		/// Will not return until the internal thread has exited.
