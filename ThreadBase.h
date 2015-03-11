@@ -21,8 +21,10 @@
 #define THREAD_BASE_H_INCLUDE
 
 #include "Log.h"
+#include "Mutex.h"
 
 #include <pthread.h>
+#include <unistd.h>
 #include <string>
 
 /// ThreadBase can be use to implement thread functionality
@@ -39,13 +41,14 @@ class ThreadBase {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		ThreadBase(const std::string &name) : _run(false), _name(name) {}
+		ThreadBase(const std::string &name) : _run(false), _exit(false), _name(name) {}
 		virtual ~ThreadBase() {}
 
 		/// Start the Thread
 		/// @return true if thread is running false if there was an error
 		bool startThread() {
 			_run = true;
+			_exit = false;
 			const bool ok = (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
 			if (ok) {
 				pthread_setname_np(_thread, _name.c_str());
@@ -55,17 +58,33 @@ class ThreadBase {
 
 		/// Is thread still running
 		bool running() const {
+			MutexLock lock(_mutex);
 			return _run;
 		}
 		
-		/// Stop the running thread
+		/// Stop the running thread give 1.5 sec to stop else cancel it
 		void stopThread() {
+			MutexLock lock(_mutex);
 			_run = false;
+			size_t timeout = 0;
+			while (!_exit) {
+				usleep(10000);
+				++timeout;
+				if (timeout > 150) {
+					cancelThread();
+					SI_LOG_DEBUG("Thread did not stop within timeout?");
+					break;
+				}
+			}
 		}
 
 		/// Cancel the running thread
 		void cancelThread() {
 			pthread_cancel(_thread);
+			{
+				MutexLock lock(_mutex);
+				_exit = true;
+			}
 		}
 
 		/// Will not return until the internal thread has exited.
@@ -115,14 +134,24 @@ class ThreadBase {
 		virtual void threadEntry() = 0;
 
 	private:
-		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntry(); return NULL;}
+		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return NULL;}
 
+		void threadEntryBase() {
+			threadEntry();
+			{
+				MutexLock lock(_mutex);
+				_exit = true;
+			}
+		}
+		
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		pthread_t   _thread;
 		bool        _run;
+		bool        _exit;
 		std::string _name;
+		Mutex       _mutex;
 }; // class ThreadBase
 
 #endif // THREAD_BASE_H_INCLUDE

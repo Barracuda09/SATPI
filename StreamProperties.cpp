@@ -131,17 +131,17 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 		case SYS_DVBS2:
 			// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
 			//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
-			StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%d,%s,%s,%d,%s,%d,%s;pids=%s",
+			StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
 					_channelData.src,
 					_streamID+1,
 					_strength,
 					(_status & FE_HAS_LOCK) ? 1 : 0,
 					_snr,
 					freq,
-					_channelData.pol_v,
+					(_channelData.pol_v == POL_V) ? 'v' : 'h',
 					StringConverter::delsys_to_string(_channelData.delsys),
 					StringConverter::modtype_to_sting(_channelData.modtype),
-					_channelData.pilot,
+					StringConverter::pilot_tone_to_string(_channelData.pilot),
 					StringConverter::rolloff_to_sting(_channelData.rolloff),
 					srate,
 					StringConverter::fec_to_string(_channelData.fec),

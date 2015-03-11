@@ -50,7 +50,7 @@ Frontend::Frontend() :
 
 Frontend::~Frontend() {;}
 
-int Frontend::open_fe(const std::string &path, int readonly) {
+int Frontend::open_fe(const std::string &path, bool readonly) const {
 	int fd;
 	if((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
 		PERROR("FRONTEND DEVICE");
@@ -95,7 +95,7 @@ void Frontend::reset_pid(PidData_t &pid) {
 	pid.cc       = 0x80;
 	pid.cc_error = 0;
 	pid.count    = 0;
-	
+
 	if (ioctl(pid.fd_dmx, DMX_STOP) != 0) {
 		PERROR("DMX_STOP");
 	}
@@ -129,7 +129,7 @@ bool Frontend::setFrontendInfo() {
 #else
 	int fd_fe;
 	// open frondend in readonly mode
-	if((fd_fe = open_fe(_path_to_fe, 1)) < 0){
+	if((fd_fe = open_fe(_path_to_fe, true)) < 0){
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
 		PERROR("open_fe");
 		return false;
@@ -349,7 +349,7 @@ bool Frontend::diseqcSendMsg(int fd_fe, fe_sec_voltage_t v, struct diseqc_cmd *c
 		return false;
 	}
 	usleep(15 * 1000);
-	
+
 	return true;
 }
 
@@ -374,7 +374,7 @@ bool Frontend::sendDiseqc(int fd_fe, int streamID) {
 
 	SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", streamID, cmd.cmd.msg[0],
               cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
-	
+
 	return diseqcSendMsg(fd_fe, (_diseqc.pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
 		      &cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A);
 }
@@ -417,9 +417,9 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 
 bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 	if (_tuned == 0) {
-		// Check if have already opened a FE
+		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
-			_fd_fe = open_fe(_path_to_fe, 0);
+			_fd_fe = open_fe(_path_to_fe, false);
 			SI_LOG_INFO("Stream: %d, Opened FE fd: %d.", streamID, _fd_fe);
 		}
 		// try tuning
@@ -436,7 +436,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 		// check if frontend is locked, if not try a few times
 		timeout = 0;
 		while (timeout < 8) {
-			fe_status_t status = FE_REINIT;
+			fe_status_t status = FE_TIMEDOUT;
 			// first read status
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 				if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
@@ -515,7 +515,7 @@ bool Frontend::teardown(ChannelData &channel, int streamID) {
 	return true;
 }
 
-bool Frontend::updateFrontend(ChannelData &channel, int streamID) {
+bool Frontend::update(ChannelData &channel, int streamID) {
 	// Setup, tune and set PID Filters
 	if (channel.changed) {
 		_tuned = false;
