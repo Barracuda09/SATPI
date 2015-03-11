@@ -319,6 +319,8 @@ const char *StringConverter::pilot_tone_to_string(int pilot) {
 			return "on";
 		case PILOT_OFF:
 			return "off";
+		case PILOT_AUTO:
+			return "auto";
 		default:
 			return "UNKNOWN PILOT";
 	}

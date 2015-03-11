@@ -105,6 +105,7 @@ class Stream  {
 
 	private:
 		/// Set functions for @c ChannelData
+		void initializeChannelData()                        { _properties.getChannelData().initialize(); }
 		void setFrequency(uint32_t freq)                    { _properties.getChannelData().freq = freq; _properties.getChannelData().changed = true; }
 		void setSymbolRate(int srate)                       { _properties.getChannelData().srate = srate;	}
 		void setDeliverySystem(fe_delivery_system_t delsys) { _properties.getChannelData().delsys = delsys; }
