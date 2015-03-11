@@ -154,7 +154,7 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 
 #ifdef DEBUG
 	static unsigned int t = 0;
-	if (t > 3) {
+	if (t > 7) {
 		t = 0;
 		SI_LOG_INFO("%s", attr_desc_str);
 	} else {
