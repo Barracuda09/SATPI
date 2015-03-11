@@ -64,10 +64,12 @@ class ThreadBase {
 		
 		/// Stop the running thread give 1.5 sec to stop else cancel it
 		void stopThread() {
-			MutexLock lock(_mutex);
-			_run = false;
+			{
+				MutexLock lock(_mutex);
+				_run = false;
+			}
 			size_t timeout = 0;
-			while (!_exit) {
+			while (!exit()) {
 				usleep(10000);
 				++timeout;
 				if (timeout > 150) {
@@ -142,6 +144,12 @@ class ThreadBase {
 				MutexLock lock(_mutex);
 				_exit = true;
 			}
+		}
+
+		/// Is thread exit
+		bool exit() const {
+			MutexLock lock(_mutex);
+			return _exit;
 		}
 		
 		// =======================================================================
