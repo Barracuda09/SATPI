@@ -124,6 +124,8 @@ class Stream  {
 		void setSISOMISO(int sm)                            { _properties.getChannelData().siso_miso = sm; }
 		void setPID(int pid, bool val)                      { _properties.getChannelData().pid.data[pid].used = val;
 		                                                      _properties.getChannelData().pid.changed = true; }
+		void setAllPID(bool val)                            { _properties.getChannelData().pid.data[ALL_PIDS].used = val;
+		                                                      _properties.getChannelData().pid.changed = true; }
 
 		///
 		void parseStreamString(const std::string &msg, const std::string &method);

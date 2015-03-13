@@ -150,10 +150,10 @@ void SsdpServer::threadEntry() {
 										// send message back
 										snprintf(msg, sizeof(msg), UPNP_M_SEARCH, _interface.getIPAddress().c_str(), SSDP_PORT,
 										         _properties.getSoftwareVersion().c_str(), _properties.getDeviceID());
-										if (sendto(udpSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&udpSend._addr, sizeof(udpSend._addr)) == -1) {
+										if (sendto(udpSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&udpSend._addr, sizeof(udpSend._addr)) == -1) {
 											PERROR("send");
 										}
-										CLOSE_FD(udpSend._fd);
+										udpSend.closeFD();
 									} else {
 										SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr, other_deviceId);
 									}
@@ -169,7 +169,7 @@ void SsdpServer::threadEntry() {
 									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, _interface.getIPAddress().c_str(), HTTP_PORT,
 									        _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(),
 									        _properties.getDeviceID());
-									if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
+									if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
 										PERROR("send");
 									}
 									// we should increment DEVICEID and send bye bye
@@ -194,7 +194,7 @@ void SsdpServer::threadEntry() {
 										snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, _interface.getIPAddress().c_str(), HTTP_PORT,
 										         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(),
 										         _properties.getBootID(), _properties.getDeviceID());
-										if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
+										if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
 											PERROR("send");
 										}
 									}
@@ -216,7 +216,7 @@ void SsdpServer::threadEntry() {
 			// broadcast message
 			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, _interface.getIPAddress().c_str(), HTTP_PORT,
 			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
-			if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_ROOTDEVICE");
 			}
 			usleep(UTIME_DEL);
@@ -224,7 +224,7 @@ void SsdpServer::threadEntry() {
 			// broadcast message
 			snprintf(msg, sizeof(msg), UPNP_ALIVE, _interface.getIPAddress().c_str(), HTTP_PORT,
 			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
-			if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_ALIVE");
 			}
 			usleep(UTIME_DEL);
@@ -232,7 +232,7 @@ void SsdpServer::threadEntry() {
 			// broadcast message
 			snprintf(msg, sizeof(msg), UPNP_DEVICE, _interface.getIPAddress().c_str(), HTTP_PORT,
 			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
-			if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_DEVICE");
 			}
 		}
@@ -271,7 +271,7 @@ bool SsdpServer::send_byebye(unsigned int bootId, const char *uuid) {
 
 	// broadcast message
 	snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE_BB, uuid, bootId);
-	if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+	if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 		PERROR("send");
 		return false;
 	}
@@ -279,7 +279,7 @@ bool SsdpServer::send_byebye(unsigned int bootId, const char *uuid) {
 
 	// broadcast message
 	snprintf(msg, sizeof(msg), UPNP_BYEBYE, uuid, uuid, bootId);
-	if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+	if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 		PERROR("send");
 		return false;
 	}
@@ -287,7 +287,7 @@ bool SsdpServer::send_byebye(unsigned int bootId, const char *uuid) {
 
 	// broadcast message
 	snprintf(msg, sizeof(msg), UPNP_DEVICE_BB, uuid, bootId);
-	if (sendto(_udpMultiSend._fd, msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
+	if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 		PERROR("send");
 		return false;
 	}

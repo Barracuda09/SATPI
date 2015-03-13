@@ -38,12 +38,15 @@ bool UdpSocket::init_udp_socket(SocketClient &server, int port, in_addr_t s_addr
 	server._addr.sin_addr.s_addr = s_addr;
 	server._addr.sin_port        = htons(port);
 
-	if ((server._fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+	int fd;
+	if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		PERROR("socket send");
 		return false;
 	}
+	server.setFD(fd);
+
 	int val = 1;
-	if (setsockopt(server._fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+	if (setsockopt(server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
 		PERROR("Server setsockopt SO_REUSEADDR");
 		return false;
 	}
@@ -57,13 +60,15 @@ bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const 
 	server._addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	server._addr.sin_port        = htons(port);
 
-	if ((server._fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+	int fd;
+	if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		PERROR("socket listen");
 		return false;
 	}
+	server.setFD(fd);
 
 	int val = 1;
-	if (setsockopt(server._fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+	if (setsockopt(server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
 		PERROR("Server setsockopt SO_REUSEADDR");
 		return false;
 	}
@@ -71,13 +76,13 @@ bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const 
 	struct ip_mreq mreq;
 	mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");
 	mreq.imr_interface.s_addr = inet_addr(ip_addr);
-	if (setsockopt(server._fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
+	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
 		PERROR("IP_ADD_MEMBERSHIP");
 		return false;
 	}
 
 	// bind the socket to the port number 
-	if (bind(server._fd, (struct sockaddr *) &server._addr, sizeof(server._addr)) == -1) {
+	if (bind(server.getFD(), (struct sockaddr *) &server._addr, sizeof(server._addr)) == -1) {
 		PERROR("udp multi bind");
 		return false;
 	}

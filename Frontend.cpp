@@ -121,7 +121,7 @@ void Frontend::addToXML(std::string &xml) const {
 
 bool Frontend::setFrontendInfo() {
 #if SIMU
-	sprintf(_fe_info.name, "Simulation DVB-S2 Card");
+	sprintf(_fe_info.name, "Simulation DVB-S2/C/T Card");
 	_fe_info.frequency_min = 1000000UL;
 	_fe_info.frequency_max = 21000000UL;
 	_fe_info.symbol_rate_min = 20000UL;
@@ -146,9 +146,15 @@ bool Frontend::setFrontendInfo() {
 
 	struct dtv_property dtvProperty;
 #if SIMU
-	dtvProperty.u.buffer.len = 2;
+	dtvProperty.u.buffer.len = 4;
 	dtvProperty.u.buffer.data[0] = SYS_DVBS;
 	dtvProperty.u.buffer.data[1] = SYS_DVBS2;
+	dtvProperty.u.buffer.data[2] = SYS_DVBT;
+#if FULL_DVB_API_VERSION >= 0x0505
+	dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_A;
+#else
+	dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_AC;
+#endif
 #else
 	dtvProperty.cmd = DTV_ENUM_DELSYS;
 	dtvProperty.u.data = DTV_UNDEFINED;
@@ -274,6 +280,9 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			FILL_PROP(DTV_ROLLOFF,           channel.rolloff);
 			FILL_PROP(DTV_PILOT,             channel.pilot);
 			break;
+		case SYS_DVBT2:
+			FILL_PROP(DTV_STREAM_ID,         channel.plp_id);
+			// Fall-through
 		case SYS_DVBT:
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
@@ -309,7 +318,14 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 	struct dtv_properties cmdseq;
 	cmdseq.num = size;
 	cmdseq.props = p;
-
+	// get all pending events to clear the POLLPRI status
+	for (;;) {
+		struct dvb_frontend_event dfe;
+		if (ioctl(fd_fe, FE_GET_EVENT, &dfe) == -1) {
+			break;
+		}
+	}
+	// set the tuning properties
 	if ((ioctl(fd_fe, FE_SET_PROPERTY, &cmdseq)) == -1) {
 		PERROR("FE_SET_PROPERTY failed");
 		return -1;

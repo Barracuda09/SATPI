@@ -30,7 +30,6 @@ ChannelData::ChannelData() {
 		pid.data[i].fd_dmx   = -1;
 	}
 	pid.changed = false;
-	pid.all = false;
 	initialize();
 }
 
@@ -64,7 +63,7 @@ void ChannelData::initialize() {
 	// =======================================================================
 	transmission = TRANSMISSION_MODE_AUTO;
 	guard = GUARD_INTERVAL_AUTO;
-	hierarchy = HIERARCHY_AUTO;;
+	hierarchy = HIERARCHY_AUTO;
 	bandwidth = BANDWIDTH_8_MHZ;
 	plp_id = 0;
 	t2_system_id = 0;

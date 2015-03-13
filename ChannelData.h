@@ -25,7 +25,9 @@
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>
 
-#define MAX_PIDS 8192
+#define MAX_PIDS 8193
+
+#define ALL_PIDS 8192
 
 // PID and DMX file descriptor
 typedef struct {
@@ -38,7 +40,6 @@ typedef struct {
 
 typedef struct {
 	bool      changed;       // if something changed to 'pid' array
-	bool      all;           // if all pid are requested
     PidData_t data[MAX_PIDS];// used pids
 } Pid_t;
 

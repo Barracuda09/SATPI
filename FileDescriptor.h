@@ -1,4 +1,4 @@
-/* SocketAttr.h
+/* FileDescriptor.h
 
    Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
 
@@ -17,34 +17,51 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef SOCKET_ATTR_H_INCLUDE
-#define SOCKET_ATTR_H_INCLUDE
+#ifndef FILE_DESCRIPTOR_H_INCLUDE
+#define FILE_DESCRIPTOR_H_INCLUDE
 
-#include <netinet/in.h>
 #include <unistd.h>
-#include <string>
 
-/// Socket attributes
-class SocketAttr {
+/// The class @c FileDescriptor can be used to make handling file descriptors
+/// easier
+class FileDescriptor {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		SocketAttr() {;}
-		virtual ~SocketAttr() {;}
+		FileDescriptor(int fd = -1) : _fd(fd) {;}
+		virtual ~FileDescriptor() { close(); }
 
-		int  getFD() const { return _fd; }
-		void setFD(int fd) { _fd = fd; }
+		/// Conversion operator to int
+//		operator int() const { return _fd; }
 
-		void closeFD() { close(_fd); _fd = -1; }
+		/// Assignment with a file descriptor (int)
+		FileDescriptor & operator=(int rhs_fd) {
+			if (_fd > 0) {
+				close();
+			}
+			_fd = rhs_fd;
+			return *this;
+		}
 
+		/// Equality operator
+		bool operator==(int rhs_fd) const { return _fd == rhs_fd; }
+
+		/// Is File descriptor opened
+		bool isOpen() const { return _fd > 0; }
+
+		/// Get File descriptor
+		int  get() const    { return _fd; }
+
+		/// close the file descriptor
+		void close()        { ::close(_fd); }
+	protected:
+
+	private:
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		struct sockaddr_in _addr;
-	protected:
 		int _fd;
-		std::string _ip_addr;
-}; // class SocketAttr
+}; // class FileDescriptor
 
-#endif // SOCKET_ATTR_H_INCLUDE
+#endif // FILE_DESCRIPTOR_H_INCLUDE

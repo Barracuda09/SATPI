@@ -103,7 +103,7 @@ void StreamProperties::addToXML(std::string &xml) const {
 std::string StreamProperties::getPidCSV() const {
 	std::string csv;
 	bool full = false;
-	if (_channelData.pid.all) {
+	if (_channelData.pid.data[ALL_PIDS].used) {
 		csv = "all";
 	} else {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
