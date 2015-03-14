@@ -30,8 +30,12 @@
 #endif
 
 #if FULL_DVB_API_VERSION < 0x0505
-#define DTV_ENUM_DELSYS     44
+#define DTV_ENUM_DELSYS       44
 #define NOT_PREFERRED_DVB_API 1
+#endif
+
+#ifndef DTV_STREAM_ID
+#define DTV_STREAM_ID         42
 #endif
 
 #endif // DVB_FIX_H_INCLUDE

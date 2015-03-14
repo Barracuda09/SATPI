@@ -395,19 +395,27 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 
 void Stream::processPID(const std::string &pids, bool add) {
 	std::string::size_type begin = 0;
-	for (;;) {
-		std::string::size_type end = pids.find_first_of(",", begin);
-		if (end != std::string::npos) {
-			const int pid = atoi(pids.substr(begin, end - begin).c_str());
-			setPID(pid, add);
-			begin = end + 1;
-		} else {
-			// Get the last one
-			if (begin < pids.size()) {
+	if (pids == "all" ) {
+		// All pids requested then 'remove' all used PIDS
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			setPID(i, false);
+		}
+		setAllPID(add);
+	} else {
+		for (;;) {
+			std::string::size_type end = pids.find_first_of(",", begin);
+			if (end != std::string::npos) {
 				const int pid = atoi(pids.substr(begin, end - begin).c_str());
 				setPID(pid, add);
+				begin = end + 1;
+			} else {
+				// Get the last one
+				if (begin < pids.size()) {
+					const int pid = atoi(pids.substr(begin, end - begin).c_str());
+					setPID(pid, add);
+				}
+				break;
 			}
-			break;
 		}
 	}
 }

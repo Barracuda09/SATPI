@@ -39,6 +39,8 @@ class SocketClient :
 		virtual ~SocketClient() {;}
 
 		int getFD() const { return _fd; }
+		
+		void closeFD()    { SocketAttr::closeFD(); }
 
 		///
 		void clearMessage() { _msg.clear(); }

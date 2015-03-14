@@ -1,6 +1,6 @@
 # SatPI
 SatPI server for example the Raspberry Pi, BeagleBone or any other linux box.
-Currently supporting DVB-S, DVB-S2 and DVB-T
+Currently supporting DVB-S(2), DVB-T and DVB-C
 
 Initial working vesion, but a work in progress.
 
@@ -21,6 +21,7 @@ Tested Programs
 - Tvheadend: this is a TV streaming server see: https://tvheadend.org/
 - DVBviewer Lite Edition. see http://www.satip.info/products
 - Elgato Sat>IP App for Android
+- VDR (in testing)
 
 Tested Hardware
 ---------------
@@ -28,6 +29,7 @@ Tested Hardware
 - BeagleBone Black see: http://www.beagleboard.org/
 - Sundtek DVB-C/T/T2 see: http://www.sundtek.com/
 - Anysee-S2(LP) STV090x Multistandard
+- HMP-Combo DVB-T2/C
 
 Build
 -----
