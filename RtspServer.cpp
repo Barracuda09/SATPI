@@ -66,6 +66,7 @@ void RtspServer::threadEntry() {
 	}
 }
 
+// Callback function if some RTSP message is received
 bool RtspServer::process(SocketClient &socketclient) {
 	std::string msg = socketclient.getMessage();
 	SI_LOG_DEBUG("Data from client %s: %s", socketclient.getIPAddress().c_str(), msg.c_str());
@@ -129,10 +130,8 @@ bool RtspServer::methodSetup(Stream &stream, int clientID) {
 						"\r\n"
 	std::string rtsp;
 
-// @TODO  check return of updateFrontend();
-	stream.updateFrontend();
-	
-	stream.startStreaming();
+// @TODO  check return of update();
+	stream.update();
 
 	// setup reply
 	StringConverter::addFormattedString(rtsp, RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str(),
@@ -157,10 +156,8 @@ bool RtspServer::methodPlay(Stream &stream, int clientID) {
 						"\r\n"
 	std::string rtsp;
 
-// @TODO  check maybe return of updateFrontend();
-	stream.updateFrontend();
-
-	stream.startStreaming();
+// @TODO  check return of update();
+	stream.update();
 
 	StringConverter::addFormattedString(rtsp, RTSP_PLAY_OK, _server_ip_addr.c_str(), stream.getStreamID(),
 	                   stream.getCSeq(clientID), stream.getSessionID(clientID).c_str());

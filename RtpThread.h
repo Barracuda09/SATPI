@@ -42,18 +42,21 @@ class RtpThread :
 		// =======================================================================
 		RtpThread(StreamClient *clients, StreamProperties &properties);
 		virtual ~RtpThread();
-		
+
 		/// Start streaming
 		/// @return true if stream is started else false on error
-		bool startStreaming(int fd_dvr);
-
-		/// will return when thread is stopped
-		void stopStreaming(int clientID);
+		bool startStreaming(const std::string &path);
 		
+		/// will return when thread is stopped and (close dvr to reset buffers)
+		void stopStreaming(int clientID);
+
 	protected:
 		/// Thread function
 		virtual void threadEntry();
-		
+
+		///
+		int open_dvr(const std::string &path);
+
 	private:
 		long getmsec();
 
@@ -61,6 +64,7 @@ class RtpThread :
 		// Data members
 		// =======================================================================
 		int           _socket_fd;      //
+		std::string   _dvr_path;       //
 		int           _fd_dvr;         //
 		StreamClient  *_clients;       //
 		unsigned char _buffer[MTU];    // RTP/UDP buffer
@@ -68,7 +72,6 @@ class RtpThread :
 		long          _send_interval;  // RTP interval time (100ms)
 		uint16_t      _cseq;           // RTP sequence number
 		StreamProperties &_properties; //
-
 }; // class RtpThread
 
 #endif // RTP_THREAD_H_INCLUDE

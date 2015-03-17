@@ -35,8 +35,7 @@
 
 Frontend::Frontend() :
 		_tuned(false),
-		_fd_fe(-1),
-		_fd_dvr(-1) {
+		_fd_fe(-1) {
 	for (size_t i = 0; i < MAX_LNB; ++i) {
 		_diseqc.LNB[i].type        = LNB_UNIVERSAL;
 		_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
@@ -54,14 +53,6 @@ int Frontend::open_fe(const std::string &path, bool readonly) const {
 	int fd;
 	if((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0){
 		PERROR("FRONTEND DEVICE");
-	}
-	return fd;
-}
-
-int Frontend::open_dvr(const std::string &path) {
-	int fd;
-	if((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
-		PERROR("DVR DEVICE");
 	}
 	return fd;
 }
@@ -276,7 +267,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			FILL_PROP(DTV_MODULATION,        channel.modtype);
 			FILL_PROP(DTV_SYMBOL_RATE,       channel.srate);
 			FILL_PROP(DTV_INNER_FEC,         channel.fec);
-			FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
+			FILL_PROP(DTV_INVERSION,         channel.inversion);
 			FILL_PROP(DTV_ROLLOFF,           channel.rolloff);
 			FILL_PROP(DTV_PILOT,             channel.pilot);
 			break;
@@ -288,7 +279,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
 			FILL_PROP(DTV_MODULATION,        channel.modtype);
 			FILL_PROP(DTV_INVERSION,         channel.inversion);
-			FILL_PROP(DTV_BANDWIDTH_HZ,      channel.bandwidth);
+			FILL_PROP(DTV_BANDWIDTH_HZ,      channel.bandwidthHz);
 			FILL_PROP(DTV_CODE_RATE_HP,      channel.fec);
 			FILL_PROP(DTV_CODE_RATE_LP,      channel.fec);
 			FILL_PROP(DTV_TRANSMISSION_MODE, channel.transmission);
@@ -431,8 +422,19 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 	return true;
 }
 
+bool Frontend::update(ChannelData &channel, int streamID) {
+	// Setup, tune and set PID Filters
+	if (channel.changed) {
+		_tuned = false;
+		channel.changed = false;
+	}
+	setupAndTune(channel, streamID);
+	updatePIDFilters(channel, streamID);
+	return true;
+}
+
 bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
-	if (_tuned == 0) {
+	if (!_tuned) {
 		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
 			_fd_fe = open_fe(_path_to_fe, false);
@@ -447,7 +449,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 				return false;
 			}
 		}
-		SI_LOG_INFO("Stream: %d, Waiting on lock.", streamID);
+		SI_LOG_INFO("Stream: %d, Waiting on lock...", streamID);
 
 		// check if frontend is locked, if not try a few times
 		timeout = 0;
@@ -457,7 +459,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 				if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
 					// We are tuned now
-					_tuned = 1;
+					_tuned = true;
 					SI_LOG_INFO("Stream: %d, Tuned and locked (FE status %d).", streamID, status);
 					break;
 				} else {
@@ -467,19 +469,6 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 			usleep(25000);
 			++timeout;
 		}
-	}
-	// Check if we have already a DVR open
-	if (_fd_dvr == -1) {
-		// try opening DVR, try again if fails
-		size_t timeout = 0;
-		while ((_fd_dvr = open_dvr(_path_to_dvr)) == -1) {
-			usleep(150000);
-			++timeout;
-			if (timeout > 3) {
-				return false;
-			}
-		}
-		SI_LOG_INFO("Stream: %d, Opened DVR fd: %d.", streamID, _fd_dvr);
 	}
 	return true;
 }
@@ -527,17 +516,5 @@ bool Frontend::teardown(ChannelData &channel, int streamID) {
 	}
 	_tuned = false;
 	CLOSE_FD(_fd_fe);
-	CLOSE_FD(_fd_dvr);
-	return true;
-}
-
-bool Frontend::update(ChannelData &channel, int streamID) {
-	// Setup, tune and set PID Filters
-	if (channel.changed) {
-		_tuned = false;
-		channel.changed = false;
-	}
-	setupAndTune(channel, streamID);
-	updatePIDFilters(channel, streamID);
 	return true;
 }

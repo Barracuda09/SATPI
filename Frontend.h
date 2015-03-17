@@ -91,7 +91,7 @@ class Frontend  {
 		bool setFrontendInfo();
 
 		///
-		int get_dvr_fd() const { return _fd_dvr; }
+		const std::string &get_dvr_path() const { return _path_to_dvr; }
 
 		/// caller should release fd
 		int get_monitor_fd() const  { return open_fe(_path_to_fe, true); }
@@ -113,9 +113,6 @@ class Frontend  {
 	protected:
 		///
 		int open_fe(const std::string &path, bool readonly) const;
-
-		///
-		int open_dvr(const std::string &path);
 
 		///
 		int open_dmx(const std::string &path);
@@ -149,12 +146,11 @@ class Frontend  {
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		bool _tuned;
-		int  _fd_fe;
-		int  _fd_dvr;
-		std::string _path_to_fe;
-		std::string _path_to_dvr;
-		std::string _path_to_dmx;
+		bool                     _tuned;
+		int                      _fd_fe;
+		std::string              _path_to_fe;
+		std::string              _path_to_dvr;
+		std::string              _path_to_dmx;
 		struct dvb_frontend_info _fe_info;
 		fe_delivery_system_t     _info_del_sys[MAX_DELSYS];
 		size_t                   _del_sys_size;

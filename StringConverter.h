@@ -71,7 +71,6 @@ class StringConverter  {
 		static const char *modtype_to_sting(int modtype);
 		static const char *fec_to_string(int fec);
 		static const char *delsys_to_string(int delsys);
-		static const char *bandwidth_to_string(int bandwidth);
 		static const char *guardinter_to_string(int guard_interval);
 		static const char *pilot_tone_to_string(int pilot);
 

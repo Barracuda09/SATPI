@@ -41,7 +41,9 @@ StreamProperties::StreamProperties() :
 
 StreamProperties::~StreamProperties() {;}
 
-void StreamProperties::addIncRtpOctetCount(const uint32_t byte, long timestamp) {
+void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
+	MutexLock lock(_mutex);
+
 	// inc RTP packet counter
 	++_spc;
 	_soc += byte;
@@ -49,7 +51,9 @@ void StreamProperties::addIncRtpOctetCount(const uint32_t byte, long timestamp) 
 	_timestamp = timestamp;
 }
 
-void StreamProperties::addPIDCounterAndSetCC(uint16_t pid, uint8_t cc) {
+void StreamProperties::addPIDData(uint16_t pid, uint8_t cc) {
+	MutexLock lock(_mutex);
+
 	++_channelData.pid.data[pid].count;
 	if (_channelData.pid.data[pid].cc == 0x80) {
 		_channelData.pid.data[pid].cc = cc;
@@ -69,6 +73,8 @@ void StreamProperties::addPIDCounterAndSetCC(uint16_t pid, uint8_t cc) {
 
 void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
                                               uint32_t ber, uint32_t ublocks) {
+	MutexLock lock(_mutex);
+
 	_status = status;
 	_strength = strength;
 	_snr = snr;
@@ -76,7 +82,13 @@ void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t stren
 	_ublocks = ublocks;
 }
 
+fe_status_t StreamProperties::getFrontendStatus() const {
+	MutexLock lock(_mutex);
+	return _status;
+}
+
 void StreamProperties::addToXML(std::string &xml) const {
+	MutexLock lock(_mutex);
 
 	//
 	StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc);
@@ -100,26 +112,27 @@ void StreamProperties::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
 }
 
+// Private
 std::string StreamProperties::getPidCSV() const {
 	std::string csv;
-	bool full = false;
 	if (_channelData.pid.data[ALL_PIDS].used) {
 		csv = "all";
 	} else {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
 			if (_channelData.pid.data[i].used) {
 				StringConverter::addFormattedString(csv, "%d,", i);
-				full = true;
 			}
 		}
-	}
-	if (full) {
-		*(csv.end()-1) = 0;
+		if (csv.size() > 1) {
+			*(csv.end()-1) = 0;
+		}
 	}
 	return csv;
 }
 
 std::string StreamProperties::attribute_describe_string(bool &active) const {
+	MutexLock lock(_mutex);
+
 	active = _streamActive;
 	double freq = _channelData.freq / 1000.0;
 	int srate = _channelData.srate / 1000;
@@ -151,13 +164,13 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 		case SYS_DVBT2:
 			// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
 			//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
-			StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%s,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+			StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
 					_streamID+1,
 					_strength,
 					(_status & FE_HAS_LOCK) ? 1 : 0,
 					_snr,
 					freq,
-					StringConverter::bandwidth_to_string(_channelData.bandwidth),
+					_channelData.bandwidthHz / 1000000.0,
 					StringConverter::delsys_to_string(_channelData.delsys),
 					StringConverter::transmode_to_string(_channelData.transmission),
 					StringConverter::modtype_to_sting(_channelData.modtype),
@@ -177,13 +190,13 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 #endif
 			// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
 			//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
-			StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%s,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+			StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
 					_streamID+1,
 					_strength,
 					(_status & FE_HAS_LOCK) ? 1 : 0,
 					_snr,
 					freq,
-					StringConverter::bandwidth_to_string(_channelData.bandwidth),
+					_channelData.bandwidthHz / 1000000.0,
 					StringConverter::delsys_to_string(_channelData.delsys),
 					StringConverter::modtype_to_sting(_channelData.modtype),
 					srate,
@@ -202,7 +215,6 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 			StringConverter::addFormattedString(desc, "NONE");
 			break;
 	}
-//	SI_LOG_DEBUG("%s", desc.c_str());
 	return desc;
 }
 
@@ -216,7 +228,7 @@ void StreamProperties::printChannelInfo() const {
 	SI_LOG_INFO("rolloff:      %s", StringConverter::rolloff_to_sting(_channelData.rolloff));
 	SI_LOG_INFO("fec:          %s", StringConverter::fec_to_string(_channelData.fec));
 	SI_LOG_INFO("specinv:      %d", _channelData.inversion);
-	SI_LOG_INFO("bandwidth:    %d", _channelData.bandwidth);
+	SI_LOG_INFO("bandwidth:    %d", _channelData.bandwidthHz);
 	SI_LOG_INFO("transmission: %d", _channelData.transmission);
 	SI_LOG_INFO("guard:        %d", _channelData.guard);
 	SI_LOG_INFO("plp_id:       %d", _channelData.plp_id);

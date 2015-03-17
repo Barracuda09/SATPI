@@ -46,12 +46,13 @@ RtcpThread::RtcpThread(StreamClient *clients, StreamProperties &properties) :
 }
 
 RtcpThread::~RtcpThread() {
-	stopThread();
+	cancelThread();
 	joinThread();
 }
 
 bool RtcpThread::startStreaming(int fd_fe) {
 	_fd_fe = fd_fe;
+	monitorFrontend(false);
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
@@ -102,10 +103,10 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 			snr = 0;
 		}
 		if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
-			ber = -2;
+			ber = 0;
 		}
 		if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
-			ublocks = -2;
+			ublocks = 0;
 		}
 		strength = (strength * 255) / 0xffff;
 		snr = (snr * 15) / 0xffff;
@@ -292,6 +293,14 @@ void RtcpThread::threadEntry() {
 	const StreamClient &client = _clients[0];
 
 	while (running()) {
+		// check do we need to update frontend monitor
+		if (mon_update == 0) {
+			monitorFrontend(false);
+			mon_update = 1;
+		} else {
+			--mon_update;
+		}
+
 		// RTCP compound packets must start with a SR, SDES then APP
 		size_t srlen   = 0;
 		size_t sdeslen = 0;
@@ -301,13 +310,6 @@ void RtcpThread::threadEntry() {
 		uint8_t *app   = get_app_packet(&applen);
 
 		if (sr && sdes && app) {
-			// check do we need to update frontend monitor
-			if (mon_update == 0) {
-				monitorFrontend(false);
-				mon_update = 1;
-			} else {
-				--mon_update;
-			}
 
 			const size_t rtcplen = srlen + sdeslen + applen;
 
