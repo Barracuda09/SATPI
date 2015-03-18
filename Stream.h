@@ -92,8 +92,7 @@ class Stream  {
 		// Functions used for RTSP Server
 		// =======================================================================
 		bool processStream(const std::string &msg, int clientID, const std::string &method);
-		void startStreaming();
-		bool updateFrontend();
+		bool update();
 		int  getRtspFD(int clientID) const                  { return _client[clientID].getRtspFD(); }
 		int  getCSeq(int clientID) const                    { return _client[clientID].getCSeq(); }
 		const std::string &getSessionID(int clientID) const { return _client[clientID].getSessionID(); }
@@ -116,7 +115,7 @@ class Stream  {
 		void setFEC(int fec)                                { _properties.getChannelData().fec = fec; }
 		void setPilotTones(int pilot)                       { _properties.getChannelData().pilot = pilot; }
 		void setSpectralInversion(int specinv)              { _properties.getChannelData().inversion = specinv; }
-		void setBandwidth(int bandwidth)                    { _properties.getChannelData().bandwidth = bandwidth; }
+		void setBandwidthHz(int bandwidth)                  { _properties.getChannelData().bandwidthHz = bandwidth; }
 		void setTransmissionMode(int transmission)          { _properties.getChannelData().transmission = transmission; }
 		void setGuardInverval(int guard)                    { _properties.getChannelData().guard = guard; }
 		void setUniqueIDPlp(int plp)                        { _properties.getChannelData().plp_id = plp; }
@@ -128,7 +127,7 @@ class Stream  {
 		                                                      _properties.getChannelData().pid.changed = true; }
 
 		///
-		void parseStreamString(const std::string &msg, const std::string &method);
+		void parseStreamString(const std::string &msg, int clientID, const std::string &method);
 
 		///
 		void processPID(const std::string &pids, bool add);

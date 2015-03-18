@@ -355,27 +355,6 @@ const char *StringConverter::transmode_to_string(int transmission_mode) {
 	}
 }
 
-const char *StringConverter::bandwidth_to_string(int bandwidth) {
-	switch (bandwidth) {
-		case BANDWIDTH_8_MHZ:
-			return "8";
-		case BANDWIDTH_7_MHZ:
-			return "7";
-		case BANDWIDTH_6_MHZ:
-			return "6";
-		case BANDWIDTH_AUTO:
-			return " ";
-		case BANDWIDTH_5_MHZ:
-			return "5";
-		case BANDWIDTH_10_MHZ:
-			return "10";
-		case BANDWIDTH_1_712_MHZ:
-			return "1.712";
-		default:
-			return "UNKNOWN BANDWIDTH";
-	}
-}
-
 const char *StringConverter::guardinter_to_string(int guard_interval) {
 	switch (guard_interval) {
 		case GUARD_INTERVAL_1_32:

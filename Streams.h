@@ -45,7 +45,7 @@ class Streams  {
 
 		///
 		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
-		
+
 		///
 		void checkStreamClientsWithTimeout();
 
@@ -62,13 +62,13 @@ class Streams  {
 
 		///
 		int getMaxDvbTer() const { return _nr_dvb_t; }
-		
+
 		///
 		int getMaxDvbCable() const { return _nr_dvb_c; }
-		
+
 		///
 		std::string attribute_describe_string(unsigned int stream, bool &active) const;
-		
+
 		///
 		void make_streams_xml(std::string &xml) const;
 

@@ -64,7 +64,7 @@ void ChannelData::initialize() {
 	transmission = TRANSMISSION_MODE_AUTO;
 	guard = GUARD_INTERVAL_AUTO;
 	hierarchy = HIERARCHY_AUTO;
-	bandwidth = BANDWIDTH_8_MHZ;
+	bandwidthHz = 8000000;
 	plp_id = 0;
 	t2_system_id = 0;
 	siso_miso = 0;

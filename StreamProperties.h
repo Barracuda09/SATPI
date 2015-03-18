@@ -21,6 +21,7 @@
 #define STREAM_PROPERTIES_H_INCLUDE
 
 #include "ChannelData.h"
+#include "Mutex.h"
 
 #include <string>
 
@@ -37,27 +38,30 @@ class StreamProperties  {
 		void printChannelInfo() const;
 
 		///
-		void addIncRtpOctetCount(const uint32_t byte, long timestamp);
-		
+		void addRtpData(const uint32_t byte, long timestamp);
+
 		///
-		void addPIDCounterAndSetCC(uint16_t pid, uint8_t cc);
-		
+		void addPIDData(uint16_t pid, uint8_t cc);
+
 		///
 		void setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
 		                            uint32_t ber, uint32_t ublocks);
-									
+
+		///
+		fe_status_t getFrontendStatus() const;
+
 		///
 		void addToXML(std::string &xml) const;
-		
+
 		///
 		std::string attribute_describe_string(bool &active) const;
-		
+
 		void setStreamID(int streamID)     { _streamID = streamID; }
 		int  getStreamID() const           { return _streamID; }
-		
+
 		void setStreamActive(bool active)  { _streamActive = active; }
 		bool getStreamActive()             { return _streamActive; }
- 
+
 		uint32_t     getSSRC() const       { return _ssrc; }
 		long         getTimestamp() const  { return _timestamp; }
 		ChannelData &getChannelData()      { return _channelData; }
@@ -74,6 +78,7 @@ class StreamProperties  {
 		// =======================================================================
 		// Data members
 		// =======================================================================
+		Mutex       _mutex;          //
 		int         _streamID;       //
 		bool        _streamActive;   //
 

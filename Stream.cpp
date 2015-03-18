@@ -97,16 +97,16 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-bool Stream::updateFrontend() {
+bool Stream::update() {
 //	_properties.printChannelInfo();
-	return _frontend.update(_properties.getChannelData(), _properties.getStreamID());
-}
+	_frontend.update(_properties.getChannelData(), _properties.getStreamID());
 
-void Stream::startStreaming() {
 	if (!_properties.getStreamActive()) {
-		_properties.setStreamActive(_rtpThread.startStreaming(_frontend.get_dvr_fd()));
+		const bool active = _rtpThread.startStreaming(_frontend.get_dvr_path());
 		_rtcpThread.startStreaming(_frontend.get_monitor_fd());
+		_properties.setStreamActive(active);
 	}
+	return true;
 }
 
 void Stream::close(int clientID) {
@@ -151,6 +151,10 @@ void Stream::addToXML(std::string &xml) const {
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
+	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
+	     StringConverter::hasTransportParameters(msg)) {
+		parseStreamString(msg, clientID, method);
+	}
 	int port;
 	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
 		_client[clientID].setRtpSocketPort(port);
@@ -160,11 +164,6 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	std::string cseq;
 	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
-	}
-
-	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
-	     StringConverter::hasTransportParameters(msg)) {
-		parseStreamString(msg, method);
 	}
 
 	bool canClose = false;
@@ -188,7 +187,7 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	return true;
 }
 
-void Stream::parseStreamString(const std::string &msg, const std::string &method) {
+void Stream::parseStreamString(const std::string &msg, int clientID, const std::string &method) {
 	double doubleVal = 0.0;
 	int    intVal = 0;
 	std::string strVal;
@@ -196,9 +195,14 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 
 	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _properties.getStreamID());
 
-	// Do this AT FIRST because of possible initializing channel data !! else we will delete it again here !!
+	// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		initializeChannelData();
+		// Channel change.. so we need to clear buffers
+		_rtpThread.stopStreaming(clientID);
+		_rtcpThread.stopStreaming(clientID);
+		_properties.setStreamActive(false);
+
 		setFrequency(doubleVal * 1000.0);
 		// new frequency so 'remove' all used PIDS
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
@@ -320,21 +324,8 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
 		setSpectralInversion(intVal);
 	}
-	if (StringConverter::getStringParameter(msg, method, "bw=", strVal) == true) {
-		//	"5", "6", "7", "8", "10", "1.712"
-		if (strVal.compare("5") == 0) {
-			setBandwidth(BANDWIDTH_5_MHZ);
-		} else if (strVal.compare("6") == 0) {
-			setBandwidth(BANDWIDTH_6_MHZ);
-		} else if (strVal.compare("7") == 0) {
-			setBandwidth(BANDWIDTH_7_MHZ);
-		} else if (strVal.compare("8") == 0) {
-			setBandwidth(BANDWIDTH_8_MHZ);
-		} else if (strVal.compare("10") == 0) {
-			setBandwidth(BANDWIDTH_10_MHZ);
-		} else if (strVal.compare("1.712") == 0) {
-			setBandwidth(BANDWIDTH_1_712_MHZ);
-		}
+	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=")) != -1) {
+		setBandwidthHz(doubleVal * 1000000.0);
 	}
 	if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
 		// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]

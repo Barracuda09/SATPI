@@ -21,6 +21,7 @@
 #include "StreamClient.h"
 #include "Log.h"
 #include "StreamProperties.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,7 @@
 RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 		ThreadBase("RtpThread"),
 		_socket_fd(-1),
+		_dvr_path("Not Set"),
 		_fd_dvr(-1),
 		_clients(clients),
 		_send_interval(0),
@@ -63,12 +65,21 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 }
 
 RtpThread::~RtpThread() {
-	stopThread();
+	cancelThread();
 	joinThread();
 }
 
-bool RtpThread::startStreaming(int fd_dvr) {
-	_fd_dvr = fd_dvr;
+int RtpThread::open_dvr(const std::string &path) {
+	int fd;
+	if((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
+		PERROR("DVR DEVICE");
+	}
+	return fd;
+}
+
+bool RtpThread::startStreaming(const std::string &path) {
+	_dvr_path = path;
+
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
@@ -90,6 +101,7 @@ bool RtpThread::startStreaming(int fd_dvr) {
 	setPriority(AboveNormal);
 	SI_LOG_INFO("Stream: %d, Start  RTP stream to %s:%d", _properties.getStreamID(),
 	            _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort());
+
 	return true;
 }
 
@@ -97,6 +109,7 @@ void RtpThread::stopStreaming(int clientID) {
 	if (running()) {
 		stopThread();
 		joinThread();
+		CLOSE_FD(_fd_dvr);
 		SI_LOG_INFO("Stream: %d, Stop  RTP stream to %s:%d (Streamed %.3f MBytes)",
 		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
 		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
@@ -113,15 +126,27 @@ void RtpThread::threadEntry() {
 	struct pollfd pfd[1];
 
 	const StreamClient &client = _clients[0];
+	const int streamID = _properties.getStreamID();
 
 	// init
 	_cseq = 0x0000;
 	_bufPtr = _buffer + RTP_HEADER_LEN;
-	pfd[0].fd = _fd_dvr;
+	pfd[0].fd = -1;
 	pfd[0].events = POLLIN | POLLPRI;
 	pfd[0].revents = 0;
 
 	while (running()) {
+
+		// Check DVR is not open and frontend is locked
+		if (_fd_dvr == -1) {
+			fe_status_t status = _properties.getFrontendStatus();
+			if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
+				_fd_dvr = open_dvr(_dvr_path);
+				pfd[0].fd = _fd_dvr;
+				SI_LOG_INFO("Stream: %d, Opened DVR fd: %d.", streamID, _fd_dvr);
+			}
+		}
+
 		// call poll with a timeout of 100 ms
 		const int pollRet = poll(pfd, 1, 100);
 		if (pollRet > 0) {
@@ -135,7 +160,7 @@ void RtpThread::threadEntry() {
 					// get CC from TS
 					const uint8_t cc  = _bufPtr[3] & 0x0f;
 
-					_properties.addPIDCounterAndSetCC(pid, cc);
+					_properties.addPIDData(pid, cc);
 				}
 				// inc buffer pointer
 				_bufPtr += bytes_read;
@@ -161,7 +186,7 @@ void RtpThread::threadEntry() {
 
 					// RTP packet octet count (Bytes)
 					const uint32_t byte = (len - RTP_HEADER_LEN);
-					_properties.addIncRtpOctetCount(byte, timestamp);
+					_properties.addRtpData(byte, timestamp);
 
 					// send the RTP packet
 					if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,

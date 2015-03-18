@@ -90,7 +90,7 @@ class ChannelData  {
 		int transmission;        // DVB-T(2)
 		int guard;               // DVB-T(2)
 		int hierarchy;           // DVB-T(2)
-		int bandwidth;           // DVB-T(2)/C2
+		uint32_t bandwidthHz;    // DVB-T(2)/C2
 		int plp_id;              // DVB-T2/C2
 		int t2_system_id;        // DVB-T2
 		int siso_miso;           // DVB-T2
