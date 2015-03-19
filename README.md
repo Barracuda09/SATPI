@@ -1,8 +1,8 @@
 # SatPI
-SatPI server for example the Raspberry Pi, BeagleBone or any other linux box.
-Currently supporting DVB-S(2), DVB-T and DVB-C
+SATIP server for linux, suitable for running on an Raspberry Pi, BeagleBone or any other linux box.
+Currently supporting DVB-S/S2/T/C
 
-Initial working vesion, but a work in progress.
+Initial working version, but a work in progress.
 
 - SatPI provides an web interface for monitoring various things (http port 8875)
 	- http://ip.of.your.box:8875
@@ -12,7 +12,7 @@ Initial working vesion, but a work in progress.
 
 Contact
 -------
-If you feel the need to contact me, you can do so by sending an email to:
+If you like to contact me, you can do that by sending an email to:
 
     m.a.postema -at- alice.nl
 
