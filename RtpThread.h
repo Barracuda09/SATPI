@@ -21,7 +21,9 @@
 #define RTP_THREAD_H_INCLUDE
 
 #include "ThreadBase.h"
+#include "Mutex.h"
 
+#include <poll.h>
 #include <stdint.h>
 
 #define RTP_HEADER_LEN  12
@@ -45,10 +47,16 @@ class RtpThread :
 
 		/// Start streaming
 		/// @return true if stream is started else false on error
-		bool startStreaming(const std::string &path);
-		
-		/// will return when thread is stopped and (close dvr to reset buffers)
+		bool startStreaming(int fd_dvr);
+
+		/// will return when thread is stopped
 		void stopStreaming(int clientID);
+
+		/// Pause streaming
+		bool pauseStreaming(int clientID);
+
+		/// Restart streaming
+		bool restartStreaming(int fd_dvr, int clientID);
 
 	protected:
 		/// Thread function
@@ -59,19 +67,29 @@ class RtpThread :
 
 	private:
 		long getmsec();
+		
+		enum State {
+			Running,
+			Pause,
+			Paused,
+		};
+		
+		State getState() const      { MutexLock lock(_mutex); return _state; }
+		void  setState(State state) { MutexLock lock(_mutex); _state = state; }
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		int           _socket_fd;      //
-		std::string   _dvr_path;       //
-		int           _fd_dvr;         //
 		StreamClient  *_clients;       //
 		unsigned char _buffer[MTU];    // RTP/UDP buffer
 		unsigned char *_bufPtr;        // RTP/UDP buffer pointer
 		long          _send_interval;  // RTP interval time (100ms)
 		uint16_t      _cseq;           // RTP sequence number
 		StreamProperties &_properties; //
+		struct pollfd _pfd[1];         //
+		Mutex         _mutex;          //
+		State         _state;          //
 }; // class RtpThread
 
 #endif // RTP_THREAD_H_INCLUDE

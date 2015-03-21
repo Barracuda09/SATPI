@@ -33,20 +33,22 @@ class StringConverter  {
 
 		///
 		static std::string makeXMLString(const std::string &msg);
-		
+
 		///
 		static void addFormattedString(std::string &str, const char *fmt, ...);
 
 		///
 		static bool isRootFile(const std::string &msg);
-		
+
 		///
 		static bool getRequestedFile(const std::string &msg, std::string &file);
 
+		///
+		static void splitPath(const std::string &fullPath, std::string &path, std::string &file);
 
 		///
 		static bool getMethod(const std::string &msg, std::string &method);
-		
+
 		///
 		static bool hasTransportParameters(const std::string &msg);
 
@@ -62,10 +64,10 @@ class StringConverter  {
 
 		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
-		
+
 		///
 		static fe_delivery_system_t getMSYSParameter(const std::string &msg, const std::string &header_field);
-		
+
 		static const char *transmode_to_string(int transmission_mode);
 		static const char *rolloff_to_sting(int rolloff);
 		static const char *modtype_to_sting(int modtype);

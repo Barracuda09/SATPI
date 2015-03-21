@@ -131,7 +131,7 @@ bool RtspServer::methodSetup(Stream &stream, int clientID) {
 	std::string rtsp;
 
 // @TODO  check return of update();
-	stream.update();
+	stream.update(clientID);
 
 	// setup reply
 	StringConverter::addFormattedString(rtsp, RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str(),
@@ -157,7 +157,7 @@ bool RtspServer::methodPlay(Stream &stream, int clientID) {
 	std::string rtsp;
 
 // @TODO  check return of update();
-	stream.update();
+	stream.update(clientID);
 
 	StringConverter::addFormattedString(rtsp, RTSP_PLAY_OK, _server_ip_addr.c_str(), stream.getStreamID(),
 	                   stream.getCSeq(clientID), stream.getSessionID(clientID).c_str());

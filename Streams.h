@@ -31,8 +31,6 @@ class SocketClient;
 /// The class @c Streams carries all the available/open streams
 class Streams  {
 	public:
-		static const unsigned int MAX_STREAMS;
-
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================

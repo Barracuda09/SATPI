@@ -54,7 +54,7 @@ bool RtcpThread::startStreaming(int fd_fe) {
 	_fd_fe = fd_fe;
 	monitorFrontend(false);
 	if (_socket_fd == -1) {
-		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
 			return false;
 		}
@@ -66,11 +66,11 @@ bool RtcpThread::startStreaming(int fd_fe) {
 		}
 	}
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, ERROR Start RTCP stream to %s:%d", _properties.getStreamID(),
+		SI_LOG_ERROR("Stream: %d, ERROR  Start RTCP stream to %s:%d", _properties.getStreamID(),
 		             _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
 		return false;
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d", _properties.getStreamID(),
+	SI_LOG_INFO("Stream: %d, Start  RTCP stream to %s:%d", _properties.getStreamID(),
 	            _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
 	return true;
 }
@@ -80,7 +80,7 @@ void RtcpThread::stopStreaming(int clientID) {
 		stopThread();
 		joinThread();
 		CLOSE_FD(_fd_fe);
-		SI_LOG_INFO("Stream: %d, Stop RTCP stream to %s:%d", _properties.getStreamID(),
+		SI_LOG_INFO("Stream: %d, Stop  RTCP stream to %s:%d", _properties.getStreamID(),
 		            _clients[clientID].getIPAddress().c_str(), _clients[clientID].getRtcpSocketPort());
 	}
 }
@@ -108,7 +108,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 		if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
 			ublocks = 0;
 		}
-		strength = (strength * 255) / 0xffff;
+		strength = (strength * 240) / 0xffff;
 		snr = (snr * 15) / 0xffff;
 
 		_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
@@ -152,7 +152,7 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 	std::string desc = _properties.attribute_describe_string(active);
 	const char *attr_desc_str = desc.c_str();
 	memcpy(app + 16, attr_desc_str, desc.size());
-
+#if 0
 #ifdef DEBUG
 	static unsigned int t = 0;
 	if (t > 7) {
@@ -161,6 +161,7 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 	} else {
 		++t;
 	}
+#endif
 #endif
 
 	// total length and align on 32 bits

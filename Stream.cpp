@@ -97,12 +97,24 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-bool Stream::update() {
+bool Stream::update(int clientID) {
 //	_properties.printChannelInfo();
+	const bool changed = _properties.getChannelData().changed;
+
+	// Channel change.. pause RTP so we can clear RTP buffers
+	if (changed) {
+		_rtpThread.pauseStreaming(clientID);
+	}
+
 	_frontend.update(_properties.getChannelData(), _properties.getStreamID());
+	
+	// Restart RTP again
+	if (changed) {
+		_rtpThread.restartStreaming(_frontend.get_dvr_fd(), clientID);
+	}
 
 	if (!_properties.getStreamActive()) {
-		const bool active = _rtpThread.startStreaming(_frontend.get_dvr_path());
+		const bool active = _rtpThread.startStreaming(_frontend.get_dvr_fd());
 		_rtcpThread.startStreaming(_frontend.get_monitor_fd());
 		_properties.setStreamActive(active);
 	}
@@ -153,7 +165,7 @@ void Stream::addToXML(std::string &xml) const {
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
 	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
 	     StringConverter::hasTransportParameters(msg)) {
-		parseStreamString(msg, clientID, method);
+		parseStreamString(msg, method);
 	}
 	int port;
 	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
@@ -182,12 +194,11 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	const bool connectionClose = foundConnection && (strncasecmp(connState.c_str(), "Close", 5) == 0);
 	_client[clientID].setCanClose(!connectionClose);
 */
-
 	_client[clientID].restartWatchDog();
 	return true;
 }
 
-void Stream::parseStreamString(const std::string &msg, int clientID, const std::string &method) {
+void Stream::parseStreamString(const std::string &msg, const std::string &method) {
 	double doubleVal = 0.0;
 	int    intVal = 0;
 	std::string strVal;
@@ -198,11 +209,6 @@ void Stream::parseStreamString(const std::string &msg, int clientID, const std::
 	// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		initializeChannelData();
-		// Channel change.. so we need to clear buffers
-		_rtpThread.stopStreaming(clientID);
-		_rtcpThread.stopStreaming(clientID);
-		_properties.setStreamActive(false);
-
 		setFrequency(doubleVal * 1000.0);
 		// new frequency so 'remove' all used PIDS
 		for (size_t i = 0; i < MAX_PIDS; ++i) {

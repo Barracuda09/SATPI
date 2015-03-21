@@ -26,11 +26,6 @@
 
 #include <linux/dvb/frontend.h>
 
-#define RTP_HEADER_LEN  12
-
-#define MTU             1500
-#define TS_PACKET_SIZE  188
-
 // forward declaration
 class StreamClient;
 class StreamProperties;
@@ -68,15 +63,15 @@ class RtcpThread :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int          _socket_fd;       //
-		StreamClient *_clients;        //
+		int              _socket_fd;   //
+		StreamClient     *_clients;    //
 		StreamProperties &_properties; //
-		int      _fd_fe;               //
+		int              _fd_fe;       //
 
-		uint8_t  _sr[28];               // Sender Report (SR Packet)
-		uint8_t  _srb[24];              // Sender Report Block n (SR Packet)
-		uint8_t  _sdes[24];             // Source Description (SDES Packet)
-		uint8_t  _app[500];             // Application Defined packet (APP Packet)
+		uint8_t  _sr[28];              // Sender Report (SR Packet)
+		uint8_t  _srb[24];             // Sender Report Block n (SR Packet)
+		uint8_t  _sdes[24];            // Source Description (SDES Packet)
+		uint8_t  _app[500];            // Application Defined packet (APP Packet)
 }; // class RtcpThread
 
 #endif // RTCP_THREAD_H_INCLUDE

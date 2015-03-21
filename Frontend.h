@@ -61,7 +61,8 @@ typedef struct {
 	Lnb_t LNB[MAX_LNB];      // LNB properties
 } DiSEqc_t;
 
-#define MAX_DELSYS  5
+#define MAX_DELSYS       5
+#define DVR_BUFFER_SIZE  188 * 100
 
 // Forward declarations
 
@@ -91,15 +92,15 @@ class Frontend  {
 		bool setFrontendInfo();
 
 		///
-		const std::string &get_dvr_path() const { return _path_to_dvr; }
+		int get_dvr_fd() const { return _fd_dvr; }		
 
 		/// caller should release fd
-		int get_monitor_fd() const  { return open_fe(_path_to_fe, true); }
+		int get_monitor_fd() const { return open_fe(_path_to_fe, true); }
 
 		///
 		bool capableOf(fe_delivery_system_t msys);
 
-		///
+		/// Update the Channel and PID. Will close DVR and reopen it if channel did change
 		bool update(ChannelData &channel, int streamID);
 
 		///
@@ -113,6 +114,9 @@ class Frontend  {
 	protected:
 		///
 		int open_fe(const std::string &path, bool readonly) const;
+
+		///
+		int open_dvr(const std::string &path);
 
 		///
 		int open_dmx(const std::string &path);
@@ -148,6 +152,7 @@ class Frontend  {
 		// =======================================================================
 		bool                     _tuned;
 		int                      _fd_fe;
+		int                      _fd_dvr;
 		std::string              _path_to_fe;
 		std::string              _path_to_dvr;
 		std::string              _path_to_dmx;

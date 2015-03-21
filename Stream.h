@@ -92,7 +92,7 @@ class Stream  {
 		// Functions used for RTSP Server
 		// =======================================================================
 		bool processStream(const std::string &msg, int clientID, const std::string &method);
-		bool update();
+		bool update(int clientID);
 		int  getRtspFD(int clientID) const                  { return _client[clientID].getRtspFD(); }
 		int  getCSeq(int clientID) const                    { return _client[clientID].getCSeq(); }
 		const std::string &getSessionID(int clientID) const { return _client[clientID].getSessionID(); }
@@ -127,7 +127,7 @@ class Stream  {
 		                                                      _properties.getChannelData().pid.changed = true; }
 
 		///
-		void parseStreamString(const std::string &msg, int clientID, const std::string &method);
+		void parseStreamString(const std::string &msg, const std::string &method);
 
 		///
 		void processPID(const std::string &pids, bool add);
