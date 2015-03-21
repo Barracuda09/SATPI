@@ -15,6 +15,8 @@
     function buildcontent(xmlDoc) {
 		page = "";
 		logdata = xmlDoc.getElementsByTagName("log");
+    var textarea = document.getElementById('txt');
+    textarea.scrollTop = textarea.scrollHeight;
 		for (i = 0; i < logdata.length; i++) {
 			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
 			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
@@ -38,6 +40,12 @@
 	function xmlloaded(xml) {
 		document.getElementById("txt").innerHTML = buildcontent(xml);
 	}
+  function scrollToBottom() {
+    $('#txt').scrollTop($('#txt')[0].scrollHeight);
+  }
+  $("#txt").change(function() {
+    scrollToBottom();
+  });
 </script>
 
 </head>
