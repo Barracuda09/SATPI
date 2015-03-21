@@ -89,7 +89,7 @@ bool HttpServer::process(SocketClient &client) {
 		if (method.compare("GET") == 0) {
 			getMethod(client);
 		} else if (method.compare("POST") == 0) {
-//			post_http(tcp_conn.pfd[i].fd, msg, rtpsession);
+			postMethod(client);
 		} else {
 			SI_LOG_ERROR("Unknown HTML message connection: %s", client.getMessage().c_str());
 		}
@@ -118,6 +118,11 @@ int read_file(const char *file, std::string &data) {
 	return file_size;
 }
 
+bool HttpServer::postMethod(const SocketClient &client) {
+	UNUSED(client);
+	return true;
+}
+
 bool HttpServer::getMethod(const SocketClient &client) {
 	std::string htmlBody;
 	std::string docType;
@@ -141,6 +146,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 		StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_HTML, docTypeSize);
 	} else {
 		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
+//			std::string path = _properties.getStartPath() + "/web";
 			std::string path("web");
 			path += file;
 			if (file.compare("/data.xml") == 0) {
@@ -153,13 +159,15 @@ bool HttpServer::getMethod(const SocketClient &client) {
 				docTypeSize = docType.size();
 
 				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
-/*
-			} else if (file.compare("config.xml") == 0) {
-*/
+			} else if (file.compare("/config.xml") == 0) {
+				make_config_xml(docType);
+				docTypeSize = docType.size();
+
+				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
 			} else if (file.compare("/log.xml") == 0) {
 				docType = make_log_xml();
 				docTypeSize = docType.size();
-				
+
 				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
 			} else if (file.compare("/STOP") == 0) {
 				// KILL
@@ -181,7 +189,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 						delete[] doc_desc_xml;
 					}
 					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
-				
+
 				} else if (file.find(".html") != std::string::npos) {
 					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize);
 				} else if (file.find(".js") != std::string::npos) {
@@ -197,7 +205,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 			} else if ((docTypeSize = read_file("web/404.html", docType))) {
 				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_NOT_FOUND, file.c_str(), CONTENT_TYPE_HTML, docTypeSize);
 			}
-		}		
+		}
 	}
 	// send something?
 	if (docType.size() > 0) {
@@ -217,11 +225,23 @@ bool HttpServer::getMethod(const SocketClient &client) {
 	return false;
 }
 
+void HttpServer::make_config_xml(std::string &xml) {
+	// make config xml
+	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+	xml += "<data>\r\n";
+	
+	// application data
+	xml += "<configdata>\r\n";
+	xml += "</configdata>\r\n";
+
+	xml += "</data>\r\n";
+}
+
 void HttpServer::make_data_xml(std::string &xml) {
 	// make data xml
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
-	
+
 	// application data
 	xml += "<appdata>";
 	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", time(NULL) - _properties.getApplicationStartTime());

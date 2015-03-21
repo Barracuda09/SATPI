@@ -44,9 +44,12 @@ class HttpServer :
 	protected:
 		/// Thread function
 		virtual void threadEntry();
-		
+
 		/// Method for getting the required files
 		bool getMethod(const SocketClient &client);
+
+		/// Method for getting the required files
+		bool postMethod(const SocketClient &client);
 		
 		/// Process the @c SocketClient when there is data received
 		virtual bool process(SocketClient &client);
@@ -54,10 +57,13 @@ class HttpServer :
 		/// Is called when the connection is closed by the client and should
 		/// take appropriate action
 		virtual bool closeConnection(SocketClient &/*client*/) { return true; }
-		
+
 		///
 		void make_data_xml(std::string &xml);
-		
+
+		///
+		void make_config_xml(std::string &xml);
+
 		///
 		void make_streams_xml(std::string &xml);
 	private:
