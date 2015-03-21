@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstdlib>
 #include <fcntl.h>
 
 
@@ -167,6 +168,9 @@ bool HttpServer::getMethod(const SocketClient &client) {
 				docTypeSize = docType.size();
 
 				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+			} else if (file.compare("/STOP") == 0) {
+				// KILL
+               std::exit(0);
 			} else if ((docTypeSize = read_file(path.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
