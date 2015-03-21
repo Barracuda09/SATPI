@@ -146,8 +146,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 		StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_HTML, docTypeSize);
 	} else {
 		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-//			std::string path = _properties.getStartPath() + "/web";
-			std::string path("web");
+			std::string path = _properties.getStartPath() + "/web";
 			path += file;
 			if (file.compare("/data.xml") == 0) {
 				make_data_xml(docType);

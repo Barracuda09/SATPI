@@ -40,14 +40,9 @@
 
 #define FE_PATH_LEN 255
 
-const unsigned int Streams::MAX_STREAMS = 8;
-
 Streams::Streams() :
-		_stream(new Stream[MAX_STREAMS]()) {
-	for (size_t i = 0; i < MAX_STREAMS; ++i) {
-		_stream[i].setStreamID(i);
-	}
-}
+		_stream(NULL),
+		_maxStreams(0) {;}
 
 Streams::~Streams() {
 	delete[] _stream;
@@ -57,13 +52,15 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 #if SIMU
 	UNUSED(path)
 	count = 1;
-	char fe_path[FE_PATH_LEN];
-	char dvr_path[FE_PATH_LEN];
-	char dmx_path[FE_PATH_LEN];
-	snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
-	snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
-	snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-	_stream[0].addFrontendPaths(fe_path, dvr_path, dmx_path);
+	if (_maxStreams && _stream) {
+		char fe_path[FE_PATH_LEN];
+		char dvr_path[FE_PATH_LEN];
+		char dmx_path[FE_PATH_LEN];
+		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
+		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
+		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
+		_stream[0].addFrontendPaths(fe_path, dvr_path, dmx_path);
+	}
 #else
 	struct dirent **file_list;
 	const int n = scandir(path.c_str(), &file_list, NULL, alphasort);
@@ -78,7 +75,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 					case S_IFCHR: // character device
 						if (strstr(file_list[i]->d_name, "frontend") != NULL) {
 							// check if we have an array we can fill in
-							if (_maxStreams) {
+							if (_maxStreams && _stream) {
 								int fe_nr;
 								sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
 								int adapt_nr;
@@ -127,35 +124,51 @@ int Streams::enumerateFrontends(const std::string &path) {
 	_nr_dvb_c2 = 0;
 #endif
 	_maxStreams = getAttachedFrontendCount(path, 0);
+	_stream = new Stream[_maxStreams+1];
+	if (_stream) {
+		for (int i = 0; i < _maxStreams; ++i) {
+			_stream[i].setStreamID(i);
+		}
+	} else {
+		_maxStreams = 0;
+	}
 	SI_LOG_INFO("Frontends found: %zu", _maxStreams);
 	if (_maxStreams) {
 		getAttachedFrontendCount(path, 0);
 		for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
 			_stream[i].setFrontendInfo();
-
+			int dvb_s2 = 0;
+			int dvb_t  = 0;
+			int dvb_t2 = 0;
+			int dvb_c  = 0;
+			//
 			for (size_t j = 0; j < _stream[i].getDeliverySystemSize(); j++) {
 				const fe_delivery_system_t *del_sys = _stream[i].getDeliverySystem();
 				switch (del_sys[j]) {
 					// only count DVBS2
 					case SYS_DVBS2:
-						++_nr_dvb_s2;
+						++dvb_s2;
 						break;
 					case SYS_DVBT:
-						++_nr_dvb_t;
+						++dvb_t;
 						break;
 					case SYS_DVBT2:
-						++_nr_dvb_t2;
+						++dvb_t2;
 						break;
 #if FULL_DVB_API_VERSION >= 0x0505
 					case SYS_DVBC_ANNEX_A:
 					case SYS_DVBC_ANNEX_B:
 					case SYS_DVBC_ANNEX_C:
-						++_nr_dvb_c;
+						if (!dvb_c) {
+							++dvb_c;
+						}
 						break;
 #else
 					case SYS_DVBC_ANNEX_AC:
 					case SYS_DVBC_ANNEX_B:
-						++_nr_dvb_c;
+						if (!dvb_c) {
+							++dvb_c;
+						}
 						break;
 #endif
 					default:
@@ -163,6 +176,10 @@ int Streams::enumerateFrontends(const std::string &path) {
 						break;
 				}
 			}
+			_nr_dvb_s2 += dvb_s2;
+			_nr_dvb_t  += dvb_t;
+			_nr_dvb_t2 += dvb_t2;
+			_nr_dvb_c  += dvb_c;
 		}
 		// make xml delivery system string
 #if FULL_DVB_API_VERSION >= 0x0505
@@ -180,7 +197,7 @@ int Streams::enumerateFrontends(const std::string &path) {
 
 Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	// Here we need to find the correct Stream and StreamClient
-
+	assert(_stream);
 	const std::string &msg = socketClient.getMessage();
 	std::string method;
 	StringConverter::getMethod(msg, method);
@@ -263,6 +280,7 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 }
 
 void Streams::checkStreamClientsWithTimeout() {
+	assert(_stream);
 	for (size_t streamID = 0; streamID < static_cast<size_t>(_maxStreams); ++streamID) {
 		if (_stream[streamID].streamInUse()) {
 			_stream[streamID].checkStreamClientsWithTimeout();
@@ -271,10 +289,12 @@ void Streams::checkStreamClientsWithTimeout() {
 }
 
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
+	assert(_stream);
 	return _stream[stream].attribute_describe_string(active);
 }
 
 void Streams::make_streams_xml(std::string &xml) const {
+	assert(_stream);
 	// make data xml
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";

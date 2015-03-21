@@ -206,7 +206,11 @@ int main(int argc, char *argv[]) {
 	char *user = NULL;
 	extern const char *satpi_version;
 	exitApp = 0;
-	
+
+	std::string path;
+	std::string file;
+	StringConverter::splitPath(argv[0], path, file);
+
 	// Check options
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-ssdp") == 0) {
@@ -241,12 +245,12 @@ int main(int argc, char *argv[]) {
 
 	// notify we are alive
 	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
-	
+
 	InterfaceAttr interface;
 	Streams streams;
 	streams.enumerateFrontends("/dev/dvb");
-	
-	Properties properties(interface.getUUID(), streams.getXMLDeliveryString());
+
+	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
 
 	RtspServer server(streams, interface.getIPAddress());
 
@@ -256,7 +260,7 @@ int main(int argc, char *argv[]) {
 	if (ssdp) {
 		ssdpserver.startThread();
 	}
-	
+
 	// Loop
 	while (!exitApp) {
 		usleep(12000);

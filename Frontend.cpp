@@ -65,6 +65,14 @@ int Frontend::open_dmx(const std::string &path) {
 	return fd;
 }
 
+int Frontend::open_dvr(const std::string &path) {
+	int fd;
+	if((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
+		PERROR("DVR DEVICE");
+	}
+	return fd;
+}
+
 bool Frontend::set_demux_filter(int fd, uint16_t pid) {
 	struct dmx_pes_filter_params pesFilter;
 
@@ -294,6 +302,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 		case SYS_DVBC_ANNEX_AC:
 		case SYS_DVBC_ANNEX_B:
 #endif
+			FILL_PROP(DTV_BANDWIDTH_HZ,      channel.bandwidthHz);
 			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
 			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
 			FILL_PROP(DTV_INVERSION,         channel.inversion);
@@ -427,6 +436,7 @@ bool Frontend::update(ChannelData &channel, int streamID) {
 	if (channel.changed) {
 		_tuned = false;
 		channel.changed = false;
+		CLOSE_FD(_fd_dvr);
 	}
 	setupAndTune(channel, streamID);
 	updatePIDFilters(channel, streamID);
@@ -466,10 +476,30 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 					SI_LOG_INFO("Stream: %d, Not locked yet (FE status %d)...", streamID, status);
 				}
 			}
-			usleep(25000);
+			usleep(150000);
 			++timeout;
 		}
 	}
+	// Check if we have already a DVR open and are tuned
+	if (_fd_dvr == -1 && _tuned) {
+		// try opening DVR, try again if fails
+		size_t timeout = 0;
+		while ((_fd_dvr = open_dvr(_path_to_dvr)) == -1) {
+			usleep(150000);
+			++timeout;
+			if (timeout > 3) {
+				return false;
+			}
+		}
+		SI_LOG_INFO("Stream: %d, Opened DVR fd: %d.", streamID, _fd_dvr);
+/*
+		const unsigned long size = DVR_BUFFER_SIZE;
+		if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) == -1) {
+			PERROR("DMX_SET_BUFFER_SIZE failed");
+		}
+*/
+	}
+
 	return true;
 }
 
@@ -516,5 +546,6 @@ bool Frontend::teardown(ChannelData &channel, int streamID) {
 	}
 	_tuned = false;
 	CLOSE_FD(_fd_fe);
+	CLOSE_FD(_fd_dvr);
 	return true;
 }

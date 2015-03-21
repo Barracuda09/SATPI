@@ -30,10 +30,11 @@
 
 extern const char *satpi_version;
 
-Properties::Properties(const std::string &uuid, const std::string &delsysString) :
+Properties::Properties(const std::string &uuid, const std::string &delsysString, const std::string &startPath) :
 		_delsysString(delsysString),
 		_uuid(uuid),
 		_versionString(satpi_version),
+		_startPath(startPath),
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),

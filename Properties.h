@@ -28,9 +28,9 @@ class Properties  {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		Properties(const std::string &uuid, const std::string &delsysString);
+		Properties(const std::string &uuid, const std::string &delsysString, const std::string &startPath);
 		virtual ~Properties();
-		
+
 		///
 		const std::string &getSoftwareVersion() const { return _versionString; }
 
@@ -39,16 +39,27 @@ class Properties  {
 
 		///
 		const std::string &getDeliverySystemString() const { return _delsysString; }
-		
+
+		///
+		const std::string &getStartPath() const { return _startPath; }
+
+		/// Get and Set BootID
 		void         setBootID(unsigned int bootID) { _bootID = bootID; }
 		unsigned int getBootID() const              { return _bootID; }
-		
+
+		/// Get and Set DeviceID
 		void         setDeviceID(unsigned int deviceID) { _deviceID = deviceID; }
 		unsigned int getDeviceID() const                { return _deviceID; }
 
+		/// Get and Set SSDP Announce Time
 		void         setSsdpAnnounceTimeSec(unsigned int sec) { _ssdpAnnounceTimeSec = sec; }
 		unsigned int getSsdpAnnounceTimeSec() const           { return _ssdpAnnounceTimeSec; }
 		
+		/// Get and Set DVR buffer size
+		void          setDVRBufferSize(unsigned long size) { _dvrBufferSize = size; }
+		unsigned long getDVRBufferSize() const             { return _dvrBufferSize; }
+
+		/// Get application start time
 		time_t       getApplicationStartTime() const { return _appStartTime; }
 	protected:
 
@@ -56,13 +67,15 @@ class Properties  {
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		std::string  _delsysString;
-		std::string  _uuid;
-		std::string  _versionString;
-		unsigned int _bootID;
-		unsigned int _deviceID;
-		unsigned int _ssdpAnnounceTimeSec;
-		time_t       _appStartTime;         // the application start time (EPOCH)
+		std::string   _delsysString;
+		std::string   _uuid;
+		std::string   _versionString;
+		std::string   _startPath;
+		unsigned int  _bootID;
+		unsigned int  _deviceID;
+		unsigned int  _ssdpAnnounceTimeSec;
+		time_t        _appStartTime;         // the application start time (EPOCH)
+		unsigned long _dvrBufferSize;
 
 }; // class Properties
 

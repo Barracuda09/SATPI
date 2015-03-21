@@ -26,6 +26,12 @@
 #include <string.h>
 #include <stdarg.h>
 
+void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
+	std::string::size_type end = fullPath.find_last_of("/\\");
+	path = fullPath.substr(0, end).c_str();
+	file = fullPath.substr(end + 1).c_str();
+}
+
 bool StringConverter::getline(const std::string &msg, std::string::size_type &begin, std::string &line, const char *line_delim) {
 	std::string::size_type end = msg.find(line_delim, begin);
 	std::string::size_type size = end - begin;

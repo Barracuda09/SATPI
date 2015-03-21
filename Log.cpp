@@ -60,13 +60,13 @@ void applog(int priority, const char *fmt, ...) {
     va_start(arglist, fmt);
     vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
     va_end(arglist);
-	
+
 	struct timespec time_stamp;
 	clock_gettime(CLOCK_REALTIME, &time_stamp);
 	std::string msg(txt);
 	std::string line;
 	std::string::size_type index = 0;
-	
+
 	while (StringConverter::getline(msg, index, line, "\r\n")) {
 		const size_t index = satip_log.end;
 		satip_log.elem[index].priority = priority;
@@ -93,18 +93,17 @@ void applog(int priority, const char *fmt, ...) {
 		if (syslog_on != 0) {
 			syslog(priority, "%zu %s", index, satip_log.elem[index].msg.c_str());
 		}
-
-/////////////////////////////////////////////			
-			std::cout << satip_log.elem[index].msg << "\r\n";
-			std::flush(std::cout);
-/////////////////////////////////////////////			
+#ifdef DEBUG
+		std::cout << satip_log.elem[index].msg << "\r\n";
+		std::flush(std::cout);
+#endif
 	}
 	pthread_mutex_unlock(&mutex);
 }
 
 std::string make_log_xml() {
 	std::string log;
-	
+
 	// make data xml
 	log  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n";
 

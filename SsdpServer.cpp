@@ -102,7 +102,8 @@ void SsdpServer::threadEntry() {
                          "DEVICEID.SES.COM: %d\r\n" \
                          "\r\n"
 
-	_properties.setBootID(read_bootID_from_file("bootID"));
+	std::string fileBootID = _properties.getStartPath() + "/bootID";
+	_properties.setBootID(read_bootID_from_file(fileBootID.c_str()));
 
 	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", _properties.getBootID());
 
@@ -177,7 +178,7 @@ void SsdpServer::threadEntry() {
 									send_byebye(_properties.getDeviceID(), _properties.getUUID().c_str());
 
 									// now increment bootID
-									_properties.setBootID(read_bootID_from_file("bootID"));
+									_properties.setBootID(read_bootID_from_file(fileBootID.c_str()));
 									SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 									// reset repeat time to annouce new DEVICEID
