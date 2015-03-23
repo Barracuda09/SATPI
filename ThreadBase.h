@@ -62,7 +62,7 @@ class ThreadBase {
 			return _run;
 		}
 		
-		/// Stop the running thread give 1.5 sec to stop else cancel it
+		/// Stop the running thread give 5.0 sec to stop else cancel it
 		void stopThread() {
 			{
 				MutexLock lock(_mutex);
@@ -70,9 +70,9 @@ class ThreadBase {
 			}
 			size_t timeout = 0;
 			while (!exit()) {
-				usleep(10000);
+				usleep(100000);
 				++timeout;
-				if (timeout > 150) {
+				if (timeout > 50) {
 					cancelThread();
 					SI_LOG_DEBUG("Thread did not stop within timeout?");
 					break;
@@ -139,6 +139,8 @@ class ThreadBase {
 		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return NULL;}
 
 		void threadEntryBase() {
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+			pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 			threadEntry();
 			{
 				MutexLock lock(_mutex);

@@ -35,7 +35,8 @@
 
 Frontend::Frontend() :
 		_tuned(false),
-		_fd_fe(-1) {
+		_fd_fe(-1),
+		_fd_dvr(-1) {
 	for (size_t i = 0; i < MAX_LNB; ++i) {
 		_diseqc.LNB[i].type        = LNB_UNIVERSAL;
 		_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
@@ -448,7 +449,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
 			_fd_fe = open_fe(_path_to_fe, false);
-			SI_LOG_INFO("Stream: %d, Opened FE fd: %d.", streamID, _fd_fe);
+			SI_LOG_INFO("Stream: %d, Opened FE fd: %d", streamID, _fd_fe);
 		}
 		// try tuning
 		size_t timeout = 0;

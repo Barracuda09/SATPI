@@ -59,7 +59,7 @@ HttpServer::HttpServer(const Streams &streams,
                        const InterfaceAttr &interface,
                        const Properties &properties) :
 		ThreadBase("HttpServer"),
-		TcpSocket(10, HTTP_PORT, true),
+		TcpSocket(20, HTTP_PORT, true),
 		_interface(interface),
 		_properties(properties),
 		_streams(streams) {

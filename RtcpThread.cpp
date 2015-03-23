@@ -290,17 +290,10 @@ uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
 }
 
 void RtcpThread::threadEntry() {
-	size_t mon_update = 0;
 	const StreamClient &client = _clients[0];
 
 	while (running()) {
-		// check do we need to update frontend monitor
-		if (mon_update == 0) {
-			monitorFrontend(false);
-			mon_update = 1;
-		} else {
-			--mon_update;
-		}
+		monitorFrontend(false);
 
 		// RTCP compound packets must start with a SR, SDES then APP
 		size_t srlen   = 0;
