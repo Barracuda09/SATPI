@@ -72,7 +72,7 @@ bool RtpThread::startStreaming(int fd_dvr) {
 	const int streamID = _properties.getStreamID();
 	_pfd[0].fd = fd_dvr;
 	if (_socket_fd == -1) {
-		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP)) == -1) {
+		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
 			return false;
 		}

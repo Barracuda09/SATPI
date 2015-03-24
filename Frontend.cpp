@@ -276,7 +276,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			FILL_PROP(DTV_MODULATION,        channel.modtype);
 			FILL_PROP(DTV_SYMBOL_RATE,       channel.srate);
 			FILL_PROP(DTV_INNER_FEC,         channel.fec);
-			FILL_PROP(DTV_INVERSION,         channel.inversion);
+			FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
 			FILL_PROP(DTV_ROLLOFF,           channel.rolloff);
 			FILL_PROP(DTV_PILOT,             channel.pilot);
 			break;

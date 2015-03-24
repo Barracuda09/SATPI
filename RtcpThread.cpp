@@ -54,7 +54,7 @@ bool RtcpThread::startStreaming(int fd_fe) {
 	_fd_fe = fd_fe;
 	monitorFrontend(false);
 	if (_socket_fd == -1) {
-		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP)) == -1) {
+		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
 			return false;
 		}
