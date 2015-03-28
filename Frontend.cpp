@@ -420,6 +420,7 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 			}
 		}
 		// set diseqc
+		sendDiseqc(fd, streamID);
 		if (sendDiseqc(fd, streamID) == -1) {
 			return false;
 		}
@@ -439,7 +440,9 @@ bool Frontend::update(ChannelData &channel, int streamID) {
 		channel.changed = false;
 		CLOSE_FD(_fd_dvr);
 	}
-	setupAndTune(channel, streamID);
+	if (!setupAndTune(channel, streamID)) {
+		return false;
+	}
 	updatePIDFilters(channel, streamID);
 	return true;
 }
@@ -501,7 +504,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 */
 	}
 
-	return true;
+	return (_fd_dvr != -1) && _tuned;
 }
 
 bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {

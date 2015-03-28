@@ -106,7 +106,9 @@ bool Stream::update(int clientID) {
 		_rtpThread.pauseStreaming(clientID);
 	}
 
-	_frontend.update(_properties.getChannelData(), _properties.getStreamID());
+	if (!_frontend.update(_properties.getChannelData(), _properties.getStreamID())) {
+		return false;
+	}
 	
 	// Restart RTP again
 	if (changed) {
