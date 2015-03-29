@@ -45,7 +45,9 @@ Frontend::Frontend() :
 		_diseqc.LNB[i].lofHigh     = DEFAULT_LOF_HIGH_UNIVERSAL;
 	}
 	snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
-	_path_to_fe = "Not Set";
+	_path_to_fe  = "Not Set";
+	_path_to_dvr = "Not Set";
+	_path_to_dmx = "Not Set";
 }
 
 Frontend::~Frontend() {;}
@@ -420,7 +422,6 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 			}
 		}
 		// set diseqc
-		sendDiseqc(fd, streamID);
 		if (sendDiseqc(fd, streamID) == -1) {
 			return false;
 		}
@@ -440,8 +441,13 @@ bool Frontend::update(ChannelData &channel, int streamID) {
 		channel.changed = false;
 		CLOSE_FD(_fd_dvr);
 	}
-	if (!setupAndTune(channel, streamID)) {
-		return false;
+	size_t timeout = 0;
+	while (!setupAndTune(channel, streamID)) {
+		usleep(50000);
+		++timeout;
+		if (timeout > 3) {
+			return false;
+		}
 	}
 	updatePIDFilters(channel, streamID);
 	return true;
@@ -467,7 +473,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 
 		// check if frontend is locked, if not try a few times
 		timeout = 0;
-		while (timeout < 8) {
+		while (timeout < 4) {
 			fe_status_t status = FE_TIMEDOUT;
 			// first read status
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
@@ -480,7 +486,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 					SI_LOG_INFO("Stream: %d, Not locked yet (FE status %d)...", streamID, status);
 				}
 			}
-			usleep(150000);
+			usleep(50000);
 			++timeout;
 		}
 	}
@@ -496,14 +502,12 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 			}
 		}
 		SI_LOG_INFO("Stream: %d, Opened DVR fd: %d.", streamID, _fd_dvr);
-/*
+
 		const unsigned long size = DVR_BUFFER_SIZE;
 		if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) == -1) {
 			PERROR("DMX_SET_BUFFER_SIZE failed");
 		}
-*/
 	}
-
 	return (_fd_dvr != -1) && _tuned;
 }
 

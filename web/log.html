@@ -16,8 +16,8 @@
     function buildcontent(xmlDoc) {
 		page = "";
 		logdata = xmlDoc.getElementsByTagName("log");
-    var textarea = document.getElementById('txt');
-    textarea.scrollTop = textarea.scrollHeight;
+		var textarea = document.getElementById('txt');
+		textarea.scrollTop = textarea.scrollHeight;
 		for (i = 0; i < logdata.length; i++) {
 			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
 			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
@@ -41,12 +41,12 @@
 	function xmlloaded(xml) {
 		document.getElementById("txt").innerHTML = buildcontent(xml);
 	}
-  function scrollToBottom() {
-    $('#txt').scrollTop($('#txt')[0].scrollHeight);
-  }
-  $("#txt").change(function() {
-    scrollToBottom();
-  });
+	function scrollToBottom() {
+		$('#txt').scrollTop($('#txt')[0].scrollHeight);
+	}
+	$("#txt").change(function() {
+		scrollToBottom();
+	});
 </script>
 
 </head>
@@ -55,27 +55,28 @@
 </div>
 
 <div class="container-fluid">
-  <div class="start">
-  <h3>Main Log Page</h3>
-  <div id="content" class="log">
-    <textarea id="txt" class="form-control logtext" readOnly></textarea>
-  </div>
-<script>
-	// make menu
-	document.getElementById("menu").innerHTML = buildmenu();
-	setMenuItemActive("log");
+	<div class="start">
+		<h3>Main Log Page</h3>
+		<div id="content" class="log">
+			<textarea id="txt" class="form-control logtext" readOnly></textarea>
+		</div>
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			setMenuItemActive("log");
 
-    // Call the ajax refresh each refresh_time seconds
-    updatePage();
-    setInterval("updatePage()", refresh_time);
-</script>
-</div>
+			// Call the ajax refresh each refresh_time seconds
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+		</script>
+	</div>
 </div>
 
 <div class="navbar navbar-default navbar-fixed-bottom">
-  <div class="container">
-    <p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
+	<div class="container">
+		<p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
+	</div>
 </div>
-</div>
+
 </body>
 </html>

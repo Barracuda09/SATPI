@@ -62,7 +62,7 @@ typedef struct {
 } DiSEqc_t;
 
 #define MAX_DELSYS       5
-#define DVR_BUFFER_SIZE  188 * 100
+#define DVR_BUFFER_SIZE  188 * 120
 
 // Forward declarations
 
