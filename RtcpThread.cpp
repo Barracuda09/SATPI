@@ -52,7 +52,6 @@ RtcpThread::~RtcpThread() {
 
 bool RtcpThread::startStreaming(int fd_fe) {
 	_fd_fe = fd_fe;
-	monitorFrontend(false);
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP ");
@@ -291,10 +290,16 @@ uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
 
 void RtcpThread::threadEntry() {
 	const StreamClient &client = _clients[0];
+	int mon_update = 0;
 
 	while (running()) {
-		monitorFrontend(false);
-
+		// check do we need to update frontend monitor
+		if (mon_update == 0) {
+			monitorFrontend(false);
+			mon_update = 1;
+		} else {
+			--mon_update;
+		}
 		// RTCP compound packets must start with a SR, SDES then APP
 		size_t srlen   = 0;
 		size_t sdeslen = 0;

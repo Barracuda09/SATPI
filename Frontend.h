@@ -30,7 +30,7 @@
 #define LNB_STANDARD  1
 
 // slof: switch frequency of LNB
-#define DEFAULT_SLOF (11700*1000UL)
+#define DEFAULT_SWITCH_LOF (11700*1000UL)
 
 // lofLow: local frequency of lower LNB band
 #define DEFAULT_LOF_LOW_UNIVERSAL (9750*1000UL)
@@ -128,17 +128,17 @@ class Frontend  {
 		void reset_pid(PidData_t &pid);
 
 		///
-		bool tune(int fd_fe, const ChannelData &channel);
+		bool tune(const ChannelData &channel);
 
 		///
-		bool diseqcSendMsg(int fd_fe, fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-		                     fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b);
+		bool diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
+		                     fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
 
 		///
-		bool sendDiseqc(int fd_fe, int streamID);
+		bool sendDiseqc(int streamID, bool repeatDiseqc);
 
 		///
-		bool tune_it(int fd, ChannelData &channel, int streamID);
+		bool tune_it(ChannelData &channel, int streamID);
 
 		///
 		bool updatePIDFilters(ChannelData &channel, int streamID);

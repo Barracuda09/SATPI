@@ -40,7 +40,7 @@ Frontend::Frontend() :
 	for (size_t i = 0; i < MAX_LNB; ++i) {
 		_diseqc.LNB[i].type        = LNB_UNIVERSAL;
 		_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
-		_diseqc.LNB[i].switchlof   = DEFAULT_SLOF;
+		_diseqc.LNB[i].switchlof   = DEFAULT_SWITCH_LOF;
 		_diseqc.LNB[i].lofLow      = DEFAULT_LOF_LOW_UNIVERSAL;
 		_diseqc.LNB[i].lofHigh     = DEFAULT_LOF_HIGH_UNIVERSAL;
 	}
@@ -130,14 +130,14 @@ bool Frontend::setFrontendInfo() {
 	_fe_info.symbol_rate_max = 250000UL;
 #else
 	int fd_fe;
-	// open frondend in readonly mode
+	// open frontend in readonly mode
 	if((fd_fe = open_fe(_path_to_fe, true)) < 0){
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
 		PERROR("open_fe");
 		return false;
 	}
 
-	if ( ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0){
+	if (ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0){
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		PERROR("FE_GET_INFO");
 		CLOSE_FD(fd_fe);
@@ -263,7 +263,7 @@ bool Frontend::setFrontendInfo() {
 	return true;
 }
 
-bool Frontend::tune(int fd_fe, const ChannelData &channel) {
+bool Frontend::tune(const ChannelData &channel) {
 	struct dtv_property p[15];
 	int size = 0;
 
@@ -315,7 +315,7 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 			break;
 
 		default:
-			return -1;
+			return false;
 	}
 	FILL_PROP(DTV_TUNE, DTV_UNDEFINED);
 	struct dtv_properties cmdseq;
@@ -324,16 +324,16 @@ bool Frontend::tune(int fd_fe, const ChannelData &channel) {
 	// get all pending events to clear the POLLPRI status
 	for (;;) {
 		struct dvb_frontend_event dfe;
-		if (ioctl(fd_fe, FE_GET_EVENT, &dfe) == -1) {
+		if (ioctl(_fd_fe, FE_GET_EVENT, &dfe) == -1) {
 			break;
 		}
 	}
 	// set the tuning properties
-	if ((ioctl(fd_fe, FE_SET_PROPERTY, &cmdseq)) == -1) {
+	if ((ioctl(_fd_fe, FE_SET_PROPERTY, &cmdseq)) == -1) {
 		PERROR("FE_SET_PROPERTY failed");
-		return -1;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 struct diseqc_cmd {
@@ -341,44 +341,51 @@ struct diseqc_cmd {
 	uint32_t wait;
 };
 
-bool Frontend::diseqcSendMsg(int fd_fe, fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-		fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b) {
-	if (ioctl(fd_fe, FE_SET_TONE, SEC_TONE_OFF) == -1) {
+bool Frontend::diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
+		fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc) {
+	if (ioctl(_fd_fe, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 		PERROR("FE_SET_TONE failed");
 		return false;
 	}
-	if (ioctl(fd_fe, FE_SET_VOLTAGE, v) == -1) {
+	if (ioctl(_fd_fe, FE_SET_VOLTAGE, v) == -1) {
 		PERROR("FE_SET_VOLTAGE failed");
 		return false;
 	}
 	usleep(15 * 1000);
-	if (ioctl(fd_fe, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
+	if (ioctl(_fd_fe, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
 		PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 		return false;
 	}
 	usleep(cmd->wait * 1000);
 	usleep(15 * 1000);
-	if (ioctl(fd_fe, FE_DISEQC_SEND_BURST, b) == -1) {
+	if (repeatDiseqc) {
+		usleep(100 * 1000);
+		// Framing 0xe1: Command from Master, No reply required, Repeated transmission
+		cmd->cmd.msg[0] = 0xe1;
+		if (ioctl(_fd_fe, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
+			PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
+			return false;
+		}
+	}
+	if (ioctl(_fd_fe, FE_DISEQC_SEND_BURST, b) == -1) {
 		PERROR("FE_DISEQC_SEND_BURST failed");
 		return false;
 	}
 	usleep(15 * 1000);
-	if (ioctl(fd_fe, FE_SET_TONE, t) == -1) {
+	if (ioctl(_fd_fe, FE_SET_TONE, t) == -1) {
 		PERROR("FE_SET_TONE failed");
 		return false;
 	}
-	usleep(15 * 1000);
-
 	return true;
 }
 
-bool Frontend::sendDiseqc(int fd_fe, int streamID) {
+bool Frontend::sendDiseqc(int streamID, bool repeatDiseqc) {
 // Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
 	struct diseqc_cmd cmd = {
 		{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
 	};
 
-	// Framing 0xe0: Command from Master, No reply required, First transmission
+	// Framing 0xe0: Command from Master, No reply required, First transmission(or repeated transmission)
 	// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
 	// Command 0x38: Write to Port group 0 (Committed switches)
 	// Data 1  0xf0: see below
@@ -394,11 +401,11 @@ bool Frontend::sendDiseqc(int fd_fe, int streamID) {
 	SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", streamID, cmd.cmd.msg[0],
               cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
 
-	return diseqcSendMsg(fd_fe, (_diseqc.pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
-		      &cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A);
+	return diseqcSendMsg((_diseqc.pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
+		      &cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A, repeatDiseqc);
 }
 
-bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
+bool Frontend::tune_it(ChannelData &channel, int streamID) {
 
 	SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
 
@@ -408,27 +415,34 @@ bool Frontend::tune_it(int fd, ChannelData &channel, int streamID) {
 		_diseqc.src = channel.src - 1;
 		_diseqc.pol_v = channel.pol_v;
 		_diseqc.hiband = 0;
-		if (lnb.switchlof && lnb.lofHigh && channel.freq >= lnb.switchlof) {
-			_diseqc.hiband = 1;
-		}
+		if (lnb.lofHigh) {
+			if (lnb.switchlof) {
+				// Voltage controlled switch
+				if (channel.freq >= lnb.switchlof) {
+					_diseqc.hiband = 1;
+				}
 
-		if (_diseqc.hiband) {
-			channel.ifreq = channel.freq - lnb.lofHigh;
-		} else {
-			if (channel.freq < lnb.lofLow) {
-				channel.ifreq = lnb.lofLow - channel.freq;
+				if (_diseqc.hiband) {
+					channel.ifreq = abs(channel.freq - lnb.lofHigh);
+				} else {
+					channel.ifreq = abs(channel.freq - lnb.lofLow);
+				}
 			} else {
-				channel.ifreq = channel.freq - lnb.lofLow;
+				// C-Band Multi-point LNB
+				channel.ifreq = abs(channel.freq - (_diseqc.pol_v == POL_V ? lnb.lofLow : lnb.lofHigh));
 			}
+		} else	{
+			// Mono-point LNB without switch
+			channel.ifreq = abs(channel.freq - lnb.lofLow);
 		}
-		// set diseqc
-		if (sendDiseqc(fd, streamID) == -1) {
+		// send diseqc (repeat = false)
+		if (!sendDiseqc(streamID, false)) {
 			return false;
 		}
 	}
 
 	// Now tune
-	if (tune(fd, channel) == -1) {
+	if (!tune(channel)) {
 		return false;
 	}
 	return true;
@@ -458,11 +472,11 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
 			_fd_fe = open_fe(_path_to_fe, false);
-			SI_LOG_INFO("Stream: %d, Opened FE fd: %d", streamID, _fd_fe);
+			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_fe.c_str(), _fd_fe);
 		}
 		// try tuning
 		size_t timeout = 0;
-		while (tune_it(_fd_fe, channel, streamID) != 1) {
+		while (!tune_it(channel, streamID)) {
 			usleep(450000);
 			++timeout;
 			if (timeout > 3) {
@@ -477,13 +491,13 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 			fe_status_t status = FE_TIMEDOUT;
 			// first read status
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-				if ((status & FE_HAS_LOCK) && (status & FE_HAS_SIGNAL)) {
+				if ((status & FE_HAS_LOCK) /*&& (status & FE_HAS_SIGNAL)*/) {
 					// We are tuned now
 					_tuned = true;
-					SI_LOG_INFO("Stream: %d, Tuned and locked (FE status %d).", streamID, status);
+					SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X).", streamID, status);
 					break;
 				} else {
-					SI_LOG_INFO("Stream: %d, Not locked yet (FE status %d)...", streamID, status);
+					SI_LOG_INFO("Stream: %d, Not locked yet (FE status 0x%X)...", streamID, status);
 				}
 			}
 			usleep(50000);
@@ -501,7 +515,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 				return false;
 			}
 		}
-		SI_LOG_INFO("Stream: %d, Opened DVR fd: %d.", streamID, _fd_dvr);
+		SI_LOG_INFO("Stream: %d, Opened %s fd: %d.", streamID, _path_to_dvr.c_str(), _fd_dvr);
 
 		const unsigned long size = DVR_BUFFER_SIZE;
 		if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) == -1) {
