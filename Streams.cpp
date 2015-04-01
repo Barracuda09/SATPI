@@ -288,6 +288,21 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
+void Streams::setDVRBufferSize(int streamID, unsigned long size) {
+	assert(_stream);
+	if (streamID < _maxStreams) {
+		_stream[streamID].setDVRBufferSize(size);
+	}
+}
+
+unsigned long Streams::getDVRBufferSize(int streamID) const {
+	assert(_stream);
+	if (streamID < _maxStreams) {
+		return _stream[streamID].getDVRBufferSize();
+	}
+	return 0;
+}
+
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
 	assert(_stream);
 	return _stream[stream].attribute_describe_string(active);

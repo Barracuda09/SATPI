@@ -19,6 +19,7 @@
 */
 #include "HttpcSocket.h"
 #include "SocketClient.h"
+#include "StringConverter.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,9 @@ ssize_t HttpcSocket::recv_recvfrom_httpc_message(SocketClient &client, int recv_
 #define HTTPC_TIMEOUT 3
 	size_t read_len = 0;
 	size_t timeout = HTTPC_TIMEOUT;
-	bool done = 0;
+	bool done = false;
+	bool end = false;
+	std::string::size_type actualSize = 0;
 
 	client.clearMessage();
 
@@ -55,14 +58,31 @@ ssize_t HttpcSocket::recv_recvfrom_httpc_message(SocketClient &client, int recv_
 	do {
 		char buf[1024];
 		const ssize_t size = recvfrom(client.getFD(), buf, sizeof(buf)-1, recv_flags, (struct sockaddr *)si_other, addrlen);
-//		const ssize_t size = recv(client.getFD(), buf, sizeof(buf)-1, recv_flags);
 		if (size > 0) {
 			read_len += size;
 			// terminate
 			buf[size] = 0;
 			client.addMessage(buf);
-			// end of message?
-			done = client.getMessage().find("\r\n\r\n", 0) != std::string::npos;
+			// end of message "\r\n\r\n" ?
+			if (!end) {
+				const std::string::size_type headerSize = client.getMessage().find("\r\n\r\n", 0);
+				end = headerSize != std::string::npos;
+
+				// check do we need to read more?
+				std::string parameter;
+				StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length", parameter);
+				const size_t contentLength = atoi(parameter.c_str());
+				if (contentLength) {
+					// now check did we read it all
+					actualSize = headerSize + contentLength + 4;
+					done = actualSize == client.getMessage().size();
+				} else {
+					done = true;
+				}
+			} else {
+				// now check did we read it all this time around?
+				done = actualSize == client.getMessage().size();
+			}
 		} else {
 			if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
 				usleep(150000);

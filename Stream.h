@@ -87,6 +87,11 @@ class Stream  {
 
 		///
 		void addToXML(std::string &xml) const;
+		
+		/// Get and Set DVR buffer size
+		void          setDVRBufferSize(unsigned long size) { _properties.setDVRBufferSize(size); }
+		unsigned long getDVRBufferSize() const             { return _properties.getDVRBufferSize(); }
+
 
 		// =======================================================================
 		// Functions used for RTSP Server
@@ -139,7 +144,7 @@ class Stream  {
 		// Data members
 		// =======================================================================
 		bool             _streamInUse; //
-		StreamClient     *_client;    // defines the participants of this stream
+		StreamClient     *_client;     // defines the participants of this stream
 		                               // index 0 is the owner of this stream
 		StreamProperties _properties;  //
 		Frontend         _frontend;    //

@@ -22,6 +22,7 @@
 #include "Utils.h"
 #include "ChannelData.h"
 #include "StringConverter.h"
+#include "StreamProperties.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -448,26 +449,27 @@ bool Frontend::tune_it(ChannelData &channel, int streamID) {
 	return true;
 }
 
-bool Frontend::update(ChannelData &channel, int streamID) {
+bool Frontend::update(StreamProperties &properties) {
 	// Setup, tune and set PID Filters
-	if (channel.changed) {
+	if (properties.getChannelData().changed) {
 		_tuned = false;
-		channel.changed = false;
+		properties.getChannelData().changed = false;
 		CLOSE_FD(_fd_dvr);
 	}
 	size_t timeout = 0;
-	while (!setupAndTune(channel, streamID)) {
+	while (!setupAndTune(properties)) {
 		usleep(50000);
 		++timeout;
 		if (timeout > 3) {
 			return false;
 		}
 	}
-	updatePIDFilters(channel, streamID);
+	updatePIDFilters(properties.getChannelData(), properties.getStreamID());
 	return true;
 }
 
-bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
+bool Frontend::setupAndTune(StreamProperties &properties) {
+	const int streamID = properties.getStreamID();
 	if (!_tuned) {
 		// Check if we have already opened a FE
 		if (_fd_fe == -1) {
@@ -476,7 +478,7 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 		}
 		// try tuning
 		size_t timeout = 0;
-		while (!tune_it(channel, streamID)) {
+		while (!tune_it(properties.getChannelData(), streamID)) {
 			usleep(450000);
 			++timeout;
 			if (timeout > 3) {
@@ -491,13 +493,13 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 			fe_status_t status = FE_TIMEDOUT;
 			// first read status
 			if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-				if ((status & FE_HAS_LOCK) /*&& (status & FE_HAS_SIGNAL)*/) {
+				if (status & FE_HAS_LOCK) {
 					// We are tuned now
 					_tuned = true;
-					SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X).", streamID, status);
+					SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", streamID, status);
 					break;
 				} else {
-					SI_LOG_INFO("Stream: %d, Not locked yet (FE status 0x%X)...", streamID, status);
+					SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", streamID, status);
 				}
 			}
 			usleep(50000);
@@ -515,9 +517,9 @@ bool Frontend::setupAndTune(ChannelData &channel, int streamID) {
 				return false;
 			}
 		}
-		SI_LOG_INFO("Stream: %d, Opened %s fd: %d.", streamID, _path_to_dvr.c_str(), _fd_dvr);
+		SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_dvr.c_str(), _fd_dvr);
 
-		const unsigned long size = DVR_BUFFER_SIZE;
+		const unsigned long size = properties.getDVRBufferSize();
 		if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) == -1) {
 			PERROR("DMX_SET_BUFFER_SIZE failed");
 		}

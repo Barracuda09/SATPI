@@ -37,7 +37,8 @@ StreamProperties::StreamProperties() :
 		_streamActive(false),
 		_ssrc((uint32_t)(rand_r(&seedp) % 0xffff)),
 		_timestamp(0),
-		_rtp_payload(0.0) {;}
+		_rtp_payload(0.0),
+		_dvrBufferSize(188 * 120) {;}
 
 StreamProperties::~StreamProperties() {;}
 
@@ -85,6 +86,16 @@ void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t stren
 fe_status_t StreamProperties::getFrontendStatus() const {
 	MutexLock lock(_mutex);
 	return _status;
+}
+
+void StreamProperties::setDVRBufferSize(unsigned long size) {
+	MutexLock lock(_mutex);
+	_dvrBufferSize = size;
+}
+
+unsigned long StreamProperties::getDVRBufferSize() const {
+	MutexLock lock(_mutex);
+	return _dvrBufferSize;
 }
 
 void StreamProperties::addToXML(std::string &xml) const {

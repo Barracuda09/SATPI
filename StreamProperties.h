@@ -69,6 +69,9 @@ class StreamProperties  {
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
 
+		void          setDVRBufferSize(unsigned long size);
+		unsigned long getDVRBufferSize() const;
+
 	protected:
 
 	private:
@@ -88,6 +91,8 @@ class StreamProperties  {
 		long        _timestamp;      //
 		ChannelData _channelData;    //
 		double      _rtp_payload;    //
+
+		unsigned long _dvrBufferSize;//
 
 		fe_status_t _status;         // FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
 		uint16_t    _strength;       //

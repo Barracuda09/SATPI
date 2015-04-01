@@ -36,9 +36,9 @@ class HttpServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpServer(const Streams &streams,
-		           const InterfaceAttr &interface,
-		           const Properties &properties);
+		HttpServer(const InterfaceAttr &interface,
+		           Streams &streams,
+		           Properties &properties);
 		virtual ~HttpServer();
 
 	protected:
@@ -72,8 +72,8 @@ class HttpServer :
 		// =======================================================================
 		/// @c InterfaceAttr has all network items
 		const InterfaceAttr &_interface;
-		const Properties &_properties;
-		const Streams &_streams;
+		Streams             &_streams;
+		Properties          &_properties;
 
 }; // class HttpServer
 

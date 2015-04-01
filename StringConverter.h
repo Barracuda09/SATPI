@@ -50,6 +50,9 @@ class StringConverter  {
 		static bool getMethod(const std::string &msg, std::string &method);
 
 		///
+		static bool getContentTypeFrom(const std::string &msg, std::string &content);
+		
+		///
 		static bool hasTransportParameters(const std::string &msg);
 
 		///

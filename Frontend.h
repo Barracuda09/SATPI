@@ -26,6 +26,9 @@
 #include <stdint.h>
 #include <string>
 
+// Forward declarations
+class StreamProperties;
+
 #define LNB_UNIVERSAL 0
 #define LNB_STANDARD  1
 
@@ -62,7 +65,6 @@ typedef struct {
 } DiSEqc_t;
 
 #define MAX_DELSYS       5
-#define DVR_BUFFER_SIZE  188 * 120
 
 // Forward declarations
 
@@ -101,7 +103,7 @@ class Frontend  {
 		bool capableOf(fe_delivery_system_t msys);
 
 		/// Update the Channel and PID. Will close DVR and reopen it if channel did change
-		bool update(ChannelData &channel, int streamID);
+		bool update(StreamProperties &properties);
 
 		///
 		bool teardown(ChannelData &channel, int streamID);
@@ -144,7 +146,7 @@ class Frontend  {
 		bool updatePIDFilters(ChannelData &channel, int streamID);
 
 		///
-		bool setupAndTune(ChannelData &channel, int streamID);
+		bool setupAndTune(StreamProperties &properties);
 
 	private:
 		// =======================================================================

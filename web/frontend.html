@@ -14,13 +14,13 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
-    function addTableLineEntry(data, name, valname) {
-		entry =  "<tr><td>" + name + "</td>";
+	function addTableLineEntry(data, name, valname) {
+		entry =	 "<tr><td>" + name + "</td>";
 		for (en = 0; en < data.length; en++) {
 			entry +=  "<td>";
 			value  = data[en].getElementsByTagName(valname)[0].childNodes[0].nodeValue;
 			if (value == "submit") {
-				nr     = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+				nr	   = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
 				entry += "<form>";
 				entry += "<input type=\"" + value + "\" name=\"" + valname + "\" value=\"" + nr + "\"";
 				entry += "id=\"" + value + nr + "\"";
@@ -31,18 +31,18 @@
 			}
 			entry +=  "</td>";
 		}
-		page +=  "</tr>";
+		page +=	 "</tr>";
 		return entry;
 	}
 
-    function buildcontent(xmlDoc) {
+	function buildcontent(xmlDoc) {
 		page = "";
 
 		streams = xmlDoc.getElementsByTagName("streams");
 		if (streams.length > 0) {
 			stream = streams[0].getElementsByTagName("stream");
 			if (stream.length > 0) {
-				page +=  "<table class='table table-bordered table-striped'>";
+				page +=	 "<table class='table table-bordered table-striped'>";
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Frontend Info</th></tr>";
 				page += addTableLineEntry(stream, "Stream Index", "streamindex");
 				page += addTableLineEntry(stream, "Attached", "attached");
@@ -76,12 +76,12 @@
 				page += addTableLineEntry(stream, "ber", "ber");
 				page += addTableLineEntry(stream, "unc", "unc");
 
-				page +=  "</table><br>";
+				page +=	 "</table><br>";
 			}
 		}
 		return page;
 	}
-    function updatePage() {
+	function updatePage() {
 		loadXMLDoc("streams.xml");
 	}
 	// function called when xml is loaded
@@ -109,16 +109,17 @@
 	document.getElementById("menu").innerHTML = buildmenu();
 	setMenuItemActive("frontend");
 
-    // Call the ajax refresh each refresh_time seconds
-    updatePage();
-    setInterval("updatePage()", refresh_time);
+	// Call the ajax refresh each refresh_time seconds
+	var refresh_time = 20000;
+	updatePage();
+	setInterval("updatePage()", refresh_time);
 </script>
 </div>
 </div>
 
 <div class="navbar navbar-default navbar-fixed-bottom">
   <div class="container">
-    <p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
+	<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
 </div>
 </div>
 </body>

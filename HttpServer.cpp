@@ -52,17 +52,18 @@
 #define CONTENT_TYPE_ICO   "image/x-icon"
 
 #define SSDP_INTERVAL_VAR  "ssdp_interval"
+#define DVR_BUFFER_VAR     "dvr_buffer"
 #define SYSLOG_ON_VAR      "syslog_on"
 #define RESET_FRONTEND     "reset_fe"
 
-HttpServer::HttpServer(const Streams &streams,
-                       const InterfaceAttr &interface,
-                       const Properties &properties) :
+HttpServer::HttpServer(const InterfaceAttr &interface,
+                       Streams &streams,
+                       Properties &properties) :
 		ThreadBase("HttpServer"),
 		TcpSocket(20, HTTP_PORT, true),
 		_interface(interface),
-		_properties(properties),
-		_streams(streams) {
+		_streams(streams),
+		_properties(properties) {
 	startThread();
 }
 
@@ -119,7 +120,30 @@ int read_file(const char *file, std::string &data) {
 }
 
 bool HttpServer::postMethod(const SocketClient &client) {
-	UNUSED(client);
+	std::string content;
+	if (StringConverter::getContentTypeFrom(client.getMessage().c_str(), content)) {
+		std::string::size_type found = content.find_first_of("=");
+		if (found != std::string::npos) {
+			std::string id = content.substr(0, found);
+			std::string val = content.substr(found + 1);
+			if (id.compare(SSDP_INTERVAL_VAR) == 0) {
+				_properties.setSsdpAnnounceTimeSec( atoi(val.c_str()) );
+				SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _properties.getSsdpAnnounceTimeSec());
+			} else if (id.compare(DVR_BUFFER_VAR) == 0) {
+				_streams.setDVRBufferSize(0, atoi(val.c_str()));
+				SI_LOG_INFO("Setting DVR buffer to: %d Bytes", _streams.getDVRBufferSize(0));
+			}
+		}
+	}
+	// setup reply
+	std::string htmlBody;
+	StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0);
+
+	// send 'htmlBody' to client
+	if (send(client.getFD(), htmlBody.c_str(), htmlBody.size(), 0) == -1) {
+		PERROR("send htmlBody");
+		return false;
+	}
 	return true;
 }
 
@@ -131,16 +155,16 @@ bool HttpServer::getMethod(const SocketClient &client) {
 
 	// Parse what to get
 	if (StringConverter::isRootFile(client.getMessage())) {
-#define HTML_MOVED	"<html>\r\n" \
-					"<head>\r\n" \
-					"<title>Page is moved</title>\r\n" \
-					"</head>\r\n" \
-					"<body>\r\n" \
-					"<h1>Moved</h1>\r\n" \
-					"<p>This page is moved:\r\n" \
-					"<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
-					"</body>\r\n" \
-					"</html>"
+#define HTML_MOVED "<html>\r\n" \
+                   "<head>\r\n" \
+                   "<title>Page is moved</title>\r\n" \
+                   "</head>\r\n" \
+                   "<body>\r\n" \
+                   "<h1>Moved</h1>\r\n" \
+                   "<p>This page is moved:\r\n" \
+                   "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
+                   "</body>\r\n" \
+                   "</html>"
 		StringConverter::addFormattedString(docType, HTML_MOVED, _interface.getIPAddress().c_str(), HTTP_PORT, "/index.html");
 		docTypeSize = docType.size();
 		StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_HTML, docTypeSize);
@@ -170,7 +194,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
 			} else if (file.compare("/STOP") == 0) {
 				// KILL
-               std::exit(0);
+				std::exit(0);
 			} else if ((docTypeSize = read_file(path.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
@@ -231,6 +255,8 @@ void HttpServer::make_config_xml(std::string &xml) {
 	
 	// application data
 	xml += "<configdata>\r\n";
+	StringConverter::addFormattedString(xml, "<input1><id>"SSDP_INTERVAL_VAR"</id><inputtype>number</inputtype><value>%d</value></input1>", _properties.getSsdpAnnounceTimeSec());
+	StringConverter::addFormattedString(xml, "<input2><id>"DVR_BUFFER_VAR"</id><inputtype>number</inputtype><value>%d</value></input2>", _streams.getDVRBufferSize(0));
 	xml += "</configdata>\r\n";
 
 	xml += "</data>\r\n";

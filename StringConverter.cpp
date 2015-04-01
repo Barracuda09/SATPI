@@ -95,6 +95,21 @@ bool StringConverter::getMethod(const std::string &msg, std::string &method) {
 	return true;
 }
 
+bool StringConverter::getContentTypeFrom(const std::string &msg, std::string &content) {
+	bool ret = false;
+	std::string parameter;
+	StringConverter::getHeaderFieldParameter(msg, "Content-Length", parameter);
+	const size_t contentLength = atoi(parameter.c_str());
+	if (contentLength) {
+		const std::string::size_type headerSize = msg.find("\r\n\r\n", 0);
+		if (headerSize != std::string::npos) {
+			content = msg.substr(headerSize + 4);
+			ret = true;
+		}
+	}
+	return ret;
+}
+
 bool StringConverter::hasTransportParameters(const std::string &msg) {
 	// Transport Parameters should be in the first line (method)
 	std::string::size_type nextline = 0;

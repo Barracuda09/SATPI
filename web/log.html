@@ -13,7 +13,7 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
-    function buildcontent(xmlDoc) {
+	function buildcontent(xmlDoc) {
 		page = "";
 		logdata = xmlDoc.getElementsByTagName("log");
 		var textarea = document.getElementById('txt');
@@ -34,7 +34,7 @@
 		}
 		return page;
 	}
-    function updatePage() {
+	function updatePage() {
 		loadXMLDoc("log.xml");
 	}
 	// function called when xml is loaded
@@ -66,6 +66,7 @@
 			setMenuItemActive("log");
 
 			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 2000;
 			updatePage();
 			setInterval("updatePage()", refresh_time);
 		</script>
@@ -74,7 +75,7 @@
 
 <div class="navbar navbar-default navbar-fixed-bottom">
 	<div class="container">
-		<p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
+		<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
 	</div>
 </div>
 

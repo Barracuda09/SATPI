@@ -1,5 +1,4 @@
 function loadXMLDoc(filename) {
-	refresh_time = 2000;
 	if (window.XMLHttpRequest) {
 		xmlhttp = new XMLHttpRequest();
 	} else if (window.ActiveXObject) {

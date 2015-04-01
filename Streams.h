@@ -69,6 +69,10 @@ class Streams  {
 
 		///
 		void make_streams_xml(std::string &xml) const;
+		
+		/// Get and Set DVR buffer size
+		void          setDVRBufferSize(int streamID, unsigned long size);
+		unsigned long getDVRBufferSize(int streamID) const;
 
 	protected:
 

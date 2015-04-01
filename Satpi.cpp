@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
 
 	RtspServer server(streams, interface.getIPAddress());
 
-	HttpServer httpserver(streams, interface, properties);
+	HttpServer httpserver(interface, streams, properties);
 
 	SsdpServer ssdpserver(interface, properties);
 	if (ssdp) {

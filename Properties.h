@@ -55,10 +55,6 @@ class Properties  {
 		void         setSsdpAnnounceTimeSec(unsigned int sec) { _ssdpAnnounceTimeSec = sec; }
 		unsigned int getSsdpAnnounceTimeSec() const           { return _ssdpAnnounceTimeSec; }
 		
-		/// Get and Set DVR buffer size
-		void          setDVRBufferSize(unsigned long size) { _dvrBufferSize = size; }
-		unsigned long getDVRBufferSize() const             { return _dvrBufferSize; }
-
 		/// Get application start time
 		time_t       getApplicationStartTime() const { return _appStartTime; }
 	protected:
@@ -75,8 +71,6 @@ class Properties  {
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;
 		time_t        _appStartTime;         // the application start time (EPOCH)
-		unsigned long _dvrBufferSize;
-
 }; // class Properties
 
 #endif // PROPERTIES_H_INCLUDE

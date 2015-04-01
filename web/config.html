@@ -53,16 +53,15 @@
 		}
 	}
 
-    function buildcontent(xmlDoc) {
-		page = "";
+	function buildcontent(xmlDoc) {
+		var page = "";
 
 		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
-		page += addInput("Log to syslog:", xmlDoc.getElementsByTagName("input2")[0]);
+		page += addInput("DVR Buffer size (Bytes):", xmlDoc.getElementsByTagName("input2")[0]);
 
 		return page;
 	}
-    function updatePage() {
-		// @TODO: should get the current value's via XML
+	function updatePage() {
 		loadXMLDoc("config.xml");
 	}
 	// function called when xml is loaded
@@ -79,38 +78,39 @@
 </div>
 
 <div class="container-fluid">
-<div class="start">
-	<h3>Main Configure Page</h3>
-<div id="content" class="log">
-</div>
+	<div class="start">
+		<h3>Main Configure Page</h3>
+		<div id="content" class="log">
+		</div>
 
-<script>
-    (function() {
-        var obj = document.getElementById("ssdp_interval");
-        obj.addEventListener('keypress', function(event) {
-//            if (event.keyCode == 13) {
-                event.preventDefault();
-				postData("ssdp_interval", obj.value);
-//            }
-        });
-    }());
-</script>
+		<script>
+			(function() {
+				var obj = document.getElementById("ssdp_interval");
+				obj.addEventListener('keypress', function(event) {
+//					if (event.keyCode == 13) {
+						event.preventDefault();
+						postData("ssdp_interval", obj.value);
+//					}
+				});
+			}());
+		</script>
 
-<script>
-	// make menu
-	document.getElementById("menu").innerHTML = buildmenu();
-	setMenuItemActive("config");
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			setMenuItemActive("config");
 
-    // Call the ajax refresh each refresh_time seconds
-    updatePage();
-    setInterval("updatePage()", refresh_time);
-</script>
-</div>
+			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 20000;
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+		</script>
+	</div>
 </div>
 <div class="navbar navbar-default navbar-fixed-bottom">
 	<div class="container">
-		<p class="navbar-text pull-left">Copyright &#169; 2014 Marc Postema</p>
-</div>
+		<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
+	</div>
 </div>
 </body>
 </html>

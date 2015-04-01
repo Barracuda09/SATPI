@@ -1,5 +1,5 @@
 function postData(id, data) {
-	refresh_time = 2000;
+	//refresh_time = 2000;
 	if (window.XMLHttpRequest) {
 		xmlhttp_post = new XMLHttpRequest();
 	} else if (window.ActiveXObject) {
