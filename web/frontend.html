@@ -20,7 +20,7 @@
 			entry +=  "<td>";
 			var value = data[en].getElementsByTagName(valname)[0].childNodes[0].nodeValue;
 			if (value == "submit") {
-				nr	   = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+				var nr = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
 				entry += "<input type=\"checkbox\" name=\"" + valname + "\" value=\"" + nr + "\"";
 				entry += "id=\"" + value + nr + "\"";
 				entry += "onclick=\"postData(id, document.getElementById(id).checked)\"/>"
@@ -55,7 +55,7 @@
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
 				page += addTableLineEntry(stream, "RTP streamed", "payload");
 				
-				page += addTableLineEntry(stream, "Repeat DiSEqC", "inputtype");
+//				page += addTableLineEntry(stream, "Repeat DiSEqC", "inputtype");
 
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
 				delsys = addTableLineEntry(stream, "Delivery System", "delsys");
