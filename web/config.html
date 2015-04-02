@@ -15,7 +15,7 @@
 <script src="bootstrap.min.js"></script>
 <script>
 	function addCheckboxInput(labelstring, input) {
-		entry  = "<form>";
+		var entry = "<div class=\"checkbox\">";
 		entry += "<label for=\"";
 		entry += input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
 		entry += "\">" + labelstring + "</label>";
@@ -26,22 +26,19 @@
 		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
 		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
 		entry += "onclick=\"postData(id, document.getElementById(id).checked)\"/>"
-		entry += "</form>";
+		entry += "</div>";
 		return entry;
 	}
 
 	function addNumberInput(labelstring, input) {
-		entry  = "<form>";
-		entry += "<label for=\"";
-		entry += input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
-		entry += "\">" + labelstring + "</label>";
-		entry += "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
+		var entry = "<div class=\"form-group\">";
+		entry += "<label for=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\">" + labelstring + "</label>";
+		entry += "<input class=\"form-control\" type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
 		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
 		entry += "\" min=\"5\"";
-		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
 		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
 		entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
-		entry += "</form>";
+		entry += "</div>";
 		return entry;
 	}
 
@@ -54,11 +51,12 @@
 	}
 
 	function buildcontent(xmlDoc) {
-		var page = "";
-
+		var page = "<div class=\"container\">";
+		page += "<form role=\"form\">";
 		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
 		page += addInput("DVR Buffer size (Bytes):", xmlDoc.getElementsByTagName("input2")[0]);
-
+		page += "</form>";
+		page += "</div>";
 		return page;
 	}
 	function updatePage() {
@@ -74,7 +72,9 @@
 </head>
 <body>
 
+<div class="container-fluid">
 <div id="menu">
+</div>
 </div>
 
 <div class="container-fluid">
@@ -82,18 +82,6 @@
 		<h3>Main Configure Page</h3>
 		<div id="content" class="log">
 		</div>
-
-		<script>
-			(function() {
-				var obj = document.getElementById("ssdp_interval");
-				obj.addEventListener('keypress', function(event) {
-//					if (event.keyCode == 13) {
-						event.preventDefault();
-						postData("ssdp_interval", obj.value);
-//					}
-				});
-			}());
-		</script>
 
 		<script>
 			// make menu

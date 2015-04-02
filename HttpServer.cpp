@@ -132,6 +132,8 @@ bool HttpServer::postMethod(const SocketClient &client) {
 			} else if (id.compare(DVR_BUFFER_VAR) == 0) {
 				_streams.setDVRBufferSize(0, atoi(val.c_str()));
 				SI_LOG_INFO("Setting DVR buffer to: %d Bytes", _streams.getDVRBufferSize(0));
+			} else {
+				SI_LOG_INFO("Posted data %s", content.c_str());
 			}
 		}
 	}

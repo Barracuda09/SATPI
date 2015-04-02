@@ -105,6 +105,12 @@ void StreamProperties::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc);
 	StringConverter::addFormattedString(xml, "<payload>%.3f</payload>", (_rtp_payload / (1024.0 * 1024.0)));
 
+#define RESET_FRONTEND "RESET_FRONTEND"
+
+	//
+	StringConverter::addFormattedString(xml, "<"RESET_FRONTEND"><inputtype>submit</inputtype><value>%zu</value></"RESET_FRONTEND">", 0);
+
+
 	// Channel
 	StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_channelData.delsys));
 	StringConverter::addFormattedString(xml, "<tunefreq>%d</tunefreq>", _channelData.freq);
