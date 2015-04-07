@@ -438,8 +438,8 @@ bool Frontend::tune_it(StreamProperties &properties) {
 			// Mono-point LNB without switch
 			channel.ifreq = abs(channel.freq - lnb.lofLow);
 		}
-		// send diseqc (repeat = false)
-		if (!sendDiseqc(streamID, false)) {
+		// send diseqc
+		if (!sendDiseqc(streamID, properties.diseqcRepeat())) {
 			return false;
 		}
 	}
