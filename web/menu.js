@@ -1,4 +1,5 @@
 function buildmenu() {
+// Glyphicons: see http://glyphicons.com/
 	var menu = "";
 	menu += "<nav class=\"navbar navbar-inverse navbar-fixed-top\">";
 	menu +=   "<div class=\"container\">";
@@ -13,15 +14,15 @@ function buildmenu() {
 	menu +=     "</div>";
 	menu +=     "<div class=\"collapse navbar-collapse\" id=\"satpinavbar\">";
 	menu +=       "<ul class=\"nav navbar-nav\">";
-	menu +=         "<li id=\"index\"    class=\"\"><a href=\"index.html\">Home</a></li>";
-	menu +=         "<li id=\"log\"      class=\"\"><a href=\"log.html\">Log</a></li>";
-	menu +=         "<li id=\"frontend\" class=\"\"><a href=\"frontend.html\">Frontend</a></li>";
-	menu +=         "<li id=\"config\"   class=\"\"><a href=\"config.html\">Configure</a></li>";
+	menu +=         "<li id=\"index\"    class=\"\"><a href=\"index.html\"><span class=\"glyphicon glyphicon-home\"></span> Home</a></li>";
+	menu +=         "<li id=\"log\"      class=\"\"><a href=\"log.html\"><span class=\"glyphicon glyphicon-list\"></span> Log</a></li>";
+	menu +=         "<li id=\"frontend\" class=\"\"><a href=\"frontend.html\"><span class=\"glyphicon glyphicon-info-sign\"></span> Frontend</a></li>";
+	menu +=         "<li id=\"config\"   class=\"\"><a href=\"config.html\"><span class=\"glyphicon glyphicon-cog\"></span> Configure</a></li>";
 	menu +=         "<li id=\"contact\"  class=\"\"><a href=\"#contact\">Contact</a></li>";
 	menu +=         "<li id=\"about\"    class=\"\"><a href=\"#about\">About</a></li>";
 	menu +=       "</ul>";
 	menu +=       "<ul class=\"nav navbar-nav navbar-right\">";
-	menu +=         "<li id=\"stop\" class=\"\"><a href=\"STOP\"><span class=\"glyphicon glyphicon-off\"></span>Stop</a></li>";
+	menu +=         "<li id=\"stop\" class=\"\"><a href=\"STOP\"><span class=\"glyphicon glyphicon-off\"></span> Stop</a></li>";
 	menu +=       "</ul>";
 	menu +=     "</div>";
 	menu +=   "</div>";

@@ -54,6 +54,10 @@ class StreamProperties  {
 		void addToXML(std::string &xml) const;
 
 		///
+		void fromXML(const std::string className, const std::string streamID,
+		             const std::string variableName, const std::string value);
+
+		///
 		std::string attribute_describe_string(bool &active) const;
 
 		void setStreamID(int streamID)     { _streamID = streamID; }
@@ -69,8 +73,9 @@ class StreamProperties  {
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
 
-		void          setDVRBufferSize(unsigned long size);
 		unsigned long getDVRBufferSize() const;
+		
+		bool diseqcRepeat() const;
 
 	protected:
 
@@ -93,6 +98,7 @@ class StreamProperties  {
 		double      _rtp_payload;    //
 
 		unsigned long _dvrBufferSize;//
+		bool          _diseqcRepeat; //
 
 		fe_status_t _status;         // FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
 		uint16_t    _strength;       //

@@ -25,6 +25,7 @@
 #include "StreamClient.h"
 #include "SocketClient.h"
 #include "StringConverter.h"
+#include "Configure.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -288,24 +289,14 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Streams::setDVRBufferSize(int streamID, unsigned long size) {
-	assert(_stream);
-	if (streamID < _maxStreams) {
-		_stream[streamID].setDVRBufferSize(size);
-	}
-}
-
-unsigned long Streams::getDVRBufferSize(int streamID) const {
-	assert(_stream);
-	if (streamID < _maxStreams) {
-		return _stream[streamID].getDVRBufferSize();
-	}
-	return 0;
-}
-
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
 	assert(_stream);
 	return _stream[stream].attribute_describe_string(active);
+}
+
+void Streams::fromXML(const std::string &className, const std::string &streamID,
+                          const std::string &variableName, const std::string &value) {
+	_stream[atoi(streamID.c_str())].fromXML(className, streamID, variableName, value);
 }
 
 void Streams::make_streams_xml(std::string &xml) const {

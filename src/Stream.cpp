@@ -20,11 +20,11 @@
 #include "Stream.h"
 #include "StringConverter.h"
 #include "SocketClient.h"
+#include "Configure.h"
+#include "Log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "Log.h"
 
 const unsigned int Stream::MAX_CLIENTS = 8;
 
@@ -162,6 +162,11 @@ void Stream::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<ownerSessionID>%s</ownerSessionID>", _client[0].getSessionID().c_str());
 	_frontend.addToXML(xml);
 	_properties.addToXML(xml);
+}
+
+void Stream::fromXML(const std::string className, const std::string streamID,
+                     const std::string variableName, const std::string value) {
+	_properties.fromXML(className.c_str(), streamID.c_str(), variableName.c_str(), value.c_str());
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {

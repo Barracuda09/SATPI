@@ -406,7 +406,9 @@ bool Frontend::sendDiseqc(int streamID, bool repeatDiseqc) {
 		      &cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A, repeatDiseqc);
 }
 
-bool Frontend::tune_it(ChannelData &channel, int streamID) {
+bool Frontend::tune_it(StreamProperties &properties) {
+	const int streamID = properties.getStreamID();
+	ChannelData channel = properties.getChannelData();
 
 	SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
 
@@ -478,7 +480,7 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 		}
 		// try tuning
 		size_t timeout = 0;
-		while (!tune_it(properties.getChannelData(), streamID)) {
+		while (!tune_it(properties)) {
 			usleep(450000);
 			++timeout;
 			if (timeout > 3) {

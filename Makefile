@@ -3,21 +3,20 @@
 ###############################################################################
 
 # Set the compiler being used.
-CC = $(CCPREFIX)g++
+CXX = $(CXXPREFIX)g++
 
 # Includes needed for proper compilation
 INCLUDES =
 
 # Libraries needed for linking
-LDFLAGS = -lpthread -lrt
+LDFLAGS = -pthread -lrt
 
 # Set Compiler Flags
-CFLAGS = -Wall -Wextra -Winit-self $(INCLUDES)
+CFLAGS = -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or simu
 ifeq ($(BUILD),debug)
   # "Debug" build - no optimization, with debugging symbols
-  #CFLAGS += -O0 -g
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
 else
   ifeq ($(BUILD),simu)
@@ -50,12 +49,17 @@ SOURCES = Version.cpp \
 	RtpThread.cpp \
 	RtcpThread.cpp
 
+# Sub dirs for project
+OBJ_DIR = obj
+SRC_DIR = src
+
 # use wildcard expansion when the variable is assigned.
 # (otherwise the variable will just contain the string '*.h' instead of the complete file list)
-HEADERS = $(wildcard *.h)
+HEADERS = $(wildcard $(SRC_DIR)/*.h)
 
 #Objectlist is identical to Sourcelist except that all .c extensions need to be replaced by .o extension.
-OBJECTS = $(SOURCES:.cpp=.o)
+# and add OBJ_DIR to path
+OBJECTS = $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 
 #Resulting Executable name
 EXECUTABLE = satpi
@@ -63,21 +67,22 @@ EXECUTABLE = satpi
 # First rule is also the default rule
 # generate the Executable from all the objects
 # $@ represents the targetname
-$(EXECUTABLE): $(OBJECTS)
-	$(CC)  $(OBJECTS) -o $@ $(LDFLAGS)
+$(EXECUTABLE): makeobj $(OBJECTS) $(HEADERS)
+	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 # A pattern rule is used to build objects from 'cpp' files
 # $< represents the first item in the dependencies list
 # $@ represents the targetname
-%.o: %.cpp $(HEADERS)
-	$(CC) -c $(CFLAGS) $<
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
+	$(CXX) -c $(CFLAGS) $< -o $@
 
 # Create version.cpp
-Version.cpp: FORCE
-	./version.sh $@ > /dev/null
+$(OBJ_DIR)/Version.o:
+	./version.sh $(SRC_DIR)/Version.cpp > /dev/null
+	$(CXX) -c $(CFLAGS) $(SRC_DIR)/Version.cpp -o $@
 
-FORCE:
-
+makeobj:
+	@mkdir -p $(OBJ_DIR)
 
 debug:
 	make "BUILD=debug"
@@ -85,6 +90,8 @@ debug:
 simu:
 	make "BUILD=simu"
 
-.PHONY: clean
+.PHONY:
+	clean
+
 clean:
-	rm -rf *.o $(EXECUTABLE) version.cpp *.*~ *~ /web/*.*~
+	rm -rf ./obj $(EXECUTABLE) src/Version.cpp src/*.*~ src/*~ /web/*.*~

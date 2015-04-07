@@ -22,6 +22,8 @@
 #include "Log.h"
 #include "dvbfix.h"
 #include "Frontend.h"
+#include "Configure.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +40,8 @@ StreamProperties::StreamProperties() :
 		_ssrc((uint32_t)(rand_r(&seedp) % 0xffff)),
 		_timestamp(0),
 		_rtp_payload(0.0),
-		_dvrBufferSize(188 * 120) {;}
+		_dvrBufferSize(188 * 120),
+		_diseqcRepeat(true) {;}
 
 StreamProperties::~StreamProperties() {;}
 
@@ -88,14 +91,28 @@ fe_status_t StreamProperties::getFrontendStatus() const {
 	return _status;
 }
 
-void StreamProperties::setDVRBufferSize(unsigned long size) {
-	MutexLock lock(_mutex);
-	_dvrBufferSize = size;
-}
-
 unsigned long StreamProperties::getDVRBufferSize() const {
 	MutexLock lock(_mutex);
 	return _dvrBufferSize;
+}
+
+bool StreamProperties::diseqcRepeat() const {
+	MutexLock lock(_mutex);
+	return _diseqcRepeat;
+}
+
+void StreamProperties::fromXML(const std::string className, const std::string streamID,
+                               const std::string variableName, const std::string value) {
+	MutexLock lock(_mutex);
+	if (atoi(streamID.c_str()) == _streamID) {
+		if (className == CLASS_STREAMPROPERTIES) {
+			if (variableName == VARI_DVR_BUFFER) {
+				_dvrBufferSize = atoi(value.c_str());
+			} else if (variableName == VARI_DISEQC_REPEAT) {
+				_diseqcRepeat = (value == "true") ? true : false;
+			}
+		}
+	}
 }
 
 void StreamProperties::addToXML(std::string &xml) const {
@@ -104,12 +121,6 @@ void StreamProperties::addToXML(std::string &xml) const {
 	//
 	StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc);
 	StringConverter::addFormattedString(xml, "<payload>%.3f</payload>", (_rtp_payload / (1024.0 * 1024.0)));
-
-//#define RESET_FRONTEND "RESET_FRONTEND"
-
-	//
-//	StringConverter::addFormattedString(xml, "<"RESET_FRONTEND"><inputtype>submit</inputtype><value>%zu</value></"RESET_FRONTEND">", 0);
-
 
 	// Channel
 	StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_channelData.delsys));
@@ -127,6 +138,11 @@ void StreamProperties::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<snr>%d</snr>", _snr);
 	StringConverter::addFormattedString(xml, "<ber>%d</ber>", _ber);
 	StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
+	
+	//
+	StringConverter::addFormattedString(xml, "<diseqc_repeat><inputtype>checkbox</inputtype><id>%s,%d,diseqc_repeat</id><value>%s</value></diseqc_repeat>", CLASS_STREAMPROPERTIES, _streamID, (_diseqcRepeat ? "true" : "false"));
+	StringConverter::addFormattedString(xml, "<dvrbuffer><inputtype>number</inputtype><id>%s,%d,dvrbuffer</id><value>%lu</value></dvrbuffer>", CLASS_STREAMPROPERTIES, _streamID, _dvrBufferSize);
+
 }
 
 // Private

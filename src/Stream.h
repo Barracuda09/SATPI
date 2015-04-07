@@ -88,10 +88,9 @@ class Stream  {
 		///
 		void addToXML(std::string &xml) const;
 		
-		/// Get and Set DVR buffer size
-		void          setDVRBufferSize(unsigned long size) { _properties.setDVRBufferSize(size); }
-		unsigned long getDVRBufferSize() const             { return _properties.getDVRBufferSize(); }
-
+		///
+		void fromXML(const std::string className, const std::string streamID,
+		             const std::string variableName, const std::string value);
 
 		// =======================================================================
 		// Functions used for RTSP Server

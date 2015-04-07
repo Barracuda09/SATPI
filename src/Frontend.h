@@ -140,7 +140,7 @@ class Frontend  {
 		bool sendDiseqc(int streamID, bool repeatDiseqc);
 
 		///
-		bool tune_it(ChannelData &channel, int streamID);
+		bool tune_it(StreamProperties &properties);
 
 		///
 		bool updatePIDFilters(ChannelData &channel, int streamID);

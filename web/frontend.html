@@ -19,13 +19,33 @@
 		for (en = 0; en < data.length; en++) {
 			entry +=  "<td>";
 			var value = data[en].getElementsByTagName(valname)[0].childNodes[0].nodeValue;
-			if (value == "submit") {
-				var nr = data[en].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-				entry += "<input type=\"checkbox\" name=\"" + valname + "\" value=\"" + nr + "\"";
-				entry += "id=\"" + value + nr + "\"";
+			entry += value;
+			entry +=  "</td>";
+		}
+		entry += "</tr>";
+		return entry;
+	}
+
+	function addTableLineEntryInput(data, name, valname) {
+		var entry =	 "<tr><td>" + name + "</td>";
+		for (en = 0; en < data.length; en++) {
+			entry +=  "<td>";
+			var input = data[en].getElementsByTagName(valname)[0];
+			var type = input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue;
+			var id = input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
+			var value = input.getElementsByTagName("value")[0].childNodes[0].nodeValue;
+			if (type == "checkbox") {
+				if (value == "true") {
+					entry += "<input type=\"checkbox\" name=\"" + valname + "\" checked=\"\"";
+				} else {
+					entry += "<input type=\"checkbox\" name=\"" + valname + "\"";
+				}
+				entry += "id=\"" + id + "\"";
 				entry += "onclick=\"postData(id, document.getElementById(id).checked)\"/>"
-			} else {
-				entry += value;
+			} else if (type == "number") {
+				entry += "<input type=\"number\" name=\"" + valname + "\" value=\"" + value + "\"";
+				entry += "id=\"" + id + "\"";
+				entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
 			}
 			entry +=  "</td>";
 		}
@@ -55,7 +75,8 @@
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
 				page += addTableLineEntry(stream, "RTP streamed", "payload");
 				
-//				page += addTableLineEntry(stream, "Repeat DiSEqC", "inputtype");
+				page += addTableLineEntryInput(stream, "Repeat DiSEqC", "diseqc_repeat");
+				page += addTableLineEntryInput(stream, "DVR Buffer", "dvrbuffer");
 
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
 				delsys = addTableLineEntry(stream, "Delivery System", "delsys");

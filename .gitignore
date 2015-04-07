@@ -1,9 +1,11 @@
-version.cpp
-*.o
-satpi
+/src/Version.cpp
+/obj
 *.*~
+*~
+satpi
+/src/*.*~
 /web/*.*~
 /web/Thumbs.db
-*~
+/src/*~
 bootID
 

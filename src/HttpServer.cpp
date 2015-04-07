@@ -24,6 +24,7 @@
 #include "Log.h"
 #include "SocketClient.h"
 #include "StringConverter.h"
+#include "Configure.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,7 @@
 #define HTML_BODY_CONT	"HTTP/1.1 %s\r\n" \
 						"Server: SatPI WebServer v0.1\r\n" \
 						"Location: %s\r\n" \
+						"cache-control: no-cache\r\n" \
 						"Content-Type: %s\r\n" \
 						"Content-Length: %d\r\n" \
 						"\r\n"
@@ -50,11 +52,6 @@
 #define CONTENT_TYPE_CSS   "text/css; charset=UTF-8"
 #define CONTENT_TYPE_PNG   "image/png"
 #define CONTENT_TYPE_ICO   "image/x-icon"
-
-#define SSDP_INTERVAL_VAR  "ssdp_interval"
-#define DVR_BUFFER_VAR     "dvr_buffer"
-#define SYSLOG_ON_VAR      "syslog_on"
-#define RESET_FRONTEND     "reset_fe"
 
 HttpServer::HttpServer(const InterfaceAttr &interface,
                        Streams &streams,
@@ -125,15 +122,22 @@ bool HttpServer::postMethod(const SocketClient &client) {
 		std::string::size_type found = content.find_first_of("=");
 		if (found != std::string::npos) {
 			std::string id = content.substr(0, found);
-			std::string val = content.substr(found + 1);
+			std::string value = content.substr(found + 1);
 			if (id.compare(SSDP_INTERVAL_VAR) == 0) {
-				_properties.setSsdpAnnounceTimeSec( atoi(val.c_str()) );
+				_properties.setSsdpAnnounceTimeSec( atoi(value.c_str()) );
 				SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _properties.getSsdpAnnounceTimeSec());
-			} else if (id.compare(DVR_BUFFER_VAR) == 0) {
-				_streams.setDVRBufferSize(0, atoi(val.c_str()));
-				SI_LOG_INFO("Setting DVR buffer to: %d Bytes", _streams.getDVRBufferSize(0));
 			} else {
-				SI_LOG_INFO("Posted data %s", content.c_str());
+				std::string::size_type begin = 0;
+				std::string::size_type end = 0;
+				end = id.find_first_of(",", begin);
+				std::string className = id.substr(begin, end - begin);
+				begin = end + 1;
+				end = id.find_first_of(",", begin);
+				std::string streamID = id.substr(begin, end - begin);
+				begin = end + 1;
+				end = id.find_first_of(",", begin);
+				std::string variableName = id.substr(begin, end - begin);
+				_streams.fromXML(className.c_str(), streamID.c_str(), variableName.c_str(), value.c_str());
 			}
 		}
 	}
@@ -258,7 +262,6 @@ void HttpServer::make_config_xml(std::string &xml) {
 	// application data
 	xml += "<configdata>\r\n";
 	StringConverter::addFormattedString(xml, "<input1><id>"SSDP_INTERVAL_VAR"</id><inputtype>number</inputtype><value>%d</value></input1>", _properties.getSsdpAnnounceTimeSec());
-	StringConverter::addFormattedString(xml, "<input2><id>"DVR_BUFFER_VAR"</id><inputtype>number</inputtype><value>%d</value></input2>", _streams.getDVRBufferSize(0));
 	xml += "</configdata>\r\n";
 
 	xml += "</data>\r\n";
