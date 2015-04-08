@@ -60,7 +60,7 @@
 		if (streams.length > 0) {
 			stream = streams[0].getElementsByTagName("stream");
 			if (stream.length > 0) {
-				page += "<table class='table table-bordered table-striped'>";
+				page += "<table class=\"table table-bordered table-striped\">";
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Frontend Info</th></tr>";
 				page += addTableLineEntry(stream, "Stream Index", "streamindex");
 				page += addTableLineEntry(stream, "Attached", "attached");
@@ -73,10 +73,10 @@
 				page += addTableLineEntry(stream, "Owner", "owner");
 				page += addTableLineEntry(stream, "Session ID", "ownerSessionID");
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
-				page += addTableLineEntry(stream, "RTP streamed", "payload");
+				page += addTableLineEntry(stream, "RTP streamed (MB)", "payload");
 				
 				page += addTableLineEntryInput(stream, "Repeat DiSEqC", "diseqc_repeat");
-				page += addTableLineEntryInput(stream, "DVR Buffer", "dvrbuffer");
+				page += addTableLineEntryInput(stream, "DVR Buffer (B)", "dvrbuffer");
 
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
 				delsys = addTableLineEntry(stream, "Delivery System", "delsys");
@@ -113,33 +113,32 @@
 
 </head>
 <body>
-<div id="menu">
-</div>
+<div id="menu"></div>
 
 <div class="container-fluid">
 	<div class="start">
 		<h3>SAT>IP Frontend Info Page</h3>
 		<div class="table-responsive">
-			<div id="content">
+			<div id="content"></div>
+
+			<script>
+				// make menu
+				document.getElementById("menu").innerHTML = buildmenu();
+				setMenuItemActive("frontend");
+
+				// Call the ajax refresh each refresh_time seconds
+				var refresh_time = 2000;
+				updatePage();
+				setInterval("updatePage()", refresh_time);
+			</script>
 		</div>
-
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			setMenuItemActive("frontend");
-
-			// Call the ajax refresh each refresh_time seconds
-			var refresh_time = 2000;
-			updatePage();
-			setInterval("updatePage()", refresh_time);
-		</script>
 	</div>
 </div>
 
 <div class="navbar navbar-default navbar-fixed-bottom">
-  <div class="container">
-	<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
-</div>
+	<div class="container">
+		<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
+	</div>
 </div>
 </body>
 </html>

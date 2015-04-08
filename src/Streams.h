@@ -48,9 +48,7 @@ class Streams  {
 		void checkStreamClientsWithTimeout();
 
 		///
-		const std::string &getXMLDeliveryString() const {
-			return _del_sys_str;
-		}
+		const std::string &getXMLDeliveryString() const { return _del_sys_str;	}
 
 		///
 		int getMaxStreams() const { return _maxStreams; }

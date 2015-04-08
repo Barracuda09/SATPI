@@ -4,7 +4,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="stylesheet.css">">
+<link rel="stylesheet" type="text/css" href="stylesheet.css">
 
 <title>SAT>IP Log Page</title>
 
@@ -13,11 +13,14 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
+	var stopScroll = 0;
 	function buildcontent(xmlDoc) {
-		page = "";
-		logdata = xmlDoc.getElementsByTagName("log");
-		var textarea = document.getElementById('txt');
-		textarea.scrollTop = textarea.scrollHeight;
+		var page = "";
+		var logdata = xmlDoc.getElementsByTagName("log");
+		if (stopScroll == 0) {
+			var textarea = document.getElementById('txt');
+			textarea.scrollTop = textarea.scrollHeight;
+		}
 		for (i = 0; i < logdata.length; i++) {
 			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
 			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
@@ -51,14 +54,13 @@
 
 </head>
 <body>
-<div id="menu">
-</div>
+<div id="menu"></div>
 
 <div class="container-fluid">
 	<div class="start">
 		<h3>Main Log Page</h3>
 		<div id="content" class="log">
-			<textarea id="txt" class="form-control logtext" readOnly></textarea>
+			<textarea id="txt" class="form-control logtext" onmouseover="stopScroll = 1" onmouseout="stopScroll = 0" readOnly></textarea>
 		</div>
 		<script>
 			// make menu
@@ -78,6 +80,5 @@
 		<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
 	</div>
 </div>
-
 </body>
 </html>

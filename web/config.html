@@ -54,7 +54,6 @@
 		var page = "<div class=\"container\">";
 		page += "<form role=\"form\">";
 		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
-		page += addInput("DVR Buffer size (Bytes):", xmlDoc.getElementsByTagName("input2")[0]);
 		page += "</form>";
 		page += "</div>";
 		return page;
@@ -71,18 +70,12 @@
 
 </head>
 <body>
-
-<div class="container-fluid">
-<div id="menu">
-</div>
-</div>
+<div id="menu"></div>
 
 <div class="container-fluid">
 	<div class="start">
 		<h3>Main Configure Page</h3>
-		<div id="content" class="log">
-		</div>
-
+		<div id="content" class="log"></div>
 		<script>
 			// make menu
 			document.getElementById("menu").innerHTML = buildmenu();

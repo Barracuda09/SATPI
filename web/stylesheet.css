@@ -1,32 +1,33 @@
 body {
-  margin-bottom: 60px;
+	margin-bottom: 60px;
 }
 
 .footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  /* Set the fixed height of the footer here */
-  height: 60px;
-  background-color: #f5f5f5;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	/* Set the fixed height of the footer here */
+	height: 60px;
+	background-color: #f5f5f5;
 }
 
 div {
-    font-size: 12px;
+	font-size: 12px;
 }
 
 div.log {
-  height: 500px;
-  font-size: 11px;
+	height: 500px;
+	font-size: 11px;
 }
 
 textarea.logtext {
-    font-size: 12px;
-    height: 100%;
-    overflow: scroll;
+	background-image: url("bg-grain.png");
+	font-size: 12px;
+	height: 100%;
+	overflow: scroll;
 }
 
 .start {
-  padding: 40px 15px;
-  text-align: center;
+	padding: 40px 15px;
+	text-align: center;
 }
