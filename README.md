@@ -1,4 +1,5 @@
 # SatPI
+
 SATIP server for linux, suitable for running on an Raspberry Pi, BeagleBone or any other linux box.
 Currently supporting DVB-S/S2/T/C
 
@@ -9,6 +10,15 @@ Initial working version, but a work in progress.
 
 - The Description xml can be found like:
 	- http://ip.of.your.box:8875/desc.xml
+
+Help
+-------
+Help in any way is appreciated, just send me an email with anythink you can
+contribute to the project.
+- coding
+- web design
+- ideas
+- spread the word!
 
 Contact
 -------
