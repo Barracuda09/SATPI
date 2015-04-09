@@ -14,6 +14,15 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
+	var autoload = 1;
+
+	function myOnkeyPressPost(id, value, event) {
+		var key = event.which;
+		if (key == 13) {
+			postData(id, value);
+		}
+	}
+
 	function addTableLineEntry(data, name, valname) {
 		var entry =	 "<tr><td>" + name + "</td>";
 		for (en = 0; en < data.length; en++) {
@@ -45,7 +54,10 @@
 			} else if (type == "number") {
 				entry += "<input type=\"number\" name=\"" + valname + "\" value=\"" + value + "\"";
 				entry += "id=\"" + id + "\"";
-				entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
+				entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
+				entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
+				entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id).value, event)\"";
+				entry += "/>";
 			}
 			entry +=  "</td>";
 		}
@@ -74,7 +86,7 @@
 				page += addTableLineEntry(stream, "Session ID", "ownerSessionID");
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
 				page += addTableLineEntry(stream, "RTP streamed (MB)", "payload");
-				
+
 				page += addTableLineEntryInput(stream, "Repeat DiSEqC", "diseqc_repeat");
 				page += addTableLineEntryInput(stream, "DVR Buffer (B)", "dvrbuffer");
 
@@ -107,7 +119,9 @@
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
-		document.getElementById("content").innerHTML = buildcontent(xml);
+		if (autoload == 1) {
+			document.getElementById("content").innerHTML = buildcontent(xml);
+		}
 	}
 </script>
 

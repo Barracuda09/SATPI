@@ -40,7 +40,7 @@ StreamProperties::StreamProperties() :
 		_ssrc((uint32_t)(rand_r(&seedp) % 0xffff)),
 		_timestamp(0),
 		_rtp_payload(0.0),
-		_dvrBufferSize(188 * 120),
+		_dvrBufferSize(40 * 188 * 1024),
 		_diseqcRepeat(true) {;}
 
 StreamProperties::~StreamProperties() {;}
