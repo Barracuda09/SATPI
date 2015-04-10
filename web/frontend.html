@@ -54,7 +54,10 @@
 			} else if (type == "number") {
 				entry += "<input type=\"number\" name=\"" + valname + "\" value=\"" + value + "\"";
 				entry += "id=\"" + id + "\"";
+				entry += "min=\"" + input.getElementsByTagName("minvalue")[0].childNodes[0].nodeValue + "\"";
+				entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].childNodes[0].nodeValue + "\"";
 				entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
+				entry += "onmousedown=\"document.getElementById(id).focus()\"";
 				entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
 				entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id).value, event)\"";
 				entry += "/>";
@@ -87,8 +90,10 @@
 				page += addTableLineEntry(stream, "RTP packet count", "spc");
 				page += addTableLineEntry(stream, "RTP streamed (MB)", "payload");
 
+				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Stream Configuration</th></tr>";
 				page += addTableLineEntryInput(stream, "Repeat DiSEqC", "diseqc_repeat");
-				page += addTableLineEntryInput(stream, "DVR Buffer (B)", "dvrbuffer");
+				page += addTableLineEntryInput(stream, "DVR Buffer (Bytes)", "dvrbuffer");
+				page += addTableLineEntryInput(stream, "RTCP Signal Update Freq", "rtcpSignalUpdate");
 
 				page += "<tr class=\"separator\"><th colspan=\"" + (stream.length+1) + "\">Channel Info</th></tr>";
 				delsys = addTableLineEntry(stream, "Delivery System", "delsys");

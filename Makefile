@@ -18,14 +18,12 @@ CFLAGS = -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 ifeq ($(BUILD),debug)
   # "Debug" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
+else ifeq ($(BUILD),simu)
+  # "Debug Simu" build - no optimization, with debugging symbols
+  CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
 else
-  ifeq ($(BUILD),simu)
-    # "Debug Simu" build - no optimization, with debugging symbols
-    CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
-  else
-    # "Release" build - optimization, and no debug symbols
-    CFLAGS += -O2 -s -DNDEBUG
-  endif
+  # "Release" build - optimization, and no debug symbols
+  CFLAGS += -O2 -s -DNDEBUG
 endif
 
 # List of source to be compiled
@@ -76,7 +74,7 @@ $(EXECUTABLE): makeobj $(OBJECTS) $(HEADERS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	$(CXX) -c $(CFLAGS) $< -o $@
 
-# Create version.cpp
+# Create Version.cpp
 $(OBJ_DIR)/Version.o:
 	./version.sh $(SRC_DIR)/Version.cpp > /dev/null
 	$(CXX) -c $(CFLAGS) $(SRC_DIR)/Version.cpp -o $@

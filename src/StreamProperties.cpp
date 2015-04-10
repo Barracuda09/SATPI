@@ -41,7 +41,8 @@ StreamProperties::StreamProperties() :
 		_timestamp(0),
 		_rtp_payload(0.0),
 		_dvrBufferSize(40 * 188 * 1024),
-		_diseqcRepeat(true) {;}
+		_diseqcRepeat(true),
+		_rtcpSignalUpdate(1) {;}
 
 StreamProperties::~StreamProperties() {;}
 
@@ -101,6 +102,11 @@ bool StreamProperties::diseqcRepeat() const {
 	return _diseqcRepeat;
 }
 
+unsigned int StreamProperties::getRtcpSignalUpdateFrequency() const {
+	MutexLock lock(_mutex);
+	return _rtcpSignalUpdate;
+}
+
 void StreamProperties::fromXML(const std::string className, const std::string streamID,
                                const std::string variableName, const std::string value) {
 	MutexLock lock(_mutex);
@@ -110,6 +116,8 @@ void StreamProperties::fromXML(const std::string className, const std::string st
 				_dvrBufferSize = atoi(value.c_str());
 			} else if (variableName == VARI_DISEQC_REPEAT) {
 				_diseqcRepeat = (value == "true") ? true : false;
+			} else if (variableName == VARI_RTCP_SIGNAL_UPDATE) {
+				_rtcpSignalUpdate = atoi(value.c_str());
 			}
 		}
 	}
@@ -138,11 +146,11 @@ void StreamProperties::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<snr>%d</snr>", _snr);
 	StringConverter::addFormattedString(xml, "<ber>%d</ber>", _ber);
 	StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
-	
-	//
-	StringConverter::addFormattedString(xml, "<diseqc_repeat><inputtype>checkbox</inputtype><id>%s,%d,diseqc_repeat</id><value>%s</value></diseqc_repeat>", CLASS_STREAMPROPERTIES, _streamID, (_diseqcRepeat ? "true" : "false"));
-	StringConverter::addFormattedString(xml, "<dvrbuffer><inputtype>number</inputtype><id>%s,%d,dvrbuffer</id><value>%lu</value></dvrbuffer>", CLASS_STREAMPROPERTIES, _streamID, _dvrBufferSize);
 
+	//
+	ADD_CONFIG_CHECKBOX(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_DISEQC_REPEAT, (_diseqcRepeat ? "true" : "false"));
+	ADD_CONFIG_NUMBER(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_DVR_BUFFER, _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
+	ADD_CONFIG_NUMBER(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_RTCP_SIGNAL_UPDATE, _rtcpSignalUpdate, 0, 5);
 }
 
 // Private

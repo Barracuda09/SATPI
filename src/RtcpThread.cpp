@@ -296,7 +296,7 @@ void RtcpThread::threadEntry() {
 		// check do we need to update frontend monitor
 		if (mon_update == 0) {
 			monitorFrontend(false);
-			mon_update = 1;
+			mon_update = _properties.getRtcpSignalUpdateFrequency();
 		} else {
 			--mon_update;
 		}

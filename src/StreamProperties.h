@@ -73,9 +73,12 @@ class StreamProperties  {
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
 
+		///
 		unsigned long getDVRBufferSize() const;
-		
+
 		bool diseqcRepeat() const;
+
+		unsigned int getRtcpSignalUpdateFrequency() const;
 
 	protected:
 
@@ -99,6 +102,7 @@ class StreamProperties  {
 
 		unsigned long _dvrBufferSize;//
 		bool          _diseqcRepeat; //
+		unsigned int  _rtcpSignalUpdate;
 
 		fe_status_t _status;         // FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
 		uint16_t    _strength;       //
