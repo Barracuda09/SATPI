@@ -23,9 +23,11 @@ contribute to the project.
 
 Contact
 -------
-If you like to contact me, you can do that by sending an email to:
+If you like to contact me, you can do that by sending an email
+to one of the following addresses:
 
     m.a.postema -at- alice.nl
+    mpostema09 -at- gmail.com
 
 Tested Programs
 ---------------
