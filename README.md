@@ -18,6 +18,7 @@ contribute to the project.
 - coding
 - web design
 - ideas
+- test reports
 - spread the word!
 
 Contact
