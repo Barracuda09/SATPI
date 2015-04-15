@@ -46,6 +46,11 @@ Tested Hardware
 
 Build
 -----
+Coverity Scan Build Status <a href="https://scan.coverity.com/projects/4842">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/4842/badge.svg"/>
+</a>
+
 To build SatPI just run these commands:
 
     git clone git://github.com/Barracuda09/satpi.git
