@@ -1,7 +1,7 @@
 language: cpp
 compiler:
-	- gcc
+  - gcc
 script:
-	- make
-	- make clean
-	- make debug
+  - make
+  - make clean
+  - make debug
