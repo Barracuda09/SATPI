@@ -43,6 +43,8 @@ Tested Hardware
 - Sundtek DVB-C/T/T2 see: http://www.sundtek.com/
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
+- Schwaiger DSR41IP (Thanks to Axel Hartmann for kindly suppling this to me)
+  see: http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf
 
 Build
 -----
