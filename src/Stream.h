@@ -31,6 +31,7 @@
 
 // Forward declarations
 class SocketClient;
+class DvbapiClient;
 
 /// The class @c Stream carries all the data/information of an stream
 class Stream  {
@@ -45,6 +46,9 @@ class Stream  {
 
 		void setStreamID(int streamID) { _properties.setStreamID(streamID); }
 		int  getStreamID() const       { return _properties.getStreamID(); }
+
+		///
+		void setDvbapiClient(DvbapiClient *dvbapi);
 
 		///
 		std::string attribute_describe_string(bool &active) const { return _properties.attribute_describe_string(active); }
@@ -109,7 +113,8 @@ class Stream  {
 	private:
 		/// Set functions for @c ChannelData
 		void initializeChannelData()                        { _properties.getChannelData().initialize(); }
-		void setFrequency(uint32_t freq)                    { _properties.getChannelData().freq = freq; _properties.getChannelData().changed = true; }
+		void setFrequency(uint32_t freq)                    { _properties.getChannelData().freq = freq;
+		                                                      _properties.getChannelData().changed = true; }
 		void setSymbolRate(int srate)                       { _properties.getChannelData().srate = srate;	}
 		void setDeliverySystem(fe_delivery_system_t delsys) { _properties.getChannelData().delsys = delsys; }
 		void setModulationType(int modtype)                 { _properties.getChannelData().modtype = modtype; }
@@ -125,10 +130,8 @@ class Stream  {
 		void setUniqueIDPlp(int plp)                        { _properties.getChannelData().plp_id = plp; }
 		void setUniqueIDT2(int id)                          { _properties.getChannelData().t2_system_id = id; }
 		void setSISOMISO(int sm)                            { _properties.getChannelData().siso_miso = sm; }
-		void setPID(int pid, bool val)                      { _properties.getChannelData().pid.data[pid].used = val;
-		                                                      _properties.getChannelData().pid.changed = true; }
-		void setAllPID(bool val)                            { _properties.getChannelData().pid.data[ALL_PIDS].used = val;
-		                                                      _properties.getChannelData().pid.changed = true; }
+		void setPID(int pid, bool val)                      { _properties.getChannelData().setPID(pid, val); }
+		void setAllPID(bool val)                            { _properties.getChannelData().setAllPID(val); }
 
 		///
 		void parseStreamString(const std::string &msg, const std::string &method);

@@ -47,6 +47,13 @@ SOURCES = Version.cpp \
 	RtpThread.cpp \
 	RtcpThread.cpp
 
+# Add dvbcsa ?
+ifeq ($(LIBDVBCSA),yes)
+  LDFLAGS += -ldvbcsa
+  CFLAGS  += -DLIBDVBCSA
+  SOURCES += DvbapiClient.cpp
+endif
+
 # Sub dirs for project
 OBJ_DIR = obj
 SRC_DIR = src
@@ -87,6 +94,11 @@ debug:
 
 simu:
 	make "BUILD=simu"
+
+# Install Doxygen and Graphviz/dot
+# sudo apt-get install graphviz doxygen
+docu:
+	doxygen ./doxygen
 
 .PHONY:
 	clean

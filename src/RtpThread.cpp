@@ -21,6 +21,7 @@
 #include "StreamClient.h"
 #include "Log.h"
 #include "StreamProperties.h"
+#include "DvbapiClient.h"
 #include "Utils.h"
 
 #include <stdio.h>
@@ -42,7 +43,8 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 		_send_interval(0),
 		_cseq(0),
 		_properties(properties),
-		_state(Running) {
+		_state(Running),
+		_dvbapi(NULL) {
 
 	_pfd[0].fd = -1;
 
@@ -66,6 +68,10 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 RtpThread::~RtpThread() {
 	cancelThread();
 	joinThread();
+}
+
+void RtpThread::setDvbapiClient(DvbapiClient *dvbapi) {
+	_dvbapi = dvbapi;
 }
 
 bool RtpThread::startStreaming(int fd_dvr) {
@@ -205,7 +211,11 @@ void RtpThread::threadEntry() {
 								// RTP packet octet count (Bytes)
 								const uint32_t byte = (len - RTP_HEADER_LEN);
 								_properties.addRtpData(byte, timestamp);
-
+#ifdef LIBDVBCSA
+								if (_dvbapi != NULL) {
+									_dvbapi->decrypt(_properties, _buffer + RTP_HEADER_LEN, byte);
+								}
+#endif
 								// send the RTP packet
 								if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,
 										  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {

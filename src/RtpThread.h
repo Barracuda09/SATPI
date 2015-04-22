@@ -34,6 +34,7 @@
 // forward declaration
 class StreamClient;
 class StreamProperties;
+class DvbapiClient;
 
 /// RTSP Server
 class RtpThread :
@@ -44,6 +45,9 @@ class RtpThread :
 		// =======================================================================
 		RtpThread(StreamClient *clients, StreamProperties &properties);
 		virtual ~RtpThread();
+
+		///
+		void setDvbapiClient(DvbapiClient *dvbapi);
 
 		/// Start streaming
 		/// @return true if stream is started else false on error
@@ -90,6 +94,9 @@ class RtpThread :
 		struct pollfd _pfd[1];         //
 		Mutex         _mutex;          //
 		State         _state;          //
+
+		DvbapiClient  *_dvbapi;        //
+
 }; // class RtpThread
 
 #endif // RTP_THREAD_H_INCLUDE

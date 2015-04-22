@@ -59,11 +59,11 @@ void close_satip_log();
 #define SI_LOG_ERROR(...)       applog(LOG_ERR, __VA_ARGS__)
 #define SI_LOG_DEBUG(...)
 #else
-#define PERROR(str)             applog(LOG_ERR,   "[%17s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
-#define GAI_PERROR(str, s)      applog(LOG_ERR,   "[%17s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
-#define SI_LOG_INFO(fmt, ...)   applog(LOG_INFO,  "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_ERROR(fmt, ...)  applog(LOG_ERR,   "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(fmt, ...)  applog(LOG_DEBUG, "[%17s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define PERROR(str)             applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
+#define GAI_PERROR(str, s)      applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
+#define SI_LOG_INFO(fmt, ...)   applog(LOG_INFO,  "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_ERROR(fmt, ...)  applog(LOG_ERR,   "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(fmt, ...)  applog(LOG_DEBUG, "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif // LOG_H_INCLUDE

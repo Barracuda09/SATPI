@@ -25,6 +25,13 @@
 
 #include <string>
 
+typedef struct {
+	std::string data;
+	int cc;
+	int pid;
+	bool collected;
+} TSCollectedData_t;
+
 /// The class @c StreamProperties carries all the available/open StreamProperties
 class StreamProperties  {
 	public:
@@ -36,12 +43,6 @@ class StreamProperties  {
 
 		///
 		void printChannelInfo() const;
-
-		///
-		void addRtpData(const uint32_t byte, long timestamp);
-
-		///
-		void addPIDData(uint16_t pid, uint8_t cc);
 
 		///
 		void setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
@@ -57,13 +58,17 @@ class StreamProperties  {
 		void fromXML(const std::string className, const std::string streamID,
 		             const std::string variableName, const std::string value);
 
-		///
+		/// Get the stream Description for RTCP and DESCRIBE command
 		std::string attribute_describe_string(bool &active) const;
 
+		/// Set the stream ID for this properties (Only used at initialize)
 		void setStreamID(int streamID)     { _streamID = streamID; }
+		/// Get the stream ID to identify the properties
 		int  getStreamID() const           { return _streamID; }
 
+		/// Set if the stream is active/in use
 		void setStreamActive(bool active)  { _streamActive = active; }
+		/// Check if the stream is busy/in use
 		bool getStreamActive()             { return _streamActive; }
 
 		uint32_t     getSSRC() const       { return _ssrc; }
@@ -73,18 +78,56 @@ class StreamProperties  {
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
 
+		/// Set if PAT has been collected or not
+		void setPATCollected(bool collected);
+		/// Check if PAT is collected
+		bool isPATCollected() const;
+		/// Add PAT data that was collected !!Without adding CRC (4Bytes)!!
+		bool addPATData(const unsigned char *data, int length, int pid, int cc);
+		/// Get the collected PAT Data
+		const unsigned char *getPATData() const;
+		/// Get the current size of the PAT Packet !!Whitout the CRC (4Bytes)!!
+		int getPATDataSize() const;
+
+		/// Set if PMT has been collected or not
+		void setPMTCollected(bool collected);
+		/// Check if PMT is collected
+		bool isPMTCollected() const;
+		/// Add PMT data that was collected !!Without adding CRC (4Bytes)!!
+		bool addPMTData(const unsigned char *data, int length, int pid, int cc);
+		/// Get the collected PMT Data
+		const unsigned char *getPMTData() const;
+		/// Get the current size of the PMT Packet !!Whitout the CRC (4Bytes)!!
+		int getPMTDataSize() const;
+
 		///
+		void addRtpData(const uint32_t byte, long timestamp);
+
+		// =======================================================================
+		// Data members for ChannelData
+		// =======================================================================
+		/// See @c ChannelData
+		void addPIDData(int pid, uint8_t cc);
+
+		/// See @c ChannelData
+		void setPMTPID(bool pmt, int pid) { _channelData.setPMTPID(pmt, pid); }
+
+		/// See @c ChannelData
+		bool isPMTPID(int pid) { return _channelData.isPMTPID(pid); }
+		// =======================================================================
+
+		/// Get the DVR buffer size
 		unsigned long getDVRBufferSize() const;
 
+		/// Check if DiSEqC command has to be repeated
 		bool diseqcRepeat() const;
 
+		/// The Frontend Monitor update interval
 		unsigned int getRtcpSignalUpdateFrequency() const;
 
 	protected:
 
 	private:
-		///
-		std::string getPidCSV() const;
 
 		// =======================================================================
 		// Data members
@@ -104,11 +147,14 @@ class StreamProperties  {
 		bool          _diseqcRepeat; //
 		unsigned int  _rtcpSignalUpdate;
 
-		fe_status_t _status;         // FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
-		uint16_t    _strength;       //
-		uint16_t    _snr;            //
-		uint32_t    _ber;            //
-		uint32_t    _ublocks;        //
+		fe_status_t   _status;       // FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
+		uint16_t      _strength;     //
+		uint16_t      _snr;          //
+		uint32_t      _ber;          //
+		uint32_t      _ublocks;      //
+
+		TSCollectedData_t _pat;      //
+		TSCollectedData_t _pmt;      //
 
 }; // class StreamProperties
 

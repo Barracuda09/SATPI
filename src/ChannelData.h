@@ -21,6 +21,7 @@
 #define CHANNEL_DATA_H_INCLUDE
 
 #include <stdint.h>
+#include <string>
 
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>
@@ -36,6 +37,7 @@ typedef struct {
 	uint8_t  cc;             // continuity counter (0 - 15) of this PID
 	uint32_t cc_error;       // cc error count
 	uint32_t count;          // the number of times this pid occurred
+	bool     pmt;            // show if this is an pmt pid
 } PidData_t;
 
 typedef struct {
@@ -52,7 +54,47 @@ class ChannelData  {
 		ChannelData();
 		virtual ~ChannelData();
 
+		/// Initialize/reset channel data
 		void initialize();
+
+		/// Reset the pid
+		void resetPid(int pid);
+
+		/// Reset that PID has changed
+		void resetPIDChanged();
+
+		/// Check if the PID has changed
+		bool hasPIDChanged() const;
+
+		/// Set DMX file descriptor
+		void setDMXFileDescriptor(int pid, int fd);
+
+		/// Get DMX file descriptor
+		int getDMXFileDescriptor(int pid) const;
+		
+		/// Get the amount of packet that were received of this pid
+		uint32_t getPacketCounter(int pid) const;
+
+		/// Get the CSV of all the requested PID
+		std::string getPidCSV() const;
+
+		/// Set the continuity counter for pid 
+		void addPIDData(int pid, uint8_t cc);
+
+		/// Set pid used or not
+		void setPID(int pid, bool val);
+
+		/// Check if PID is used
+		bool isPIDUsed(int pid) const;
+
+		/// Set all PID
+		void setAllPID(bool val);
+
+		/// Set the pid as an PMT
+		void setPMTPID(bool pmt, int pid);
+
+		/// Is the pid set as an PMT PID
+		bool isPMTPID(int pid) const;
 
 //	protected:
 
@@ -69,8 +111,10 @@ class ChannelData  {
 		int fec;                 // forward error control i.e. (FEC_1_2 / FEC_2_3)
 		int rolloff;             // roll-off
 		int inversion;           //
-		Pid_t pid;               //
+	private:
+		Pid_t _pid;              //
 
+	public:
 		// =======================================================================
 		// DVB-S(2) Data members
 		// =======================================================================

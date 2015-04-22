@@ -129,6 +129,9 @@ int Streams::enumerateFrontends(const std::string &path) {
 	if (_stream) {
 		for (int i = 0; i < _maxStreams; ++i) {
 			_stream[i].setStreamID(i);
+#ifdef LIBDVBCSA
+			_stream[i].setDvbapiClient(&_dvbapi);
+#endif
 		}
 	} else {
 		_maxStreams = 0;

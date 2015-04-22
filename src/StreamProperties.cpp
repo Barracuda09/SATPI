@@ -42,7 +42,15 @@ StreamProperties::StreamProperties() :
 		_rtp_payload(0.0),
 		_dvrBufferSize(40 * 188 * 1024),
 		_diseqcRepeat(true),
-		_rtcpSignalUpdate(1) {;}
+		_rtcpSignalUpdate(1) {
+	_pat.cc  = -1;
+	_pat.pid = -1;
+	_pat.collected = false;
+
+	_pmt.cc  = -1;
+	_pmt.pid = -1;
+	_pmt.collected = false;
+}
 
 StreamProperties::~StreamProperties() {;}
 
@@ -56,24 +64,9 @@ void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
 	_timestamp = timestamp;
 }
 
-void StreamProperties::addPIDData(uint16_t pid, uint8_t cc) {
+void StreamProperties::addPIDData(int pid, uint8_t cc) {
 	MutexLock lock(_mutex);
-
-	++_channelData.pid.data[pid].count;
-	if (_channelData.pid.data[pid].cc == 0x80) {
-		_channelData.pid.data[pid].cc = cc;
-	} else {
-		++_channelData.pid.data[pid].cc;
-		_channelData.pid.data[pid].cc %= 0x10;
-		if (_channelData.pid.data[pid].cc != cc) {
-			int diff = cc - _channelData.pid.data[pid].cc;
-			if (diff < 0) {
-				diff += 0x10;
-			}
-			_channelData.pid.data[pid].cc = cc;
-			_channelData.pid.data[pid].cc_error += diff;
-		}
-	}
+	_channelData.addPIDData(pid, cc);
 }
 
 void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
@@ -153,24 +146,6 @@ void StreamProperties::addToXML(std::string &xml) const {
 	ADD_CONFIG_NUMBER(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_RTCP_SIGNAL_UPDATE, _rtcpSignalUpdate, 0, 5);
 }
 
-// Private
-std::string StreamProperties::getPidCSV() const {
-	std::string csv;
-	if (_channelData.pid.data[ALL_PIDS].used) {
-		csv = "all";
-	} else {
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			if (_channelData.pid.data[i].used) {
-				StringConverter::addFormattedString(csv, "%d,", i);
-			}
-		}
-		if (csv.size() > 1) {
-			*(csv.end()-1) = 0;
-		}
-	}
-	return csv;
-}
-
 std::string StreamProperties::attribute_describe_string(bool &active) const {
 	MutexLock lock(_mutex);
 
@@ -178,7 +153,7 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 	double freq = _channelData.freq / 1000.0;
 	int srate = _channelData.srate / 1000;
 
-	std::string csv = getPidCSV();
+	std::string csv = _channelData.getPidCSV();
 	std::string desc;
 	switch (_channelData.delsys) {
 		case SYS_DVBS:
@@ -276,7 +251,72 @@ void StreamProperties::printChannelInfo() const {
 	SI_LOG_INFO("t2_id:        %d", _channelData.t2_system_id);
 	SI_LOG_INFO("sm:           %d", _channelData.siso_miso);
 	SI_LOG_INFO("----------------", _channelData.siso_miso);
-	SI_LOG_INFO("pid:          %s", getPidCSV().c_str());
+	SI_LOG_INFO("pid:          %s", _channelData.getPidCSV().c_str());
 	SI_LOG_INFO("----------------", _channelData.siso_miso);
 }
 
+void StreamProperties::setPATCollected(bool collected) {
+	_pat.collected = collected;
+	if (!collected) {
+		_pat.data.clear();
+		_pat.cc  = -1;
+		_pat.pid = -1;
+	}
+}
+
+bool StreamProperties::isPATCollected() const {
+	return _pat.collected;
+}
+
+bool StreamProperties::addPATData(const unsigned char *data, int length, int pid, int cc) {
+	// @TODO  Should we check CRC of PAT Data?
+	if ((_pat.cc  == -1 ||  cc == _pat.cc + 1) &&
+	    (_pat.pid == -1 || pid == _pat.pid)) {
+		_pat.data.append(reinterpret_cast<const char *>(data), length - 4); // without CRC
+		_pat.cc   = cc;
+		_pat.pid  = pid;
+		return true;
+	}
+	return false;
+}
+
+const unsigned char *StreamProperties::getPATData() const {
+	return reinterpret_cast<const unsigned char *>(_pat.data.c_str());
+}
+
+int StreamProperties::getPATDataSize() const {
+	return _pat.data.size();
+}
+
+void StreamProperties::setPMTCollected(bool collected) {
+	_pmt.collected = collected;
+	if (!collected) {
+		_pmt.data.clear();
+		_pmt.cc  = -1;
+		_pmt.pid = -1;
+	}
+}
+
+bool StreamProperties::isPMTCollected() const {
+	return _pmt.collected;
+}
+
+bool StreamProperties::addPMTData(const unsigned char *data, int length, int pid, int cc) {
+	// @TODO  Should we check CRC of PMT Data?
+	if ((_pmt.cc  == -1 ||  cc == _pmt.cc + 1) &&
+	    (_pmt.pid == -1 || pid == _pmt.pid)) {
+		_pmt.data.append(reinterpret_cast<const char *>(data), length - 4); // without CRC
+		_pmt.cc   = cc;
+		_pmt.pid  = pid;
+		return true;
+	}
+	return false;
+}
+
+const unsigned char *StreamProperties::getPMTData() const {
+	return reinterpret_cast<const unsigned char *>(_pmt.data.c_str());
+}
+
+int StreamProperties::getPMTDataSize() const {
+	return _pmt.data.size();
+}

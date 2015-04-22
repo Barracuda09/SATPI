@@ -42,6 +42,10 @@ Stream::~Stream() {
 	delete[] _client;
 }
 
+void Stream::setDvbapiClient(DvbapiClient *dvbapi) {
+	_rtpThread.setDvbapiClient(dvbapi);
+}
+
 bool Stream::findClientIDFor(SocketClient &socketClient,
                              bool newSession,
                              std::string sessionID,
@@ -215,12 +219,11 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 
 	// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
+		// new frequency so initialize ChannelData and 'remove' all used PIDS
 		initializeChannelData();
+		_properties.setPATCollected(false);
+		_properties.setPMTCollected(false);
 		setFrequency(doubleVal * 1000.0);
-		// new frequency so 'remove' all used PIDS
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			setPID(i, false);
-		}
 	}
 	// !!!!
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {

@@ -18,18 +18,11 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #include "ChannelData.h"
+#include "StringConverter.h"
 
 #include <stdio.h>
 
 ChannelData::ChannelData() {
-	for (size_t i = 0; i < MAX_PIDS; ++i) {
-		pid.data[i].used     = 0;
-		pid.data[i].cc       = 0x80;
-		pid.data[i].cc_error = 0;
-		pid.data[i].count    = 0;
-		pid.data[i].fd_dmx   = -1;
-	}
-	pid.changed = false;
 	initialize();
 }
 
@@ -44,6 +37,11 @@ void ChannelData::initialize() {
 	fec = FEC_AUTO;
 	rolloff = ROLLOFF_AUTO;
 	inversion = INVERSION_AUTO;
+	
+	for (size_t i = 0; i < MAX_PIDS; ++i) {
+		resetPid(i);
+	}
+	_pid.changed = false;
 
 	// =======================================================================
 	// DVB-S(2) Data members
@@ -68,5 +66,95 @@ void ChannelData::initialize() {
 	plp_id = 0;
 	t2_system_id = 0;
 	siso_miso = 0;
+}
+
+void ChannelData::resetPid(int pid) {
+	_pid.data[pid].used     = 0;
+	_pid.data[pid].cc       = 0x80;
+	_pid.data[pid].cc_error = 0;
+	_pid.data[pid].count    = 0;
+	_pid.data[pid].fd_dmx   = -1;
+	_pid.data[pid].pmt      = false;
+}
+
+uint32_t ChannelData::getPacketCounter(int pid) const {
+	return _pid.data[pid].count;
+}
+
+void ChannelData::setDMXFileDescriptor(int pid, int fd) {
+	_pid.data[pid].fd_dmx = fd;
+}
+
+int ChannelData::getDMXFileDescriptor(int pid) const {
+	return _pid.data[pid].fd_dmx;
+}
+
+void ChannelData::resetPIDChanged() {
+	_pid.changed = false;
+}
+
+bool ChannelData::hasPIDChanged() const {
+	return _pid.changed;
+}
+
+std::string ChannelData::getPidCSV() const {
+	std::string csv;
+	if (_pid.data[ALL_PIDS].used) {
+		csv = "all";
+	} else {
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			if (_pid.data[i].used) {
+				StringConverter::addFormattedString(csv, "%d,", i);
+			}
+		}
+		if (csv.size() > 1) {
+			*(csv.end()-1) = 0;
+		}
+	}
+	return csv;
+}
+
+void ChannelData::addPIDData(int pid, uint8_t cc) {
+	++_pid.data[pid].count;
+	if (_pid.data[pid].cc == 0x80) {
+		_pid.data[pid].cc = cc;
+	} else {
+		++_pid.data[pid].cc;
+		_pid.data[pid].cc %= 0x10;
+		if (_pid.data[pid].cc != cc) {
+			int diff = cc - _pid.data[pid].cc;
+			if (diff < 0) {
+				diff += 0x10;
+			}
+			_pid.data[pid].cc = cc;
+			_pid.data[pid].cc_error += diff;
+		}
+	}
+}
+
+void ChannelData::setPID(int pid, bool val) {
+	_pid.data[pid].used = val;
+	_pid.changed = true;
+	// Do we need to remove this pid then also reset PMT
+	if (!val) {
+		_pid.data[pid].pmt = false;
+	}
+}
+
+bool ChannelData::isPIDUsed(int pid) const {
+	return _pid.data[pid].used;
+}
+
+void ChannelData::setAllPID(bool val) {
+	_pid.data[ALL_PIDS].used = val;
+	_pid.changed = true;
+}
+
+void ChannelData::setPMTPID(bool pmt, int pid) {
+	_pid.data[pid].pmt = pmt;
+}
+
+bool ChannelData::isPMTPID(int pid) const {
+	return _pid.data[pid].pmt;
 }
 

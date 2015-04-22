@@ -1,6 +1,6 @@
 /* satpi.c
 
-   Copyright (C) 2014 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2014 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License

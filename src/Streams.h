@@ -22,6 +22,9 @@
 
 #include "Stream.h"
 #include "StreamClient.h"
+#ifdef LIBDVBCSA
+	#include "DvbapiClient.h"
+#endif
 
 #include <string>
 
@@ -91,6 +94,10 @@ class Streams  {
 		int _nr_dvb_c;
 #if FULL_DVB_API_VERSION >= 0x0505
 		int _nr_dvb_c2;
+#endif
+
+#ifdef LIBDVBCSA
+		DvbapiClient _dvbapi;
 #endif
 
 }; // class Streams

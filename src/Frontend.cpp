@@ -93,18 +93,6 @@ bool Frontend::set_demux_filter(int fd, uint16_t pid) {
 	return true;
 }
 
-void Frontend::reset_pid(PidData_t &pid) {
-	pid.used     = 0;
-	pid.cc       = 0x80;
-	pid.cc_error = 0;
-	pid.count    = 0;
-
-	if (ioctl(pid.fd_dmx, DMX_STOP) != 0) {
-		PERROR("DMX_STOP");
-	}
-	CLOSE_FD(pid.fd_dmx);
-}
-
 bool Frontend::capableOf(fe_delivery_system_t msys) {
 	for (size_t i = 0; i < MAX_DELSYS; ++i) {
 		// we no not like SYS_UNDEFINED
@@ -529,31 +517,41 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 	return (_fd_dvr != -1) && _tuned;
 }
 
+static void resetPid(ChannelData &channel, int pid) {
+	if (ioctl(channel.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+		PERROR("DMX_STOP");
+	}
+	close(channel.getDMXFileDescriptor(pid));
+	channel.resetPid(pid);
+}
+
 bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {
-	if (channel.pid.changed == 1) {
+	if (channel.hasPIDChanged()) {
 		SI_LOG_INFO("Stream: %d, Updating PID filters...", streamID);
-		channel.pid.changed = 0;
+		channel.resetPIDChanged();
 		int i;
 		for (i = 0; i < MAX_PIDS; ++i) {
 			// check if PID is used or removed
-			if (channel.pid.data[i].used == 1) {
+			if (channel.isPIDUsed(i)) {
 				// check if we have no DMX for this PID, then open one
-				if (channel.pid.data[i].fd_dmx == -1) {
-					channel.pid.data[i].fd_dmx = open_dmx(_path_to_dmx);
+				if (channel.getDMXFileDescriptor(i) == -1) {
+					channel.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
 					size_t timeout = 0;
-					while (set_demux_filter(channel.pid.data[i].fd_dmx, i) != 1) {
+					while (set_demux_filter(channel.getDMXFileDescriptor(i), i) != 1) {
 						usleep(350000);
 						++timeout;
 						if (timeout > 3) {
 							return false;
 						}
 					}
-					SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d", streamID, i, channel.pid.data[i].fd_dmx);
+					SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d",
+					             streamID, i, channel.getDMXFileDescriptor(i));
 				}
-			} else if (channel.pid.data[i].fd_dmx != -1) {
+			} else if (channel.getDMXFileDescriptor(i) != -1) {
 				// We have a DMX but no PID anymore, so reset it
-				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d", streamID, i, channel.pid.data[i].fd_dmx, channel.pid.data[i].count);
-				reset_pid(channel.pid.data[i]);
+				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+				             streamID, i, channel.getDMXFileDescriptor(i), channel.getPacketCounter(i));
+				resetPid(channel, i);
 			}
 		}
 	}
@@ -562,12 +560,13 @@ bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {
 
 bool Frontend::teardown(ChannelData &channel, int streamID) {
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
-		if (channel.pid.data[i].used) {
-			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d", streamID, i, channel.pid.data[i].fd_dmx, channel.pid.data[i].count);
-			reset_pid(channel.pid.data[i]);
-		} else if (channel.pid.data[i].fd_dmx != -1) {
+		if (channel.isPIDUsed(i)) {
+			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+			             streamID, i, channel.getDMXFileDescriptor(i), channel.getPacketCounter(i));
+			resetPid(channel, i);
+		} else if (channel.getDMXFileDescriptor(i) != -1) {
 			SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", streamID, i);
-			reset_pid(channel.pid.data[i]);
+			resetPid(channel, i);
 		}
 	}
 	_tuned = false;

@@ -127,9 +127,6 @@ class Frontend  {
 		bool set_demux_filter(int fd, uint16_t pid);
 
 		///
-		void reset_pid(PidData_t &pid);
-
-		///
 		bool tune(const ChannelData &channel);
 
 		///
