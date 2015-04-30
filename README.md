@@ -71,6 +71,9 @@ If you need to make a debug version to help with testing, use:
 
     make debug
 
+If you like to build the documentation, use:
+
+    make docu   (!! you need Doxygen and Graphviz/dot !!)
 
 Usage
 -----
