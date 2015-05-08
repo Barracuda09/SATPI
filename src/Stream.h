@@ -41,14 +41,11 @@ class Stream  {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		Stream();
+		Stream(int streamID, DvbapiClient *dvbapi);
 		virtual ~Stream();
 
-		void setStreamID(int streamID) { _properties.setStreamID(streamID); }
-		int  getStreamID() const       { return _properties.getStreamID(); }
-
 		///
-		void setDvbapiClient(DvbapiClient *dvbapi);
+		int  getStreamID() const       { return _properties.getStreamID(); }
 
 		///
 		std::string attribute_describe_string(bool &active) const { return _properties.attribute_describe_string(active); }
@@ -95,6 +92,12 @@ class Stream  {
 		///
 		void fromXML(const std::string className, const std::string streamID,
 		             const std::string variableName, const std::string value);
+
+		// =======================================================================
+		// Functions used for dvbapi
+		// =======================================================================
+		///
+		void setECMFilterData(int demux, int filter, int pid, int parity) { _properties.setECMFilterData(demux, filter, pid, parity); }
 
 		// =======================================================================
 		// Functions used for RTSP Server

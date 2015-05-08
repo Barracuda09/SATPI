@@ -43,9 +43,15 @@
 
 Streams::Streams() :
 		_stream(NULL),
-		_maxStreams(0) {;}
+		_maxStreams(0) {
+	_dummyStream = new Stream(0, NULL);
+}
 
 Streams::~Streams() {
+	delete _dummyStream;
+	for (int i = 0; i < _maxStreams; ++i) {
+		delete _stream[i];
+	}
 	delete[] _stream;
 }
 
@@ -60,7 +66,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-		_stream[0].addFrontendPaths(fe_path, dvr_path, dmx_path);
+		_stream[0]->addFrontendPaths(fe_path, dvr_path, dmx_path);
 	}
 #else
 	struct dirent **file_list;
@@ -89,7 +95,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 								snprintf(fe_path,  FE_PATH_LEN, FRONTEND, adapt_nr, fe_nr);
 								snprintf(dvr_path, FE_PATH_LEN, DVR, adapt_nr, fe_nr);
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
-								_stream[count].addFrontendPaths(fe_path, dvr_path, dmx_path);
+								_stream[count]->addFrontendPaths(fe_path, dvr_path, dmx_path);
 							}
 							++count;
 						}
@@ -125,12 +131,13 @@ int Streams::enumerateFrontends(const std::string &path) {
 	_nr_dvb_c2 = 0;
 #endif
 	_maxStreams = getAttachedFrontendCount(path, 0);
-	_stream = new Stream[_maxStreams+1];
+	_stream = new Stream *[_maxStreams+1];
 	if (_stream) {
 		for (int i = 0; i < _maxStreams; ++i) {
-			_stream[i].setStreamID(i);
 #ifdef LIBDVBCSA
-			_stream[i].setDvbapiClient(&_dvbapi);
+			_stream[i] = new Stream(i, this);
+#else
+			_stream[i] = new Stream(i, NULL);
 #endif
 		}
 	} else {
@@ -140,14 +147,14 @@ int Streams::enumerateFrontends(const std::string &path) {
 	if (_maxStreams) {
 		getAttachedFrontendCount(path, 0);
 		for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
-			_stream[i].setFrontendInfo();
+			_stream[i]->setFrontendInfo();
 			int dvb_s2 = 0;
 			int dvb_t  = 0;
 			int dvb_t2 = 0;
 			int dvb_c  = 0;
 			//
-			for (size_t j = 0; j < _stream[i].getDeliverySystemSize(); j++) {
-				const fe_delivery_system_t *del_sys = _stream[i].getDeliverySystem();
+			for (size_t j = 0; j < _stream[i]->getDeliverySystemSize(); j++) {
+				const fe_delivery_system_t *del_sys = _stream[i]->getDeliverySystem();
 				switch (del_sys[j]) {
 					// only count DVBS2
 					case SYS_DVBS2:
@@ -235,8 +242,8 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 		} else {
 			SI_LOG_INFO("Found message outside session");
 			socketClient.setSessionID("-1");
-			_dummyStream.copySocketClientAttr(socketClient);
-			return &_dummyStream;
+			_dummyStream->copySocketClientAttr(socketClient);
+			return _dummyStream;
 		}
 	}
 
@@ -245,18 +252,18 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 		if (foundSessionID) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
 			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (_stream[streamID].findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+				if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
-					return &_stream[streamID];
+					return _stream[streamID];
 				}
 			}
 		} else {
 			SI_LOG_INFO("Found StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
 			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (!_stream[streamID].streamInUse()) {
-					if (_stream[streamID].findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+				if (!_stream[streamID]->streamInUse()) {
+					if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 						socketClient.setSessionID(sessionID);
-						return &_stream[streamID];
+						return _stream[streamID];
 					}
 				}
 			}
@@ -265,17 +272,17 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 // @TODO Check is this the owner of this stream??
 		SI_LOG_INFO("Found StreamID %d - SessionID %s", streamID, sessionID.c_str());
 		// Did we find the StreamClient? else try to search in other Streams
-		if (!_stream[streamID].findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			SI_LOG_ERROR("SessionID %s not found int StreamID %d", sessionID.c_str(), streamID);
 			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (_stream[streamID].findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+				if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
-					return &_stream[streamID];
+					return _stream[streamID];
 				}
 			}
 		} else {
 			socketClient.setSessionID(sessionID);
-			return &_stream[streamID];
+			return _stream[streamID];
 		}
 	}
 	// Did not find anything
@@ -286,20 +293,25 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 void Streams::checkStreamClientsWithTimeout() {
 	assert(_stream);
 	for (size_t streamID = 0; streamID < static_cast<size_t>(_maxStreams); ++streamID) {
-		if (_stream[streamID].streamInUse()) {
-			_stream[streamID].checkStreamClientsWithTimeout();
+		if (_stream[streamID]->streamInUse()) {
+			_stream[streamID]->checkStreamClientsWithTimeout();
 		}
 	}
 }
 
+void Streams::setECMFilterData(int streamID, int demux, int filter, int pid, int parity) {
+	SI_LOG_DEBUG("Stream: %d, Set ECM PID: %d  DMX: %d  Filter: %d  Parity: %02X", streamID, pid, demux, filter, parity);
+	_stream[streamID]->setECMFilterData(demux, filter, pid, parity);
+}
+
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
 	assert(_stream);
-	return _stream[stream].attribute_describe_string(active);
+	return _stream[stream]->attribute_describe_string(active);
 }
 
 void Streams::fromXML(const std::string &className, const std::string &streamID,
                           const std::string &variableName, const std::string &value) {
-	_stream[atoi(streamID.c_str())].fromXML(className, streamID, variableName, value);
+	_stream[atoi(streamID.c_str())]->fromXML(className, streamID, variableName, value);
 }
 
 void Streams::make_streams_xml(std::string &xml) const {
@@ -312,7 +324,7 @@ void Streams::make_streams_xml(std::string &xml) const {
 	xml += "<streams>";
 	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
 		StringConverter::addFormattedString(xml, "<stream>");
-		_stream[i].addToXML(xml);
+		_stream[i]->addToXML(xml);
 		StringConverter::addFormattedString(xml, "</stream>");
 	}
 	xml += "</streams>";

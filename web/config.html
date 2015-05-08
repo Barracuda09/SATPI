@@ -14,6 +14,28 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
+	var autoload = 1;
+
+	function validateIPaddress(element) {
+		// Regular Expression Pattern
+		var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+		if (element.value.match(ipformat)) {
+			return true;
+		} else {
+			alert("You have entered an invalid IP address!");
+			return false;
+		}
+	}
+
+ 	function myOnkeyPressPost(id, element, event) {
+		var key = event.which;
+		if (key == 13) {
+			if (validateIPaddress(element) == true) {
+				postData(id, element.value);
+			}
+		}
+	}
+
 	function addCheckboxInput(labelstring, input) {
 		var entry = "<div class=\"checkbox\">";
 		entry += "<label for=\"";
@@ -25,7 +47,8 @@
 		}
 		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
 		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
-		entry += "onclick=\"postData(id, document.getElementById(id).checked)\"/>"
+		entry += "onclick=\"postData(id, document.getElementById(id).checked)\"";
+		entry += "/>";
 		entry += "</div>";
 		return entry;
 	}
@@ -37,14 +60,36 @@
 		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
 		entry += "\" min=\"5\"";
 		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
-		entry += "onclick=\"postData(id, document.getElementById(id).value)\"/>"
+		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
+		entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
+		entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id), event)\"";
+		entry += "/>";
 		entry += "</div>";
 		return entry;
 	}
 
+	function addIPInput(labelstring, input) {
+		var entry = "<div class=\"form-group\">";
+		entry += "<label for=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\">" + labelstring + "</label>";
+		entry += "<input class=\"form-control\" type='text'";
+		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
+		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+	
+		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
+		entry += "onmousedown=\"document.getElementById(id).focus()\"";
+//		entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
+		entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id), event)\"";
+		entry += "/>";
+				
+		entry += "</div>";
+		return entry;
+	}
+	
 	function addInput(labelstring, input) {
 		if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
 			return addCheckboxInput(labelstring, input);
+		} else if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "ip") {
+			return addIPInput(labelstring, input);
 		} else {
 			return addNumberInput(labelstring, input);
 		}
@@ -54,6 +99,8 @@
 		var page = "<div class=\"container\">";
 		page += "<form role=\"form\">";
 		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
+		page += addInput("OSCam server IP:", xmlDoc.getElementsByTagName("OSCamIP")[0]);
+		page += addInput("OSCam server PORT:", xmlDoc.getElementsByTagName("OSCamPORT")[0]);
 		page += "</form>";
 		page += "</div>";
 		return page;
@@ -63,7 +110,9 @@
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
-		document.getElementById("content").innerHTML = buildcontent(xml);
+		if (autoload == 1) {
+			document.getElementById("content").innerHTML = buildcontent(xml);
+		}
 	}
 
 </script>

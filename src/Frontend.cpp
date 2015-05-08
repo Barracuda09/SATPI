@@ -93,6 +93,37 @@ bool Frontend::set_demux_filter(int fd, uint16_t pid) {
 	return true;
 }
 
+void Frontend::clearDVRBuffer(StreamProperties &properties) const {
+	// Check do we have an DVR
+	if (_fd_dvr != -1) {
+		SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer...", properties.getStreamID());
+		const ChannelData &channel = properties.getChannelData();
+		// Stop DMX
+		for (int i = 0; i < MAX_PIDS; ++i) {
+			if (channel.getDMXFileDescriptor(i) != -1) {
+				ioctl(channel.getDMXFileDescriptor(i), DMX_STOP);
+			}
+		}
+		int timeout = 0;
+		char buffer[properties.getDVRBufferSize()];
+		while (read(_fd_dvr, buffer, sizeof(buffer)) > 0) {
+			usleep(5000);
+			++timeout;
+			if (timeout > 10) {
+				SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer (Timeout) size %d", properties.getStreamID(), sizeof(buffer));
+				break;
+			}
+		}
+		// Start DMX again
+		for (int i = 0; i < MAX_PIDS; ++i) {
+			if (channel.getDMXFileDescriptor(i) != -1) {
+				ioctl(channel.getDMXFileDescriptor(i), DMX_START);
+			}
+		}
+		SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer (Finished)", properties.getStreamID());
+	}
+}
+
 bool Frontend::capableOf(fe_delivery_system_t msys) {
 	for (size_t i = 0; i < MAX_DELSYS; ++i) {
 		// we no not like SYS_UNDEFINED
@@ -396,9 +427,9 @@ bool Frontend::sendDiseqc(int streamID, bool repeatDiseqc) {
 
 bool Frontend::tune_it(StreamProperties &properties) {
 	const int streamID = properties.getStreamID();
-	ChannelData channel = properties.getChannelData();
-
 	SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
+
+	ChannelData &channel = properties.getChannelData();
 
 	if (channel.delsys == SYS_DVBS || channel.delsys == SYS_DVBS2) {
 		// DiSEqC switch position differs from src
@@ -440,11 +471,13 @@ bool Frontend::tune_it(StreamProperties &properties) {
 }
 
 bool Frontend::update(StreamProperties &properties) {
+	SI_LOG_DEBUG("Stream: %d, Updating frontend...", properties.getStreamID());
+
 	// Setup, tune and set PID Filters
 	if (properties.getChannelData().changed) {
-		_tuned = false;
 		properties.getChannelData().changed = false;
-		CLOSE_FD(_fd_dvr);
+		clearDVRBuffer(properties);
+		_tuned = false;
 	}
 	size_t timeout = 0;
 	while (!setupAndTune(properties)) {
@@ -455,6 +488,8 @@ bool Frontend::update(StreamProperties &properties) {
 		}
 	}
 	updatePIDFilters(properties.getChannelData(), properties.getStreamID());
+
+	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", properties.getStreamID());
 	return true;
 }
 
@@ -521,7 +556,7 @@ static void resetPid(ChannelData &channel, int pid) {
 	if (ioctl(channel.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 		PERROR("DMX_STOP");
 	}
-	close(channel.getDMXFileDescriptor(pid));
+	channel.closeDMXFileDescriptor(pid);
 	channel.resetPid(pid);
 }
 

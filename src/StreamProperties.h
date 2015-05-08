@@ -38,7 +38,8 @@ class StreamProperties  {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		StreamProperties();
+		/// Set the stream ID for this properties (Only used at initialize)
+		StreamProperties(int streamID);
 		virtual ~StreamProperties();
 
 		///
@@ -61,8 +62,6 @@ class StreamProperties  {
 		/// Get the stream Description for RTCP and DESCRIBE command
 		std::string attribute_describe_string(bool &active) const;
 
-		/// Set the stream ID for this properties (Only used at initialize)
-		void setStreamID(int streamID)     { _streamID = streamID; }
 		/// Get the stream ID to identify the properties
 		int  getStreamID() const           { return _streamID; }
 
@@ -82,7 +81,7 @@ class StreamProperties  {
 		void setPATCollected(bool collected);
 		/// Check if PAT is collected
 		bool isPATCollected() const;
-		/// Add PAT data that was collected !!Without adding CRC (4Bytes)!!
+		/// Add PAT data that was collected
 		bool addPATData(const unsigned char *data, int length, int pid, int cc);
 		/// Get the collected PAT Data
 		const unsigned char *getPATData() const;
@@ -93,7 +92,7 @@ class StreamProperties  {
 		void setPMTCollected(bool collected);
 		/// Check if PMT is collected
 		bool isPMTCollected() const;
-		/// Add PMT data that was collected !!Without adding CRC (4Bytes)!!
+		/// Add PMT data that was collected
 		bool addPMTData(const unsigned char *data, int length, int pid, int cc);
 		/// Get the collected PMT Data
 		const unsigned char *getPMTData() const;
@@ -110,10 +109,25 @@ class StreamProperties  {
 		void addPIDData(int pid, uint8_t cc);
 
 		/// See @c ChannelData
-		void setPMTPID(bool pmt, int pid) { _channelData.setPMTPID(pmt, pid); }
+		void setPMTPID(bool pmt, int pid);
 
 		/// See @c ChannelData
-		bool isPMTPID(int pid) { return _channelData.isPMTPID(pid); }
+		bool isPMTPID(int pid);
+
+		/// See @c ChannelData
+		void setECMFilterData(int demux, int filter, int pid, int parity);
+
+		/// See @c ChannelData
+		void getECMFilterData(int &demux, int &filter, int pid) const;
+		
+		/// See @c ChannelData
+		void setKeyParity(int pid, int parity);
+
+		/// See @c ChannelData
+		int getKeyParity(int pid) const;
+
+		/// See @c ChannelData
+		bool isECMPID(int pid);
 		// =======================================================================
 
 		/// Get the DVR buffer size
@@ -155,7 +169,6 @@ class StreamProperties  {
 
 		TSCollectedData_t _pat;      //
 		TSCollectedData_t _pmt;      //
-
 }; // class StreamProperties
 
 #endif // STREAM_PROPERTIES_H_INCLUDE

@@ -19,10 +19,17 @@
 */
 #include "ChannelData.h"
 #include "StringConverter.h"
+#include "Utils.h"
+#include "Log.h"
 
 #include <stdio.h>
 
 ChannelData::ChannelData() {
+	for (size_t i = 0; i < MAX_PIDS; ++i) {
+		_pid.data[i].fd_dmx = -1;
+		resetPid(i);
+	}
+	_pid.changed = false;
 	initialize();
 }
 
@@ -37,7 +44,7 @@ void ChannelData::initialize() {
 	fec = FEC_AUTO;
 	rolloff = ROLLOFF_AUTO;
 	inversion = INVERSION_AUTO;
-	
+
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		resetPid(i);
 	}
@@ -73,8 +80,11 @@ void ChannelData::resetPid(int pid) {
 	_pid.data[pid].cc       = 0x80;
 	_pid.data[pid].cc_error = 0;
 	_pid.data[pid].count    = 0;
-	_pid.data[pid].fd_dmx   = -1;
 	_pid.data[pid].pmt      = false;
+	_pid.data[pid].ecm      = false;
+	_pid.data[pid].demux    = -1;
+	_pid.data[pid].filter   = -1;
+	_pid.data[pid].parity   = -1;
 }
 
 uint32_t ChannelData::getPacketCounter(int pid) const {
@@ -87,6 +97,10 @@ void ChannelData::setDMXFileDescriptor(int pid, int fd) {
 
 int ChannelData::getDMXFileDescriptor(int pid) const {
 	return _pid.data[pid].fd_dmx;
+}
+
+void ChannelData::closeDMXFileDescriptor(int pid) {
+	CLOSE_FD(_pid.data[pid].fd_dmx);
 }
 
 void ChannelData::resetPIDChanged() {
@@ -138,6 +152,7 @@ void ChannelData::setPID(int pid, bool val) {
 	// Do we need to remove this pid then also reset PMT
 	if (!val) {
 		_pid.data[pid].pmt = false;
+		_pid.data[pid].ecm = false;
 	}
 }
 
@@ -158,3 +173,26 @@ bool ChannelData::isPMTPID(int pid) const {
 	return _pid.data[pid].pmt;
 }
 
+void ChannelData::setECMFilterData(int demux, int filter, int pid, int parity) {
+	_pid.data[pid].ecm    = true;
+	_pid.data[pid].demux  = demux;
+	_pid.data[pid].filter = filter;
+//	_pid.data[pid].parity = parity;
+}
+
+void ChannelData::getECMFilterData(int &demux, int &filter, int pid) const {
+	demux  = _pid.data[pid].demux;
+	filter = _pid.data[pid].filter;
+}
+
+void ChannelData::setKeyParity(int pid, int parity) {
+	_pid.data[pid].parity = parity;
+}
+
+int ChannelData::getKeyParity(int pid) const {
+	return _pid.data[pid].parity;
+}
+
+bool ChannelData::isECMPID(int pid) const {
+	return _pid.data[pid].ecm;
+}

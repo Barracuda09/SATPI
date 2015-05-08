@@ -94,7 +94,7 @@ class Frontend  {
 		bool setFrontendInfo();
 
 		///
-		int get_dvr_fd() const { return _fd_dvr; }		
+		int get_dvr_fd() const { return _fd_dvr; }
 
 		/// caller should release fd
 		int get_monitor_fd() const { return open_fe(_path_to_fe, true); }
@@ -122,6 +122,9 @@ class Frontend  {
 
 		///
 		int open_dmx(const std::string &path);
+
+		///
+		void clearDVRBuffer(StreamProperties &properties) const;
 
 		///
 		bool set_demux_filter(int fd, uint16_t pid);

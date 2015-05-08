@@ -159,7 +159,7 @@ bool StringConverter::getHeaderFieldParameter(const std::string &msg, const std:
 
 bool StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
                                          const std::string &parameter, std::string &value) {
-	const char delim[] = "?; &\r\n=";
+	const char delim[] = "/?; &\r\n=";
 	std::string line;
 	if (getHeaderFieldParameter(msg, header_field, line)) {
 		std::string::size_type begin = line.find_first_of(delim, 0);

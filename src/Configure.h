@@ -40,4 +40,10 @@
 #define ADD_CONFIG_NUMBER(xml, clName, streamID, varName, value, minValue, maxValue) \
 	StringConverter::addFormattedString(xml, "<%s><inputtype>number</inputtype><id>%s,%d,%s</id><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></%s>", varName, clName, streamID, varName, value, minValue, maxValue, varName);
 
+#define ADD_CONFIG_TEXT(xml, clName, streamID, varName, value) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>text</inputtype><id>%s,%d,%s</id><value>%s</value></%s>", varName, clName, streamID, varName, value, varName);
+
+#define ADD_CONFIG_IP(xml, clName, streamID, varName, value) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>ip</inputtype><id>%s,%d,%s</id><value>%s</value></%s>", varName, clName, streamID, varName, value, varName);
+
 #endif // CONFIGURE_H_INCLUDE

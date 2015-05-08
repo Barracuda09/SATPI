@@ -45,6 +45,8 @@ typedef struct {
 	int full;
 } LogBuffer_t;
 
+void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...);
+
 void applog(int priority, const char *fmt, ...);
 
 std::string make_log_xml();
@@ -53,17 +55,19 @@ void open_satip_log();
 void close_satip_log();
 
 #ifdef NDEBUG
-#define PERROR(str)             applog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
-#define GAI_PERROR(str, s)      applog(LOG_ERR, str ": %s (code %d)", gai_strerror(s), s)
-#define SI_LOG_INFO(...)        applog(LOG_INFO, __VA_ARGS__)
-#define SI_LOG_ERROR(...)       applog(LOG_ERR, __VA_ARGS__)
+#define PERROR(str)                 applog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
+#define GAI_PERROR(str, s)          applog(LOG_ERR, str ": %s (code %d)", gai_strerror(s), s)
+#define SI_LOG_INFO(...)            applog(LOG_INFO, __VA_ARGS__)
+#define SI_LOG_ERROR(...)           applog(LOG_ERR, __VA_ARGS__)
 #define SI_LOG_DEBUG(...)
+#define SI_LOG_BIN_DEBUG(streamID, title, p, length)
 #else
-#define PERROR(str)             applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
-#define GAI_PERROR(str, s)      applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
-#define SI_LOG_INFO(fmt, ...)   applog(LOG_INFO,  "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_ERROR(fmt, ...)  applog(LOG_ERR,   "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(fmt, ...)  applog(LOG_DEBUG, "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define PERROR(str)                 applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
+#define GAI_PERROR(str, s)          applog(LOG_ERR,   "[%21s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
+#define SI_LOG_INFO(fmt, ...)       applog(LOG_INFO,  "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_ERROR(fmt, ...)      applog(LOG_ERR,   "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(fmt, ...)      applog(LOG_DEBUG, "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  binlog(LOG_DEBUG, p, length, "[%21s:%03d] "fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif // LOG_H_INCLUDE

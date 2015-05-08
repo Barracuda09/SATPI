@@ -20,8 +20,8 @@
 #ifndef STREAMS_H_INCLUDE
 #define STREAMS_H_INCLUDE
 
-#include "Stream.h"
 #include "StreamClient.h"
+#include "dvbfix.h"
 #ifdef LIBDVBCSA
 	#include "DvbapiClient.h"
 #endif
@@ -30,9 +30,14 @@
 
 // Forward declarations
 class SocketClient;
+class Stream;
 
 /// The class @c Streams carries all the available/open streams
-class Streams  {
+class Streams
+#ifdef LIBDVBCSA
+		: public DvbapiClient 
+#endif
+		{
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -75,6 +80,8 @@ class Streams  {
 		void fromXML(const std::string &className, const std::string &streamID,
 		             const std::string &variableName, const std::string &value);
 	protected:
+		///
+		virtual void setECMFilterData(int streamID, int demux, int filter, int pid, int parity);
 
 	private:
 		///
@@ -83,9 +90,9 @@ class Streams  {
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Stream *_stream;
+		Stream **_stream;
 		int  _maxStreams;
-		Stream _dummyStream;
+		Stream *_dummyStream;
 		std::string _del_sys_str;
 
 		int _nr_dvb_s2;
@@ -94,10 +101,6 @@ class Streams  {
 		int _nr_dvb_c;
 #if FULL_DVB_API_VERSION >= 0x0505
 		int _nr_dvb_c2;
-#endif
-
-#ifdef LIBDVBCSA
-		DvbapiClient _dvbapi;
 #endif
 
 }; // class Streams

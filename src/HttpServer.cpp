@@ -262,6 +262,10 @@ void HttpServer::make_config_xml(std::string &xml) {
 	// application data
 	xml += "<configdata>\r\n";
 	StringConverter::addFormattedString(xml, "<input1><id>"SSDP_INTERVAL_VAR"</id><inputtype>number</inputtype><value>%d</value></input1>", _properties.getSsdpAnnounceTimeSec());
+	
+	ADD_CONFIG_IP(xml, "CLASS_OSCam", 0, "OSCamIP", "127.0.0.1");
+	ADD_CONFIG_NUMBER(xml, "CLASS_OSCam", 0, "OSCamPORT", 15011, 0, 65535);
+
 	xml += "</configdata>\r\n";
 
 	xml += "</data>\r\n";

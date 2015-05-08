@@ -52,10 +52,27 @@ void close_satip_log() {
 	// @TODO destroy mutex??
 }
 
+void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...) {
+	std::string strData;
+	for (int i = 1; i <= length; ++i) {
+		StringConverter::addFormattedString(strData, "%02X ", p[i-1]);
+		if ((i % 16) == 0) {
+			StringConverter::addFormattedString(strData, "\r\n");
+		}
+	}
+    char txt[2048];
+    va_list arglist;
+    va_start(arglist, fmt);
+    vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
+    va_end(arglist);
+
+	applog(priority, "%s\r\n%s\r\nEND\r\n", txt, strData.c_str());
+}
+
 void applog(int priority, const char *fmt, ...) {
 	pthread_mutex_lock(&mutex);
 
-    char txt[1024];
+    char txt[2048];
     va_list arglist;
     va_start(arglist, fmt);
     vsnprintf(txt, sizeof(txt)-1, fmt, arglist);

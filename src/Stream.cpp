@@ -28,10 +28,11 @@
 
 const unsigned int Stream::MAX_CLIENTS = 8;
 
-Stream::Stream() :
+Stream::Stream(int streamID, DvbapiClient *dvbapi) :
 		_streamInUse(false),
 		_client(new StreamClient[MAX_CLIENTS]),
-		_rtpThread(_client, _properties),
+		_properties(streamID),
+		_rtpThread(_client, _properties, dvbapi),
 		_rtcpThread(_client, _properties) {
 	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
 		_client[i]._clientID = i;
@@ -40,10 +41,6 @@ Stream::Stream() :
 
 Stream::~Stream() {
 	delete[] _client;
-}
-
-void Stream::setDvbapiClient(DvbapiClient *dvbapi) {
-	_rtpThread.setDvbapiClient(dvbapi);
 }
 
 bool Stream::findClientIDFor(SocketClient &socketClient,
@@ -116,7 +113,7 @@ bool Stream::update(int clientID) {
 	
 	// Restart RTP again
 	if (changed) {
-		_rtpThread.restartStreaming(_frontend.get_dvr_fd(), clientID);
+		_rtpThread.restartStreaming(clientID);
 	}
 
 	if (!_properties.getStreamActive()) {
@@ -152,8 +149,11 @@ void Stream::processStopStream(int clientID, bool gracefull) {
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);
 
+	// @TODO Are all other StreamClients stopped??
 	if (clientID == 0) {
-// @TODO Stop all other StreamClients here??
+		for (size_t i = 1; i < MAX_CLIENTS; ++i) {
+			_client[i].teardown(false); // Not gracefully teardown other clients
+		}
 		_properties.setStreamActive(false);
 		_streamInUse = false;
 	}
@@ -398,6 +398,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
 		processPID(strVal, false);
 	}
+	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _properties.getStreamID());
 }
 
 void Stream::processPID(const std::string &pids, bool add) {

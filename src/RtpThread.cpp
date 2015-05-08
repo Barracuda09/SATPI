@@ -36,7 +36,7 @@
 
 #include <fcntl.h>
 
-RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
+RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi) :
 		ThreadBase("RtpThread"),
 		_socket_fd(-1),
 		_clients(clients),
@@ -44,7 +44,7 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties) :
 		_cseq(0),
 		_properties(properties),
 		_state(Running),
-		_dvbapi(NULL) {
+		_dvbapi(dvbapi) {
 
 	_pfd[0].fd = -1;
 
@@ -70,10 +70,6 @@ RtpThread::~RtpThread() {
 	joinThread();
 }
 
-void RtpThread::setDvbapiClient(DvbapiClient *dvbapi) {
-	_dvbapi = dvbapi;
-}
-
 bool RtpThread::startStreaming(int fd_dvr) {
 	const int streamID = _properties.getStreamID();
 	_pfd[0].fd = fd_dvr;
@@ -97,8 +93,8 @@ bool RtpThread::startStreaming(int fd_dvr) {
 	}
 	// Set priority above normal for RTP Thread
 	setPriority(AboveNormal);
-	SI_LOG_INFO("Stream: %d, Start   RTP stream to %s:%d", streamID,
-	            _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort());
+	SI_LOG_INFO("Stream: %d, Start   RTP stream to %s:%d (fd: %d)", streamID,
+	            _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort(), _pfd[0].fd);
 
 	return true;
 }
@@ -111,13 +107,17 @@ void RtpThread::stopStreaming(int clientID) {
 		SI_LOG_INFO("Stream: %d, Stop   RTP stream to %s:%d (Streamed %.3f MBytes)",
 		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
 		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+#ifdef LIBDVBCSA
+		if (_dvbapi != NULL) {
+			_dvbapi->stopDecrypt(_properties);
+		}
+#endif
 	}
 }
 
-bool RtpThread::restartStreaming(int fd_dvr, int clientID) {
+bool RtpThread::restartStreaming(int clientID) {
 	// Check if thread is running
 	if (running()) {
-		_pfd[0].fd = fd_dvr;
 		setState(Running);
 		SI_LOG_INFO("Stream: %d, Restart RTP stream to %s:%d", _properties.getStreamID(),
 					_clients[clientID].getIPAddress().c_str(), _clients[clientID].getRtpSocketPort());
@@ -135,12 +135,15 @@ bool RtpThread::pauseStreaming(int clientID) {
 			usleep(50000);
 			++timeout;
 			if (timeout > 5u) {
+				SI_LOG_ERROR("Stream: %d, Pause  RTP stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
+				             _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
+				             _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
 				return false;
 			}
 		}
 		SI_LOG_INFO("Stream: %d, Pause  RTP stream to %s:%d (Streamed %.3f MBytes)",
-					_properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-					_clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
+		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
 	}
 	return true;
 }
@@ -157,7 +160,7 @@ void RtpThread::threadEntry() {
 	// init
 	_cseq = 0x0000;
 	_bufPtr = _buffer + RTP_HEADER_LEN;
-	_pfd[0].events = POLLIN | POLLPRI;
+	_pfd[0].events  = POLLIN | POLLPRI;
 	_pfd[0].revents = 0;
 
 	while (running()) {
@@ -179,11 +182,9 @@ void RtpThread::threadEntry() {
 						if (bytes_read > 0) {
 							// sync byte then check cc
 							if (_bufPtr[0] == 0x47 && bytes_read > 3) {
-								// get PID from TS
+								// get PID and CC from TS
 								const uint16_t pid = ((_bufPtr[1] & 0x1f) << 8) | _bufPtr[2];
-								// get CC from TS
-								const uint8_t cc  = _bufPtr[3] & 0x0f;
-
+								const uint8_t  cc  =   _bufPtr[3] & 0x0f;
 								_properties.addPIDData(pid, cc);
 							}
 							// inc buffer pointer

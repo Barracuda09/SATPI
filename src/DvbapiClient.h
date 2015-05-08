@@ -39,10 +39,15 @@ class DvbapiClient :
 
 		bool decrypt(StreamProperties &properties, unsigned char *data, int len);
 
+		bool stopDecrypt(StreamProperties &properties);
+
 	protected:
 		/// Thread function
 		virtual void threadEntry();
 
+		///
+		virtual void setECMFilterData(int streamID, int demux, int filter, int pid, int parity) = 0;
+		
 	private:
 
 		///
@@ -52,17 +57,23 @@ class DvbapiClient :
 		void sendClientInfo();
 
 		///
-		void collectPAT(StreamProperties &properties, unsigned char *data, int len);
+		void collectPAT(StreamProperties &properties, const unsigned char *data, int len);
 		
 		///
-		void collectPMT(StreamProperties &properties, unsigned char *data, int len);
+		void collectPMT(StreamProperties &properties, const unsigned char *data, int len);
+
+		///
+		void collectECM(StreamProperties &properties, const unsigned char *data, int len);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		Mutex _mutex;
+		bool  _connected;
 		SocketClient _client;
 		std::string _server_ip_addr;
+		
+		struct dvbcsa_key_s *_key[2];
 
 }; // class DvbapiClient
 

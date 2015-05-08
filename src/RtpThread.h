@@ -43,11 +43,8 @@ class RtpThread :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtpThread(StreamClient *clients, StreamProperties &properties);
+		RtpThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi);
 		virtual ~RtpThread();
-
-		///
-		void setDvbapiClient(DvbapiClient *dvbapi);
 
 		/// Start streaming
 		/// @return true if stream is started else false on error
@@ -60,7 +57,7 @@ class RtpThread :
 		bool pauseStreaming(int clientID);
 
 		/// Restart streaming
-		bool restartStreaming(int fd_dvr, int clientID);
+		bool restartStreaming(int clientID);
 
 	protected:
 		/// Thread function
