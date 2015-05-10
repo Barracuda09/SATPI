@@ -166,6 +166,7 @@ void RtpThread::threadEntry() {
 	while (running()) {
 		switch (getState()) {
 			case Pause:
+				_bufPtr = _buffer + RTP_HEADER_LEN;
 				setState(Paused);
 				break;
 			case Paused:
