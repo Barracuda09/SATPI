@@ -57,7 +57,7 @@ class RtpThread :
 		bool pauseStreaming(int clientID);
 
 		/// Restart streaming
-		bool restartStreaming(int clientID);
+		bool restartStreaming(int fd_dvr, int clientID);
 
 	protected:
 		/// Thread function

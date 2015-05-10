@@ -115,9 +115,10 @@ void RtpThread::stopStreaming(int clientID) {
 	}
 }
 
-bool RtpThread::restartStreaming(int clientID) {
+bool RtpThread::restartStreaming(int fd_dvr, int clientID) {
 	// Check if thread is running
 	if (running()) {
+		_pfd[0].fd = fd_dvr;
 		setState(Running);
 		SI_LOG_INFO("Stream: %d, Restart RTP stream to %s:%d", _properties.getStreamID(),
 					_clients[clientID].getIPAddress().c_str(), _clients[clientID].getRtpSocketPort());

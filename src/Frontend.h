@@ -124,9 +124,6 @@ class Frontend  {
 		int open_dmx(const std::string &path);
 
 		///
-		void clearDVRBuffer(StreamProperties &properties) const;
-
-		///
 		bool set_demux_filter(int fd, uint16_t pid);
 
 		///

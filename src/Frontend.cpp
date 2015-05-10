@@ -93,37 +93,6 @@ bool Frontend::set_demux_filter(int fd, uint16_t pid) {
 	return true;
 }
 
-void Frontend::clearDVRBuffer(StreamProperties &properties) const {
-	// Check do we have an DVR
-	if (_fd_dvr != -1) {
-		SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer...", properties.getStreamID());
-		const ChannelData &channel = properties.getChannelData();
-		// Stop DMX
-		for (int i = 0; i < MAX_PIDS; ++i) {
-			if (channel.getDMXFileDescriptor(i) != -1) {
-				ioctl(channel.getDMXFileDescriptor(i), DMX_STOP);
-			}
-		}
-		int timeout = 0;
-		char buffer[properties.getDVRBufferSize()];
-		while (read(_fd_dvr, buffer, sizeof(buffer)) > 0) {
-			usleep(5000);
-			++timeout;
-			if (timeout > 10) {
-				SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer (Timeout) size %d", properties.getStreamID(), sizeof(buffer));
-				break;
-			}
-		}
-		// Start DMX again
-		for (int i = 0; i < MAX_PIDS; ++i) {
-			if (channel.getDMXFileDescriptor(i) != -1) {
-				ioctl(channel.getDMXFileDescriptor(i), DMX_START);
-			}
-		}
-		SI_LOG_DEBUG("Stream: %d, Clearing DVR Buffer (Finished)", properties.getStreamID());
-	}
-}
-
 bool Frontend::capableOf(fe_delivery_system_t msys) {
 	for (size_t i = 0; i < MAX_DELSYS; ++i) {
 		// we no not like SYS_UNDEFINED
@@ -476,9 +445,10 @@ bool Frontend::update(StreamProperties &properties) {
 	// Setup, tune and set PID Filters
 	if (properties.getChannelData().changed) {
 		properties.getChannelData().changed = false;
-		clearDVRBuffer(properties);
 		_tuned = false;
+		CLOSE_FD(_fd_dvr);
 	}
+
 	size_t timeout = 0;
 	while (!setupAndTune(properties)) {
 		usleep(50000);
@@ -487,6 +457,7 @@ bool Frontend::update(StreamProperties &properties) {
 			return false;
 		}
 	}
+
 	updatePIDFilters(properties.getChannelData(), properties.getStreamID());
 
 	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", properties.getStreamID());
