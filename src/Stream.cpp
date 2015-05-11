@@ -98,6 +98,15 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
+void Stream::setECMFilterData(int demux, int filter, int pid, int parity) {
+	// Did we open this pid already?
+	const bool ecm = _properties.isECMPID(pid);
+	_properties.setECMFilterData(demux, filter, pid, parity);
+	if (!ecm) {
+		_frontend.update(_properties);
+	}
+}
+
 bool Stream::update(int clientID) {
 //	_properties.printChannelInfo();
 	const bool changed = _properties.getChannelData().changed;
@@ -113,7 +122,7 @@ bool Stream::update(int clientID) {
 	
 	// Restart RTP again
 	if (changed) {
-		_rtpThread.restartStreaming(clientID);
+		_rtpThread.restartStreaming(_frontend.get_dvr_fd(), clientID);
 	}
 
 	if (!_properties.getStreamActive()) {

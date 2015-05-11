@@ -97,7 +97,7 @@ class Stream  {
 		// Functions used for dvbapi
 		// =======================================================================
 		///
-		void setECMFilterData(int demux, int filter, int pid, int parity) { _properties.setECMFilterData(demux, filter, pid, parity); }
+		void setECMFilterData(int demux, int filter, int pid, int parity);
 
 		// =======================================================================
 		// Functions used for RTSP Server
