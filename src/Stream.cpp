@@ -98,11 +98,10 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Stream::setECMFilterData(int demux, int filter, int pid, int parity) {
-	// Did we open this pid already?
-	const bool ecm = _properties.isECMPID(pid);
-	_properties.setECMFilterData(demux, filter, pid, parity);
-	if (!ecm) {
+void Stream::setECMPID(int pid, bool set) {
+	const bool isSet = isPIDUsed(pid);
+	setPID(pid, set);
+	if (!isSet) {
 		_frontend.update(_properties);
 	}
 }
@@ -230,8 +229,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		// new frequency so initialize ChannelData and 'remove' all used PIDS
 		initializeChannelData();
-		_properties.setPATCollected(false);
-		_properties.setPMTCollected(false);
+		_rtpThread.clearDecrypt();
 		setFrequency(doubleVal * 1000.0);
 	}
 	// !!!!

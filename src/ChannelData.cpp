@@ -80,11 +80,6 @@ void ChannelData::resetPid(int pid) {
 	_pid.data[pid].cc       = 0x80;
 	_pid.data[pid].cc_error = 0;
 	_pid.data[pid].count    = 0;
-	_pid.data[pid].pmt      = false;
-	_pid.data[pid].ecm      = false;
-	_pid.data[pid].demux    = -1;
-	_pid.data[pid].filter   = -1;
-	_pid.data[pid].parity   = -1;
 }
 
 uint32_t ChannelData::getPacketCounter(int pid) const {
@@ -149,11 +144,6 @@ void ChannelData::addPIDData(int pid, uint8_t cc) {
 void ChannelData::setPID(int pid, bool val) {
 	_pid.data[pid].used = val;
 	_pid.changed = true;
-	// Do we need to remove this pid then also reset PMT
-	if (!val) {
-		_pid.data[pid].pmt = false;
-		_pid.data[pid].ecm = false;
-	}
 }
 
 bool ChannelData::isPIDUsed(int pid) const {
@@ -163,36 +153,4 @@ bool ChannelData::isPIDUsed(int pid) const {
 void ChannelData::setAllPID(bool val) {
 	_pid.data[ALL_PIDS].used = val;
 	_pid.changed = true;
-}
-
-void ChannelData::setPMTPID(bool pmt, int pid) {
-	_pid.data[pid].pmt = pmt;
-}
-
-bool ChannelData::isPMTPID(int pid) const {
-	return _pid.data[pid].pmt;
-}
-
-void ChannelData::setECMFilterData(int demux, int filter, int pid, int parity) {
-	_pid.data[pid].ecm    = true;
-	_pid.data[pid].demux  = demux;
-	_pid.data[pid].filter = filter;
-//	_pid.data[pid].parity = parity;
-}
-
-void ChannelData::getECMFilterData(int &demux, int &filter, int pid) const {
-	demux  = _pid.data[pid].demux;
-	filter = _pid.data[pid].filter;
-}
-
-void ChannelData::setKeyParity(int pid, int parity) {
-	_pid.data[pid].parity = parity;
-}
-
-int ChannelData::getKeyParity(int pid) const {
-	return _pid.data[pid].parity;
-}
-
-bool ChannelData::isECMPID(int pid) const {
-	return _pid.data[pid].ecm;
 }

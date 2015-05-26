@@ -25,13 +25,6 @@
 
 #include <string>
 
-typedef struct {
-	std::string data;
-	int cc;
-	int pid;
-	bool collected;
-} TSCollectedData_t;
-
 /// The class @c StreamProperties carries all the available/open StreamProperties
 class StreamProperties  {
 	public:
@@ -42,20 +35,20 @@ class StreamProperties  {
 		StreamProperties(int streamID);
 		virtual ~StreamProperties();
 
-		///
+		/// Print channel information (just used as debug info)
 		void printChannelInfo() const;
 
-		///
+		/// Set the frontend  status information like strength, snr etc.
 		void setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
 		                            uint32_t ber, uint32_t ublocks);
 
-		///
+		/// Get the frontend status. Is the frontend locked or not
 		fe_status_t getFrontendStatus() const;
 
-		///
+		/// Add data to an XML for storing or web interface
 		void addToXML(std::string &xml) const;
 
-		///
+		/// Get data from an XML for restoring or web interface
 		void fromXML(const std::string className, const std::string streamID,
 		             const std::string variableName, const std::string value);
 
@@ -77,28 +70,6 @@ class StreamProperties  {
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
 
-		/// Set if PAT has been collected or not
-		void setPATCollected(bool collected);
-		/// Check if PAT is collected
-		bool isPATCollected() const;
-		/// Add PAT data that was collected
-		bool addPATData(const unsigned char *data, int length, int pid, int cc);
-		/// Get the collected PAT Data
-		const unsigned char *getPATData() const;
-		/// Get the current size of the PAT Packet !!Whitout the CRC (4Bytes)!!
-		int getPATDataSize() const;
-
-		/// Set if PMT has been collected or not
-		void setPMTCollected(bool collected);
-		/// Check if PMT is collected
-		bool isPMTCollected() const;
-		/// Add PMT data that was collected
-		bool addPMTData(const unsigned char *data, int length, int pid, int cc);
-		/// Get the collected PMT Data
-		const unsigned char *getPMTData() const;
-		/// Get the current size of the PMT Packet !!Whitout the CRC (4Bytes)!!
-		int getPMTDataSize() const;
-
 		///
 		void addRtpData(const uint32_t byte, long timestamp);
 
@@ -107,27 +78,6 @@ class StreamProperties  {
 		// =======================================================================
 		/// See @c ChannelData
 		void addPIDData(int pid, uint8_t cc);
-
-		/// See @c ChannelData
-		void setPMTPID(bool pmt, int pid);
-
-		/// See @c ChannelData
-		bool isPMTPID(int pid);
-
-		/// See @c ChannelData
-		void setECMFilterData(int demux, int filter, int pid, int parity);
-
-		/// See @c ChannelData
-		void getECMFilterData(int &demux, int &filter, int pid) const;
-		
-		/// See @c ChannelData
-		void setKeyParity(int pid, int parity);
-
-		/// See @c ChannelData
-		int getKeyParity(int pid) const;
-
-		/// See @c ChannelData
-		bool isECMPID(int pid);
 		// =======================================================================
 
 		/// Get the DVR buffer size
@@ -166,9 +116,6 @@ class StreamProperties  {
 		uint16_t      _snr;          //
 		uint32_t      _ber;          //
 		uint32_t      _ublocks;      //
-
-		TSCollectedData_t _pat;      //
-		TSCollectedData_t _pmt;      //
 }; // class StreamProperties
 
 #endif // STREAM_PROPERTIES_H_INCLUDE

@@ -21,9 +21,12 @@
 #include "StreamClient.h"
 #include "Log.h"
 #include "StreamProperties.h"
-#include "DvbapiClient.h"
 #include "Utils.h"
+#ifdef LIBDVBCSA
+	#include "DvbapiClient.h"
+#endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -45,6 +48,9 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 		_properties(properties),
 		_state(Running),
 		_dvbapi(dvbapi) {
+#ifdef LIBDVBCSA
+//	assert(dvbapi != NULL);
+#endif
 
 	_pfd[0].fd = -1;
 
@@ -68,6 +74,13 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 RtpThread::~RtpThread() {
 	cancelThread();
 	joinThread();
+}
+
+void RtpThread::clearDecrypt() {
+#ifdef LIBDVBCSA
+	assert(_dvbapi);
+	_dvbapi->clearDecrypt(_properties.getStreamID());
+#endif
 }
 
 bool RtpThread::startStreaming(int fd_dvr) {
@@ -108,9 +121,8 @@ void RtpThread::stopStreaming(int clientID) {
 		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
 		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
 #ifdef LIBDVBCSA
-		if (_dvbapi != NULL) {
-			_dvbapi->stopDecrypt(_properties);
-		}
+		assert(_dvbapi);
+		_dvbapi->stopDecrypt(_properties.getStreamID());
 #endif
 	}
 }
@@ -212,13 +224,19 @@ void RtpThread::threadEntry() {
 								_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
 
 								// RTP packet octet count (Bytes)
-								const uint32_t byte = (len - RTP_HEADER_LEN);
+								uint32_t byte = (len - RTP_HEADER_LEN);
 								_properties.addRtpData(byte, timestamp);
 #ifdef LIBDVBCSA
-								if (_dvbapi != NULL) {
-									_dvbapi->decrypt(_properties, _buffer + RTP_HEADER_LEN, byte);
+								if (_dvbapi->decrypt(_properties.getStreamID(), _buffer + RTP_HEADER_LEN, byte)) {
+									// send the RTP packet
+									if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,
+											  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
+										PERROR("send RTP");
+									}
+									// set bufPtr to begin of RTP data (after Header)
+									_bufPtr = _buffer + RTP_HEADER_LEN;
 								}
-#endif
+#else
 								// send the RTP packet
 								if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,
 										  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
@@ -226,6 +244,7 @@ void RtpThread::threadEntry() {
 								}
 								// set bufPtr to begin of RTP data (after Header)
 								_bufPtr = _buffer + RTP_HEADER_LEN;
+#endif
 							}
 						}
 					}

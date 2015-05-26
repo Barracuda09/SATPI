@@ -299,9 +299,9 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Streams::setECMFilterData(int streamID, int demux, int filter, int pid, int parity) {
-	SI_LOG_DEBUG("Stream: %d, Set ECM PID: %d  DMX: %d  Filter: %d  Parity: %02X", streamID, pid, demux, filter, parity);
-	_stream[streamID]->setECMFilterData(demux, filter, pid, parity);
+void Streams::setECMPID(int streamID, int pid, bool set) {
+	SI_LOG_INFO("Stream: %d, %s ECM PID: %d", streamID, set ? "Set" : "Clear", pid);
+	_stream[streamID]->setECMPID(pid, set);
 }
 
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {

@@ -42,17 +42,9 @@ StreamProperties::StreamProperties(int streamID) :
 		_rtp_payload(0.0),
 		_dvrBufferSize(40 * 188 * 1024),
 		_diseqcRepeat(true),
-		_rtcpSignalUpdate(1) {
-	_pat.cc  = -1;
-	_pat.pid = -1;
-	_pat.collected = false;
+		_rtcpSignalUpdate(1) {}
 
-	_pmt.cc  = -1;
-	_pmt.pid = -1;
-	_pmt.collected = false;
-}
-
-StreamProperties::~StreamProperties() {;}
+StreamProperties::~StreamProperties() {}
 
 void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
 	MutexLock lock(_mutex);
@@ -253,115 +245,5 @@ void StreamProperties::printChannelInfo() const {
 	SI_LOG_INFO("----------------", _channelData.siso_miso);
 	SI_LOG_INFO("pid:          %s", _channelData.getPidCSV().c_str());
 	SI_LOG_INFO("----------------", _channelData.siso_miso);
-}
-
-void StreamProperties::setPATCollected(bool collected) {
-	MutexLock lock(_mutex);
-	_pat.collected = collected;
-	if (!collected) {
-		_pat.data.clear();
-		_pat.cc  = -1;
-		_pat.pid = -1;
-	}
-}
-
-bool StreamProperties::isPATCollected() const {
-	MutexLock lock(_mutex);
-	return _pat.collected;
-}
-
-bool StreamProperties::addPATData(const unsigned char *data, int length, int pid, int cc) {
-	MutexLock lock(_mutex);
-	if ((_pat.cc  == -1 ||  cc == _pat.cc + 1) &&
-	    (_pat.pid == -1 || pid == _pat.pid)) {
-		_pat.data.append(reinterpret_cast<const char *>(data), length);
-		_pat.cc   = cc;
-		_pat.pid  = pid;
-		return true;
-	}
-	return false;
-}
-
-const unsigned char *StreamProperties::getPATData() const {
-	MutexLock lock(_mutex);
-	return reinterpret_cast<const unsigned char *>(_pat.data.c_str());
-}
-
-int StreamProperties::getPATDataSize() const {
-	MutexLock lock(_mutex);
-	return _pat.data.size();
-}
-
-void StreamProperties::setPMTCollected(bool collected) {
-	MutexLock lock(_mutex);
-	_pmt.collected = collected;
-	if (!collected) {
-		_pmt.data.clear();
-		_pmt.cc  = -1;
-		_pmt.pid = -1;
-	}
-}
-
-bool StreamProperties::isPMTCollected() const {
-	MutexLock lock(_mutex);
-	return _pmt.collected;
-}
-
-bool StreamProperties::addPMTData(const unsigned char *data, int length, int pid, int cc) {
-	MutexLock lock(_mutex);
-	if ((_pmt.cc  == -1 ||  cc == _pmt.cc + 1) &&
-	    (_pmt.pid == -1 || pid == _pmt.pid)) {
-		_pmt.data.append(reinterpret_cast<const char *>(data), length);
-		_pmt.cc   = cc;
-		_pmt.pid  = pid;
-		return true;
-	}
-	return false;
-}
-
-const unsigned char *StreamProperties::getPMTData() const {
-	MutexLock lock(_mutex);
-	return reinterpret_cast<const unsigned char *>(_pmt.data.c_str());
-}
-
-int StreamProperties::getPMTDataSize() const {
-	MutexLock lock(_mutex);
-	return _pmt.data.size();
-}
-
-void StreamProperties::setPMTPID(bool pmt, int pid) {
-	MutexLock lock(_mutex);
-	_channelData.setPMTPID(pmt, pid);
-}
-
-bool StreamProperties::isPMTPID(int pid) {
-	MutexLock lock(_mutex);
-	return _channelData.isPMTPID(pid);
-}
-
-void StreamProperties::setECMFilterData(int demux, int filter, int pid, int parity) {
-	MutexLock lock(_mutex);
-	_channelData.setECMFilterData(demux, filter, pid, parity);
-}
-
-void StreamProperties::getECMFilterData(int &demux, int &filter, int pid) const {
-	MutexLock lock(_mutex);
-	_channelData.getECMFilterData(demux, filter, pid);
-}
-
-void StreamProperties::setKeyParity(int pid, int parity) {
-	MutexLock lock(_mutex);
-	_channelData.setKeyParity(pid, parity);
-}
-
-int StreamProperties::getKeyParity(int pid) const {
-	MutexLock lock(_mutex);
-	return _channelData.getKeyParity(pid);
-}
-
-
-bool StreamProperties::isECMPID(int pid) {
-	MutexLock lock(_mutex);
-	return _channelData.isECMPID(pid);
 }
 

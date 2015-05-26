@@ -81,7 +81,7 @@ class Streams
 		             const std::string &variableName, const std::string &value);
 	protected:
 		///
-		virtual void setECMFilterData(int streamID, int demux, int filter, int pid, int parity);
+		virtual void setECMPID(int streamID, int pid, bool set);
 
 	private:
 		///

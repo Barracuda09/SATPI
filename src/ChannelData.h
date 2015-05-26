@@ -37,11 +37,6 @@ typedef struct {
 	uint8_t  cc;             // continuity counter (0 - 15) of this PID
 	uint32_t cc_error;       // cc error count
 	uint32_t count;          // the number of times this pid occurred
-	bool     pmt;            // show if this is an PMT pid
-	bool     ecm;            // show if this is an ECM pid
-	int      demux;          // dvbapi demux
-	int      filter;         // dvbapi filter
-	int      parity;         // key parity
 } PidData_t;
 
 typedef struct {
@@ -97,26 +92,6 @@ class ChannelData  {
 		/// Set all PID
 		void setAllPID(bool val);
 
-		/// Set the pid as an PMT
-		void setPMTPID(bool pmt, int pid);
-
-		/// Is the pid set as an PMT PID
-		bool isPMTPID(int pid) const;
-
-		/// Set the filter data and ECM pid
-		void setECMFilterData(int demux, int filter, int pid, int parity);
-		
-		/// Get the filter data of the ECM pid
-		void getECMFilterData(int &demux, int &filter, int pid) const;
-
-		/// Set the key parity of the pid
-		void setKeyParity(int pid, int parity);
-
-		/// Get the key parity of the pid
-		int getKeyParity(int pid) const;
-
-		/// Is the pid set as an ECM PID
-		bool isECMPID(int pid) const;
 //	protected:
 
 //	private:

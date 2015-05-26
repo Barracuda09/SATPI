@@ -59,6 +59,9 @@ class RtpThread :
 		/// Restart streaming
 		bool restartStreaming(int fd_dvr, int clientID);
 
+		///
+		void clearDecrypt();
+
 	protected:
 		/// Thread function
 		virtual void threadEntry();
@@ -81,12 +84,12 @@ class RtpThread :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int           _socket_fd;      //
+		int            _socket_fd;      //
 		StreamClient  *_clients;       //
-		unsigned char _buffer[MTU];    // RTP/UDP buffer
+		unsigned char  _buffer[MTU];    // RTP/UDP buffer
 		unsigned char *_bufPtr;        // RTP/UDP buffer pointer
-		long          _send_interval;  // RTP interval time (100ms)
-		uint16_t      _cseq;           // RTP sequence number
+		long           _send_interval;  // RTP interval time (100ms)
+		uint16_t       _cseq;           // RTP sequence number
 		StreamProperties &_properties; //
 		struct pollfd _pfd[1];         //
 		Mutex         _mutex;          //

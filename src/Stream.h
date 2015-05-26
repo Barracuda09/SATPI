@@ -44,60 +44,61 @@ class Stream  {
 		Stream(int streamID, DvbapiClient *dvbapi);
 		virtual ~Stream();
 
-		///
+		/// Get the streamID of this stream
 		int  getStreamID() const       { return _properties.getStreamID(); }
 
-		///
+		/// Get the describe string for this stream
 		std::string attribute_describe_string(bool &active) const { return _properties.attribute_describe_string(active); }
 
-		///
+		/// Add the frontend paths to connect to this stream
 		void addFrontendPaths(const std::string &fe,
 		                      const std::string &dvr,
 							  const std::string &dmx) { _frontend.addFrontendPaths(fe, dvr, dmx); }
 
-		///
+		/// This will read the frontend information for this stream
 		void setFrontendInfo() { _frontend.setFrontendInfo(); }
 
-		///
+		/// Get the amount of delivery systems of this stream
 		size_t getDeliverySystemSize() const { return _frontend.getDeliverySystemSize(); }
 
-		///
+		/// Get the possible delivery systems of this stream
 		const fe_delivery_system_t *getDeliverySystem() const { return _frontend.getDeliverySystem(); }
 
+		/// Find the clientID for the requested parameters
 		bool findClientIDFor(SocketClient &socketClient,
 		                     bool newSession,
 		                     std::string sessionID,
 		                     const std::string &method,
 		                     int &clientID);
 
-		///
+		/// Copy the connected  client data to this stream
 		void copySocketClientAttr(const SocketClient &socketClient);
 
-		///
+		/// Check is this stream used already
 		bool streamInUse() const { return _streamInUse; }
 
 
-		///
+		/// Close the stream client with clientID
 		void close(int clientID);
 
-		///
+		/// Teardown the stream client with clientID can be graceful or not
+		/// graceful means it is just closed by the client itself else a time-out
+		/// probably occurred. 
 		bool teardown(int clientID, bool gracefull);
 
-		///
+		/// Check if there are any stream clients with a time-out that should be
+		/// closed
 		void checkStreamClientsWithTimeout();
 
-		///
+		/// Add stream data to an XML for storing or web interface
 		void addToXML(std::string &xml) const;
 		
-		///
+		/// Get stream data from an XML for restoring or web interface
 		void fromXML(const std::string className, const std::string streamID,
 		             const std::string variableName, const std::string value);
 
-		// =======================================================================
-		// Functions used for dvbapi
-		// =======================================================================
-		///
-		void setECMFilterData(int demux, int filter, int pid, int parity);
+		/// Set externally an ECM (or just any other pid)
+		void setECMPID(int pid, bool set);
 
 		// =======================================================================
 		// Functions used for RTSP Server
@@ -134,6 +135,7 @@ class Stream  {
 		void setUniqueIDT2(int id)                          { _properties.getChannelData().t2_system_id = id; }
 		void setSISOMISO(int sm)                            { _properties.getChannelData().siso_miso = sm; }
 		void setPID(int pid, bool val)                      { _properties.getChannelData().setPID(pid, val); }
+		bool isPIDUsed(int pid)                             { return _properties.getChannelData().isPIDUsed(pid); }
 		void setAllPID(bool val)                            { _properties.getChannelData().setAllPID(val); }
 
 		///

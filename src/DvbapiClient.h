@@ -23,11 +23,12 @@
 #include "ThreadBase.h"
 #include "SocketClient.h"
 #include "Mutex.h"
+#include "DvbapiClientProperties.h"
 
 // forward declaration
 class StreamProperties;
 
-/// DVBAPI Client
+/// The class @c DvbapiClient is for decrypting streams
 class DvbapiClient :
 		public ThreadBase {
 	public:
@@ -37,17 +38,22 @@ class DvbapiClient :
 		DvbapiClient();
 		virtual ~DvbapiClient();
 
-		bool decrypt(StreamProperties &properties, unsigned char *data, int len);
+		///
+		bool decrypt(int streamID, unsigned char *data, uint32_t &len);
 
-		bool stopDecrypt(StreamProperties &properties);
+		///
+		bool stopDecrypt(int streamID);
+
+		///
+		bool clearDecrypt(int streamID);
 
 	protected:
 		/// Thread function
 		virtual void threadEntry();
 
 		///
-		virtual void setECMFilterData(int streamID, int demux, int filter, int pid, int parity) = 0;
-		
+		virtual void setECMPID(int streamID, int pid, bool set) = 0;
+
 	private:
 
 		///
@@ -57,13 +63,16 @@ class DvbapiClient :
 		void sendClientInfo();
 
 		///
-		void collectPAT(StreamProperties &properties, const unsigned char *data, int len);
-		
-		///
-		void collectPMT(StreamProperties &properties, const unsigned char *data, int len);
+		void collectPAT(int streamID, const unsigned char *data, int len);
 
 		///
-		void collectECM(StreamProperties &properties, const unsigned char *data, int len);
+		void collectPMT(int streamID, const unsigned char *data, int len);
+
+		///
+		void cleanPacketPMT(int streamID, unsigned char *data);
+
+		///
+		void collectECM(int streamID, const unsigned char *data);
 
 		// =======================================================================
 		// Data members
@@ -72,8 +81,9 @@ class DvbapiClient :
 		bool  _connected;
 		SocketClient _client;
 		std::string _server_ip_addr;
-		
-		struct dvbcsa_key_s *_key[2];
+
+		/// @todo alloc this dynamic
+		DvbapiClientProperties _properties[5];
 
 }; // class DvbapiClient
 
