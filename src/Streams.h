@@ -35,7 +35,7 @@ class Stream;
 /// The class @c Streams carries all the available/open streams
 class Streams
 #ifdef LIBDVBCSA
-		: public DvbapiClient 
+		: public DvbapiClient
 #endif
 		{
 	public:
@@ -73,10 +73,10 @@ class Streams
 		///
 		std::string attribute_describe_string(unsigned int stream, bool &active) const;
 
-		///
-		void make_streams_xml(std::string &xml) const;
+		/// Add streams data to an XML for storing or web interface
+		void addToXML(std::string &xml) const;
 
-		///
+		/// Get streams data from an XML for restoring or web interface
 		void fromXML(const std::string &className, const std::string &streamID,
 		             const std::string &variableName, const std::string &value);
 	protected:

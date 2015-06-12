@@ -314,12 +314,8 @@ void Streams::fromXML(const std::string &className, const std::string &streamID,
 	_stream[atoi(streamID.c_str())]->fromXML(className, streamID, variableName, value);
 }
 
-void Streams::make_streams_xml(std::string &xml) const {
+void Streams::addToXML(std::string &xml) const {
 	assert(_stream);
-	// make data xml
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-	
 	// application data
 	xml += "<streams>";
 	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
@@ -328,7 +324,5 @@ void Streams::make_streams_xml(std::string &xml) const {
 		StringConverter::addFormattedString(xml, "</stream>");
 	}
 	xml += "</streams>";
-
-	xml += "</data>\r\n";
 }
 

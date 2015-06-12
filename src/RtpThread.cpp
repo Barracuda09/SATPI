@@ -48,10 +48,6 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 		_properties(properties),
 		_state(Running),
 		_dvbapi(dvbapi) {
-#ifdef LIBDVBCSA
-//	assert(dvbapi != NULL);
-#endif
-
 	_pfd[0].fd = -1;
 
 	uint32_t ssrc = _properties.getSSRC();
@@ -84,6 +80,9 @@ void RtpThread::clearDecrypt() {
 }
 
 bool RtpThread::startStreaming(int fd_dvr) {
+#ifdef LIBDVBCSA
+	assert(_dvbapi);
+#endif
 	const int streamID = _properties.getStreamID();
 	_pfd[0].fd = fd_dvr;
 	if (_socket_fd == -1) {
