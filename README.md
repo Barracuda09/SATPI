@@ -69,6 +69,10 @@ If you need to make a debug version to help with testing, use:
 
     make debug
 
+If you need to clean the project (because there was something wrong), use:
+
+    make clean
+
 If you like to build the documentation, use:
 
     make docu   (!! you need Doxygen and Graphviz/dot !!)
