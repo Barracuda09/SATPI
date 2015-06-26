@@ -23,10 +23,8 @@ contribute to the project.
 
 Contact
 -------
-If you like to contact me, you can do that by sending an email
-to one of the following addresses:
+If you like to contact me, you can do so by sending an email to:
 
-    m.a.postema -at- alice.nl
     mpostema09 -at- gmail.com
 
 Tested Programs
@@ -70,6 +68,10 @@ See some new commits/changes you need, rebuild with:
 If you need to make a debug version to help with testing, use:
 
     make debug
+
+If you need to clean the project (because there was something wrong), use:
+
+    make clean
 
 If you like to build the documentation, use:
 
