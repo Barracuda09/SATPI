@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
 	openlog(DAEMON_NAME, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 
 	// open our logging
-	open_satip_log();
+	open_app_log();
 
 	// Daemonize
 	if (daemon) {
@@ -269,6 +269,8 @@ int main(int argc, char *argv[]) {
 
 	// close logging interface
 	closelog();
+
+	close_app_log();
 
 	return EXIT_SUCCESS;
 }

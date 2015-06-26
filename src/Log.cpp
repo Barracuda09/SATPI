@@ -25,30 +25,23 @@
 #include <stdarg.h>
 #include <iostream>
 
-static LogBuffer_t satip_log;
+#define LOG_SIZE 350
+
+static LogBuffer_t appLog;
 static pthread_mutex_t mutex;
 int syslog_on = 1;
 
 /*
  *
  */
-void open_satip_log() {
+void open_app_log() {
 	pthread_mutexattr_t attr;
-	size_t i;
-
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(&mutex, &attr);
-
-	satip_log.begin = 0;
-	satip_log.end = 0;
-	satip_log.full = 0;
-	for (i = 0; i < LOG_SIZE; ++i) {
-		satip_log.elem[i].priority = 0;
-	}
 }
 
-void close_satip_log() {
+void close_app_log() {
 	// @TODO destroy mutex??
 }
 
@@ -85,8 +78,11 @@ void applog(int priority, const char *fmt, ...) {
 	std::string::size_type index = 0;
 
 	while (StringConverter::getline(msg, index, line, "\r\n")) {
-		const size_t index = satip_log.end;
-		satip_log.elem[index].priority = priority;
+		LogElem_t elem;
+
+		// set priority
+		elem.priority = priority;
+
 		// set timestamp
 		char asc_time[30];
 		ctime_r(&time_stamp.tv_sec, asc_time);
@@ -96,22 +92,24 @@ void applog(int priority, const char *fmt, ...) {
 		// cut line to insert nsec '.000000000'
 		asc_time[19] = 0;
 		char time[100];
-		snprintf(time, sizeof(time), "%s.%09lu %s", &asc_time[0], time_stamp.tv_nsec, &asc_time[20]);
-		satip_log.elem[index].timestamp = time;
+		snprintf(time, sizeof(time), "%s.%04lu %s", &asc_time[0], time_stamp.tv_nsec/100000, &asc_time[20]);
+		elem.timestamp = time;
+
 		// set message
-		satip_log.elem[index].msg = line;
-		satip_log.end = (satip_log.end + 1) % LOG_SIZE;
-		if (satip_log.full == 0 && satip_log.end == satip_log.begin) {
-			satip_log.full = 1;
-		} else if (satip_log.full) {
-			satip_log.begin = satip_log.end;
+		elem.msg = line;
+
+		// save to deque
+		if (appLog.size() == LOG_SIZE) {
+		  appLog.pop_front();
 		}
+		appLog.push_back(elem);
+
 		// log to syslog
 		if (syslog_on != 0) {
-			syslog(priority, "%zu %s", index, satip_log.elem[index].msg.c_str());
+			syslog(priority, "%s", elem.msg.c_str());
 		}
 #ifdef DEBUG
-		std::cout << satip_log.elem[index].msg << "\r\n";
+		std::cout << elem.msg << "\r\n";
 		std::flush(std::cout);
 #endif
 	}
@@ -125,20 +123,12 @@ std::string make_log_xml() {
 	log  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n";
 
 	pthread_mutex_lock(&mutex);
-	const size_t size = satip_log.full ? LOG_SIZE :
-	                   ((satip_log.end < satip_log.begin) ? (satip_log.end + LOG_SIZE - satip_log.begin) :
-	                                                        (satip_log.end - satip_log.begin));
-
-	size_t i;
-	size_t l = satip_log.begin;
-	for (i = 0; i < size; ++i) {
-		std::string line = StringConverter::makeXMLString(satip_log.elem[l].msg);
-		const size_t size = line.size() + satip_log.elem[l].timestamp.size() + 100;
-		char *tmp = new char[size+1];
-		snprintf(tmp, size, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n", satip_log.elem[l].timestamp.c_str(), line.c_str(), satip_log.elem[l].priority);
-		log += tmp;
-		delete[] tmp;
-		l = (l + 1) % LOG_SIZE;
+	if (!appLog.empty()) {
+		for (LogBuffer_t::iterator it = appLog.begin(); it != appLog.end(); ++it) {
+			LogElem_t elem = *it;
+			StringConverter::addFormattedString(log, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
+												elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(), elem.priority);
+		}
 	}
 	pthread_mutex_unlock(&mutex);
 

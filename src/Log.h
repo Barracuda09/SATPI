@@ -29,6 +29,7 @@
 #include <netdb.h>
 
 #include <string>
+#include <deque>
 
 typedef struct {
 	int priority;
@@ -36,14 +37,7 @@ typedef struct {
 	std::string timestamp;
 } LogElem_t;
 
-#define LOG_SIZE 350
-
-typedef struct {
-	LogElem_t elem[LOG_SIZE];
-	size_t begin;
-	size_t end;
-	int full;
-} LogBuffer_t;
+typedef std::deque<LogElem_t> LogBuffer_t;
 
 void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...);
 
@@ -51,8 +45,8 @@ void applog(int priority, const char *fmt, ...);
 
 std::string make_log_xml();
 
-void open_satip_log();
-void close_satip_log();
+void open_app_log();
+void close_app_log();
 
 #ifdef NDEBUG
 #define PERROR(str)                 applog(LOG_ERR, str ": %s (code %d)", strerror(errno), errno)
