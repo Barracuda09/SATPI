@@ -1,11 +1,9 @@
 # SatPI
 
 SATIP server for linux, suitable for running on an Raspberry Pi, BeagleBone or any other linux box.
-Currently supporting DVB-S/S2/T/C
+Currently supporting DVB-S, DVB-S2, DVB-T and DVB-C.
 
-Initial working version, but a work in progress.
-
-- SatPI provides an web interface for monitoring various things (http port 8875)
+- SatPI provides an web interface for monitoring and configuring various things (http port 8875)
 	- http://ip.of.your.box:8875
 
 - The Description xml can be found like:
@@ -14,10 +12,10 @@ Initial working version, but a work in progress.
 Help
 -------
 Help in any way is appreciated, just send me an email with anythink you can
-contribute to the project.
+contribute to the project, like:
 - coding
 - web design
-- ideas
+- ideas / feature requests
 - test reports
 - spread the word!
 
@@ -32,7 +30,7 @@ Tested Programs
 - Tvheadend: this is a TV streaming server see: https://tvheadend.org/
 - DVBviewer Lite Edition. see http://www.satip.info/products
 - Elgato Sat>IP App for Android
-- VDR (in testing)
+- VDR
 
 Tested Hardware
 ---------------
