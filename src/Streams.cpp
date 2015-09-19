@@ -309,9 +309,14 @@ std::string Streams::attribute_describe_string(unsigned int stream, bool &active
 	return _stream[stream]->attribute_describe_string(active);
 }
 
-void Streams::fromXML(const std::string &className, const std::string &streamID,
-                          const std::string &variableName, const std::string &value) {
-	_stream[atoi(streamID.c_str())]->fromXML(className, streamID, variableName, value);
+void Streams::fromXML(const std::string &xml) {
+	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
+		std::string find;
+		std::string element;
+		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
+		findXMLElement(xml, find, element);
+		_stream[i]->fromXML(element);
+	}
 }
 
 void Streams::addToXML(std::string &xml) const {
@@ -319,9 +324,9 @@ void Streams::addToXML(std::string &xml) const {
 	// application data
 	xml += "<streams>";
 	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
-		StringConverter::addFormattedString(xml, "<stream>");
+		StringConverter::addFormattedString(xml, "<stream%zu>", i);
 		_stream[i]->addToXML(xml);
-		StringConverter::addFormattedString(xml, "</stream>");
+		StringConverter::addFormattedString(xml, "</stream%zu>", i);
 	}
 	xml += "</streams>";
 }

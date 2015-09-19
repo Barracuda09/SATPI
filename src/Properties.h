@@ -20,16 +20,24 @@
 #ifndef PROPERTIES_H_INCLUDE
 #define PROPERTIES_H_INCLUDE
 
+#include "XMLSupport.h"
+
 #include <string>
 
 /// The class @c Properties carries all the available/open Properties
-class Properties  {
+class Properties : public XMLSupport  {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
 		Properties(const std::string &uuid, const std::string &delsysString, const std::string &startPath);
 		virtual ~Properties();
+
+		/// Add data to an XML for storing or web interface
+		virtual void addToXML(std::string &xml) const;
+
+		/// Get data from an XML for restoring or web interface
+		virtual void fromXML(const std::string &xml);
 
 		///
 		const std::string &getSoftwareVersion() const { return _versionString; }
@@ -54,7 +62,7 @@ class Properties  {
 		/// Get and Set SSDP Announce Time
 		void         setSsdpAnnounceTimeSec(unsigned int sec) { _ssdpAnnounceTimeSec = sec; }
 		unsigned int getSsdpAnnounceTimeSec() const           { return _ssdpAnnounceTimeSec; }
-		
+
 		/// Get application start time
 		time_t       getApplicationStartTime() const { return _appStartTime; }
 	protected:

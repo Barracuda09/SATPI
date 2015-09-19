@@ -25,6 +25,7 @@
 #include "SocketClient.h"
 #include "StringConverter.h"
 #include "Configure.h"
+#include "XMLSupport.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,26 +119,15 @@ int read_file(const char *file, std::string &data) {
 
 bool HttpServer::postMethod(const SocketClient &client) {
 	std::string content;
-	if (StringConverter::getContentTypeFrom(client.getMessage().c_str(), content)) {
-		std::string::size_type found = content.find_first_of("=");
-		if (found != std::string::npos) {
-			std::string id = content.substr(0, found);
-			std::string value = content.substr(found + 1);
-			if (id.compare(SSDP_INTERVAL_VAR) == 0) {
-				_properties.setSsdpAnnounceTimeSec( atoi(value.c_str()) );
-				SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _properties.getSsdpAnnounceTimeSec());
-			} else {
-				std::string::size_type begin = 0;
-				std::string::size_type end = 0;
-				end = id.find_first_of(",", begin);
-				std::string className = id.substr(begin, end - begin);
-				begin = end + 1;
-				end = id.find_first_of(",", begin);
-				std::string streamID = id.substr(begin, end - begin);
-				begin = end + 1;
-				end = id.find_first_of(",", begin);
-				std::string variableName = id.substr(begin, end - begin);
-				_streams.fromXML(className.c_str(), streamID.c_str(), variableName.c_str(), value.c_str());
+	if (StringConverter::getContentTypeFrom(client.getMessage(), content)) {
+		std::string file;
+		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
+			if (file.compare("/data.xml") == 0) {
+
+			} else if (file.compare("/streams.xml") == 0) {
+				_streams.fromXML(content);
+			} else if (file.compare("/config.xml") == 0) {
+				_properties.fromXML(content);
 			}
 		}
 	}
@@ -259,14 +249,7 @@ void HttpServer::make_config_xml(std::string &xml) {
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
 
-	// application data
-	xml += "<configdata>\r\n";
-	StringConverter::addFormattedString(xml, "<input1><id>"SSDP_INTERVAL_VAR"</id><inputtype>number</inputtype><value>%d</value></input1>", _properties.getSsdpAnnounceTimeSec());
-
-	ADD_CONFIG_IP(xml, "CLASS_OSCam", 0, "OSCamIP", "127.0.0.1");
-	ADD_CONFIG_NUMBER(xml, "CLASS_OSCam", 0, "OSCamPORT", 15011, 0, 65535);
-
-	xml += "</configdata>\r\n";
+	_properties.addToXML(xml);
 
 	xml += "</data>\r\n";
 }

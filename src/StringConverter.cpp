@@ -1,6 +1,6 @@
 /* StringConverter.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -67,7 +67,8 @@ bool StringConverter::isRootFile(const std::string &msg) {
 
 bool StringConverter::getRequestedFile(const std::string &msg, std::string &file) {
 	std::string param;
-	if (StringConverter::getHeaderFieldParameter(msg, "GET", param)) {
+	if (StringConverter::getHeaderFieldParameter(msg, "GET", param) || 
+	    StringConverter::getHeaderFieldParameter(msg, "POST", param)) {
 		std::string::size_type begin = param.find_first_of("/");
 		std::string::size_type end = param.find_first_of(" ", begin);
 		file = param.substr(begin, end - begin);

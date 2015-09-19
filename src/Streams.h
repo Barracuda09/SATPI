@@ -22,6 +22,8 @@
 
 #include "StreamClient.h"
 #include "dvbfix.h"
+#include "XMLSupport.h"
+
 #ifdef LIBDVBCSA
 	#include "DvbapiClient.h"
 #endif
@@ -33,7 +35,7 @@ class SocketClient;
 class Stream;
 
 /// The class @c Streams carries all the available/open streams
-class Streams
+class Streams : public XMLSupport
 #ifdef LIBDVBCSA
 		: public DvbapiClient
 #endif
@@ -74,11 +76,10 @@ class Streams
 		std::string attribute_describe_string(unsigned int stream, bool &active) const;
 
 		/// Add streams data to an XML for storing or web interface
-		void addToXML(std::string &xml) const;
+		virtual void addToXML(std::string &xml) const;
 
 		/// Get streams data from an XML for restoring or web interface
-		void fromXML(const std::string &className, const std::string &streamID,
-		             const std::string &variableName, const std::string &value);
+		virtual void fromXML(const std::string &xml);
 	protected:
 		///
 		virtual void setECMPID(int streamID, int pid, bool set);

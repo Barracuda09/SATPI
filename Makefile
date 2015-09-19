@@ -45,7 +45,8 @@ SOURCES = Version.cpp \
 	RtspServer.cpp \
 	SsdpServer.cpp \
 	RtpThread.cpp \
-	RtcpThread.cpp
+	RtcpThread.cpp \
+	XMLSupport.cpp
 
 # Add dvbcsa ?
 ifeq ($(LIBDVBCSA),yes)

@@ -14,12 +14,14 @@
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <script>
+	var filename = "config.xml";
 	var autoload = 1;
+	var xmlLoaded;
 
-	function validateIPaddress(element) {
+	function validateIPaddress(value) {
 		// Regular Expression Pattern
 		var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-		if (element.value.match(ipformat)) {
+		if (value.match(ipformat)) {
 			return true;
 		} else {
 			alert("You have entered an invalid IP address!");
@@ -27,90 +29,100 @@
 		}
 	}
 
- 	function myOnkeyPressPost(id, element, event) {
+	function myOnkeyPressPost(id, tagName, value, event) {
 		var key = event.which;
 		if (key == 13) {
-			if (validateIPaddress(element) == true) {
-				postData(id, element.value);
+			if (validateIPaddress(value) == true) {
+				changeXMLAndPost(id, tagName, value);
 			}
 		}
 	}
 
-	function addCheckboxInput(labelstring, input) {
+	function changeXMLAndPost(id, tagName, value) {
+		var input = xmlLoaded.getElementsByTagName(tagName)[0];
+		input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
+		var xmlString = (new XMLSerializer()).serializeToString(xmlLoaded);
+		postData(filename, xmlString);
+	}
+
+	function addCheckboxInput(labelstring, tagName, input) {
+		var id = tagName;
 		var entry = "<div class=\"checkbox\">";
-		entry += "<label for=\"";
-		entry += input.getElementsByTagName("id")[0].childNodes[0].nodeValue;
-		entry += "\">" + labelstring + "</label>";
+		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
 		entry += "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
 		if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
 			entry += "checked=\"true\"";
 		}
-		entry += "name=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
-		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
-		entry += "onclick=\"postData(id, document.getElementById(id).checked)\"";
+		entry += "name=\"" + tagName + "\"";
+		entry += "id=\"" + id + "\"";
+		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
 		entry += "/>";
 		entry += "</div>";
 		return entry;
 	}
 
-	function addNumberInput(labelstring, input) {
+	function addNumberInput(labelstring, tagName, input) {
+		var id = tagName;
 		var entry = "<div class=\"form-group\">";
-		entry += "<label for=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\">" + labelstring + "</label>";
+		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
 		entry += "<input class=\"form-control\" type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
 		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
 		entry += "\" min=\"5\"";
-		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
+		entry += "name=\"" + tagName + "\"";
+		entry += "id=\"" + id + "\"";
 		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
-		entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
-		entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id), event)\"";
+		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
+		entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
 		entry += "/>";
 		entry += "</div>";
 		return entry;
 	}
 
-	function addIPInput(labelstring, input) {
+	function addIPInput(labelstring, tagName, input) {
+		var id = tagName;
 		var entry = "<div class=\"form-group\">";
-		entry += "<label for=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\">" + labelstring + "</label>";
+		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
 		entry += "<input class=\"form-control\" type='text'";
 		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-		entry += "id=\"" + input.getElementsByTagName("id")[0].childNodes[0].nodeValue + "\"";
-	
+		entry += "name=\"" + tagName + "\"";
+		entry += "id=\"" + id + "\"";
 		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 		entry += "onmousedown=\"document.getElementById(id).focus()\"";
-//		entry += "onclick=\"postData(id, document.getElementById(id).value)\"";
-		entry += "onkeypress=\"myOnkeyPressPost(id, document.getElementById(id), event)\"";
+		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
+		entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
 		entry += "/>";
-				
 		entry += "</div>";
 		return entry;
 	}
-	
-	function addInput(labelstring, input) {
+
+	function addInput(labelstring, xmlDoc, tagName) {
+		var input = xmlDoc.getElementsByTagName(tagName)[0];
 		if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
 			return addCheckboxInput(labelstring, input);
 		} else if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "ip") {
-			return addIPInput(labelstring, input);
+			return addIPInput(labelstring, tagName, input);
 		} else {
-			return addNumberInput(labelstring, input);
+			return addNumberInput(labelstring, tagName, input);
 		}
 	}
 
 	function buildcontent(xmlDoc) {
 		var page = "<div class=\"container\">";
 		page += "<form role=\"form\">";
-		page += addInput("SSDP Interval (sec):", xmlDoc.getElementsByTagName("input1")[0]);
-		page += addInput("OSCam server IP:", xmlDoc.getElementsByTagName("OSCamIP")[0]);
-		page += addInput("OSCam server PORT:", xmlDoc.getElementsByTagName("OSCamPORT")[0]);
+		page += addInput("SSDP Interval (sec):", xmlDoc, "input1");
+		page += addInput("OSCam server IP:", xmlDoc, "OSCamIP");
+		page += addInput("OSCam server PORT:", xmlDoc, "OSCamPORT");
 		page += "</form>";
 		page += "</div>";
 		return page;
 	}
 	function updatePage() {
-		loadXMLDoc("config.xml");
+		loadXMLDoc(filename);
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
 		if (autoload == 1) {
+			xmlLoaded = xml;
 			document.getElementById("content").innerHTML = buildcontent(xml);
 		}
 	}

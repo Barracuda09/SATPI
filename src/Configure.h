@@ -22,28 +22,21 @@
 
 #include "StringConverter.h"
 
-// Class names
-#define CLASS_STREAMPROPERTIES   "StreamProperties"
-
-// Variable names
-#define VARI_DVR_BUFFER          "dvrbuffer"
-#define VARI_DISEQC_REPEAT       "diseqc_repeat"
-#define VARI_RTCP_SIGNAL_UPDATE  "rtcpSignalUpdate"
 
 #define SSDP_INTERVAL_VAR  "ssdp_interval"
 #define SYSLOG_ON_VAR      "syslog_on"
 #define RESET_FRONTEND     "reset_fe"
 
-#define ADD_CONFIG_CHECKBOX(xml, clName, streamID, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>checkbox</inputtype><id>%s,%d,%s</id><value>%s</value></%s>", varName, clName, streamID, varName, value, varName);
+#define ADD_CONFIG_CHECKBOX(xml, varName, value) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>checkbox</inputtype><value>%s</value></%s>", varName, value, varName);
 
-#define ADD_CONFIG_NUMBER(xml, clName, streamID, varName, value, minValue, maxValue) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>number</inputtype><id>%s,%d,%s</id><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></%s>", varName, clName, streamID, varName, value, minValue, maxValue, varName);
+#define ADD_CONFIG_NUMBER(xml, varName, value, minValue, maxValue) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></%s>", varName, value, minValue, maxValue, varName);
 
-#define ADD_CONFIG_TEXT(xml, clName, streamID, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>text</inputtype><id>%s,%d,%s</id><value>%s</value></%s>", varName, clName, streamID, varName, value, varName);
+#define ADD_CONFIG_TEXT(xml, varName, value) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>text</inputtype><value>%s</value></%s>", varName, value, varName);
 
-#define ADD_CONFIG_IP(xml, clName, streamID, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>ip</inputtype><id>%s,%d,%s</id><value>%s</value></%s>", varName, clName, streamID, varName, value, varName);
+#define ADD_CONFIG_IP(xml, varName, value) \
+	StringConverter::addFormattedString(xml, "<%s><inputtype>ip</inputtype><value>%s</value></%s>", varName, value, varName);
 
 #endif // CONFIGURE_H_INCLUDE

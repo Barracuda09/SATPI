@@ -1,4 +1,4 @@
-function postData(id, data) {
+function postData(filename, data) {
 	//refresh_time = 2000;
 	if (window.XMLHttpRequest) {
 		xmlhttp_post = new XMLHttpRequest();
@@ -18,7 +18,7 @@ function postData(id, data) {
 	}
 
 	// specify our action, location and send to the server
-	xmlhttp_post.open("POST", "");
-	xmlhttp_post.setRequestHeader("Content-Type", "text/plain");
-	xmlhttp_post.send(id + "=" + data);
+	xmlhttp_post.open("POST", filename);
+	xmlhttp_post.setRequestHeader("Content-Type", "text/xml");
+	xmlhttp_post.send(data);
 }

@@ -92,19 +92,18 @@ unsigned int StreamProperties::getRtcpSignalUpdateFrequency() const {
 	return _rtcpSignalUpdate;
 }
 
-void StreamProperties::fromXML(const std::string className, const std::string streamID,
-                               const std::string variableName, const std::string value) {
+void StreamProperties::fromXML(const std::string &xml) {
 	MutexLock lock(_mutex);
-	if (atoi(streamID.c_str()) == _streamID) {
-		if (className == CLASS_STREAMPROPERTIES) {
-			if (variableName == VARI_DVR_BUFFER) {
-				_dvrBufferSize = atoi(value.c_str());
-			} else if (variableName == VARI_DISEQC_REPEAT) {
-				_diseqcRepeat = (value == "true") ? true : false;
-			} else if (variableName == VARI_RTCP_SIGNAL_UPDATE) {
-				_rtcpSignalUpdate = atoi(value.c_str());
-			}
-		}
+	
+	std::string element;
+	if (findXMLElement(xml, "diseqc_repeat.value", element)) {
+		_diseqcRepeat = (element == "true") ? true : false;
+	}
+	if (findXMLElement(xml, "dvrbuffer.value", element)) {
+		_dvrBufferSize = atoi(element.c_str());
+	}
+	if (findXMLElement(xml, "rtcpSignalUpdate.value", element)) {
+		_rtcpSignalUpdate = atoi(element.c_str());
 	}
 }
 
@@ -133,9 +132,9 @@ void StreamProperties::addToXML(std::string &xml) const {
 	StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
 
 	//
-	ADD_CONFIG_CHECKBOX(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_DISEQC_REPEAT, (_diseqcRepeat ? "true" : "false"));
-	ADD_CONFIG_NUMBER(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_DVR_BUFFER, _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
-	ADD_CONFIG_NUMBER(xml, CLASS_STREAMPROPERTIES, _streamID, VARI_RTCP_SIGNAL_UPDATE, _rtcpSignalUpdate, 0, 5);
+	ADD_CONFIG_CHECKBOX(xml, "diseqc_repeat", (_diseqcRepeat ? "true" : "false"));
+	ADD_CONFIG_NUMBER(xml, "dvrbuffer", _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
+	ADD_CONFIG_NUMBER(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 }
 
 std::string StreamProperties::attribute_describe_string(bool &active) const {

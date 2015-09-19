@@ -94,8 +94,7 @@ class Stream  {
 		void addToXML(std::string &xml) const;
 		
 		/// Get stream data from an XML for restoring or web interface
-		void fromXML(const std::string className, const std::string streamID,
-		             const std::string variableName, const std::string value);
+		void fromXML(const std::string &xml);
 
 		/// Set externally an ECM (or just any other pid)
 		void setECMPID(int pid, bool set);

@@ -176,9 +176,8 @@ void Stream::addToXML(std::string &xml) const {
 	_properties.addToXML(xml);
 }
 
-void Stream::fromXML(const std::string className, const std::string streamID,
-                     const std::string variableName, const std::string value) {
-	_properties.fromXML(className.c_str(), streamID.c_str(), variableName.c_str(), value.c_str());
+void Stream::fromXML(const std::string &xml) {
+	_properties.fromXML(xml);
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {

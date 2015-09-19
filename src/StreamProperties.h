@@ -22,11 +22,12 @@
 
 #include "ChannelData.h"
 #include "Mutex.h"
+#include "XMLSupport.h"
 
 #include <string>
 
 /// The class @c StreamProperties carries all the available/open StreamProperties
-class StreamProperties  {
+class StreamProperties : public XMLSupport {
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -46,11 +47,10 @@ class StreamProperties  {
 		fe_status_t getFrontendStatus() const;
 
 		/// Add data to an XML for storing or web interface
-		void addToXML(std::string &xml) const;
+		virtual void addToXML(std::string &xml) const;
 
 		/// Get data from an XML for restoring or web interface
-		void fromXML(const std::string className, const std::string streamID,
-		             const std::string variableName, const std::string value);
+		virtual void fromXML(const std::string &xml);
 
 		/// Get the stream Description for RTCP and DESCRIBE command
 		std::string attribute_describe_string(bool &active) const;
