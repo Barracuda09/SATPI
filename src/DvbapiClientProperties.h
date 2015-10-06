@@ -45,6 +45,7 @@ class DvbapiClientProperties {
 				_pidTable[i].filter = -1;
 				_pidTable[i].parity = -1;
 			}
+			_batchSize = dvbcsa_bs_batch_size();
 		}
 		virtual ~DvbapiClientProperties() {
 			freeKeys();
@@ -60,20 +61,25 @@ class DvbapiClientProperties {
 		} PidTable_t;
 
 		///
+		int getBatchSize() const {
+			return _batchSize;
+		}
+
+		///
 		void freeKeys() {
-			dvbcsa_key_free(_key[0]);
-			dvbcsa_key_free(_key[1]);
+			dvbcsa_bs_key_free(_key[0]);
+			dvbcsa_bs_key_free(_key[1]);
 			_key[0] = NULL;
 			_key[1] = NULL;
 		}
 
 		///
 		void setKey(const unsigned char *cw, int parity, int /*index*/) {
-			dvbcsa_key_set(cw, _key[parity]);
+			dvbcsa_bs_key_set(cw, _key[parity]);
 		}
 
 		///
-		dvbcsa_key_s *getKey(int parity) const {
+		dvbcsa_bs_key_s *getKey(int parity) const {
 			return _key[parity];
 		}
 
@@ -90,10 +96,10 @@ class DvbapiClientProperties {
 		///
 		void setECMFilterData(int demux, int filter, int pid, bool set) {
 			if(!_key[0]) {
-				_key[0] = dvbcsa_key_alloc();
+				_key[0] = dvbcsa_bs_key_alloc();
 			}
 			if(!_key[1]) {
-				_key[1] = dvbcsa_key_alloc();
+				_key[1] = dvbcsa_bs_key_alloc();
 			}
 			_pidTable[pid].ecm    = set;
 			_pidTable[pid].demux  = demux;
@@ -131,7 +137,7 @@ class DvbapiClientProperties {
 					return "Unknown Table";
 			}
 		}
-		
+
 		/// Collect Table data for tableID
 		void collectTableData(int streamID, int tableID, const unsigned char *data) {
 			const unsigned char options = (data[1] & 0xE0);
@@ -232,9 +238,10 @@ class DvbapiClientProperties {
 					return false;
 			}
 		}
-		
+
 	private:
-		struct dvbcsa_key_s *_key[2];
+		struct dvbcsa_bs_key_s *_key[2];
+		int _batchSize;
 		PidTable_t _pidTable[MAX_PIDS];
 		int _parity;
 

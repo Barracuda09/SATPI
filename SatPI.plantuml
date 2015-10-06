@@ -1,0 +1,57 @@
+@startuml
+
+hide footbox
+
+title SatPI
+
+SatPI --* DvbapiClient
+SatPI --* Streams
+SatPI --* RtspServer
+SatPI --* HttpServer
+SatPI --* SsdpServer
+SatPI --* InterfaceAttr
+
+note top of InterfaceAttr : Eth0 etc.
+
+Stream --* StreamClient : " _client[..] "
+Stream --* StreamProperties
+Stream --* Frontend
+Stream --* RtpThread
+Stream --* RtcpThread
+
+Streams --* Stream : " _stream[..] "
+
+StreamClient --* SocketAttr : " _rtp "
+StreamClient --* SocketAttr : " _rtcp "
+
+SocketClient --|> SocketAttr
+
+StreamProperties --* ChannelData
+
+DvbapiClient --* DvbapiClientProperties : " _properties"
+
+DvbapiClientProperties --* PidTable_t
+DvbapiClientProperties --* dvbcsa_key_s
+DvbapiClientProperties --* TSTableData : " _pat "
+DvbapiClientProperties --* TSTableData : " _pmt "
+
+Frontend --* Lnb_t
+Frontend --* DiSEqc_t
+
+ChannelData --* Pid_t
+
+RtpThread --|> ThreadBase
+RtpThread ..* StreamProperties
+RtpThread ..* StreamClient : " _client[..] "
+RtpThread ..* DvbapiClient
+
+RtspServer ..* Streams : " _streams "
+
+RtcpThread ..* StreamProperties
+RtcpThread ..* StreamClient : " _client[..] "
+
+HttpServer ..* Streams
+HttpServer ..* Properties
+HttpServer ..* InterfaceAttr
+
+@enduml

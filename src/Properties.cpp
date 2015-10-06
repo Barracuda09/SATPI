@@ -1,6 +1,6 @@
 /* Properties.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -44,24 +44,14 @@ Properties::Properties(const std::string &uuid, const std::string &delsysString,
 Properties::~Properties() {;}
 
 void Properties::fromXML(const std::string &xml) {
-	
+
 	std::string element;
 	if (findXMLElement(xml, "data.configdata.input1.value", element)) {
 		_ssdpAnnounceTimeSec = atoi(element.c_str());
 		SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _ssdpAnnounceTimeSec);
 	}
-	if (findXMLElement(xml, "data.configdata.input1.value", element)) {
-	}
 }
 
 void Properties::addToXML(std::string &xml) const {
-	// application data
-	xml += "<configdata>\r\n";
-
 	ADD_CONFIG_NUMBER(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
-	
-	ADD_CONFIG_IP(xml, "OSCamIP", "127.0.0.1");
-	ADD_CONFIG_NUMBER(xml, "OSCamPORT", 15011, 0, 65535);
-
-	xml += "</configdata>\r\n";
 }

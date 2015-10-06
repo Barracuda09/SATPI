@@ -1,6 +1,6 @@
 /* Stream.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@ class Stream  {
 		virtual ~Stream();
 
 		/// Get the streamID of this stream
-		int  getStreamID() const       { return _properties.getStreamID(); }
+		int  getStreamID() const { return _properties.getStreamID(); }
 
 		/// Get the describe string for this stream
 		std::string attribute_describe_string(bool &active) const { return _properties.attribute_describe_string(active); }

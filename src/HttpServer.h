@@ -1,6 +1,6 @@
 /* HttpServer.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@
 class InterfaceAttr;
 class Properties;
 class Streams;
+class DvbapiClient;
 
 /// HTTP Server serves the XML and other related web pages
 class HttpServer :
@@ -38,7 +39,9 @@ class HttpServer :
 		// =======================================================================
 		HttpServer(const InterfaceAttr &interface,
 		           Streams &streams,
-		           Properties &properties);
+		           Properties &properties,
+		           DvbapiClient *dvbapi);
+
 		virtual ~HttpServer();
 
 	protected:
@@ -50,7 +53,7 @@ class HttpServer :
 
 		/// Method for getting the required files
 		bool postMethod(const SocketClient &client);
-		
+
 		/// Process the @c SocketClient when there is data received
 		virtual bool process(SocketClient &client);
 
@@ -74,6 +77,7 @@ class HttpServer :
 		const InterfaceAttr &_interface;
 		Streams             &_streams;
 		Properties          &_properties;
+		DvbapiClient        *_dvbapi;
 
 }; // class HttpServer
 

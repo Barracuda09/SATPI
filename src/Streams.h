@@ -1,6 +1,6 @@
 /* Streams.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -24,22 +24,17 @@
 #include "dvbfix.h"
 #include "XMLSupport.h"
 
-#ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
-#endif
-
 #include <string>
 
 // Forward declarations
+class DvbapiClient;
 class SocketClient;
 class Stream;
 
 /// The class @c Streams carries all the available/open streams
-class Streams : public XMLSupport
-#ifdef LIBDVBCSA
-		: public DvbapiClient
-#endif
-		{
+class Streams :
+		public XMLSupport {
+
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -49,7 +44,7 @@ class Streams : public XMLSupport
 
 		/// enumerate all available frontends
 		/// @param path
-		int enumerateFrontends(const std::string &path);
+		int enumerateFrontends(const std::string &path, DvbapiClient *dvbapi);
 
 		///
 		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -80,9 +75,11 @@ class Streams : public XMLSupport
 
 		/// Get streams data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml);
-	protected:
+
 		///
-		virtual void setECMPID(int streamID, int pid, bool set);
+		void setECMPIDCallback(int streamID, int pid, bool set);
+
+	protected:
 
 	private:
 		///

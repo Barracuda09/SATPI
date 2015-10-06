@@ -47,15 +47,15 @@
 
 	function addCheckboxInput(labelstring, tagName, input) {
 		var id = tagName;
-		var entry = "<div class=\"checkbox\">";
+		var entry = "<div class=\"form-group\">";
 		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
-		entry += "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
+		entry += "<input class=\"form-control\" type='checkbox'";
 		if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
 			entry += "checked=\"true\"";
 		}
 		entry += "name=\"" + tagName + "\"";
 		entry += "id=\"" + id + "\"";
-		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
+		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).checked)\"";
 		entry += "/>";
 		entry += "</div>";
 		return entry;
@@ -96,13 +96,18 @@
 	}
 
 	function addInput(labelstring, xmlDoc, tagName) {
-		var input = xmlDoc.getElementsByTagName(tagName)[0];
-		if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
-			return addCheckboxInput(labelstring, input);
-		} else if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "ip") {
-			return addIPInput(labelstring, tagName, input);
+		var check = xmlDoc.getElementsByTagName(tagName);
+		if (check.length != 0) {
+			var input = xmlDoc.getElementsByTagName(tagName)[0];
+			if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
+				return addCheckboxInput(labelstring, tagName, input);
+			} else if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "ip") {
+				return addIPInput(labelstring, tagName, input);
+			} else {
+				return addNumberInput(labelstring, tagName, input);
+			}
 		} else {
-			return addNumberInput(labelstring, tagName, input);
+			return "";
 		}
 	}
 
@@ -110,6 +115,7 @@
 		var page = "<div class=\"container\">";
 		page += "<form role=\"form\">";
 		page += addInput("SSDP Interval (sec):", xmlDoc, "input1");
+		page += addInput("OSCam server Enabled:", xmlDoc, "OSCamEnabled");
 		page += addInput("OSCam server IP:", xmlDoc, "OSCamIP");
 		page += addInput("OSCam server PORT:", xmlDoc, "OSCamPORT");
 		page += "</form>";

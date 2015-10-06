@@ -1,6 +1,6 @@
 /* HttpServer.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -26,6 +26,10 @@
 #include "StringConverter.h"
 #include "Configure.h"
 #include "XMLSupport.h"
+
+#ifdef LIBDVBCSA
+	#include "DvbapiClient.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,12 +60,14 @@
 
 HttpServer::HttpServer(const InterfaceAttr &interface,
                        Streams &streams,
-                       Properties &properties) :
+                       Properties &properties,
+                       DvbapiClient *dvbapi) :
 		ThreadBase("HttpServer"),
 		TcpSocket(20, HTTP_PORT, true),
 		_interface(interface),
 		_streams(streams),
-		_properties(properties) {
+		_properties(properties),
+		_dvbapi(dvbapi) {
 	startThread();
 }
 
@@ -128,6 +134,9 @@ bool HttpServer::postMethod(const SocketClient &client) {
 				_streams.fromXML(content);
 			} else if (file.compare("/config.xml") == 0) {
 				_properties.fromXML(content);
+#ifdef LIBDVBCSA
+				_dvbapi->fromXML(content);
+#endif
 			}
 		}
 	}
@@ -249,7 +258,14 @@ void HttpServer::make_config_xml(std::string &xml) {
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
 
+	// application data
+	xml += "<configdata>\r\n";
+
 	_properties.addToXML(xml);
+#ifdef LIBDVBCSA
+	_dvbapi->addToXML(xml);
+#endif
+	xml += "</configdata>\r\n";
 
 	xml += "</data>\r\n";
 }

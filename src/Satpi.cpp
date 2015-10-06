@@ -26,6 +26,9 @@
 #include "Properties.h"
 #include "Log.h"
 #include "StringConverter.h"
+#ifdef LIBDVBCSA
+	#include "DvbapiClient.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -248,13 +251,19 @@ int main(int argc, char *argv[]) {
 
 	InterfaceAttr interface;
 	Streams streams;
-	streams.enumerateFrontends("/dev/dvb");
-
+#ifdef LIBDVBCSA
+	Functor3<int, int, bool> setECMPIDCallback = makeFunctor((Functor3<int, int, bool>*)0, streams, &Streams::setECMPIDCallback);
+	DvbapiClient dvbapi(setECMPIDCallback);
+	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
+	HttpServer httpserver(interface, streams, properties, &dvbapi);
+#else
+	streams.enumerateFrontends("/dev/dvb", NULL);
+	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
+	HttpServer httpserver(interface, streams, properties, NULL);
+#endif
 
 	RtspServer server(streams, interface.getIPAddress());
-
-	HttpServer httpserver(interface, streams, properties);
 
 	SsdpServer ssdpserver(interface, properties);
 	if (ssdp) {

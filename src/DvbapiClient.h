@@ -24,18 +24,19 @@
 #include "SocketClient.h"
 #include "Mutex.h"
 #include "DvbapiClientProperties.h"
+#include "XMLSupport.h"
+#include "Functor3.h"
 
-// forward declaration
-class StreamProperties;
+#include <string>
 
 /// The class @c DvbapiClient is for decrypting streams
-class DvbapiClient :
-		public ThreadBase {
+class DvbapiClient : public ThreadBase,
+                     public XMLSupport {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClient();
+		DvbapiClient(const Functor3<int, int, bool> &setECMPIDCallback);
 		virtual ~DvbapiClient();
 
 		///
@@ -47,12 +48,14 @@ class DvbapiClient :
 		///
 		bool clearDecrypt(int streamID);
 
+		/// Add data to an XML for storing or web interface
+		virtual void addToXML(std::string &xml) const;
+
+		/// Get data from an XML for restoring or web interface
+		virtual void fromXML(const std::string &xml);
 	protected:
 		/// Thread function
 		virtual void threadEntry();
-
-		///
-		virtual void setECMPID(int streamID, int pid, bool set) = 0;
 
 	private:
 
@@ -79,11 +82,15 @@ class DvbapiClient :
 		// =======================================================================
 		Mutex _mutex;
 		bool  _connected;
+		bool _enabled;
 		SocketClient _client;
-		std::string _server_ip_addr;
+		std::string _serverIpAddr;
+		int _serverPort;
 
 		/// @todo alloc this dynamic
 		DvbapiClientProperties _properties[5];
+
+		Functor3<int, int, bool> _setECMPIDCallback;
 
 }; // class DvbapiClient
 

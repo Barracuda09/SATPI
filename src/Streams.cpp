@@ -1,6 +1,6 @@
 /* Streams.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,6 +27,10 @@
 #include "StringConverter.h"
 #include "Configure.h"
 
+#ifdef LIBDVBCSA
+	#include "DvbapiClient.h"
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,8 +47,8 @@
 
 Streams::Streams() :
 		_stream(NULL),
-		_maxStreams(0) {
-	_dummyStream = new Stream(0, NULL);
+		_maxStreams(0),
+		_dummyStream(NULL) {
 }
 
 Streams::~Streams() {
@@ -115,7 +119,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 	return count;
 }
 
-int Streams::enumerateFrontends(const std::string &path) {
+int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
@@ -130,15 +134,12 @@ int Streams::enumerateFrontends(const std::string &path) {
 #if FULL_DVB_API_VERSION >= 0x0505
 	_nr_dvb_c2 = 0;
 #endif
+	_dummyStream = new Stream(0, dvbapi);
 	_maxStreams = getAttachedFrontendCount(path, 0);
 	_stream = new Stream *[_maxStreams+1];
 	if (_stream) {
 		for (int i = 0; i < _maxStreams; ++i) {
-#ifdef LIBDVBCSA
-			_stream[i] = new Stream(i, this);
-#else
-			_stream[i] = new Stream(i, NULL);
-#endif
+			_stream[i] = new Stream(i, dvbapi);
 		}
 	} else {
 		_maxStreams = 0;
@@ -299,7 +300,7 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Streams::setECMPID(int streamID, int pid, bool set) {
+void Streams::setECMPIDCallback(int streamID, int pid, bool set) {
 	SI_LOG_INFO("Stream: %d, %s ECM PID: %d", streamID, set ? "Set" : "Clear", pid);
 	_stream[streamID]->setECMPID(pid, set);
 }
