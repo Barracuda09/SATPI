@@ -71,9 +71,17 @@ If you need to clean the project (because there was something wrong), use:
 
     make clean
 
+If you like to try DVBAPI (but be aware it still buggy), use:
+
+    make debug LIBDVBCSA=yes
+
 If you like to build the documentation, use:
 
     make docu   (!! you need Doxygen and Graphviz/dot !!)
+
+If you like to build the UML documentation, use:
+
+    make plantuml   (!! you need PlantUML !!)
 
 Usage
 -----
