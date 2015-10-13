@@ -96,8 +96,11 @@ class Stream  {
 		/// Get stream data from an XML for restoring or web interface
 		void fromXML(const std::string &xml);
 
-		/// Set externally an ECM (or just any other pid)
-		void setECMPID(int pid, bool set);
+		///
+		StreamProperties & getStreamProperties() { return _properties; }
+		
+		///
+		void updateFrontend();
 
 		// =======================================================================
 		// Functions used for RTSP Server
@@ -114,28 +117,6 @@ class Stream  {
 	protected:
 
 	private:
-		/// Set functions for @c ChannelData
-		void initializeChannelData()                        { _properties.getChannelData().initialize(); }
-		void setFrequency(uint32_t freq)                    { _properties.getChannelData().freq = freq;
-		                                                      _properties.getChannelData().changed = true; }
-		void setSymbolRate(int srate)                       { _properties.getChannelData().srate = srate;	}
-		void setDeliverySystem(fe_delivery_system_t delsys) { _properties.getChannelData().delsys = delsys; }
-		void setModulationType(int modtype)                 { _properties.getChannelData().modtype = modtype; }
-		void setLNBPolarization(int pol)                    { _properties.getChannelData().pol_v = pol; }
-		void setLNBSource(int source)                       { _properties.getChannelData().src = source; 	}
-		void setRollOff(int rolloff)                        { _properties.getChannelData().rolloff = rolloff; }
-		void setFEC(int fec)                                { _properties.getChannelData().fec = fec; }
-		void setPilotTones(int pilot)                       { _properties.getChannelData().pilot = pilot; }
-		void setSpectralInversion(int specinv)              { _properties.getChannelData().inversion = specinv; }
-		void setBandwidthHz(int bandwidth)                  { _properties.getChannelData().bandwidthHz = bandwidth; }
-		void setTransmissionMode(int transmission)          { _properties.getChannelData().transmission = transmission; }
-		void setGuardInverval(int guard)                    { _properties.getChannelData().guard = guard; }
-		void setUniqueIDPlp(int plp)                        { _properties.getChannelData().plp_id = plp; }
-		void setUniqueIDT2(int id)                          { _properties.getChannelData().t2_system_id = id; }
-		void setSISOMISO(int sm)                            { _properties.getChannelData().siso_miso = sm; }
-		void setPID(int pid, bool val)                      { _properties.getChannelData().setPID(pid, val); }
-		bool isPIDUsed(int pid)                             { return _properties.getChannelData().isPIDUsed(pid); }
-		void setAllPID(bool val)                            { _properties.getChannelData().setAllPID(val); }
 
 		///
 		void parseStreamString(const std::string &msg, const std::string &method);

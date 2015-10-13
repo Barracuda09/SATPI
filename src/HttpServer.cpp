@@ -116,7 +116,7 @@ int read_file(const char *file, std::string &data) {
 	if (buf) {
 		file_size = read(fd, buf, size);
 		data.assign(buf, file_size);
-		delete[] buf;
+		DELETE_ARRAY(buf);
 	}
 	CLOSE_FD(fd);
 //	SI_LOG_DEBUG("GET %s (size %d)", file, file_size);
@@ -214,7 +214,7 @@ bool HttpServer::getMethod(const SocketClient &client) {
 						snprintf(doc_desc_xml, docTypeSize+1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
 						                       _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str());
 						docType = doc_desc_xml;
-						delete[] doc_desc_xml;
+						DELETE_ARRAY(doc_desc_xml);
 					}
 					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
 

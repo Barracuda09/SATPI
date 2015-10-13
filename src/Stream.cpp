@@ -22,6 +22,7 @@
 #include "SocketClient.h"
 #include "Configure.h"
 #include "Log.h"
+#include "Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +41,7 @@ Stream::Stream(int streamID, DvbapiClient *dvbapi) :
 }
 
 Stream::~Stream() {
-	delete[] _client;
+	DELETE_ARRAY(_client);
 }
 
 bool Stream::findClientIDFor(SocketClient &socketClient,
@@ -98,17 +99,15 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Stream::setECMPID(int pid, bool set) {
-	const bool isSet = isPIDUsed(pid);
-	setPID(pid, set);
-	if (!isSet) {
+void Stream::updateFrontend() {
+	if (_properties.hasPIDTableChanged()) {
 		_frontend.update(_properties);
 	}
 }
 
 bool Stream::update(int clientID) {
 //	_properties.printChannelInfo();
-	const bool changed = _properties.getChannelData().changed;
+	const bool changed = _properties.hasChannelDataChanged();
 
 	// Channel change.. pause RTP so we can clear RTP buffers
 	if (changed) {
@@ -118,7 +117,7 @@ bool Stream::update(int clientID) {
 	if (!_frontend.update(_properties)) {
 		return false;
 	}
-	
+
 	// Restart RTP again
 	if (changed) {
 		_rtpThread.restartStreaming(_frontend.get_dvr_fd(), clientID);
@@ -152,7 +151,7 @@ bool Stream::teardown(int clientID, bool gracefull) {
 void Stream::processStopStream(int clientID, bool gracefull) {
 	_rtpThread.stopStreaming(clientID);
 	_rtcpThread.stopStreaming(clientID);
-	_frontend.teardown(_properties.getChannelData(), _properties.getStreamID());
+	_frontend.teardown(_properties);
 
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);
@@ -160,7 +159,8 @@ void Stream::processStopStream(int clientID, bool gracefull) {
 	// @TODO Are all other StreamClients stopped??
 	if (clientID == 0) {
 		for (size_t i = 1; i < MAX_CLIENTS; ++i) {
-			_client[i].teardown(false); // Not gracefully teardown other clients
+			// Not gracefully teardown for other clients
+			_client[i].teardown(false);
 		}
 		_properties.setStreamActive(false);
 		_streamInUse = false;
@@ -227,104 +227,103 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
 		// new frequency so initialize ChannelData and 'remove' all used PIDS
-		initializeChannelData();
-		_rtpThread.clearDecrypt();
-		setFrequency(doubleVal * 1000.0);
+		_properties.initializeChannelData();
+		_properties.setFrequency(doubleVal * 1000.0);
 	}
 	// !!!!
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
-		setSymbolRate(intVal * 1000);
+		_properties.setSymbolRate(intVal * 1000);
 	}
 	if ((msys = StringConverter::getMSYSParameter(msg, method)) != SYS_UNDEFINED) {
-		setDeliverySystem(msys);
+		_properties.setDeliverySystem(msys);
 	}
 	if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
 		if (strVal.compare("h") == 0) {
-			setLNBPolarization(POL_H);
+			_properties.setPolarization(POL_H);
 		} else if (strVal.compare("v") == 0) {
-			setLNBPolarization(POL_V);
+			_properties.setPolarization(POL_V);
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "src=")) != -1) {
-		setLNBSource(intVal);
+		_properties.setDiSEqcSource(intVal);
 	}
 	if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
 		// "on", "off"[, "auto"]
 		if (strVal.compare("on") == 0) {
-			setPilotTones(PILOT_ON);
+			_properties.setPilotTones(PILOT_ON);
 		} else if (strVal.compare("off") == 0) {
-			setPilotTones(PILOT_OFF);
+			_properties.setPilotTones(PILOT_OFF);
 		} else if (strVal.compare("auto") == 0) {
-			setPilotTones(PILOT_AUTO);
+			_properties.setPilotTones(PILOT_AUTO);
 		} else {
 			SI_LOG_ERROR("Unknown Pilot Tone [%s]", strVal.c_str());
-			setPilotTones(PILOT_AUTO);
+			_properties.setPilotTones(PILOT_AUTO);
 		}
 	}
 	if (StringConverter::getStringParameter(msg, method, "ro=", strVal) == true) {
 		// "0.35", "0.25", "0.20"[, "auto"]
 		if (strVal.compare("0.35") == 0) {
-			setRollOff(ROLLOFF_35);
+			_properties.setRollOff(ROLLOFF_35);
 		} else if (strVal.compare("0.25") == 0) {
-			setRollOff(ROLLOFF_25);
+			_properties.setRollOff(ROLLOFF_25);
 		} else if (strVal.compare("0.20") == 0) {
-			setRollOff(ROLLOFF_20);
+			_properties.setRollOff(ROLLOFF_20);
 		} else if (strVal.compare("auto") == 0) {
-			setRollOff(ROLLOFF_AUTO);
+			_properties.setRollOff(ROLLOFF_AUTO);
 		} else {
 			SI_LOG_ERROR("Unknown Rolloff [%s]", strVal.c_str());
-			setRollOff(ROLLOFF_AUTO);
+			_properties.setRollOff(ROLLOFF_AUTO);
 		}
 	}
 	if (StringConverter::getStringParameter(msg, method, "fec=", strVal) == true) {
 		const int fec = atoi(strVal.c_str());
 		// "12", "23", "34", "56", "78", "89", "35", "45", "910"
 		if (fec == 12) {
-			setFEC(FEC_1_2);
+			_properties.setFEC(FEC_1_2);
 		} else if (fec == 23) {
-			setFEC(FEC_2_3);
+			_properties.setFEC(FEC_2_3);
 		} else if (fec == 34) {
-			setFEC(FEC_3_4);
+			_properties.setFEC(FEC_3_4);
 		} else if (fec == 35) {
-			setFEC(FEC_3_5);
+			_properties.setFEC(FEC_3_5);
 		} else if (fec == 45) {
-			setFEC(FEC_4_5);
+			_properties.setFEC(FEC_4_5);
 		} else if (fec == 56) {
-			setFEC(FEC_5_6);
+			_properties.setFEC(FEC_5_6);
 		} else if (fec == 67) {
-			setFEC(FEC_6_7);
+			_properties.setFEC(FEC_6_7);
 		} else if (fec == 78) {
-			setFEC(FEC_7_8);
+			_properties.setFEC(FEC_7_8);
 		} else if (fec == 89) {
-			setFEC(FEC_8_9);
+			_properties.setFEC(FEC_8_9);
 		} else if (fec == 910) {
-			setFEC(FEC_9_10);
+			_properties.setFEC(FEC_9_10);
 		} else if (fec == 999) {
-			setFEC(FEC_AUTO);
+			_properties.setFEC(FEC_AUTO);
 		} else {
-			setFEC(FEC_NONE);
+			_properties.setFEC(FEC_NONE);
 		}
 	}
 	if (StringConverter::getStringParameter(msg, method, "mtype=", strVal) == true) {
 		if (strVal.compare("8psk") == 0) {
-			setModulationType(PSK_8);
+			_properties.setModulationType(PSK_8);
 		} else if (strVal.compare("qpsk") == 0) {
-			setModulationType(QPSK);
+			_properties.setModulationType(QPSK);
 		} else if (strVal.compare("16qam") == 0) {
-			setModulationType(QAM_16);
+			_properties.setModulationType(QAM_16);
 		} else if (strVal.compare("64qam") == 0) {
-			setModulationType(QAM_64);
+			_properties.setModulationType(QAM_64);
 		} else if (strVal.compare("256qam") == 0) {
-			setModulationType(QAM_256);
+			_properties.setModulationType(QAM_256);
 		}
 	} else if (msys != SYS_UNDEFINED) {
 		// no 'mtype' set so guess one according to 'msys'
 		switch (msys) {
 			case SYS_DVBS:
-				setModulationType(QPSK);
+				_properties.setModulationType(QPSK);
 				break;
 			case SYS_DVBS2:
-				setModulationType(PSK_8);
+				_properties.setModulationType(PSK_8);
 				break;
 			case SYS_DVBT:
 			case SYS_DVBT2:
@@ -336,7 +335,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 			case SYS_DVBC_ANNEX_AC:
 			case SYS_DVBC_ANNEX_B:
 #endif
-				setModulationType(QAM_AUTO);
+				_properties.setModulationType(QAM_AUTO);
 				break;
 			default:
 				SI_LOG_ERROR("Not supported delivery system");
@@ -344,58 +343,58 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
-		setSpectralInversion(intVal);
+		_properties.setSpectralInversion(intVal);
 	}
 	if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=")) != -1) {
-		setBandwidthHz(doubleVal * 1000000.0);
+		_properties.setBandwidthHz(doubleVal * 1000000.0);
 	}
 	if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
 		// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
 		if (strVal.compare("1k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_1K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_1K);
 		} else if (strVal.compare("2k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_2K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_2K);
 		} else if (strVal.compare("4k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_4K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_4K);
 		} else if (strVal.compare("8k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_8K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_8K);
 		} else if (strVal.compare("16k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_16K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_16K);
 		} else if (strVal.compare("32k") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_32K);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_32K);
 		} else if (strVal.compare("auto") == 0) {
-			setTransmissionMode(TRANSMISSION_MODE_AUTO);
+			_properties.setTransmissionMode(TRANSMISSION_MODE_AUTO);
 		}
 	}
 	if (StringConverter::getStringParameter(msg, method, "gi=", strVal) == true) {
 		// "14", "18", "116", "132","1128", "19128", "19256"
 		const int gi = atoi(strVal.c_str());
 		if (gi == 14) {
-			setGuardInverval(GUARD_INTERVAL_1_4);
+			_properties.setGuardInverval(GUARD_INTERVAL_1_4);
 		} else if (gi == 18) {
-			setGuardInverval(GUARD_INTERVAL_1_8);
+			_properties.setGuardInverval(GUARD_INTERVAL_1_8);
 		} else if (gi == 116) {
-			setGuardInverval(GUARD_INTERVAL_1_16);
+			_properties.setGuardInverval(GUARD_INTERVAL_1_16);
 		} else if (gi == 132) {
-			setGuardInverval(GUARD_INTERVAL_1_32);
+			_properties.setGuardInverval(GUARD_INTERVAL_1_32);
 		} else if (gi == 1128) {
-			setGuardInverval(GUARD_INTERVAL_1_128);
+			_properties.setGuardInverval(GUARD_INTERVAL_1_128);
 		} else if (gi == 19128) {
-			setGuardInverval(GUARD_INTERVAL_19_128);
+			_properties.setGuardInverval(GUARD_INTERVAL_19_128);
 		} else if (gi == 19256) {
-			setGuardInverval(GUARD_INTERVAL_19_256);
+			_properties.setGuardInverval(GUARD_INTERVAL_19_256);
 		} else {
-			setGuardInverval(GUARD_INTERVAL_AUTO);
+			_properties.setGuardInverval(GUARD_INTERVAL_AUTO);
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "plp=")) != -1) {
-		setUniqueIDPlp(intVal);
+		_properties.setUniqueIDPlp(intVal);
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "t2id=")) != -1) {
-		setUniqueIDT2(intVal);
+		_properties.setUniqueIDT2(intVal);
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sm=")) != -1) {
-		setSISOMISO(intVal);
+		_properties.setSISOMISO(intVal);
 	}
 	if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
 		StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
@@ -412,21 +411,21 @@ void Stream::processPID(const std::string &pids, bool add) {
 	if (pids == "all" ) {
 		// All pids requested then 'remove' all used PIDS
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			setPID(i, false);
+			_properties.setPID(i, false);
 		}
-		setAllPID(add);
+		_properties.setAllPID(add);
 	} else {
 		for (;;) {
 			std::string::size_type end = pids.find_first_of(",", begin);
 			if (end != std::string::npos) {
 				const int pid = atoi(pids.substr(begin, end - begin).c_str());
-				setPID(pid, add);
+				_properties.setPID(pid, add);
 				begin = end + 1;
 			} else {
 				// Get the last one
 				if (begin < pids.size()) {
 					const int pid = atoi(pids.substr(begin, end - begin).c_str());
-					setPID(pid, add);
+					_properties.setPID(pid, add);
 				}
 				break;
 			}

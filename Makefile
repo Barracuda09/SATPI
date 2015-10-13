@@ -30,7 +30,10 @@ endif
 SOURCES = Version.cpp \
 	Satpi.cpp \
 	ChannelData.cpp \
+	PidTable.cpp \
 	StreamProperties.cpp \
+	StreamProperties_ChannelData_get.cpp \
+	StreamProperties_ChannelData_set.cpp \
 	Properties.cpp \
 	StringConverter.cpp \
 	Log.cpp \
@@ -100,6 +103,11 @@ simu:
 # sudo apt-get install graphviz doxygen
 docu:
 	doxygen ./doxygen
+
+# Download PlaneUML from http://plantuml.com/download.html
+# and put it into the root of the project directory
+plantuml:
+	java -jar plantuml.jar -tsvg SatPI.plantuml
 
 .PHONY:
 	clean

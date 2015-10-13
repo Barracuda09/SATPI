@@ -30,6 +30,7 @@
 class DvbapiClient;
 class SocketClient;
 class Stream;
+class StreamProperties;
 
 /// The class @c Streams carries all the available/open streams
 class Streams :
@@ -77,7 +78,7 @@ class Streams :
 		virtual void fromXML(const std::string &xml);
 
 		///
-		void setECMPIDCallback(int streamID, int pid, bool set);
+		StreamProperties &getStreamProperties(int streamID);
 
 	protected:
 

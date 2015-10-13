@@ -1,6 +1,6 @@
 /* Utils.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -36,5 +36,23 @@
 			x = NULL; \
 		} \
 	}
-	
+
+/// If @a pointer is not NULL, delete it and set it to NULL.
+#define DELETE(pointer)        \
+	{                          \
+		if (pointer != NULL) { \
+			delete pointer;    \
+			pointer = NULL;    \
+		}                      \
+	}
+
+/// If @a arrayPointer is not NULL, delete[] it and set it to NULL.
+#define DELETE_ARRAY(arrayPointer)   \
+	{                                \
+		if (arrayPointer != NULL) {  \
+			delete[] arrayPointer;   \
+			arrayPointer = NULL;     \
+		}                            \
+	}
+
 #endif // UTILS_H_INCLUDE

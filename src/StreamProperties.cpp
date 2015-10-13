@@ -56,10 +56,54 @@ void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
 	_timestamp = timestamp;
 }
 
-void StreamProperties::addPIDData(int pid, uint8_t cc) {
+
+////////////////////////////////////
+////////////////////////////////////
+
+void StreamProperties::setPMT(int pid, bool set) {
 	MutexLock lock(_mutex);
-	_channelData.addPIDData(pid, cc);
+	_channelData._pidTable.setPMT(pid, set);
 }
+
+bool StreamProperties::isPMT(int pid) const {
+	MutexLock lock(_mutex);
+	return _channelData._pidTable.isPMT(pid);
+}
+
+void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set) {
+	MutexLock lock(_mutex);
+#ifdef LIBDVBCSA
+	if(!_key[0]) {
+		_key[0] = dvbcsa_bs_key_alloc();
+	}
+	if(!_key[1]) {
+		_key[1] = dvbcsa_bs_key_alloc();
+	}
+#endif
+	const bool isSet = _channelData.isPIDUsed(pid);
+	if (!isSet || !set) {
+		SI_LOG_INFO("Stream: %d, %s ECM PID: %d", _streamID, set ? "Set" : "Clear", pid);
+		_channelData._pidTable.setECMFilterData(demux, filter, pid, set);
+	}
+}
+
+void StreamProperties::getECMFilterData(int &demux, int &filter, int pid) const {
+	_channelData._pidTable.getECMFilterData(demux, filter, pid);
+}
+
+bool StreamProperties::isECM(int pid) const {
+	return _channelData._pidTable.isECM(pid);
+}
+
+void StreamProperties::setKeyParity(int pid, int parity) {
+	_channelData._pidTable.setKeyParity(pid, parity);
+}
+
+int StreamProperties::getKeyParity(int pid) const {
+	return _channelData._pidTable.getKeyParity(pid);
+}
+////////////////////////////////////
+////////////////////////////////////
 
 void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
                                               uint32_t ber, uint32_t ublocks) {

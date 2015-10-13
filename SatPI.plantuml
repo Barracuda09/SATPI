@@ -26,19 +26,19 @@ StreamClient --* SocketAttr : " _rtcp "
 
 SocketClient --|> SocketAttr
 
-StreamProperties --* ChannelData
-
-DvbapiClient --* DvbapiClientProperties : " _properties"
-
-DvbapiClientProperties --* PidTable_t
 DvbapiClientProperties --* dvbcsa_key_s
 DvbapiClientProperties --* TSTableData : " _pat "
 DvbapiClientProperties --* TSTableData : " _pmt "
 
+StreamProperties --* ChannelData
+StreamProperties --|> DvbapiClientProperties
+
+DvbapiClient  .  Streams : " _getStreamProperties(..)"
+
 Frontend --* Lnb_t
 Frontend --* DiSEqc_t
 
-ChannelData --* Pid_t
+ChannelData --* PidTable
 
 RtpThread --|> ThreadBase
 RtpThread ..* StreamProperties

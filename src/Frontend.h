@@ -1,6 +1,6 @@
 /* Frontend.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -21,7 +21,6 @@
 #define FRONTEND_H_INCLUDE
 
 #include "dvbfix.h"
-#include "ChannelData.h"
 
 #include <stdint.h>
 #include <string>
@@ -106,7 +105,7 @@ class Frontend  {
 		bool update(StreamProperties &properties);
 
 		///
-		bool teardown(ChannelData &channel, int streamID);
+		bool teardown(StreamProperties &properties);
 
 		///
 		size_t getDeliverySystemSize() const { return _del_sys_size; }
@@ -127,7 +126,7 @@ class Frontend  {
 		bool set_demux_filter(int fd, uint16_t pid);
 
 		///
-		bool tune(const ChannelData &channel);
+		bool tune(const StreamProperties &properties);
 
 		///
 		bool diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
@@ -140,7 +139,7 @@ class Frontend  {
 		bool tune_it(StreamProperties &properties);
 
 		///
-		bool updatePIDFilters(ChannelData &channel, int streamID);
+		bool updatePIDFilters(StreamProperties &properties);
 
 		///
 		bool setupAndTune(StreamProperties &properties);

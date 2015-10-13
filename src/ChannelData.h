@@ -20,29 +20,12 @@
 #ifndef CHANNEL_DATA_H_INCLUDE
 #define CHANNEL_DATA_H_INCLUDE
 
+#include "PidTable.h"
+
 #include <stdint.h>
 #include <string>
 
 #include <linux/dvb/frontend.h>
-#include <linux/dvb/version.h>
-
-#define MAX_PIDS 8193
-
-#define ALL_PIDS 8192
-
-// PID and DMX file descriptor
-typedef struct {
-	int      fd_dmx;         // used DMX file descriptor for PID
-	uint8_t  used;           // used pid (0 = not used, 1 = in use)
-	uint8_t  cc;             // continuity counter (0 - 15) of this PID
-	uint32_t cc_error;       // cc error count
-	uint32_t count;          // the number of times this pid occurred
-} PidData_t;
-
-typedef struct {
-	bool      changed;       // if something changed to 'pid' array
-    PidData_t data[MAX_PIDS];// used pids
-} Pid_t;
 
 /// The class @c ChannelData carries all the data/information for tuning a frontend
 class ChannelData  {
@@ -60,10 +43,10 @@ class ChannelData  {
 		void resetPid(int pid);
 
 		/// Reset that PID has changed
-		void resetPIDChanged();
+		void resetPIDTableChanged();
 
 		/// Check if the PID has changed
-		bool hasPIDChanged() const;
+		bool hasPIDTableChanged() const;
 
 		/// Set DMX file descriptor
 		void setDMXFileDescriptor(int pid, int fd);
@@ -107,10 +90,10 @@ class ChannelData  {
 		int fec;                 // forward error control i.e. (FEC_1_2 / FEC_2_3)
 		int rolloff;             // roll-off
 		int inversion;           //
-	private:
-		Pid_t _pid;              //
+//	private:
+		PidTable _pidTable;      //
 
-	public:
+//	public:
 		// =======================================================================
 		// DVB-S(2) Data members
 		// =======================================================================

@@ -20,7 +20,6 @@
 #include "Frontend.h"
 #include "Log.h"
 #include "Utils.h"
-#include "ChannelData.h"
 #include "StringConverter.h"
 #include "StreamProperties.h"
 
@@ -252,39 +251,39 @@ bool Frontend::setFrontendInfo() {
 	return true;
 }
 
-bool Frontend::tune(const ChannelData &channel) {
+bool Frontend::tune(const StreamProperties &properties) {
 	struct dtv_property p[15];
 	int size = 0;
 
 #define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
 	FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
-	switch (channel.delsys) {
+	switch (properties.getDeliverySystem()) {
 		case SYS_DVBS:
 		case SYS_DVBS2:
-			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
-			FILL_PROP(DTV_FREQUENCY,         channel.ifreq);
-			FILL_PROP(DTV_MODULATION,        channel.modtype);
-			FILL_PROP(DTV_SYMBOL_RATE,       channel.srate);
-			FILL_PROP(DTV_INNER_FEC,         channel.fec);
+			FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
+			FILL_PROP(DTV_FREQUENCY,         properties.getIntermediateFrequency());
+			FILL_PROP(DTV_MODULATION,        properties.getModulationType());
+			FILL_PROP(DTV_SYMBOL_RATE,       properties.getSymbolRate());
+			FILL_PROP(DTV_INNER_FEC,         properties.getFEC());
 			FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
-			FILL_PROP(DTV_ROLLOFF,           channel.rolloff);
-			FILL_PROP(DTV_PILOT,             channel.pilot);
+			FILL_PROP(DTV_ROLLOFF,           properties.getRollOff());
+			FILL_PROP(DTV_PILOT,             properties.getPilotTones());
 			break;
 		case SYS_DVBT2:
-			FILL_PROP(DTV_STREAM_ID,         channel.plp_id);
+			FILL_PROP(DTV_STREAM_ID,         properties.getUniqueIDPlp());
 			// Fall-through
 		case SYS_DVBT:
-			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
-			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
-			FILL_PROP(DTV_MODULATION,        channel.modtype);
-			FILL_PROP(DTV_INVERSION,         channel.inversion);
-			FILL_PROP(DTV_BANDWIDTH_HZ,      channel.bandwidthHz);
-			FILL_PROP(DTV_CODE_RATE_HP,      channel.fec);
-			FILL_PROP(DTV_CODE_RATE_LP,      channel.fec);
-			FILL_PROP(DTV_TRANSMISSION_MODE, channel.transmission);
-			FILL_PROP(DTV_GUARD_INTERVAL,    channel.guard);
-			FILL_PROP(DTV_HIERARCHY,         channel.hierarchy);
+			FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
+			FILL_PROP(DTV_FREQUENCY,         properties.getFrequency() * 1000UL);
+			FILL_PROP(DTV_MODULATION,        properties.getModulationType());
+			FILL_PROP(DTV_INVERSION,         properties.getSpectralInversion());
+			FILL_PROP(DTV_BANDWIDTH_HZ,      properties.getBandwidthHz());
+			FILL_PROP(DTV_CODE_RATE_HP,      properties.getFEC());
+			FILL_PROP(DTV_CODE_RATE_LP,      properties.getFEC());
+			FILL_PROP(DTV_TRANSMISSION_MODE, properties.getTransmissionMode());
+			FILL_PROP(DTV_GUARD_INTERVAL,    properties.getGuardInverval());
+			FILL_PROP(DTV_HIERARCHY,         properties.getHierarchy());
 			break;
 #if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_A:
@@ -294,18 +293,19 @@ bool Frontend::tune(const ChannelData &channel) {
 		case SYS_DVBC_ANNEX_AC:
 		case SYS_DVBC_ANNEX_B:
 #endif
-			FILL_PROP(DTV_BANDWIDTH_HZ,      channel.bandwidthHz);
-			FILL_PROP(DTV_DELIVERY_SYSTEM,   channel.delsys);
-			FILL_PROP(DTV_FREQUENCY,         channel.freq * 1000UL);
-			FILL_PROP(DTV_INVERSION,         channel.inversion);
-			FILL_PROP(DTV_MODULATION,        channel.modtype);
-			FILL_PROP(DTV_SYMBOL_RATE,       channel.srate);
-			FILL_PROP(DTV_INNER_FEC,         channel.fec);
+			FILL_PROP(DTV_BANDWIDTH_HZ,      properties.getBandwidthHz());
+			FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
+			FILL_PROP(DTV_FREQUENCY,         properties.getFrequency() * 1000UL);
+			FILL_PROP(DTV_INVERSION,         properties.getSpectralInversion());
+			FILL_PROP(DTV_MODULATION,        properties.getModulationType());
+			FILL_PROP(DTV_SYMBOL_RATE,       properties.getSymbolRate());
+			FILL_PROP(DTV_INNER_FEC,         properties.getFEC());
 			break;
 
 		default:
 			return false;
 	}
+
 	FILL_PROP(DTV_TUNE, DTV_UNDEFINED);
 	struct dtv_properties cmdseq;
 	cmdseq.num = size;
@@ -398,34 +398,38 @@ bool Frontend::tune_it(StreamProperties &properties) {
 	const int streamID = properties.getStreamID();
 	SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
 
-	ChannelData &channel = properties.getChannelData();
-
-	if (channel.delsys == SYS_DVBS || channel.delsys == SYS_DVBS2) {
+	const fe_delivery_system_t delsys = properties.getDeliverySystem();
+	if (delsys == SYS_DVBS || delsys == SYS_DVBS2) {
 		// DiSEqC switch position differs from src
-		Lnb_t &lnb = _diseqc.LNB[channel.src - 1];
-		_diseqc.src = channel.src - 1;
-		_diseqc.pol_v = channel.pol_v;
+		const int src = properties.getDiSEqcSource() - 1;
+		Lnb_t &lnb = _diseqc.LNB[src];
+		_diseqc.src = src;
+		_diseqc.pol_v = properties.getPolarization();
 		_diseqc.hiband = 0;
+
+		const uint32_t freq = properties.getFrequency();
+		uint32_t ifreq = 0;
 		if (lnb.lofHigh) {
 			if (lnb.switchlof) {
 				// Voltage controlled switch
-				if (channel.freq >= lnb.switchlof) {
+				if (freq >= lnb.switchlof) {
 					_diseqc.hiband = 1;
 				}
 
 				if (_diseqc.hiband) {
-					channel.ifreq = abs(channel.freq - lnb.lofHigh);
+					ifreq = abs(freq - lnb.lofHigh);
 				} else {
-					channel.ifreq = abs(channel.freq - lnb.lofLow);
+					ifreq = abs(freq - lnb.lofLow);
 				}
 			} else {
 				// C-Band Multi-point LNB
-				channel.ifreq = abs(channel.freq - (_diseqc.pol_v == POL_V ? lnb.lofLow : lnb.lofHigh));
+				ifreq = abs(freq - (_diseqc.pol_v == POL_V ? lnb.lofLow : lnb.lofHigh));
 			}
 		} else	{
 			// Mono-point LNB without switch
-			channel.ifreq = abs(channel.freq - lnb.lofLow);
+			ifreq = abs(freq - lnb.lofLow);
 		}
+		properties.setIntermediateFrequency(ifreq);
 		// send diseqc
 		if (!sendDiseqc(streamID, properties.diseqcRepeat())) {
 			return false;
@@ -433,7 +437,7 @@ bool Frontend::tune_it(StreamProperties &properties) {
 	}
 
 	// Now tune
-	if (!tune(channel)) {
+	if (!tune(properties)) {
 		return false;
 	}
 	return true;
@@ -443,8 +447,8 @@ bool Frontend::update(StreamProperties &properties) {
 	SI_LOG_DEBUG("Stream: %d, Updating frontend...", properties.getStreamID());
 
 	// Setup, tune and set PID Filters
-	if (properties.getChannelData().changed) {
-		properties.getChannelData().changed = false;
+	if (properties.hasChannelDataChanged()) {
+		properties.resetChannelDataChanged();
 		_tuned = false;
 		CLOSE_FD(_fd_dvr);
 	}
@@ -458,7 +462,7 @@ bool Frontend::update(StreamProperties &properties) {
 		}
 	}
 
-	updatePIDFilters(properties.getChannelData(), properties.getStreamID());
+	updatePIDFilters(properties);
 
 	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", properties.getStreamID());
 	return true;
@@ -523,27 +527,28 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 	return (_fd_dvr != -1) && _tuned;
 }
 
-static void resetPid(ChannelData &channel, int pid) {
-	if (ioctl(channel.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+static void resetPid(StreamProperties &properties, int pid) {
+	if (ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 		PERROR("DMX_STOP");
 	}
-	channel.closeDMXFileDescriptor(pid);
-	channel.resetPid(pid);
+	properties.closeDMXFileDescriptor(pid);
+	properties.resetPid(pid);
 }
 
-bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {
-	if (channel.hasPIDChanged()) {
+bool Frontend::updatePIDFilters(StreamProperties &properties) {
+	if (properties.hasPIDTableChanged()) {
+		properties.resetPIDTableChanged();
+		const int streamID = properties.getStreamID();
 		SI_LOG_INFO("Stream: %d, Updating PID filters...", streamID);
-		channel.resetPIDChanged();
 		int i;
 		for (i = 0; i < MAX_PIDS; ++i) {
 			// check if PID is used or removed
-			if (channel.isPIDUsed(i)) {
+			if (properties.isPIDUsed(i)) {
 				// check if we have no DMX for this PID, then open one
-				if (channel.getDMXFileDescriptor(i) == -1) {
-					channel.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
+				if (properties.getDMXFileDescriptor(i) == -1) {
+					properties.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
 					size_t timeout = 0;
-					while (set_demux_filter(channel.getDMXFileDescriptor(i), i) != 1) {
+					while (set_demux_filter(properties.getDMXFileDescriptor(i), i) != 1) {
 						usleep(350000);
 						++timeout;
 						if (timeout > 3) {
@@ -551,28 +556,29 @@ bool Frontend::updatePIDFilters(ChannelData &channel, int streamID) {
 						}
 					}
 					SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d",
-					             streamID, i, channel.getDMXFileDescriptor(i));
+					             streamID, i, properties.getDMXFileDescriptor(i));
 				}
-			} else if (channel.getDMXFileDescriptor(i) != -1) {
+			} else if (properties.getDMXFileDescriptor(i) != -1) {
 				// We have a DMX but no PID anymore, so reset it
 				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-				             streamID, i, channel.getDMXFileDescriptor(i), channel.getPacketCounter(i));
-				resetPid(channel, i);
+				             streamID, i, properties.getDMXFileDescriptor(i), properties.getPacketCounter(i));
+				resetPid(properties, i);
 			}
 		}
 	}
 	return true;
 }
 
-bool Frontend::teardown(ChannelData &channel, int streamID) {
+bool Frontend::teardown(StreamProperties &properties) {
+	const int streamID = properties.getStreamID();
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
-		if (channel.isPIDUsed(i)) {
+		if (properties.isPIDUsed(i)) {
 			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-			             streamID, i, channel.getDMXFileDescriptor(i), channel.getPacketCounter(i));
-			resetPid(channel, i);
-		} else if (channel.getDMXFileDescriptor(i) != -1) {
+			             streamID, i, properties.getDMXFileDescriptor(i), properties.getPacketCounter(i));
+			resetPid(properties, i);
+		} else if (properties.getDMXFileDescriptor(i) != -1) {
 			SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", streamID, i);
-			resetPid(channel, i);
+			resetPid(properties, i);
 		}
 	}
 	_tuned = false;

@@ -18,18 +18,11 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #include "ChannelData.h"
-#include "StringConverter.h"
-#include "Utils.h"
 #include "Log.h"
 
 #include <stdio.h>
 
 ChannelData::ChannelData() {
-	for (size_t i = 0; i < MAX_PIDS; ++i) {
-		_pid.data[i].fd_dmx = -1;
-		resetPid(i);
-	}
-	_pid.changed = false;
 	initialize();
 }
 
@@ -48,7 +41,7 @@ void ChannelData::initialize() {
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		resetPid(i);
 	}
-	_pid.changed = false;
+	resetPIDTableChanged();
 
 	// =======================================================================
 	// DVB-S(2) Data members
@@ -76,81 +69,49 @@ void ChannelData::initialize() {
 }
 
 void ChannelData::resetPid(int pid) {
-	_pid.data[pid].used     = 0;
-	_pid.data[pid].cc       = 0x80;
-	_pid.data[pid].cc_error = 0;
-	_pid.data[pid].count    = 0;
+	_pidTable.resetPid(pid);
 }
 
 uint32_t ChannelData::getPacketCounter(int pid) const {
-	return _pid.data[pid].count;
+	return _pidTable.getPacketCounter(pid);
 }
 
 void ChannelData::setDMXFileDescriptor(int pid, int fd) {
-	_pid.data[pid].fd_dmx = fd;
+	_pidTable.setDMXFileDescriptor(pid, fd);
 }
 
 int ChannelData::getDMXFileDescriptor(int pid) const {
-	return _pid.data[pid].fd_dmx;
+	return _pidTable.getDMXFileDescriptor(pid);
 }
 
 void ChannelData::closeDMXFileDescriptor(int pid) {
-	CLOSE_FD(_pid.data[pid].fd_dmx);
+	_pidTable.closeDMXFileDescriptor(pid);
 }
 
-void ChannelData::resetPIDChanged() {
-	_pid.changed = false;
+void ChannelData::resetPIDTableChanged() {
+	_pidTable.resetPIDTableChanged();
 }
 
-bool ChannelData::hasPIDChanged() const {
-	return _pid.changed;
+bool ChannelData::hasPIDTableChanged() const {
+	return _pidTable.hasPIDTableChanged();
 }
 
 std::string ChannelData::getPidCSV() const {
-	std::string csv;
-	if (_pid.data[ALL_PIDS].used) {
-		csv = "all";
-	} else {
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			if (_pid.data[i].used) {
-				StringConverter::addFormattedString(csv, "%d,", i);
-			}
-		}
-		if (csv.size() > 1) {
-			*(csv.end()-1) = 0;
-		}
-	}
-	return csv;
+	return _pidTable.getPidCSV();
 }
 
 void ChannelData::addPIDData(int pid, uint8_t cc) {
-	++_pid.data[pid].count;
-	if (_pid.data[pid].cc == 0x80) {
-		_pid.data[pid].cc = cc;
-	} else {
-		++_pid.data[pid].cc;
-		_pid.data[pid].cc %= 0x10;
-		if (_pid.data[pid].cc != cc) {
-			int diff = cc - _pid.data[pid].cc;
-			if (diff < 0) {
-				diff += 0x10;
-			}
-			_pid.data[pid].cc = cc;
-			_pid.data[pid].cc_error += diff;
-		}
-	}
+	_pidTable.addPIDData(pid, cc);
 }
 
 void ChannelData::setPID(int pid, bool val) {
-	_pid.data[pid].used = val;
-	_pid.changed = true;
+	_pidTable.setPID(pid, val);
 }
 
 bool ChannelData::isPIDUsed(int pid) const {
-	return _pid.data[pid].used;
+	return _pidTable.isPIDUsed(pid);
 }
 
 void ChannelData::setAllPID(bool val) {
-	_pid.data[ALL_PIDS].used = val;
-	_pid.changed = true;
+	_pidTable.setAllPID(val);
 }

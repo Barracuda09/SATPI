@@ -252,8 +252,8 @@ int main(int argc, char *argv[]) {
 	InterfaceAttr interface;
 	Streams streams;
 #ifdef LIBDVBCSA
-	Functor3<int, int, bool> setECMPIDCallback = makeFunctor((Functor3<int, int, bool>*)0, streams, &Streams::setECMPIDCallback);
-	DvbapiClient dvbapi(setECMPIDCallback);
+	Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((Functor1Ret<StreamProperties &, int>*)0, streams, &Streams::getStreamProperties);
+	DvbapiClient dvbapi(getStreamProperties);
 	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
 	HttpServer httpserver(interface, streams, properties, &dvbapi);

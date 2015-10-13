@@ -1,6 +1,6 @@
 /* RtcpThread.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -323,11 +323,11 @@ void RtcpThread::threadEntry() {
 					PERROR("send RTCP");
 				}
 			}
-			delete[] rtcp;
+			DELETE_ARRAY(rtcp);
 		}
-		delete[] sr;
-		delete[] sdes;
-		delete[] app;
+		DELETE_ARRAY(sr);
+		DELETE_ARRAY(sdes);
+		DELETE_ARRAY(app);
 
 		// update 5 Hz
 		usleep(200000);

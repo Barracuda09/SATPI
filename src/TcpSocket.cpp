@@ -1,6 +1,6 @@
 /* TcpSocket.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -48,8 +48,8 @@ TcpSocket::TcpSocket(int maxClients, int port, bool nonblock) :
 }
 
 TcpSocket::~TcpSocket() {
-	delete[] _pfd;
-	delete[] _client;
+	DELETE_ARRAY(_pfd);
+	DELETE_ARRAY(_client);
 	_server.closeFD();
 }
 

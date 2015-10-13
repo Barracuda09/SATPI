@@ -48,6 +48,9 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 		_properties(properties),
 		_state(Running),
 		_dvbapi(dvbapi) {
+#ifdef LIBDVBCSA
+	assert(_dvbapi);
+#endif
 	_pfd[0].fd = -1;
 
 	uint32_t ssrc = _properties.getSSRC();
@@ -72,17 +75,7 @@ RtpThread::~RtpThread() {
 	joinThread();
 }
 
-void RtpThread::clearDecrypt() {
-#ifdef LIBDVBCSA
-	assert(_dvbapi);
-	_dvbapi->clearDecrypt(_properties.getStreamID());
-#endif
-}
-
 bool RtpThread::startStreaming(int fd_dvr) {
-#ifdef LIBDVBCSA
-	assert(_dvbapi);
-#endif
 	const int streamID = _properties.getStreamID();
 	_pfd[0].fd = fd_dvr;
 	if (_socket_fd == -1) {
@@ -120,7 +113,6 @@ void RtpThread::stopStreaming(int clientID) {
 		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
 		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
 #ifdef LIBDVBCSA
-		assert(_dvbapi);
 		_dvbapi->stopDecrypt(_properties.getStreamID());
 #endif
 	}
@@ -154,8 +146,11 @@ bool RtpThread::pauseStreaming(int clientID) {
 			}
 		}
 		SI_LOG_INFO("Stream: %d, Pause  RTP stream to %s:%d (Streamed %.3f MBytes)",
-		            _properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
-		            _clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+					_properties.getStreamID(), _clients[clientID].getIPAddress().c_str(),
+					_clients[clientID].getRtpSocketPort(), (_properties.getRtpPayload() / (1024.0 * 1024.0)));
+#ifdef LIBDVBCSA
+		_dvbapi->stopDecrypt(_properties.getStreamID());
+#endif
 	}
 	return true;
 }

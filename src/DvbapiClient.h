@@ -23,11 +23,13 @@
 #include "ThreadBase.h"
 #include "SocketClient.h"
 #include "Mutex.h"
-#include "DvbapiClientProperties.h"
 #include "XMLSupport.h"
-#include "Functor3.h"
+#include "Functor1Ret.h"
 
 #include <string>
+
+// Forward declarations
+class StreamProperties;
 
 /// The class @c DvbapiClient is for decrypting streams
 class DvbapiClient : public ThreadBase,
@@ -36,7 +38,7 @@ class DvbapiClient : public ThreadBase,
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClient(const Functor3<int, int, bool> &setECMPIDCallback);
+		DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties);
 		virtual ~DvbapiClient();
 
 		///
@@ -44,9 +46,6 @@ class DvbapiClient : public ThreadBase,
 
 		///
 		bool stopDecrypt(int streamID);
-
-		///
-		bool clearDecrypt(int streamID);
 
 		/// Add data to an XML for storing or web interface
 		virtual void addToXML(std::string &xml) const;
@@ -66,16 +65,16 @@ class DvbapiClient : public ThreadBase,
 		void sendClientInfo();
 
 		///
-		void collectPAT(int streamID, const unsigned char *data, int len);
+		void collectPAT(StreamProperties &properties, const unsigned char *data, int len);
 
 		///
-		void collectPMT(int streamID, const unsigned char *data, int len);
+		void collectPMT(StreamProperties &properties, const unsigned char *data, int len);
 
 		///
-		void cleanPacketPMT(int streamID, unsigned char *data);
+		void cleanPacketPMT(StreamProperties &properties, unsigned char *data);
 
 		///
-		void collectECM(int streamID, const unsigned char *data);
+		void collectECM(StreamProperties &properties, const unsigned char *data);
 
 		// =======================================================================
 		// Data members
@@ -87,10 +86,7 @@ class DvbapiClient : public ThreadBase,
 		std::string _serverIpAddr;
 		int _serverPort;
 
-		/// @todo alloc this dynamic
-		DvbapiClientProperties _properties[5];
-
-		Functor3<int, int, bool> _setECMPIDCallback;
+		Functor1Ret<StreamProperties &, int> _getStreamProperties;
 
 }; // class DvbapiClient
 

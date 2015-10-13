@@ -1,6 +1,6 @@
 /* StreamProperties.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -23,11 +23,20 @@
 #include "ChannelData.h"
 #include "Mutex.h"
 #include "XMLSupport.h"
+#ifdef LIBDVBCSA
+	#include "DvbapiClientProperties.h"
+#endif
 
 #include <string>
 
 /// The class @c StreamProperties carries all the available/open StreamProperties
-class StreamProperties : public XMLSupport {
+class StreamProperties
+#ifdef LIBDVBCSA
+            : public XMLSupport,
+              public DvbapiClientProperties {
+#else
+            : public XMLSupport {
+#endif
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -65,20 +74,9 @@ class StreamProperties : public XMLSupport {
 
 		uint32_t     getSSRC() const       { return _ssrc; }
 		long         getTimestamp() const  { return _timestamp; }
-		ChannelData &getChannelData()      { return _channelData; }
 		double       getRtpPayload() const { return _rtp_payload; }
 		uint32_t     getSPC() const        { return _spc; }
 		uint32_t     getSOC() const        { return _soc; }
-
-		///
-		void addRtpData(const uint32_t byte, long timestamp);
-
-		// =======================================================================
-		// Data members for ChannelData
-		// =======================================================================
-		/// See @c ChannelData
-		void addPIDData(int pid, uint8_t cc);
-		// =======================================================================
 
 		/// Get the DVR buffer size
 		unsigned long getDVRBufferSize() const;
@@ -88,6 +86,131 @@ class StreamProperties : public XMLSupport {
 
 		/// The Frontend Monitor update interval
 		unsigned int getRtcpSignalUpdateFrequency() const;
+
+		///
+		void addRtpData(const uint32_t byte, long timestamp);
+
+		// =======================================================================
+		// Data members for ChannelData
+		// =======================================================================
+
+		/// Check if Channel Data has changed, that we should update
+		bool hasChannelDataChanged() const;
+
+		/// Reset/clear the Channel Data has changed flag
+		void resetChannelDataChanged();
+
+		/// Get/Set the intermediate frequency in Mhz
+		uint32_t getIntermediateFrequency() const;
+		void setIntermediateFrequency(uint32_t frequency);
+
+		/// Reset the pid
+		void resetPid(int pid);
+
+		/// Reset that PID has changed
+		void resetPIDTableChanged();
+
+		/// Check if the PID has changed
+		bool hasPIDTableChanged() const;
+
+		/// Set DMX file descriptor
+		void setDMXFileDescriptor(int pid, int fd);
+
+		/// Get DMX file descriptor
+		int getDMXFileDescriptor(int pid) const;
+
+		/// Close DMX file descriptor
+		void closeDMXFileDescriptor(int pid);
+
+		/// Get the amount of packet that were received of this pid
+		uint32_t getPacketCounter(int pid) const;
+
+		/// Get the CSV of all the requested PID
+		std::string getPidCSV() const;
+
+		/// Set the continuity counter for pid
+		void addPIDData(int pid, uint8_t cc);
+
+		/// Set pid used or not
+		void setPID(int pid, bool val);
+
+		/// Check if PID is used
+		bool isPIDUsed(int pid) const;
+
+		/// Set all PID
+		void setAllPID(bool val);
+
+		void initializeChannelData();
+
+		/// Get/Set the frequency in Mhz
+		uint32_t getFrequency() const;
+		void setFrequency(uint32_t freq);
+
+		int  getSymbolRate() const;
+		void setSymbolRate(int srate);
+
+		/// Get/Set the current Delivery System
+		fe_delivery_system_t getDeliverySystem() const;
+		void setDeliverySystem(fe_delivery_system_t delsys);
+
+		/// Get/Set modulation type
+		int  getModulationType() const;
+		void setModulationType(int modtype);
+
+		/// Get/Set the LNB polarizaion
+		int getPolarization() const;
+		void setPolarization(int pol);
+
+		/// Get/Set the DiSEqc source
+		int getDiSEqcSource() const;
+		void setDiSEqcSource(int source);
+
+		void setRollOff(int rolloff);
+		int  getRollOff() const;
+		void setFEC(int fec);
+		int  getFEC() const;
+		void setPilotTones(int pilot);
+		int  getPilotTones() const;
+		void setSpectralInversion(int specinv);
+		int  getSpectralInversion() const;
+		void setBandwidthHz(int bandwidth);
+		int  getBandwidthHz() const;
+		void setTransmissionMode(int transmission);
+		int  getTransmissionMode() const;
+		void setGuardInverval(int guard);
+		int  getGuardInverval() const;
+		void setHierarchy(int hierarchy);
+		int  getHierarchy() const;
+		void setUniqueIDPlp(int plp);
+		int  getUniqueIDPlp() const;
+		void setUniqueIDT2(int id);
+		void setSISOMISO(int sm);
+
+		// =======================================================================
+
+///////////////////////////////////////////////////////////////////////////////
+		///
+		void setPMT(int pid, bool set);
+
+		///
+		bool isPMT(int pid) const;
+
+		///
+		void setECMFilterData(int demux, int filter, int pid, bool set);
+
+		///
+		void getECMFilterData(int &demux, int &filter, int pid) const;
+
+		///
+		bool isECM(int pid) const;
+
+		///
+		void setKeyParity(int pid, int parity);
+
+		///
+		int getKeyParity(int pid) const;
+///////////////////////////////////////////////////////////////////////////////
+
 
 	protected:
 

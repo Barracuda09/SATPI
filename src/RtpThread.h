@@ -59,9 +59,6 @@ class RtpThread :
 		/// Restart streaming
 		bool restartStreaming(int fd_dvr, int clientID);
 
-		///
-		void clearDecrypt();
-
 	protected:
 		/// Thread function
 		virtual void threadEntry();

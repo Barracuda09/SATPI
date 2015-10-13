@@ -52,11 +52,11 @@ Streams::Streams() :
 }
 
 Streams::~Streams() {
-	delete _dummyStream;
+	DELETE(_dummyStream);
 	for (int i = 0; i < _maxStreams; ++i) {
-		delete _stream[i];
+		DELETE(_stream[i]);
 	}
-	delete[] _stream;
+	DELETE_ARRAY(_stream);
 }
 
 int Streams::getAttachedFrontendCount(const std::string &path, int count) {
@@ -296,13 +296,15 @@ void Streams::checkStreamClientsWithTimeout() {
 	for (size_t streamID = 0; streamID < static_cast<size_t>(_maxStreams); ++streamID) {
 		if (_stream[streamID]->streamInUse()) {
 			_stream[streamID]->checkStreamClientsWithTimeout();
+
+			// @TODO - is this the correct place?? for now it works
+			_stream[streamID]->updateFrontend();
 		}
 	}
 }
 
-void Streams::setECMPIDCallback(int streamID, int pid, bool set) {
-	SI_LOG_INFO("Stream: %d, %s ECM PID: %d", streamID, set ? "Set" : "Clear", pid);
-	_stream[streamID]->setECMPID(pid, set);
+StreamProperties & Streams::getStreamProperties(int streamID) {
+	return _stream[streamID]->getStreamProperties();
 }
 
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {

@@ -22,15 +22,13 @@
 
 #include "TSTableData.h"
 #include "Log.h"
+#include "Utils.h"
 
-#ifdef LIBDVBCSA
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
-#endif
 
 class DvbapiClientProperties {
-#define MAX_PIDS 8193
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -38,31 +36,23 @@ class DvbapiClientProperties {
 		DvbapiClientProperties() {
 			_key[0] = NULL;
 			_key[1] = NULL;
-			for (size_t i = 0; i < MAX_PIDS; ++i) {
-				_pidTable[i].pmt = false;
-				_pidTable[i].ecm = false;
-				_pidTable[i].demux = -1;
-				_pidTable[i].filter = -1;
-				_pidTable[i].parity = -1;
-			}
+
 			_batchSize = dvbcsa_bs_batch_size();
+			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
 		}
 		virtual ~DvbapiClientProperties() {
+			DELETE_ARRAY(_batch);
 			freeKeys();
 		}
-
-		// PID and DMX file descriptor
-		typedef struct {
-			bool     pmt;            // show if this is an PMT pid
-			bool     ecm;            // show if this is an ECM pid
-			int      demux;          // dvbapi demux
-			int      filter;         // dvbapi filter
-			int      parity;         // key parity
-		} PidTable_t;
 
 		///
 		int getBatchSize() const {
 			return _batchSize;
+		}
+
+		///
+		struct dvbcsa_bs_batch_s *getBatchBuffer() const {
+			return _batch;
 		}
 
 		///
@@ -81,50 +71,6 @@ class DvbapiClientProperties {
 		///
 		dvbcsa_bs_key_s *getKey(int parity) const {
 			return _key[parity];
-		}
-
-		///
-		void setPMT(int pid, bool set) {
-			_pidTable[pid].pmt = set;
-		}
-
-		///
-		bool isPMT(int pid) const {
-			return _pidTable[pid].pmt;
-		}
-
-		///
-		void setECMFilterData(int demux, int filter, int pid, bool set) {
-			if(!_key[0]) {
-				_key[0] = dvbcsa_bs_key_alloc();
-			}
-			if(!_key[1]) {
-				_key[1] = dvbcsa_bs_key_alloc();
-			}
-			_pidTable[pid].ecm    = set;
-			_pidTable[pid].demux  = demux;
-			_pidTable[pid].filter = filter;
-		}
-
-		///
-		void getECMFilterData(int &demux, int &filter, int pid) const {
-			demux  = _pidTable[pid].demux;
-			filter = _pidTable[pid].filter;
-		}
-
-		///
-		bool isECM(int pid) const {
-			return _pidTable[pid].ecm;
-		}
-
-		///
-		void setKeyParity(int pid, int parity) {
-			_pidTable[pid].parity = parity;
-		}
-
-		///
-		int getKeyParity(int pid) const {
-			return _pidTable[pid].parity;
 		}
 
 		const char* getTableTXT(int tableID) {
@@ -149,11 +95,12 @@ class DvbapiClientProperties {
 				if (addTableData(tableID, data, 188, pid, cc)) {
 					SI_LOG_DEBUG("Stream: %d, %s: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), sectionLength, getTableDataSize(tableID));
 					// Check did we finish collecting Table Data
-					if (sectionLength <= 180) {
+					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
 						setTableCollected(tableID, true);
 					}
 				} else {
-					SI_LOG_ERROR("Stream: %d, %s: Unable to add data!", streamID, getTableTXT(tableID));
+					SI_LOG_ERROR("Stream: %d, %s: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID));
+					setTableCollected(tableID, false);
 				}
 			} else {
 				const unsigned char *cData = getTableData(tableID);
@@ -172,7 +119,8 @@ class DvbapiClientProperties {
 						setTableCollected(tableID, true);
 					}
 				} else {
-					SI_LOG_ERROR("Stream: %d, %s: Unable to add data!", streamID, getTableTXT(tableID));
+					SI_LOG_ERROR("Stream: %d, %s: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID));
+					setTableCollected(tableID, false);
 				}
 			}
 		}
@@ -239,10 +187,11 @@ class DvbapiClientProperties {
 			}
 		}
 
-	private:
+	protected:
 		struct dvbcsa_bs_key_s *_key[2];
+		struct dvbcsa_bs_batch_s *_batch;
+
 		int _batchSize;
-		PidTable_t _pidTable[MAX_PIDS];
 		int _parity;
 
 		TSTableData _pat;

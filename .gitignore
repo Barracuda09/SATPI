@@ -10,4 +10,7 @@ satpi
 /web/Thumbs.db
 /src/*~
 bootID
+plantuml.jar
+SatPI.svg
+
 
