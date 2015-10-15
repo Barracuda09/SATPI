@@ -176,7 +176,7 @@ bool DvbapiClient::decrypt(int streamID, unsigned char *data, uint32_t &len) {
 							batch[batchCnt].data = NULL;
 							dvbcsa_bs_decrypt(key, batch, 184);
 						}
-						SI_LOG_DEBUG("Stream: %d, Parity changed sending batch size %d", streamID, batchCnt);
+						SI_LOG_DEBUG("Stream: %d, Parity changed from %d to %d, sending batch size %d", streamID, parityBegin, parity, batchCnt);
 						batchCnt = 0;
 						parityBegin = parity;
 						key = properties.getKey(parity);
@@ -555,6 +555,8 @@ void DvbapiClient::collectECM(StreamProperties &properties, const unsigned char 
 void DvbapiClient::threadEntry() {
 	SI_LOG_INFO("Setting up DVBAPI client");
 
+
+	std::string serverName;
 	struct pollfd pfd[1];
 	pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 	pfd[0].revents = 0;
@@ -591,6 +593,7 @@ void DvbapiClient::threadEntry() {
 
 					MutexLock lock(_mutex);
 					if (cmd == DVBAPI_SERVER_INFO) {
+						serverName = &buf[7];
 						SI_LOG_INFO("Connected to %s", &buf[7]);
 						_connected = true;
 					} else if (cmd == DVBAPI_DMX_SET_FILTER) {
@@ -622,6 +625,12 @@ void DvbapiClient::threadEntry() {
 					} else {
 						SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
 					}
+				} else {
+					// connection closed, try to reconnect
+					SI_LOG_INFO("Connected lost with %s", serverName.c_str());
+					_client.closeFD();
+					pfd[0].fd = -1;
+					_connected = false;
 				}
 			}
 		}
