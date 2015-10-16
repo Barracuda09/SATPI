@@ -9,6 +9,9 @@ Currently supporting DVB-S, DVB-S2, DVB-T and DVB-C.
 - The Description xml can be found like:
 	- http://ip.of.your.box:8875/desc.xml
 
+- The SatPI wiki can be found here:
+	- https://github.com/Barracuda09/SATPI/wiki
+
 Help
 -------
 Help in any way is appreciated, just send me an email with anythink you can
