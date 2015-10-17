@@ -84,6 +84,7 @@ class DvbapiClient : public ThreadBase,
 		bool _enabled;
 		SocketClient _client;
 		std::string _serverIpAddr;
+		std::string _serverName;
 		int _serverPort;
 
 		Functor1Ret<StreamProperties &, int> _getStreamProperties;

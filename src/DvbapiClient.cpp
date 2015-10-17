@@ -139,6 +139,7 @@ DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStream
 		_connected(false),
 		_enabled(false),
 		_serverIpAddr("127.0.0.1"),
+		_serverName("Not connected"),
 		_serverPort(15011),
 		_getStreamProperties(getStreamProperties) {
 	startThread();
@@ -273,9 +274,10 @@ bool DvbapiClient::initClientSocket(SocketClient &client, int port, in_addr_t s_
 		client.closeFD();
 		return false;
 	}
-
 	if (connect(client.getFD(), (struct sockaddr *)&client._addr, sizeof(client._addr)) == -1) {
-		PERROR("connect");
+		if (errno != ECONNREFUSED && errno != EINPROGRESS) {
+			PERROR("connect");
+		}
 		client.closeFD();
 		return false;
 	}
@@ -555,8 +557,6 @@ void DvbapiClient::collectECM(StreamProperties &properties, const unsigned char 
 void DvbapiClient::threadEntry() {
 	SI_LOG_INFO("Setting up DVBAPI client");
 
-
-	std::string serverName;
 	struct pollfd pfd[1];
 	pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 	pfd[0].revents = 0;
@@ -593,8 +593,8 @@ void DvbapiClient::threadEntry() {
 
 					MutexLock lock(_mutex);
 					if (cmd == DVBAPI_SERVER_INFO) {
-						serverName = &buf[7];
-						SI_LOG_INFO("Connected to %s", &buf[7]);
+						_serverName.assign(&buf[7], buf[6]);
+						SI_LOG_INFO("Connected to %s", _serverName.c_str());
 						_connected = true;
 					} else if (cmd == DVBAPI_DMX_SET_FILTER) {
 						const int adapter = buf[4];
@@ -627,7 +627,8 @@ void DvbapiClient::threadEntry() {
 					}
 				} else {
 					// connection closed, try to reconnect
-					SI_LOG_INFO("Connected lost with %s", serverName.c_str());
+					SI_LOG_INFO("Connected lost with %s", _serverName.c_str());
+					_serverName = "Not connected";
 					_client.closeFD();
 					pfd[0].fd = -1;
 					_connected = false;
@@ -657,4 +658,5 @@ void DvbapiClient::addToXML(std::string &xml) const {
 	ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 	ADD_CONFIG_IP(xml, "OSCamIP", _serverIpAddr.c_str());
 	ADD_CONFIG_NUMBER(xml, "OSCamPORT", _serverPort, 0, 65535);
+	ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
 }
