@@ -91,6 +91,9 @@ class PidTable  {
 		void getECMFilterData(int &demux, int &filter, int pid) const;
 
 		///
+		bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
+
+		///
 		int getKeyParity(int pid) const;
 
 		// =======================================================================

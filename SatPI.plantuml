@@ -34,6 +34,7 @@ StreamProperties --* ChannelData
 StreamProperties --|> DvbapiClientProperties
 
 DvbapiClient  .  Streams : " _getStreamProperties(..)"
+DvbapiClient  .  Streams : " _updateFrontend(..)"
 
 Frontend --* Lnb_t
 Frontend --* DiSEqc_t

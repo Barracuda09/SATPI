@@ -100,7 +100,7 @@ class Stream  {
 		StreamProperties & getStreamProperties() { return _properties; }
 		
 		///
-		void updateFrontend();
+		bool updateFrontend();
 
 		// =======================================================================
 		// Functions used for RTSP Server

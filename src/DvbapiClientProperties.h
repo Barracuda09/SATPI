@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef DVB_API_CLIENT_PROPERTIES_H_INCLUDE
-#define DVB_API_CLIENT_PROPERTIES_H_INCLUDE
+#define DVB_API_CLIENT_PROPERTIES_H_INCLUDE DVB_API_CLIENT_PROPERTIES_H_INCLUDE
 
 #include "TSTableData.h"
 #include "Log.h"
@@ -36,23 +36,73 @@ class DvbapiClientProperties {
 		DvbapiClientProperties() {
 			_key[0] = NULL;
 			_key[1] = NULL;
-
 			_batchSize = dvbcsa_bs_batch_size();
 			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
+			_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
+			_batchCount = 0;
 		}
 		virtual ~DvbapiClientProperties() {
 			DELETE_ARRAY(_batch);
+			DELETE_ARRAY(_ts);
 			freeKeys();
 		}
 
 		///
-		int getBatchSize() const {
+		int getMaximumBatchSize() const {
 			return _batchSize;
 		}
 
 		///
-		struct dvbcsa_bs_batch_s *getBatchBuffer() const {
-			return _batch;
+		int getBatchCount() const {
+			return _batchCount;
+		}
+
+		///
+		int getBatchParity() const {
+			return _parity;
+		}
+
+		/// Set the pointers into the batch
+		/// @param ptr specifies the pointer to de data that should be decrypted
+		/// @param len specifies the lenght of data
+		/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
+		void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
+			_batch[_batchCount].data = ptr;
+			_batch[_batchCount].len  = len;
+			_ts[_batchCount].data = originalPtr;
+			_parity = parity;
+			++_batchCount;
+		}
+
+		/// This function will decrypt the batch upon success it will clear scramble flag
+		/// on failure it will make a NULL TS Packet and clear scramble flag
+		void decryptBatch() {
+			if (_key[_parity] != NULL) {
+				// terminate batch buffer
+				setBatchData(NULL, 0, _parity, NULL);
+				// decrypt it
+				dvbcsa_bs_decrypt(_key[_parity], _batch, 184);
+
+				// clear scramble flags, so we can send it.
+				unsigned int i = 0;
+				while (_ts[i].data != NULL) {
+					_ts[i].data[3] &= 0x3F;
+					++i;
+				}
+			} else {
+				unsigned int i = 0;
+				while (_ts[i].data != NULL) {
+					// set decrypt failed by setting NULL packet ID..
+					_ts[i].data[1] |= 0x1F;
+					_ts[i].data[2] |= 0xFF;
+
+					// clear scramble flag, so we can send it.
+					_ts[i].data[3] &= 0x3F;
+					++i;
+				}
+			}
+			// decrypted this batch reset counter
+			_batchCount = 0;
 		}
 
 		///
@@ -61,6 +111,8 @@ class DvbapiClientProperties {
 			dvbcsa_bs_key_free(_key[1]);
 			_key[0] = NULL;
 			_key[1] = NULL;
+
+			_batchCount = 0;
 		}
 
 		///
@@ -188,10 +240,12 @@ class DvbapiClientProperties {
 		}
 
 	protected:
-		struct dvbcsa_bs_key_s *_key[2];
+		struct dvbcsa_bs_key_s   *_key[2];
 		struct dvbcsa_bs_batch_s *_batch;
+		struct dvbcsa_bs_batch_s *_ts;
 
 		int _batchSize;
+		int _batchCount;
 		int _parity;
 
 		TSTableData _pat;

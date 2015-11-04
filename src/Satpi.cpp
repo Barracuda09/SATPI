@@ -248,12 +248,14 @@ int main(int argc, char *argv[]) {
 
 	// notify we are alive
 	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
+	SI_LOG_INFO("Number of processors online: %d", ThreadBase::getNumberOfProcessorsOnline());
 
 	InterfaceAttr interface;
 	Streams streams;
 #ifdef LIBDVBCSA
 	Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((Functor1Ret<StreamProperties &, int>*)0, streams, &Streams::getStreamProperties);
-	DvbapiClient dvbapi(getStreamProperties);
+	Functor1Ret<bool, int> updateFrontend = makeFunctor((Functor1Ret<bool, int>*)0, streams, &Streams::updateFrontend);
+	DvbapiClient dvbapi(getStreamProperties, updateFrontend);
 	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
 	HttpServer httpserver(interface, streams, properties, &dvbapi);

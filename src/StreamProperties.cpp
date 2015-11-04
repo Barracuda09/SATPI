@@ -91,6 +91,10 @@ void StreamProperties::getECMFilterData(int &demux, int &filter, int pid) const 
 	_channelData._pidTable.getECMFilterData(demux, filter, pid);
 }
 
+bool StreamProperties::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
+	return _channelData._pidTable.getActiveECMFilterData(demux, filter, pid);
+}
+
 bool StreamProperties::isECM(int pid) const {
 	return _channelData._pidTable.isECM(pid);
 }
@@ -138,7 +142,7 @@ unsigned int StreamProperties::getRtcpSignalUpdateFrequency() const {
 
 void StreamProperties::fromXML(const std::string &xml) {
 	MutexLock lock(_mutex);
-	
+
 	std::string element;
 	if (findXMLElement(xml, "diseqc_repeat.value", element)) {
 		_diseqcRepeat = (element == "true") ? true : false;

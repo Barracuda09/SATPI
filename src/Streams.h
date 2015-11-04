@@ -80,6 +80,9 @@ class Streams :
 		///
 		StreamProperties &getStreamProperties(int streamID);
 
+		///
+		bool updateFrontend(int streamID);
+
 	protected:
 
 	private:

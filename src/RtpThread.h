@@ -18,18 +18,15 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef RTP_THREAD_H_INCLUDE
-#define RTP_THREAD_H_INCLUDE
+#define RTP_THREAD_H_INCLUDE RTP_THREAD_H_INCLUDE
 
 #include "ThreadBase.h"
 #include "Mutex.h"
+#include "RtpPacketBuffer.h"
 
 #include <poll.h>
-#include <stdint.h>
 
-#define RTP_HEADER_LEN  12
-
-#define MTU             1500
-#define TS_PACKET_SIZE  188
+#define MAX_BUF 100
 
 // forward declaration
 class StreamClient;
@@ -68,31 +65,36 @@ class RtpThread :
 
 	private:
 		long getmsec();
-		
+
 		enum State {
 			Running,
 			Pause,
 			Paused,
 		};
-		
+
+		///
+		bool readFullRtpPacket(RtpPacketBuffer &buffer);
+
+		/// send the RTP 'full' packet
+		void sendRtpPacket(RtpPacketBuffer &buffer, const StreamClient &client);
+
 		State getState() const      { MutexLock lock(_mutex); return _state; }
 		void  setState(State state) { MutexLock lock(_mutex); _state = state; }
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int            _socket_fd;      //
-		StreamClient  *_clients;       //
-		unsigned char  _buffer[MTU];    // RTP/UDP buffer
-		unsigned char *_bufPtr;        // RTP/UDP buffer pointer
-		long           _send_interval;  // RTP interval time (100ms)
-		uint16_t       _cseq;           // RTP sequence number
-		StreamProperties &_properties; //
-		struct pollfd _pfd[1];         //
-		Mutex         _mutex;          //
-		State         _state;          //
-
-		DvbapiClient  *_dvbapi;        //
+		int              _socket_fd;         //
+		StreamClient     *_clients;          //
+		RtpPacketBuffer  _rtpBuffer[MAX_BUF];//
+		size_t           _writeIndex;        //
+		size_t           _readIndex;         //
+		uint16_t         _cseq;              // RTP sequence number
+		StreamProperties &_properties;       //
+		struct pollfd    _pfd[1];            //
+		Mutex            _mutex;             //
+		State            _state;             //
+		DvbapiClient     *_dvbapi;           //
 
 }; // class RtpThread
 

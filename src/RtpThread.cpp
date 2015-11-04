@@ -43,7 +43,6 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 		ThreadBase("RtpThread"),
 		_socket_fd(-1),
 		_clients(clients),
-		_send_interval(0),
 		_cseq(0),
 		_properties(properties),
 		_state(Running),
@@ -53,21 +52,12 @@ RtpThread::RtpThread(StreamClient *clients, StreamProperties &properties, Dvbapi
 #endif
 	_pfd[0].fd = -1;
 
+	// Initialize all RTP packets
 	uint32_t ssrc = _properties.getSSRC();
 	long timestamp = _properties.getTimestamp();
-
-	_buffer[0]  = 0x80;                         // version: 2, padding: 0, extension: 0, CSRC: 0
-	_buffer[1]  = 33;                           // marker: 0, payload type: 33 (MP2T)
-	_buffer[2]  = (_cseq >> 8) & 0xff;          // sequence number
-	_buffer[3]  = (_cseq >> 0) & 0xff;          // sequence number
-	_buffer[4]  = (timestamp >> 24) & 0xff;     // timestamp
-	_buffer[5]  = (timestamp >> 16) & 0xff;     // timestamp
-	_buffer[6]  = (timestamp >>  8) & 0xff;     // timestamp
-	_buffer[7]  = (timestamp >>  0) & 0xff;     // timestamp
-	_buffer[8]  = (ssrc >> 24) & 0xff;          // synchronization source
-	_buffer[9]  = (ssrc >> 16) & 0xff;          // synchronization source
-	_buffer[10] = (ssrc >>  8) & 0xff;          // synchronization source
-	_buffer[11] = (ssrc >>  0) & 0xff;          // synchronization source
+	for (size_t i = 0; i < MAX_BUF; ++i) {
+		_rtpBuffer[i].initialize(ssrc, timestamp);
+	}
 }
 
 RtpThread::~RtpThread() {
@@ -98,6 +88,10 @@ bool RtpThread::startStreaming(int fd_dvr) {
 	}
 	// Set priority above normal for RTP Thread
 	setPriority(AboveNormal);
+
+	// Set affinity with CPU
+//	setAffinity(3);
+
 	SI_LOG_INFO("Stream: %d, Start   RTP stream to %s:%d (fd: %d)", streamID,
 	            _clients[0].getIPAddress().c_str(), _clients[0].getRtpSocketPort(), _pfd[0].fd);
 
@@ -155,6 +149,16 @@ bool RtpThread::pauseStreaming(int clientID) {
 	return true;
 }
 
+bool RtpThread::readFullRtpPacket(RtpPacketBuffer &buffer) {
+	// try read maximum amount of bytes from DVR
+	const int bytes = read(_pfd[0].fd, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+	if (bytes > 0) {
+		buffer.addAmountOfBytesWritten(bytes);
+		return buffer.full();
+	}
+	return false;
+}
+
 long RtpThread::getmsec() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -166,14 +170,19 @@ void RtpThread::threadEntry() {
 
 	// init
 	_cseq = 0x0000;
-	_bufPtr = _buffer + RTP_HEADER_LEN;
 	_pfd[0].events  = POLLIN | POLLPRI;
 	_pfd[0].revents = 0;
+
+	_writeIndex = 0;
+	_readIndex  = 0;
+	_rtpBuffer[_writeIndex].reset();
 
 	while (running()) {
 		switch (getState()) {
 			case Pause:
-				_bufPtr = _buffer + RTP_HEADER_LEN;
+				_writeIndex = 0;
+				_readIndex  = 0;
+				_rtpBuffer[_writeIndex].reset();
 				setState(Paused);
 				break;
 			case Paused:
@@ -185,60 +194,39 @@ void RtpThread::threadEntry() {
 					// call poll with a timeout of 100 ms
 					const int pollRet = poll(_pfd, 1, 100);
 					if (pollRet > 0) {
-						// try read TS_PACKET_SIZE from DVR
-						const int bytes_read = read(_pfd[0].fd, _bufPtr, TS_PACKET_SIZE);
-						if (bytes_read > 0) {
+						if (readFullRtpPacket(_rtpBuffer[_writeIndex])) {
+/*
 							// sync byte then check cc
-							if (_bufPtr[0] == 0x47 && bytes_read > 3) {
+							if (_bufferPtrWrite[0] == 0x47 && bytes_read > 3) {
 								// get PID and CC from TS
-								const uint16_t pid = ((_bufPtr[1] & 0x1f) << 8) | _bufPtr[2];
-								const uint8_t  cc  =   _bufPtr[3] & 0x0f;
+								const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
+								const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
 								_properties.addPIDData(pid, cc);
 							}
-							// inc buffer pointer
-							_bufPtr += bytes_read;
-							const int len = _bufPtr - _buffer;
-
-							// rtp buffer full
-							const long time_ms = getmsec();
-							if ((len + TS_PACKET_SIZE) > MTU || _send_interval < time_ms) {
-								// reset the time interval
-								_send_interval = time_ms + 100;
-
-								// update sequence number
-								++_cseq;
-								_buffer[2] = ((_cseq >> 8) & 0xFF); // sequence number
-								_buffer[3] =  (_cseq & 0xFF);       // sequence number
-
-								// update timestamp
-								const long timestamp = time_ms;
-								_buffer[4] = (timestamp >> 24) & 0xFF; // timestamp
-								_buffer[5] = (timestamp >> 16) & 0xFF; // timestamp
-								_buffer[6] = (timestamp >>  8) & 0xFF; // timestamp
-								_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
-
-								// RTP packet octet count (Bytes)
-								uint32_t byte = (len - RTP_HEADER_LEN);
-								_properties.addRtpData(byte, timestamp);
+*/
 #ifdef LIBDVBCSA
-								if (_dvbapi->decrypt(_properties.getStreamID(), _buffer + RTP_HEADER_LEN, byte)) {
-									// send the RTP packet
-									if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,
-											  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
-										PERROR("send RTP");
-									}
-									// set bufPtr to begin of RTP data (after Header)
-									_bufPtr = _buffer + RTP_HEADER_LEN;
-								}
-#else
-								// send the RTP packet
-								if (sendto(_socket_fd, _buffer, len, MSG_DONTWAIT,
-										  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
-									PERROR("send RTP");
-								}
-								// set bufPtr to begin of RTP data (after Header)
-								_bufPtr = _buffer + RTP_HEADER_LEN;
+							//
+							_dvbapi->decrypt(_properties.getStreamID(), _rtpBuffer[_writeIndex]);
 #endif
+							// goto next, so inc write index
+							++_writeIndex;
+							_writeIndex %= MAX_BUF;
+
+							// reset next
+							_rtpBuffer[_writeIndex].reset();
+
+							// should we send some packets
+							while (_rtpBuffer[_readIndex].isReadyToSend()) {
+								sendRtpPacket(_rtpBuffer[_readIndex], client);
+
+								// inc read index
+								++_readIndex;
+								_readIndex %= MAX_BUF;
+
+								// should we stop searching
+								if (_readIndex == _writeIndex) {
+									break;
+								}
 							}
 						}
 					}
@@ -249,5 +237,32 @@ void RtpThread::threadEntry() {
 				usleep(50000);
 				break;
 		}
+	}
+}
+
+void RtpThread::sendRtpPacket(RtpPacketBuffer &buffer, const StreamClient &client) {
+	unsigned char *rtpBuffer = buffer.getReadBufferPtr();
+
+	// update sequence number
+	++_cseq;
+	rtpBuffer[2] = ((_cseq >> 8) & 0xFF); // sequence number
+	rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
+
+	// update timestamp
+	const long timestamp = getmsec();
+	rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
+	rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
+	rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
+	rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+
+	const unsigned int size = buffer.getBufferSize();
+
+	// RTP packet octet count (Bytes)
+	_properties.addRtpData(size, timestamp);
+
+	// send the RTP packet
+	if (sendto(_socket_fd, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,
+			  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
+		PERROR("send RTP");
 	}
 }

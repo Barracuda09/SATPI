@@ -23,6 +23,7 @@
 #include "StringConverter.h"
 #include "StreamProperties.h"
 #include "Configure.h"
+#include "RtpPacketBuffer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,14 +135,16 @@ static uint32_t calculateCRC32(const unsigned char *data, int len) {
 #define CRC(data, sectionLength) (data[sectionLength - 4 + 8]     << 24) | (data[sectionLength - 4 + 8 + 1] << 16) | \
                                  (data[sectionLength - 4 + 8 + 2] <<  8) |  data[sectionLength - 4 + 8 + 3]
 
-DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties) :
+DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties,
+			const Functor1Ret<bool, int> &updateFrontend) :
 		ThreadBase("DvbapiClient"),
 		_connected(false),
 		_enabled(false),
 		_serverIpAddr("127.0.0.1"),
 		_serverName("Not connected"),
 		_serverPort(15011),
-		_getStreamProperties(getStreamProperties) {
+		_getStreamProperties(getStreamProperties),
+		_updateFrontend(updateFrontend) {
 	startThread();
 }
 
@@ -150,84 +153,88 @@ DvbapiClient::~DvbapiClient() {
 	joinThread();
 }
 
-bool DvbapiClient::decrypt(int streamID, unsigned char *data, uint32_t &len) {
+void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 	MutexLock lock(_mutex);
 	if (_connected && _enabled) {
 		StreamProperties &properties = _getStreamProperties(streamID);
-		struct dvbcsa_bs_batch_s *batch = properties.getBatchBuffer();
-		int parityBegin = -1;
-		unsigned char *ptr = data;
-		dvbcsa_bs_key_s *key = NULL;
-		int batchCnt = 0;
-		for (uint32_t i = 0; i < len; i += 188) {
+		const size_t size = buffer.getNumberOfTSPackets();
+		for (size_t i = 0; i < size; ++i) {
+			// Get TS packet from the buffer
+			unsigned char *data = buffer.getTSPacketPtr(i);
+
 			// Check is this the beginning of the TS and no Transport error indicator
-			if (ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80) {
+			if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
+				// get PID from TS
+				const int pid = ((data[1] & 0x1f) << 8) | data[2];
 
-				if (ptr[3] & 0x80) {
+				// this packet scrambled and no NULL packet
+				if (data[3] & 0x80 && pid < 0x1FFF) {
 					// scrambled TS packet with even(0) or odd(1) key?
-					const int parity = (ptr[3] & 0x40) > 0;
+					const int parity = (data[3] & 0x40) > 0;
 
-					// set begin parity (to check if it changed in this batch)
-					if (parityBegin == -1) {
-						parityBegin = parity;
-						key = properties.getKey(parity);
-					} else if (parity != parityBegin) {
-						// parity has changed, decrypt up until now
-						if (key != NULL) {
-							batch[batchCnt].data = NULL;
-							dvbcsa_bs_decrypt(key, batch, 184);
+					// get batch parity and count
+					const int parityBatch = properties.getBatchParity();
+					const int countBatch  = properties.getBatchCount();
+
+					// check if the parity changed in this batch (but should not be the begin of the batch)
+					// or check if this batch full, then decrypt this batch
+					if (countBatch != 0 && (parity != parityBatch || countBatch >= properties.getMaximumBatchSize())) {
+						//
+						SI_LOG_COND_DEBUG(parity != parityBatch, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
+								streamID, parityBatch, parity, countBatch);
+
+						// decrypt this batch
+						properties.decryptBatch();
+					}
+
+					// Can we add this packet to the batch
+					if (properties.getKey(parity) != NULL) {
+						// check is there an adaptation field we should skip, then add it to batch
+						int skip = 4;
+						if((data[3] & 0x20) && (data[4] < 183)) {
+							skip += data[4] + 1;
 						}
-						SI_LOG_DEBUG("Stream: %d, Parity changed from %d to %d, sending batch size %d", streamID, parityBegin, parity, batchCnt);
-						batchCnt = 0;
-						parityBegin = parity;
-						key = properties.getKey(parity);
-					}
+						properties.setBatchData(data + skip, 188 - skip, parity, data);
 
-					// check is there an adaptation field we should skip
-					int skip = 4;
-					if((ptr[3] & 0x20) && (ptr[4] < 183)) {
-						skip += ptr[4] + 1;
-					}
-					batch[batchCnt].data = ptr + skip;
-					batch[batchCnt].len  = 188 - skip;
-					++batchCnt;
+						// set pending decrypt for this buffer
+						buffer.setDecryptPending();
+					} else {
+						// set decrypt failed by setting NULL packet ID..
+						data[1] |= 0x1F;
+						data[2] |= 0xFF;
 
-					// clear scramble flag
-					ptr[3] &= 0x3F;
+						// clear scramble flag, so we can send it.
+						data[3] &= 0x3F;
+					}
 				} else {
-					// get PID from TS
-					const int pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 					if (pid == 0) {
 						// Check PAT pid and start indicator and table ID
-						collectPAT(properties, ptr, 188);
+						collectPAT(properties, data, 188);
 					} else if (properties.isPMT(pid)) {
-						collectPMT(properties, ptr, 188);
+						collectPMT(properties, data, 188);
 						// Do we need to clean PMT
-						cleanPacketPMT(properties, ptr);
+						cleanPacketPMT(properties, data);
 					} else if (properties.isECM(pid)) {
-						collectECM(properties, ptr);
+						collectECM(properties, data);
 					}
 				}
 			}
-			// goto next TS packet
-			ptr += 188;
-		}
-		// decrypt (the rest)
-		if (key != NULL) {
-			batch[batchCnt].data = NULL;
-			dvbcsa_bs_decrypt(key, batch, 184);
 		}
 	}
-	return true;
 }
 
 bool DvbapiClient::stopDecrypt(int streamID) {
 	MutexLock lock(_mutex);
 	if (_connected) {
+		int demux = 0xFF; // demux index wildcard
+		int filter = 0;
+		int pid = 0;
 		unsigned char caPMT[8];
 
 		StreamProperties &properties = _getStreamProperties(streamID);
-		properties.freeKeys();
+		if (!properties.getActiveECMFilterData(demux, filter, pid)) {
+			SI_LOG_DEBUG("Stream: %d, Strange, did not find any active ECM filter!", streamID);
+		}
 
 		// Stop 9F 80 3f 04 83 02 00 <demux index>
 		caPMT[0] = (DVBAPI_AOT_CA_STOP >> 24) & 0xFF;
@@ -237,14 +244,15 @@ bool DvbapiClient::stopDecrypt(int streamID) {
 		caPMT[4] = 0x83;
 		caPMT[5] = 0x02;
 		caPMT[6] = 0x00;
-		caPMT[7] = 0xFF;  // demux index wildcard
+		caPMT[7] = demux;
 
-		SI_LOG_BIN_DEBUG(caPMT, sizeof(caPMT), "Stream: %d, PMT Stop DMX", streamID);
+		SI_LOG_BIN_DEBUG(caPMT, sizeof(caPMT), "Stream: %d, Stop CA Decrypt DMX: %d  PID: %d", streamID, demux, pid);
 
 		// cleaning tables
 		SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables...", streamID);
 		properties.setTableCollected(PAT_TABLE_ID, false);
 		properties.setTableCollected(PMT_TABLE_ID, false);
+		properties.freeKeys();
 
 		if (send(_client.getFD(), caPMT, sizeof(caPMT), MSG_DONTWAIT) == -1) {
 			SI_LOG_ERROR("Stream: %d, PMT Stop DMX - send data to server failed", streamID);
@@ -326,7 +334,7 @@ void DvbapiClient::collectPAT(StreamProperties &properties, const unsigned char 
 
 			len = sectionLength - 4 - 6; // 4 = CRC  6 = PAT Table begin from section length
 
-			SI_LOG_BIN_DEBUG(cData, properties.getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
+//			SI_LOG_BIN_DEBUG(cData, properties.getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
 
 			const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 			SI_LOG_INFO("Stream: %d, PAT: Calc CRC32: %04X   Msg CRC32: %04X", streamID, calccrc, crc);
@@ -479,14 +487,17 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 			int cpyLength = progInfo.size();
 			int piLenght  = cpyLength + 1 + 4;
 			int totLength = piLenght + 6;
+
 // HACK HACK (Add some STREAM PID of video)
 			{
-				const char tmp[5] = { 0x01, 0x00, 0x0B, 0x00, 0x06 };
+//				const char tmp[5] = { 0x01, 0x00, 0x0B, 0x00, 0x06 };
+				const char tmp[5] = { 0x00, 0x00, 0x0B, 0x00, 0x06 };
 				progInfo.append(tmp, sizeof(tmp));
 				cpyLength += sizeof(tmp);
 				totLength += sizeof(tmp);
 			}
 // HACK HACK
+
 			// DVBAPI_AOT_CA_PMT 0x9F 80 32 82
 			caPMT[ 0] = (DVBAPI_AOT_CA_PMT >> 24) & 0xFF;
 			caPMT[ 1] = (DVBAPI_AOT_CA_PMT >> 16) & 0xFF;
@@ -528,12 +539,11 @@ void DvbapiClient::collectECM(StreamProperties &properties, const unsigned char 
 		// Do we have and filter and did the parity change?
 		if (filter != -1 && demux != -1 && properties.getKeyParity(pid) != tableID) {
 //			const int cc            =    data[3] & 0x0f;
-			const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3;
-			const int length        = sectionLength + 6;
+			const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
 
 			properties.setKeyParity(pid, tableID);
 
-//			SI_LOG_BIN_DEBUG(data, len, "Stream: %d, ECM sectionlenght: %d  data", streamID, sectionLength);
+//			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, ECM sectionlenght: %d  data", streamID, sectionLength);
 
 			unsigned char caECM[2048];
 			caECM[0] = (DVBAPI_FILTER_DATA >> 24) & 0xFF;
@@ -543,6 +553,7 @@ void DvbapiClient::collectECM(StreamProperties &properties, const unsigned char 
 			caECM[4] =  demux;
 			caECM[5] =  filter;
 			memcpy(&caECM[6], &data[5], sectionLength); // copy ECM data
+			const int length = sectionLength + 6; // 6 = caECM header
 
 //			SI_LOG_BIN_DEBUG(caECM, length, "Stream: %d, ECM data", streamID);
 			SI_LOG_DEBUG("Stream: %d, Send ECM data with %02X", streamID, tableID);
@@ -604,6 +615,8 @@ void DvbapiClient::threadEntry() {
 
 						StreamProperties &properties = _getStreamProperties(adapter);
 						properties.setECMFilterData(demux, filter, pid, true);
+						// now update frontend, PID list has changed
+						_updateFrontend(adapter);
 					} else if (cmd == DVBAPI_DMX_STOP) {
 						const int adapter = buf[4];
 						const int demux   = buf[5];
@@ -612,6 +625,8 @@ void DvbapiClient::threadEntry() {
 
 						StreamProperties &properties = _getStreamProperties(adapter);
 						properties.setECMFilterData(demux, filter, pid, false);
+						// now update frontend, PID list has changed
+						_updateFrontend(adapter);
 					} else if (cmd == DVBAPI_CA_SET_DESCR) {
 						const int adapter =  buf[ 4];
 						const int index   = (buf[ 5] << 24) | (buf[ 6] << 16) | (buf[ 7] << 8) | buf[ 8];

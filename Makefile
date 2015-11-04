@@ -48,6 +48,7 @@ SOURCES = Version.cpp \
 	RtspServer.cpp \
 	SsdpServer.cpp \
 	RtpThread.cpp \
+	RtpPacketBuffer.cpp \
 	RtcpThread.cpp \
 	XMLSupport.cpp
 
@@ -103,6 +104,13 @@ simu:
 # sudo apt-get install graphviz doxygen
 docu:
 	doxygen ./doxygen
+
+help:
+	@echo "Help, use these command for building this project:"
+	@echo " - Make debug version             :  make debug"
+	@echo " - Make debug version with DVBAPI :  make debug LIBDVBCSA=yes"
+	@echo " - Make PlantUML graph            :  make plantuml"
+	@echo " - Make Doxygen docmumentation    :  make doc"
 
 # Download PlaneUML from http://plantuml.com/download.html
 # and put it into the root of the project directory

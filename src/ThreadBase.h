@@ -1,6 +1,6 @@
 /* ThreadBase.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -61,7 +61,7 @@ class ThreadBase {
 			MutexLock lock(_mutex);
 			return _run;
 		}
-		
+
 		/// Stop the running thread give 5.0 sec to stop else cancel it
 		void stopThread() {
 			{
@@ -92,6 +92,21 @@ class ThreadBase {
 		/// Will not return until the internal thread has exited.
 		void joinThread() {
 			(void) pthread_join(_thread, NULL);
+		}
+
+		/// This will set the threads affinity (which CPU is used).
+		/// @param cpu Set threads affinity with this CPU.
+		void setAffinity(int cpu) {
+			cpu_set_t cpus;
+			CPU_ZERO(&cpus);
+			CPU_SET(cpu, &cpus);
+			pthread_setaffinity_np(_thread, sizeof(cpu_set_t), &cpus);
+		}
+
+		/// This will get the scheduled affinity of this thread.
+		/// @return @c returns the affinity of this thread.
+		int getScheduledAffinity() const {
+			return sched_getcpu();
 		}
 
 		/// Set the thread priority of the current thread.
@@ -131,6 +146,18 @@ class ThreadBase {
 			return (pthread_setschedprio(_thread, linuxPriority) == 0);
 		}
 
+		/// Get the number of processors that are online (available)
+		/// @return @c returns the number of processors that are online
+		static int getNumberOfProcessorsOnline() {
+			return sysconf(_SC_NPROCESSORS_ONLN);
+		}
+
+		/// Get the number of processors that are on this host
+		/// @return @c returns the number of processors that are in this host
+		static int getNumberOfProcessorsOnHost() {
+			return sysconf(_SC_NPROCESSORS_CONF);
+		}
+
 	protected:
 		/// thread entry
 		virtual void threadEntry() = 0;
@@ -153,7 +180,7 @@ class ThreadBase {
 			MutexLock lock(_mutex);
 			return _exit;
 		}
-		
+
 		// =======================================================================
 		// Data members
 		// =======================================================================

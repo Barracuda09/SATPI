@@ -99,10 +99,11 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-void Stream::updateFrontend() {
+bool Stream::updateFrontend() {
 	if (_properties.hasPIDTableChanged()) {
 		_frontend.update(_properties);
 	}
+	return true;
 }
 
 bool Stream::update(int clientID) {

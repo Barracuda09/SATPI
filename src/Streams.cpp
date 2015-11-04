@@ -136,8 +136,8 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 #endif
 	_dummyStream = new Stream(0, dvbapi);
 	_maxStreams = getAttachedFrontendCount(path, 0);
-	_stream = new Stream *[_maxStreams+1];
-	if (_stream) {
+	_stream = new Stream *[_maxStreams + 1];
+	if (_stream != NULL) {
 		for (int i = 0; i < _maxStreams; ++i) {
 			_stream[i] = new Stream(i, dvbapi);
 		}
@@ -296,15 +296,16 @@ void Streams::checkStreamClientsWithTimeout() {
 	for (size_t streamID = 0; streamID < static_cast<size_t>(_maxStreams); ++streamID) {
 		if (_stream[streamID]->streamInUse()) {
 			_stream[streamID]->checkStreamClientsWithTimeout();
-
-			// @TODO - is this the correct place?? for now it works
-			_stream[streamID]->updateFrontend();
 		}
 	}
 }
 
 StreamProperties & Streams::getStreamProperties(int streamID) {
 	return _stream[streamID]->getStreamProperties();
+}
+
+bool Streams::updateFrontend(int streamID) {
+	return _stream[streamID]->updateFrontend();
 }
 
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {

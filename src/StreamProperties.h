@@ -202,6 +202,9 @@ class StreamProperties
 		void getECMFilterData(int &demux, int &filter, int pid) const;
 
 		///
+		bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
+
+		///
 		bool isECM(int pid) const;
 
 		///

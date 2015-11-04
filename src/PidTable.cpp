@@ -26,9 +26,8 @@
 
 PidTable::PidTable() {
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
-		_data[i].fd_dmx   = -1;
+		_data[i].fd_dmx = -1;
 		resetPid(i);
-
 	}
 	_changed = false;
 }
@@ -42,10 +41,13 @@ void PidTable::resetPid(int pid) {
 	_data[pid].count    = 0;
 
 	_data[pid].pmt      = false;
-	_data[pid].ecm      = false;
-	_data[pid].demux    = -1;
-	_data[pid].filter   = -1;
-	_data[pid].parity   = -1;
+	// @todo this is an ugly hack... have to find another way
+	if (!_data[pid].ecm) {
+		_data[pid].ecm      = false;
+		_data[pid].demux    = -1;
+		_data[pid].filter   = -1;
+		_data[pid].parity   = -1;
+	}
 }
 
 uint32_t PidTable::getPacketCounter(int pid) const {
@@ -152,4 +154,18 @@ void PidTable::setECMFilterData(int demux, int filter, int pid, bool set) {
 void PidTable::getECMFilterData(int &demux, int &filter, int pid) const {
 	demux  = _data[pid].demux;
 	filter = _data[pid].filter;
+}
+
+bool PidTable::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
+	demux = 0xff;
+	filter = -1;
+	for (size_t i = 0; i < MAX_PIDS; ++i) {
+		if (_data[i].fd_dmx != -1 && isECM(i)) {
+			pid = i;
+			demux = _data[i].demux;
+			filter = _data[i].filter;
+			return true;
+		}
+	}
+	return false;
 }

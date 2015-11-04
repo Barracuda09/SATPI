@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef DVB_API_CLIENT_H_INCLUDE
-#define DVB_API_CLIENT_H_INCLUDE
+#define DVB_API_CLIENT_H_INCLUDE DVB_API_CLIENT_H_INCLUDE
 
 #include "ThreadBase.h"
 #include "SocketClient.h"
@@ -30,6 +30,7 @@
 
 // Forward declarations
 class StreamProperties;
+class RtpPacketBuffer;
 
 /// The class @c DvbapiClient is for decrypting streams
 class DvbapiClient : public ThreadBase,
@@ -38,11 +39,12 @@ class DvbapiClient : public ThreadBase,
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties);
+		DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties,
+			const Functor1Ret<bool, int> &updateFrontend);
 		virtual ~DvbapiClient();
 
 		///
-		bool decrypt(int streamID, unsigned char *data, uint32_t &len);
+		void decrypt(int streamID, RtpPacketBuffer &buffer);
 
 		///
 		bool stopDecrypt(int streamID);
@@ -88,6 +90,7 @@ class DvbapiClient : public ThreadBase,
 		int _serverPort;
 
 		Functor1Ret<StreamProperties &, int> _getStreamProperties;
+		Functor1Ret<bool, int> _updateFrontend;
 
 }; // class DvbapiClient
 
