@@ -56,6 +56,7 @@ extern "C" {
 #define DVBAPI_SERVER_INFO     0xFFFF0002
 
 #define LIST_ONLY              0x03
+#define LIST_ONLY_UPDATE       0x05
 
 static uint32_t crc32Table[] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
@@ -226,7 +227,7 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 bool DvbapiClient::stopDecrypt(int streamID) {
 	MutexLock lock(_mutex);
 	if (_connected) {
-		int demux = 0xFF; // demux index wildcard
+		int demux = 0xff; // demux index wildcard
 		int filter = 0;
 		int pid = 0;
 		unsigned char caPMT[8];
@@ -235,7 +236,6 @@ bool DvbapiClient::stopDecrypt(int streamID) {
 		if (!properties.getActiveECMFilterData(demux, filter, pid)) {
 			SI_LOG_DEBUG("Stream: %d, Strange, did not find any active ECM filter!", streamID);
 		}
-
 		// Stop 9F 80 3f 04 83 02 00 <demux index>
 		caPMT[0] = (DVBAPI_AOT_CA_STOP >> 24) & 0xFF;
 		caPMT[1] = (DVBAPI_AOT_CA_STOP >> 16) & 0xFF;
@@ -244,7 +244,7 @@ bool DvbapiClient::stopDecrypt(int streamID) {
 		caPMT[4] = 0x83;
 		caPMT[5] = 0x02;
 		caPMT[6] = 0x00;
-		caPMT[7] = demux;
+		caPMT[7] = streamID;  // demux
 
 		SI_LOG_BIN_DEBUG(caPMT, sizeof(caPMT), "Stream: %d, Stop CA Decrypt DMX: %d  PID: %d", streamID, demux, pid);
 
@@ -505,7 +505,7 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 			caPMT[ 3] =  DVBAPI_AOT_CA_PMT & 0xFF;
 			caPMT[ 4] = (totLength >> 8) & 0xFF;     // Total Length of caPMT
 			caPMT[ 5] =  totLength & 0xFF;           // Total Length of caPMT
-			caPMT[ 6] = LIST_ONLY;                   // send LIST_ONLY
+			caPMT[ 6] = LIST_ONLY_UPDATE;            // send LIST_ONLY_UPDATE
 			caPMT[ 7] = (programNumber >> 8) & 0xFF; // Program ID
 			caPMT[ 8] =  programNumber & 0xFF;       //
 			caPMT[ 9] = DVBAPI_PROTOCOL_VERSION;     // Version
@@ -514,7 +514,7 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 			caPMT[12] = 0x01;                        // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
 			caPMT[13] = 0x82;                        // CAPMT_DESC_DEMUX
 			caPMT[14] = 0x02;                        // Length
-			caPMT[15] = 0x00;                        // Demux ID
+			caPMT[15] = (char) streamID;             // Demux ID
 			caPMT[16] = (char) streamID;             // streamID
 			memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
