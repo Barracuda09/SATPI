@@ -13,113 +13,42 @@
 <script src="postxmldoc.js"></script>
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
+<script src="addtableentry.js"></script>
 <script>
 	var filename = "config.xml";
 	var autoload = 1;
 	var xmlLoaded;
 
-	function validateIPaddress(value) {
-		// Regular Expression Pattern
-		var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-		if (value.match(ipformat)) {
-			return true;
-		} else {
-			alert("You have entered an invalid IP address!");
-			return false;
+	function addTableLineEntry(labelstring, xmlDoc, tagName) {
+		var page = "";
+		if (xmlDoc.getElementsByTagName(tagName).length != 0) {
+			page += "<tr>";
+			page += addTableLabel(labelstring);
+			page += addTableEntry(xmlDoc, tagName, tagName);
+			page += "<tr>";
 		}
-	}
-
-	function myOnkeyPressPost(id, tagName, value, event) {
-		var key = event.which;
-		if (key == 13) {
-			if (validateIPaddress(value) == true) {
-				changeXMLAndPost(id, tagName, value);
-			}
-		}
-	}
-
-	function changeXMLAndPost(id, tagName, value) {
-		var input = xmlLoaded.getElementsByTagName(tagName)[0];
-		input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
-		var xmlString = (new XMLSerializer()).serializeToString(xmlLoaded);
-		postData(filename, xmlString);
-	}
-
-	function addCheckboxInput(labelstring, tagName, input) {
-		var id = tagName;
-		var entry = "<div class=\"form-group\">";
-		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
-		entry += "<input class=\"form-control\" type='checkbox'";
-		if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
-			entry += "checked=\"true\"";
-		}
-		entry += "name=\"" + tagName + "\"";
-		entry += "id=\"" + id + "\"";
-		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).checked)\"";
-		entry += "/>";
-		entry += "</div>";
-		return entry;
-	}
-
-	function addNumberInput(labelstring, tagName, input) {
-		var id = tagName;
-		var entry = "<div class=\"form-group\">";
-		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
-		entry += "<input class=\"form-control\" type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
-		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-		entry += "\" min=\"5\"";
-		entry += "name=\"" + tagName + "\"";
-		entry += "id=\"" + id + "\"";
-		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
-		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-		entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
-		entry += "/>";
-		entry += "</div>";
-		return entry;
-	}
-
-	function addIPInput(labelstring, tagName, input) {
-		var id = tagName;
-		var entry = "<div class=\"form-group\">";
-		entry += "<label for=\"" + id + "\">" + labelstring + "</label>";
-		entry += "<input class=\"form-control\" type='text'";
-		entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-		entry += "name=\"" + tagName + "\"";
-		entry += "id=\"" + id + "\"";
-		entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
-		entry += "onmousedown=\"document.getElementById(id).focus()\"";
-		entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-		entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
-		entry += "/>";
-		entry += "</div>";
-		return entry;
-	}
-
-	function addInput(labelstring, xmlDoc, tagName) {
-		var check = xmlDoc.getElementsByTagName(tagName);
-		if (check.length != 0) {
-			var input = xmlDoc.getElementsByTagName(tagName)[0];
-			if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "checkbox") {
-				return addCheckboxInput(labelstring, tagName, input);
-			} else if (input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue == "ip") {
-				return addIPInput(labelstring, tagName, input);
-			} else {
-				return addNumberInput(labelstring, tagName, input);
-			}
-		} else {
-			return "";
-		}
+		return page;
 	}
 
 	function buildcontent(xmlDoc) {
-		var page = "<div class=\"container\">";
-		page += "<form role=\"form\">";
-		page += addInput("SSDP Interval (sec):", xmlDoc, "input1");
-		page += addInput("OSCam server Enabled:", xmlDoc, "OSCamEnabled");
-		page += addInput("OSCam server IP:", xmlDoc, "OSCamIP");
-		page += addInput("OSCam server PORT:", xmlDoc, "OSCamPORT");
-		page += "</form>";
-		page += "</div>";
+		var length = 1;
+		var page = "<table class=\"table table-bordered table-striped\">";
+
+		page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\">General</th></tr>";
+		page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
+		page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
+
+		// check if OSCam part is there
+		if (xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {
+			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\">OSCam</th></tr>";
+			page += addTableLineEntry("OSCam server Enabled", xmlDoc, "OSCamEnabled");
+			page += addTableLineEntry("OSCam server name", xmlDoc, "OSCamServerName");
+			page += addTableLineEntry("OSCam server IP", xmlDoc, "OSCamIP");
+			page += addTableLineEntry("OSCam server PORT", xmlDoc, "OSCamPORT");
+			page += addTableLineEntry("Rewrite PMT", xmlDoc, "RewritePMT");
+		}
+
+		page +=	 "</table><br>";
 		return page;
 	}
 	function updatePage() {
@@ -142,17 +71,19 @@
 <div class="container-fluid">
 	<div class="start">
 		<h3>Main Configure Page</h3>
-		<div id="content" class="log"></div>
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			setMenuItemActive("config");
+		<div class="table-responsive">
+			<div id="content"></div>
+			<script>
+				// make menu
+				document.getElementById("menu").innerHTML = buildmenu();
+				setMenuItemActive("config");
 
-			// Call the ajax refresh each refresh_time seconds
-			var refresh_time = 20000;
-			updatePage();
-			setInterval("updatePage()", refresh_time);
-		</script>
+				// Call the ajax refresh each refresh_time seconds
+				var refresh_time = 3000;
+				updatePage();
+				setInterval("updatePage()", refresh_time);
+			</script>
+		</div>
 	</div>
 </div>
 <div class="navbar navbar-default navbar-fixed-bottom">

@@ -26,6 +26,7 @@
 #include "RtpThread.h"
 #include "RtcpThread.h"
 #include "StreamProperties.h"
+#include "XMLSupport.h"
 
 #include <string>
 
@@ -34,7 +35,7 @@ class SocketClient;
 class DvbapiClient;
 
 /// The class @c Stream carries all the data/information of an stream
-class Stream  {
+class Stream : public XMLSupport  {
 	public:
 		static const unsigned int MAX_CLIENTS;
 
@@ -77,6 +78,8 @@ class Stream  {
 		/// Check is this stream used already
 		bool streamInUse() const { return _streamInUse; }
 
+		/// Check is this stream enabled, can we use it?
+		bool streamEnabled() const { return _enabled; }
 
 		/// Close the stream client with clientID
 		void close(int clientID);
@@ -91,15 +94,15 @@ class Stream  {
 		void checkStreamClientsWithTimeout();
 
 		/// Add stream data to an XML for storing or web interface
-		void addToXML(std::string &xml) const;
+		virtual void addToXML(std::string &xml) const;
 		
 		/// Get stream data from an XML for restoring or web interface
-		void fromXML(const std::string &xml);
+		virtual void fromXML(const std::string &xml);
 
-		///
+		/// Get the stream properties for this stream
 		StreamProperties & getStreamProperties() { return _properties; }
 		
-		///
+		/// Update the frontend of this stream
 		bool updateFrontend();
 
 		// =======================================================================
@@ -130,6 +133,7 @@ class Stream  {
 		// =======================================================================
 		// Data members
 		// =======================================================================
+		bool             _enabled;     // is this stream enabled, could we use it?
 		bool             _streamInUse; //
 		StreamClient     *_client;     // defines the participants of this stream
 		                               // index 0 is the owner of this stream

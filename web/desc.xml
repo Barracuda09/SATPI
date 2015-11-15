@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <root xmlns="urn:schemas-upnp-org:device-1-0" configId="0">
 	<specVersion>
 		<major>1</major>
@@ -53,6 +52,9 @@
 		<presentationURL>/</presentationURL>
 		<!-- filled in by server -->
 		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPCAP>
+		<!-- filled in by server -->
+		<!-- filled in by server -->
+		<satip:X_SATIPM3U xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPM3U>
 		<!-- filled in by server -->
 	</device>
 </root>

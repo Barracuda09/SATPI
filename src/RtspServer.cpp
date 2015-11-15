@@ -73,7 +73,7 @@ bool RtspServer::process(SocketClient &socketclient) {
 
 	int clientID;
 	Stream *stream = _streams.findStreamAndClientIDFor(socketclient, clientID);
-	if (stream) {
+	if (stream != NULL) {
 		std::string method;
 		if (StringConverter::getMethod(msg, method)) {
 			stream->processStream(msg, clientID, method);

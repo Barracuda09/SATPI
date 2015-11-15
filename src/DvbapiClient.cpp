@@ -41,7 +41,7 @@ extern "C" {
 #include <sys/types.h>
 
 //constants used in socket communication:
-#define DVBAPI_PROTOCOL_VERSION         1
+#define DVBAPI_PROTOCOL_VERSION         2
 
 #define DVBAPI_CA_SET_PID      0x40086f87
 #define DVBAPI_CA_SET_DESCR    0x40106f86
@@ -54,6 +54,7 @@ extern "C" {
 #define DVBAPI_FILTER_DATA     0xFFFF0000
 #define DVBAPI_CLIENT_INFO     0xFFFF0001
 #define DVBAPI_SERVER_INFO     0xFFFF0002
+#define DVBAPI_ECM_INFO        0xFFFF0003
 
 #define LIST_ONLY              0x03
 #define LIST_ONLY_UPDATE       0x05
@@ -141,6 +142,7 @@ DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStream
 		ThreadBase("DvbapiClient"),
 		_connected(false),
 		_enabled(false),
+		_rewritePMT(false),
 		_serverIpAddr("127.0.0.1"),
 		_serverName("Not connected"),
 		_serverPort(15011),
@@ -170,6 +172,7 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 
 				// this packet scrambled and no NULL packet
 				if (data[3] & 0x80 && pid < 0x1FFF) {
+
 					// scrambled TS packet with even(0) or odd(1) key?
 					const int parity = (data[3] & 0x40) > 0;
 
@@ -210,11 +213,13 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 				} else {
 					if (pid == 0) {
 						// Check PAT pid and start indicator and table ID
-						collectPAT(properties, data, 188);
+						collectPAT(properties, data);
 					} else if (properties.isPMT(pid)) {
-						collectPMT(properties, data, 188);
+						collectPMT(properties, data);
 						// Do we need to clean PMT
-						cleanPacketPMT(properties, data);
+						if (_rewritePMT) {
+							cleanPMT(properties, data);
+						}
 					} else if (properties.isECM(pid)) {
 						collectECM(properties, data);
 					}
@@ -227,7 +232,7 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 bool DvbapiClient::stopDecrypt(int streamID) {
 	MutexLock lock(_mutex);
 	if (_connected) {
-		int demux = 0xff; // demux index wildcard
+		int demux = streamID; // demux index
 		int filter = 0;
 		int pid = 0;
 		unsigned char caPMT[8];
@@ -245,6 +250,7 @@ bool DvbapiClient::stopDecrypt(int streamID) {
 		caPMT[5] = 0x02;
 		caPMT[6] = 0x00;
 		caPMT[7] = streamID;  // demux
+//		caPMT[7] = demux;
 
 		SI_LOG_BIN_DEBUG(caPMT, sizeof(caPMT), "Stream: %d, Stop CA Decrypt DMX: %d  PID: %d", streamID, demux, pid);
 
@@ -297,12 +303,15 @@ void DvbapiClient::sendClientInfo() {
 	std::string name = "SatPI ";
 	name += satpi_version;
 
-	int len = name.size() - 1; // ignoring null termination
+	const int len = name.size() - 1; // ignoring null termination
 	unsigned char buff[7 + len];
-	uint32_t req = htonl(DVBAPI_CLIENT_INFO);
-	memcpy(&buff[0], &req, 4);
-	int16_t proto_version = htons(DVBAPI_PROTOCOL_VERSION);
-	memcpy(&buff[4], &proto_version, 2);
+
+	buff[0] = (DVBAPI_CLIENT_INFO >> 24) & 0xFF;
+	buff[1] = (DVBAPI_CLIENT_INFO >> 16) & 0xFF;
+	buff[2] = (DVBAPI_CLIENT_INFO >>  8) & 0xFF;
+	buff[3] =  DVBAPI_CLIENT_INFO & 0xFF;
+	buff[4] = (DVBAPI_PROTOCOL_VERSION >>  8) & 0xFF;
+	buff[5] =  DVBAPI_PROTOCOL_VERSION & 0xFF;
 	buff[6] = len;
 	memcpy(&buff[7], name.c_str(), len);
 
@@ -311,7 +320,7 @@ void DvbapiClient::sendClientInfo() {
 	}
 }
 
-void DvbapiClient::collectPAT(StreamProperties &properties, const unsigned char *data, int len) {
+void DvbapiClient::collectPAT(StreamProperties &properties, const unsigned char *data) {
 	if (!properties.isTableCollected(PAT_TABLE_ID)) {
 		const int streamID = properties.getStreamID();
 		// collect PAT data
@@ -332,7 +341,7 @@ void DvbapiClient::collectPAT(StreamProperties &properties, const unsigned char 
 			SI_LOG_INFO("Stream: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  nLoop: %d  CRC: %04X",
 						 streamID, sectionLength, tid, version, secNr, lastSecNr, nLoop, crc);
 
-			len = sectionLength - 4 - 6; // 4 = CRC  6 = PAT Table begin from section length
+			const int len = sectionLength - 4 - 6; // 4 = CRC  6 = PAT Table begin from section length
 
 //			SI_LOG_BIN_DEBUG(cData, properties.getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
 
@@ -356,9 +365,11 @@ void DvbapiClient::collectPAT(StreamProperties &properties, const unsigned char 
 	}
 }
 
-void DvbapiClient::cleanPacketPMT(StreamProperties &/*properties*/, unsigned char *data) {
+void DvbapiClient::cleanPMT(StreamProperties &UNUSED(properties), unsigned char *data) {
 	const unsigned char options = (data[1] & 0xE0);
 	if (options == 0x40 && data[5] == PMT_TABLE_ID) {
+//		const int streamID = properties.getStreamID();
+
 //		const int pid           = ((data[1] & 0x1f) << 8) | data[2];
 //		const int cc            =   data[3] & 0x0f;
 		const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
@@ -367,14 +378,19 @@ void DvbapiClient::cleanPacketPMT(StreamProperties &/*properties*/, unsigned cha
 		std::string pmt;
 		// Copy first part to new PMT buffer
 		pmt.append((const char *)&data[0], 17);
+
 		// Clear sectionLength
 		pmt[6]  &= 0xF0;
 		pmt[7]   = 0x00;
+
+		//
+		pmt[10] ^= 0x3F;
+
 		// Clear prgLength
 		pmt[15] &= 0xF0;
 		pmt[16]  = 0x00;
 
-		int len = sectionLength - 4 - 9 - prgLength; // 4 = CRC   9 = PMT Header from section length
+		const int len = sectionLength - 4 - 9 - prgLength; // 4 = CRC   9 = PMT Header from section length
 		// skip to ES Table begin and iterate over entries
 		const unsigned char *ptr = &data[17 + prgLength];
 		for (int i = 0; i < len; ) {
@@ -419,7 +435,7 @@ void DvbapiClient::cleanPacketPMT(StreamProperties &/*properties*/, unsigned cha
 	}
 }
 
-void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char *data, int len) {
+void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char *data) {
 	if (!properties.isTableCollected(PMT_TABLE_ID)) {
 		const int streamID = properties.getStreamID();
 		// collect PMT data
@@ -450,7 +466,7 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 				progInfo.append((const char *)&cData[17], prgLength);
 			}
 
-			len = sectionLength - 4 - 9 - prgLength; // 4 = CRC   9 = PMT Header from section length
+			const int len = sectionLength - 4 - 9 - prgLength; // 4 = CRC   9 = PMT Header from section length
 			// skip to ES Table begin and iterate over entries
 			const unsigned char *ptr = &cData[17 + prgLength];
 			for (int i = 0; i < len; ) {
@@ -490,7 +506,6 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 
 // HACK HACK (Add some STREAM PID of video)
 			{
-//				const char tmp[5] = { 0x01, 0x00, 0x0B, 0x00, 0x06 };
 				const char tmp[5] = { 0x00, 0x00, 0x0B, 0x00, 0x06 };
 				progInfo.append(tmp, sizeof(tmp));
 				cpyLength += sizeof(tmp);
@@ -506,8 +521,9 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 			caPMT[ 4] = (totLength >> 8) & 0xFF;     // Total Length of caPMT
 			caPMT[ 5] =  totLength & 0xFF;           // Total Length of caPMT
 			caPMT[ 6] = LIST_ONLY_UPDATE;            // send LIST_ONLY_UPDATE
+//			caPMT[ 6] = LIST_ONLY;                   // send LIST_ONLY
 			caPMT[ 7] = (programNumber >> 8) & 0xFF; // Program ID
-			caPMT[ 8] =  programNumber & 0xFF;       //
+			caPMT[ 8] =  programNumber & 0xFF;       // Program ID
 			caPMT[ 9] = DVBAPI_PROTOCOL_VERSION;     // Version
 			caPMT[10] = (piLenght >> 8) & 0xFF;      // Prog Info Length
 			caPMT[11] =  piLenght & 0xFF;            // Prog Info Length
@@ -518,7 +534,7 @@ void DvbapiClient::collectPMT(StreamProperties &properties, const unsigned char 
 			caPMT[16] = (char) streamID;             // streamID
 			memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
-			SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data", streamID);
+			SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam", streamID);
 
 			if (send(_client.getFD(), caPMT, totLength + 6, MSG_DONTWAIT) == -1) {
 				SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
@@ -608,9 +624,9 @@ void DvbapiClient::threadEntry() {
 						SI_LOG_INFO("Connected to %s", _serverName.c_str());
 						_connected = true;
 					} else if (cmd == DVBAPI_DMX_SET_FILTER) {
-						const int adapter = buf[4];
-						const int demux   = buf[5];
-						const int filter  = buf[6];
+						const int adapter =  buf[4];
+						const int demux   =  buf[5];
+						const int filter  =  buf[6];
 						const int pid     = (buf[7] << 8) | buf[8];
 
 						StreamProperties &properties = _getStreamProperties(adapter);
@@ -618,9 +634,9 @@ void DvbapiClient::threadEntry() {
 						// now update frontend, PID list has changed
 						_updateFrontend(adapter);
 					} else if (cmd == DVBAPI_DMX_STOP) {
-						const int adapter = buf[4];
-						const int demux   = buf[5];
-						const int filter  = buf[6];
+						const int adapter =  buf[4];
+						const int demux   =  buf[5];
+						const int filter  =  buf[6];
 						const int pid     = (buf[7] << 8) | buf[8];
 
 						StreamProperties &properties = _getStreamProperties(adapter);
@@ -628,15 +644,19 @@ void DvbapiClient::threadEntry() {
 						// now update frontend, PID list has changed
 						_updateFrontend(adapter);
 					} else if (cmd == DVBAPI_CA_SET_DESCR) {
-						const int adapter =  buf[ 4];
-						const int index   = (buf[ 5] << 24) | (buf[ 6] << 16) | (buf[ 7] << 8) | buf[ 8];
-						const int parity  = (buf[ 9] << 24) | (buf[10] << 16) | (buf[11] << 8) | buf[12];
+						const int adapter =  buf[4];
+						const int index   = (buf[5] << 24) | (buf[ 6] << 16) | (buf[ 7] << 8) | buf[ 8];
+						const int parity  = (buf[9] << 24) | (buf[10] << 16) | (buf[11] << 8) | buf[12];
 						const unsigned char *cw = reinterpret_cast<unsigned char *>(&buf[13]);
 
 						StreamProperties &properties = _getStreamProperties(adapter);
 						properties.setKey(cw, parity, index);
 						SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
 						             adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
+					} else if (cmd == DVBAPI_ECM_INFO) {
+						const int adapter =  buf[4];
+//						StreamProperties &properties = _getStreamProperties(adapter);
+						SI_LOG_DEBUG("Stream: %d, Receive ECM Info", adapter);
 					} else {
 						SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
 					}
@@ -665,13 +685,16 @@ void DvbapiClient::fromXML(const std::string &xml) {
 	if (findXMLElement(xml, "data.configdata.OSCamEnabled.value", element)) {
 		_enabled = (element == "true") ? true : false;
 	}
-
+	if (findXMLElement(xml, "data.configdata.RewritePMT.value", element)) {
+		_rewritePMT = (element == "true") ? true : false;
+	}
 }
 
 void DvbapiClient::addToXML(std::string &xml) const {
 	MutexLock lock(_mutex);
 	ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
-	ADD_CONFIG_IP(xml, "OSCamIP", _serverIpAddr.c_str());
-	ADD_CONFIG_NUMBER(xml, "OSCamPORT", _serverPort, 0, 65535);
+	ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
+	ADD_CONFIG_IP_INPUT(xml, "OSCamIP", _serverIpAddr.c_str());
+	ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort, 0, 65535);
 	ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
 }

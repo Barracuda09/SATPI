@@ -555,8 +555,8 @@ bool Frontend::updatePIDFilters(StreamProperties &properties) {
 							return false;
 						}
 					}
-					SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d",
-					             streamID, i, properties.getDMXFileDescriptor(i));
+					SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
+								 streamID, i, properties.getDMXFileDescriptor(i), properties.isPMT(i) ? " - PMT" : "");
 				}
 			} else if (properties.getDMXFileDescriptor(i) != -1) {
 				// We have a DMX but no PID anymore, so reset it

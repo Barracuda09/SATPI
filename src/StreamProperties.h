@@ -94,10 +94,10 @@ class StreamProperties
 		// Data members for ChannelData
 		// =======================================================================
 
-		/// Check if Channel Data has changed, that we should update
+		/// Check the 'Channel Data changed' flag. If set we should update
 		bool hasChannelDataChanged() const;
 
-		/// Reset/clear the Channel Data has changed flag
+		/// Reset/clear the 'Channel Data changed' flag
 		void resetChannelDataChanged();
 
 		/// Get/Set the intermediate frequency in Mhz
@@ -107,10 +107,10 @@ class StreamProperties
 		/// Reset the pid
 		void resetPid(int pid);
 
-		/// Reset that PID has changed
+		/// Reset 'PID has changed' flag
 		void resetPIDTableChanged();
 
-		/// Check if the PID has changed
+		/// Check the 'PID has changed' flag
 		bool hasPIDTableChanged() const;
 
 		/// Set DMX file descriptor
@@ -140,6 +140,7 @@ class StreamProperties
 		/// Set all PID
 		void setAllPID(bool val);
 
+		///
 		void initializeChannelData();
 
 		/// Get/Set the frequency in Mhz

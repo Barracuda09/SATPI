@@ -1,6 +1,6 @@
 /* Properties.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -51,6 +51,9 @@ class Properties : public XMLSupport  {
 		///
 		const std::string &getStartPath() const { return _startPath; }
 
+		///
+		const std::string &getXSatipM3U() const { return _xSatipM3U; }
+
 		/// Get and Set BootID
 		void         setBootID(unsigned int bootID) { _bootID = bootID; }
 		unsigned int getBootID() const              { return _bootID; }
@@ -75,6 +78,7 @@ class Properties : public XMLSupport  {
 		std::string   _uuid;
 		std::string   _versionString;
 		std::string   _startPath;
+		std::string   _xSatipM3U;
 		unsigned int  _bootID;
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;

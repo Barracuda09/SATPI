@@ -73,16 +73,16 @@ bool StreamProperties::isPMT(int pid) const {
 void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set) {
 	MutexLock lock(_mutex);
 #ifdef LIBDVBCSA
-	if(!_key[0]) {
+	if(_key[0] == NULL) {
 		_key[0] = dvbcsa_bs_key_alloc();
 	}
-	if(!_key[1]) {
+	if(_key[1] == NULL) {
 		_key[1] = dvbcsa_bs_key_alloc();
 	}
 #endif
 	const bool isSet = _channelData.isPIDUsed(pid);
 	if (!isSet || !set) {
-		SI_LOG_INFO("Stream: %d, %s ECM PID: %d", _streamID, set ? "Set" : "Clear", pid);
+		SI_LOG_INFO("Stream: %d, %s ECM PID: %d  demux: %d  filter: %d", _streamID, set ? "Set" : "Clear", pid, demux, filter);
 		_channelData._pidTable.setECMFilterData(demux, filter, pid, set);
 	}
 }
@@ -181,8 +181,8 @@ void StreamProperties::addToXML(std::string &xml) const {
 
 	//
 	ADD_CONFIG_CHECKBOX(xml, "diseqc_repeat", (_diseqcRepeat ? "true" : "false"));
-	ADD_CONFIG_NUMBER(xml, "dvrbuffer", _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
-	ADD_CONFIG_NUMBER(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
+	ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
+	ADD_CONFIG_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 }
 
 std::string StreamProperties::attribute_describe_string(bool &active) const {

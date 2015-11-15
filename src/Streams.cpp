@@ -62,7 +62,7 @@ Streams::~Streams() {
 int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 #if SIMU
 	UNUSED(path)
-	count = 1;
+	count = 2;
 	if (_maxStreams && _stream) {
 		char fe_path[FE_PATH_LEN];
 		char dvr_path[FE_PATH_LEN];
@@ -71,6 +71,10 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
 		_stream[0]->addFrontendPaths(fe_path, dvr_path, dmx_path);
+		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
+		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
+		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
+		_stream[1]->addFrontendPaths(fe_path, dvr_path, dmx_path);
 	}
 #else
 	struct dirent **file_list;
@@ -235,9 +239,7 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 		// Do we need to make a new sessionID (only if there are transport parameters
 		} else if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
 			static unsigned int seedp = 0xBEEF;
-			char newSessionID[50];
-			snprintf(newSessionID, sizeof(newSessionID), "%010d", rand_r(&seedp) % 0xffffffff);
-			sessionID = newSessionID;
+			StringConverter::addFormattedString(sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
 			newSession = true;
 		// None of the above.. so it is just an outside session give an temporary StreamClient
 		} else {

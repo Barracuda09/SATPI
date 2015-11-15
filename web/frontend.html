@@ -13,122 +13,75 @@
 <script src="postxmldoc.js"></script>
 <script src="jquery.min.js"></script>
 <script src="bootstrap.min.js"></script>
+<script src="addtableentry.js"></script>
 <script>
 	var filename = "streams.xml";
 	var autoload = 1;
 	var xmlLoaded;
 
-	function myOnkeyPressPost(id, valname, value, event) {
-		var key = event.which;
-		if (key == 13) {
-			changeXMLAndPost(id, valname, value);
-		}
-	}
-
-	function addTableLineEntry(xmlDoc, name, tagName) {
-		var entry =	 "<tr><td>" + name + "</td>";
-		var len = xmlDoc.getElementsByTagName("streamindex").length;
-		for (en = 0; en < len; en++) {
-			entry +=  "<td>";
-			var data = xmlDoc.getElementsByTagName("stream" + en)[0];
-			var value = data.getElementsByTagName(tagName)[0].childNodes[0].nodeValue;
-			entry += value;
-			entry +=  "</td>";
-		}
-		entry += "</tr>";
-		return entry;
-	}
-
-	function changeXMLAndPost(id, tagName, value) {
-		var n = id.lastIndexOf(".") + 1;
-		var index = id.substring(n);
-		var data = xmlLoaded.getElementsByTagName("stream" + index)[0];
-		var input = data.getElementsByTagName(tagName)[0];
-		input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
-		var xmlString = (new XMLSerializer()).serializeToString(xmlLoaded);
-		postData(filename, xmlString);
-	}
-
-	function addTableLineEntryInput(xmlDoc, name, valname) {
-		var entry =	 "<tr><td>" + name + "</td>";
-		var len = xmlDoc.getElementsByTagName("streamindex").length;
-		for (en = 0; en < len; en++) {
-			entry +=  "<td>";
-			var data = xmlDoc.getElementsByTagName("stream" + en)[0];
-			var input = data.getElementsByTagName(valname)[0];
-			var type = input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue;
-			var value = input.getElementsByTagName("value")[0].childNodes[0].nodeValue;
-			var id = valname + "." + en
-			if (type == "checkbox") {
-				if (value == "true") {
-					entry += "<input type=\"checkbox\" name=\"" + valname + "\" checked=\"\"";
-				} else {
-					entry += "<input type=\"checkbox\" name=\"" + valname + "\"";
-				}
-				entry += "id=\"" + id + "\"";
-				entry += "value=\"" + en + "\"";
-				entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).checked)\"";
-				entry += "/>";
-			} else if (type == "number") {
-				entry += "<input type=\"number\" name=\"" + valname + "\" value=\"" + value + "\"";
-				entry += "id=\"" + id + "\"";
-				entry += "min=\"" + input.getElementsByTagName("minvalue")[0].childNodes[0].nodeValue + "\"";
-				entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].childNodes[0].nodeValue + "\"";
-				entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
-				entry += "onmousedown=\"document.getElementById(id).focus()\"";
-				entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-				entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
-				entry += "/>";
+	function addTableLineEntry(labelstring, xmlDoc, tagName) {
+		var page = "";
+		if (xmlDoc.getElementsByTagName(tagName).length != 0) {
+			page += "<tr>";
+			page += addTableLabel(labelstring);
+			var len = xmlDoc.getElementsByTagName("streamindex").length;
+			for (en = 0; en < len; en++) {
+				var id = "stream" + en;
+				var data = xmlDoc.getElementsByTagName(id)[0];
+				id += "." + tagName;
+				page += addTableEntry(data, tagName, id);
 			}
-			entry +=  "</td>";
+			page += "<tr>";
 		}
-		entry += "</tr>";
-		return entry;
+		return page;
 	}
 
 	function buildcontent(xmlDoc) {
 		var page = "";
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
-			page += "<table class=\"table table-bordered table-striped\">";
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Frontend Info</th></tr>";
-			page += addTableLineEntry(xmlDoc, "Stream Index", "streamindex");
+			page += "<table class=\"table table-bordered table-striped \">";
+			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length + 1) + "\">Frontend Info</th></tr>";
 
-			page += addTableLineEntry(xmlDoc, "Attached", "attached");
-			page += addTableLineEntry(xmlDoc, "Name", "frontendname");
-			page += addTableLineEntry(xmlDoc, "Path", "pathname");
-			page += addTableLineEntry(xmlDoc, "Freq Range", "freq");
-			page += addTableLineEntry(xmlDoc, "Symbol Rate Range", "symbol");
+			page += addTableLineEntry("Stream Index", xmlDoc, "streamindex");
+
+			page += addTableLineEntry("Enable", xmlDoc, "enable");
+			page += addTableLineEntry("Attached", xmlDoc, "attached");
+			page += addTableLineEntry("Name", xmlDoc, "frontendname");
+
+			page += addTableLineEntry("Path", xmlDoc, "pathname");
+			page += addTableLineEntry("Freq Range", xmlDoc, "freq");
+			page += addTableLineEntry("Symbol Rate Range", xmlDoc, "symbol");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
-			page += addTableLineEntry(xmlDoc, "Owner", "owner");
-			page += addTableLineEntry(xmlDoc, "Session ID", "ownerSessionID");
-			page += addTableLineEntry(xmlDoc, "RTP packet count", "spc");
-			page += addTableLineEntry(xmlDoc, "RTP streamed (MB)", "payload");
+			page += addTableLineEntry("Owner", xmlDoc, "owner");
+			page += addTableLineEntry("Session ID", xmlDoc, "ownerSessionID");
+			page += addTableLineEntry("RTP packet count", xmlDoc, "spc");
+			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, "payload");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
-			page += addTableLineEntryInput(xmlDoc, "Repeat DiSEqC", "diseqc_repeat");
-			page += addTableLineEntryInput(xmlDoc, "DVR Buffer (Bytes)", "dvrbuffer");
-			page += addTableLineEntryInput(xmlDoc, "RTCP Signal Update Freq", "rtcpSignalUpdate");
+			page += addTableLineEntry("Repeat DiSEqC", xmlDoc, "diseqc_repeat");
+			page += addTableLineEntry("DVR Buffer (Bytes)", xmlDoc, "dvrbuffer");
+			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, "rtcpSignalUpdate");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
-			delsys = addTableLineEntry(xmlDoc, "Delivery System", "delsys");
+			delsys = addTableLineEntry("Delivery System", xmlDoc, "delsys");
 			page += delsys;
-			page += addTableLineEntry(xmlDoc, "Tune Freq", "tunefreq");
-			page += addTableLineEntry(xmlDoc, "Modulation", "modulation");
-			page += addTableLineEntry(xmlDoc, "Fec", "fec");
+			page += addTableLineEntry("Tune Freq", xmlDoc, "tunefreq");
+			page += addTableLineEntry("Modulation", xmlDoc, "modulation");
+			page += addTableLineEntry("Fec", xmlDoc, "fec");
 
-			page += addTableLineEntry(xmlDoc, "Symbol Rate", "tunesymbol");
-			page += addTableLineEntry(xmlDoc, "Rolloff", "rolloff");
-			page += addTableLineEntry(xmlDoc, "Source", "src");
-			page += addTableLineEntry(xmlDoc, "Polarization", "pol");
+			page += addTableLineEntry("Symbol Rate", xmlDoc, "tunesymbol");
+			page += addTableLineEntry("Rolloff", xmlDoc, "rolloff");
+			page += addTableLineEntry("Source", xmlDoc, "src");
+			page += addTableLineEntry("Polarization", xmlDoc, "pol");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
-			page += addTableLineEntry(xmlDoc, "Status", "status");
-			page += addTableLineEntry(xmlDoc, "Signal Strength", "signal");
-			page += addTableLineEntry(xmlDoc, "snr", "snr");
-			page += addTableLineEntry(xmlDoc, "ber", "ber");
-			page += addTableLineEntry(xmlDoc, "unc", "unc");
+			page += addTableLineEntry("Status", xmlDoc, "status");
+			page += addTableLineEntry("Signal Strength", xmlDoc, "signal");
+			page += addTableLineEntry("snr", xmlDoc, "snr");
+			page += addTableLineEntry("ber", xmlDoc, "ber");
+			page += addTableLineEntry("unc", xmlDoc, "unc");
 
 			page +=	 "</table><br>";
 		}

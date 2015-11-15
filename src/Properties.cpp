@@ -36,6 +36,7 @@ Properties::Properties(const std::string &uuid, const std::string &delsysString,
 		_uuid(uuid),
 		_versionString(satpi_version),
 		_startPath(startPath),
+		_xSatipM3U("channellist.m3u"),
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),
@@ -50,8 +51,12 @@ void Properties::fromXML(const std::string &xml) {
 		_ssdpAnnounceTimeSec = atoi(element.c_str());
 		SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _ssdpAnnounceTimeSec);
 	}
+	if (findXMLElement(xml, "data.configdata.xsatipm3u.value", element)) {
+		_xSatipM3U = element;
+	}
 }
 
 void Properties::addToXML(std::string &xml) const {
-	ADD_CONFIG_NUMBER(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
+	ADD_CONFIG_NUMBER_INPUT(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
+	ADD_CONFIG_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U.c_str());
 }

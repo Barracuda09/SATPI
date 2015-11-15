@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define UNUSED(x) (void)x;
+#define UNUSED(x)
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))
 

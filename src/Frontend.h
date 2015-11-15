@@ -98,6 +98,9 @@ class Frontend  {
 		/// caller should release fd
 		int get_monitor_fd() const { return open_fe(_path_to_fe, true); }
 
+		/// Check if this frontend is tuned
+		bool isTuned() const {return (_fd_dvr != -1) && _tuned; }
+
 		///
 		bool capableOf(fe_delivery_system_t msys);
 

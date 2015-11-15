@@ -41,6 +41,7 @@ void PidTable::resetPid(int pid) {
 	_data[pid].count    = 0;
 
 	_data[pid].pmt      = false;
+
 	// @todo this is an ugly hack... have to find another way
 	if (!_data[pid].ecm) {
 		_data[pid].ecm      = false;
@@ -125,7 +126,6 @@ void PidTable::setAllPID(bool val) {
 
 void PidTable::setPMT(int pid, bool set) {
 	_data[pid].pmt = set;
-//	setPID(pid, set);
 }
 
 bool PidTable::isPMT(int pid) const {
@@ -157,7 +157,6 @@ void PidTable::getECMFilterData(int &demux, int &filter, int pid) const {
 }
 
 bool PidTable::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
-	demux = 0xff;
 	filter = -1;
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		if (_data[i].fd_dmx != -1 && isECM(i)) {

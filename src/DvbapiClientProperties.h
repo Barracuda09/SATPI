@@ -145,13 +145,13 @@ class DvbapiClientProperties {
 				const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
 				// Add Table Data
 				if (addTableData(tableID, data, 188, pid, cc)) {
-					SI_LOG_DEBUG("Stream: %d, %s: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), sectionLength, getTableDataSize(tableID));
+					SI_LOG_DEBUG("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), pid, sectionLength, getTableDataSize(tableID));
 					// Check did we finish collecting Table Data
 					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
 						setTableCollected(tableID, true);
 					}
 				} else {
-					SI_LOG_ERROR("Stream: %d, %s: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID));
+					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
 					setTableCollected(tableID, false);
 				}
 			} else {
@@ -165,13 +165,13 @@ class DvbapiClientProperties {
 				// Add Table Data without TS Header
 				if (addTableData(tableID, &data[4], 188 - 4, pid, cc)) { // 4 = TS Header
 					const int tableDataSize = getTableDataSize(tableID);
-					SI_LOG_DEBUG("Stream: %d, %s: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), sectionLength, tableDataSize);
+					SI_LOG_DEBUG("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), pid, sectionLength, tableDataSize);
 					// Check did we finish collecting Table Data
 					if (sectionLength <= (tableDataSize - 9)) { // 9 = Untill Table Section Length
 						setTableCollected(tableID, true);
 					}
 				} else {
-					SI_LOG_ERROR("Stream: %d, %s: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID));
+					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
 					setTableCollected(tableID, false);
 				}
 			}

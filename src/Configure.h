@@ -22,21 +22,22 @@
 
 #include "StringConverter.h"
 
+#define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE);
 
-#define SSDP_INTERVAL_VAR  "ssdp_interval"
-#define SYSLOG_ON_VAR      "syslog_on"
-#define RESET_FRONTEND     "reset_fe"
+#define ADD_CONFIG_NUMBER(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME ">%d</" VARNAME ">", VALUE);
 
-#define ADD_CONFIG_CHECKBOX(xml, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>checkbox</inputtype><value>%s</value></%s>", varName, value, varName);
+#define ADD_CONFIG_CHECKBOX(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>checkbox</inputtype><value>%s</value></" VARNAME ">", VALUE);
 
-#define ADD_CONFIG_NUMBER(xml, varName, value, minValue, maxValue) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></%s>", varName, value, minValue, maxValue, varName);
+#define ADD_CONFIG_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></" VARNAME ">", VALUE, MIN, MAX);
 
-#define ADD_CONFIG_TEXT(xml, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>text</inputtype><value>%s</value></%s>", varName, value, varName);
+#define ADD_CONFIG_TEXT_INPUT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>text</inputtype><value>%s</value></" VARNAME ">", VALUE);
 
-#define ADD_CONFIG_IP(xml, varName, value) \
-	StringConverter::addFormattedString(xml, "<%s><inputtype>ip</inputtype><value>%s</value></%s>", varName, value, varName);
+#define ADD_CONFIG_IP_INPUT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>ip</inputtype><value>%s</value></" VARNAME ">", VALUE);
 
 #endif // CONFIGURE_H_INCLUDE

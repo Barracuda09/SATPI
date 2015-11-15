@@ -1,0 +1,19 @@
+#EXTM3U
+
+#EXTINF:0,1. RTL4 HD
+rtsp://192.168.0.118/?src=2&fe=2&freq=11856&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,34,84,514,2520
+
+#EXTINF:0,2. RTL5 HD
+rtsp://192.168.0.118/?src=2&fe=2&freq=11856&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,33,83,523,2523
+
+#EXTINF:0,3. Veronica HD
+rtsp://192.168.0.118/?src=2&fe=2&freq=12187&sr=27500&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,37,105,517,2735
+
+#EXTINF:0,4. TV Noord
+rtsp://192.168.0.118/?src=2&fe=2&freq=11914&sr=29900&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,40,88,516,2310,8190
+
+#EXTINF:0,5. Animal Planet
+rtsp://192.168.0.118/?src=2&fe=2&freq=12109&sr=27500&msys=dvbs2&mtype=8psk&pol=h&fec=34&pids=0,1,16,17,18,57,3500,3510,3550,3660
+
+#EXTINF:0,6. Nederland 3
+rtsp://192.168.0.118/?src=2&fe=2&freq=12187.50&sr=27500&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,38,52,106,518,2740

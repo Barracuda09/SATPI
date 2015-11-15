@@ -30,6 +30,7 @@
 const unsigned int Stream::MAX_CLIENTS = 8;
 
 Stream::Stream(int streamID, DvbapiClient *dvbapi) :
+		_enabled(true),
 		_streamInUse(false),
 		_client(new StreamClient[MAX_CLIENTS]),
 		_properties(streamID),
@@ -49,6 +50,13 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              std::string sessionID,
                              const std::string &method,
                              int &clientID) {
+
+	// Check if frontend is enabled when we have a new session
+	if (newSession && !_enabled) {
+		SI_LOG_INFO("Stream: %d, Not enabled...", _properties.getStreamID());
+		return false;
+	}
+
 	fe_delivery_system_t msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
 	// Check if frontend is capable if handling 'msys' when we have a new session
 	if (newSession && !_frontend.capableOf(msys)) {
@@ -101,7 +109,12 @@ void Stream::checkStreamClientsWithTimeout() {
 
 bool Stream::updateFrontend() {
 	if (_properties.hasPIDTableChanged()) {
-		_frontend.update(_properties);
+		if (_frontend.isTuned()) {
+			_frontend.update(_properties);
+		} else {
+			SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
+			             _properties.getStreamID());
+		}
 	}
 	return true;
 }
@@ -169,15 +182,23 @@ void Stream::processStopStream(int clientID, bool gracefull) {
 }
 
 void Stream::addToXML(std::string &xml) const {
-	StringConverter::addFormattedString(xml, "<streamindex>%d</streamindex>", _properties.getStreamID());
-	StringConverter::addFormattedString(xml, "<attached>%s</attached>", _streamInUse ? "yes" : "no");
-	StringConverter::addFormattedString(xml, "<owner>%s</owner>", _client[0].getIPAddress().c_str());
-	StringConverter::addFormattedString(xml, "<ownerSessionID>%s</ownerSessionID>", _client[0].getSessionID().c_str());
+
+	ADD_CONFIG_NUMBER(xml, "streamindex", _properties.getStreamID());
+
+	ADD_CONFIG_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
+	ADD_CONFIG_TEXT(xml, "attached", _streamInUse ? "yes" : "no");
+	ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
+	ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
+
 	_frontend.addToXML(xml);
 	_properties.addToXML(xml);
 }
 
 void Stream::fromXML(const std::string &xml) {
+	std::string element;
+	if (findXMLElement(xml, "enable.value", element)) {
+		_enabled = (element == "true") ? true : false;;
+	}
 	_properties.fromXML(xml);
 }
 
@@ -230,6 +251,7 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 		// new frequency so initialize ChannelData and 'remove' all used PIDS
 		_properties.initializeChannelData();
 		_properties.setFrequency(doubleVal * 1000.0);
+		SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _properties.getStreamID());
 	}
 	// !!!!
 	if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {

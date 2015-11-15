@@ -67,13 +67,13 @@ class DvbapiClient : public ThreadBase,
 		void sendClientInfo();
 
 		///
-		void collectPAT(StreamProperties &properties, const unsigned char *data, int len);
+		void collectPAT(StreamProperties &properties, const unsigned char *data);
 
 		///
-		void collectPMT(StreamProperties &properties, const unsigned char *data, int len);
+		void collectPMT(StreamProperties &properties, const unsigned char *data);
 
 		///
-		void cleanPacketPMT(StreamProperties &properties, unsigned char *data);
+		void cleanPMT(StreamProperties &properties, unsigned char *data);
 
 		///
 		void collectECM(StreamProperties &properties, const unsigned char *data);
@@ -84,6 +84,7 @@ class DvbapiClient : public ThreadBase,
 		Mutex _mutex;
 		bool  _connected;
 		bool _enabled;
+		bool _rewritePMT;
 		SocketClient _client;
 		std::string _serverIpAddr;
 		std::string _serverName;
