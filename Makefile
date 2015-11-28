@@ -3,7 +3,7 @@
 ###############################################################################
 
 # Set the compiler being used.
-CXX = $(CXXPREFIX)g++
+CXX = $(CXXPREFIX)g++$(CXXSUFFIX)
 
 # Includes needed for proper compilation
 INCLUDES =
