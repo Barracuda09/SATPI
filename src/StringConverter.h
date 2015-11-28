@@ -1,6 +1,6 @@
 /* StringConverter.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,9 +18,11 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef STRING_CONVERTER_H_INCLUDE
-#define STRING_CONVERTER_H_INCLUDE
+#define STRING_CONVERTER_H_INCLUDE STRING_CONVERTER_H_INCLUDE
 
 #include <string>
+#include <cstdarg>
+
 #include <linux/dvb/frontend.h>
 
 
@@ -35,7 +37,13 @@ class StringConverter  {
 		static std::string makeXMLString(const std::string &msg);
 
 		///
+		static void addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist);
+
+		///
 		static void addFormattedString(std::string &str, const char *fmt, ...);
+
+		///
+		static std::string getFormattedString(const char *fmt, ...);
 
 		///
 		static bool isRootFile(const std::string &msg);

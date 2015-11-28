@@ -37,6 +37,7 @@
 		page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\">General</th></tr>";
 		page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
 		page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
+		page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");
 
 		// check if OSCam part is there
 		if (xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {

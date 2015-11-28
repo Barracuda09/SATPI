@@ -23,7 +23,7 @@
 #include "StringConverter.h"
 #include "StreamProperties.h"
 #include "Configure.h"
-#include "RtpPacketBuffer.h"
+#include "TSPacketBuffer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,9 +143,9 @@ DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStream
 		_connected(false),
 		_enabled(false),
 		_rewritePMT(false),
+		_serverPort(15011),
 		_serverIpAddr("127.0.0.1"),
 		_serverName("Not connected"),
-		_serverPort(15011),
 		_getStreamProperties(getStreamProperties),
 		_updateFrontend(updateFrontend) {
 	startThread();
@@ -156,8 +156,7 @@ DvbapiClient::~DvbapiClient() {
 	joinThread();
 }
 
-void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
-	MutexLock lock(_mutex);
+void DvbapiClient::decrypt(int streamID, TSPacketBuffer &buffer) {
 	if (_connected && _enabled) {
 		StreamProperties &properties = _getStreamProperties(streamID);
 		const size_t size = buffer.getNumberOfTSPackets();
@@ -185,14 +184,14 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 					if (countBatch != 0 && (parity != parityBatch || countBatch >= properties.getMaximumBatchSize())) {
 						//
 						SI_LOG_COND_DEBUG(parity != parityBatch, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
-								streamID, parityBatch, parity, countBatch);
+						   streamID, parityBatch, parity, countBatch);
 
 						// decrypt this batch
 						properties.decryptBatch();
 					}
 
 					// Can we add this packet to the batch
-					if (properties.getKey(parity) != NULL) {
+					if (properties.getKey(parity) != nullptr) {
 						// check is there an adaptation field we should skip, then add it to batch
 						int skip = 4;
 						if((data[3] & 0x20) && (data[4] < 183)) {
@@ -230,7 +229,6 @@ void DvbapiClient::decrypt(int streamID, RtpPacketBuffer &buffer) {
 }
 
 bool DvbapiClient::stopDecrypt(int streamID) {
-	MutexLock lock(_mutex);
 	if (_connected) {
 		int demux = streamID; // demux index
 		int filter = 0;
@@ -590,13 +588,14 @@ void DvbapiClient::threadEntry() {
 	pfd[0].fd      = -1;
 
 	// set time to try to connect
-	time_t retryTime = time(NULL) + 2;
+	time_t retryTime = time(nullptr) + 2;
 
 	for (;;) {
 		// try to connect to server
 		if (!_connected && _enabled) {
-			const time_t currTime = time(NULL);
+			const time_t currTime = time(nullptr);
 			if (retryTime < currTime) {
+				MutexLock lock(_mutex);
 				if (initClientSocket(_client, _serverPort, inet_addr(_serverIpAddr.c_str()))) {
 					sendClientInfo();
 					pfd[0].fd = _client.getFD();
@@ -618,7 +617,6 @@ void DvbapiClient::threadEntry() {
 					const uint32_t cmd = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
 					SI_LOG_DEBUG("Stream: %d, Receive data  len: %d  cmd: %X", buf[4], size, cmd);
 
-					MutexLock lock(_mutex);
 					if (cmd == DVBAPI_SERVER_INFO) {
 						_serverName.assign(&buf[7], buf[6]);
 						SI_LOG_INFO("Connected to %s", _serverName.c_str());
@@ -675,6 +673,7 @@ void DvbapiClient::threadEntry() {
 
 void DvbapiClient::fromXML(const std::string &xml) {
 	MutexLock lock(_mutex);
+
 	std::string element;
 	if (findXMLElement(xml, "data.configdata.OSCamIP.value", element)) {
 		_serverIpAddr = element;
@@ -692,9 +691,10 @@ void DvbapiClient::fromXML(const std::string &xml) {
 
 void DvbapiClient::addToXML(std::string &xml) const {
 	MutexLock lock(_mutex);
+
 	ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 	ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
 	ADD_CONFIG_IP_INPUT(xml, "OSCamIP", _serverIpAddr.c_str());
-	ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort, 0, 65535);
+	ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
 	ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
 }

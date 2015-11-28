@@ -18,8 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef PROPERTIES_H_INCLUDE
-#define PROPERTIES_H_INCLUDE
+#define PROPERTIES_H_INCLUDE PROPERTIES_H_INCLUDE
 
+#include "Mutex.h"
 #include "XMLSupport.h"
 
 #include <string>
@@ -31,6 +32,7 @@ class Properties : public XMLSupport  {
 		// Constructors and destructor
 		// =======================================================================
 		Properties(const std::string &uuid, const std::string &delsysString, const std::string &startPath);
+
 		virtual ~Properties();
 
 		/// Add data to an XML for storing or web interface
@@ -40,45 +42,57 @@ class Properties : public XMLSupport  {
 		virtual void fromXML(const std::string &xml);
 
 		///
-		const std::string &getSoftwareVersion() const { return _versionString; }
+		std::string getSoftwareVersion() const;
 
 		///
-		const std::string &getUUID() const { return _uuid; }
+		std::string getUUID() const;
 
 		///
-		const std::string &getDeliverySystemString() const { return _delsysString; }
+		std::string getDeliverySystemString() const;
 
 		///
-		const std::string &getStartPath() const { return _startPath; }
+		std::string getStartPath() const;
 
 		///
-		const std::string &getXSatipM3U() const { return _xSatipM3U; }
+		std::string getXSatipM3U() const;
 
-		/// Get and Set BootID
-		void         setBootID(unsigned int bootID) { _bootID = bootID; }
-		unsigned int getBootID() const              { return _bootID; }
+		///
+		std::string getXMLDeviceDescriptionFile() const;
 
-		/// Get and Set DeviceID
-		void         setDeviceID(unsigned int deviceID) { _deviceID = deviceID; }
-		unsigned int getDeviceID() const                { return _deviceID; }
+		/// Set BootID
+		void setBootID(unsigned int bootID);
 
-		/// Get and Set SSDP Announce Time
-		void         setSsdpAnnounceTimeSec(unsigned int sec) { _ssdpAnnounceTimeSec = sec; }
-		unsigned int getSsdpAnnounceTimeSec() const           { return _ssdpAnnounceTimeSec; }
+		/// Get BootID
+		unsigned int getBootID() const;
+
+		/// Set DeviceID
+		void setDeviceID(unsigned int deviceID);
+
+		/// Get DeviceID
+		unsigned int getDeviceID() const;
+
+		/// Set SSDP Announce Time
+		void setSsdpAnnounceTimeSec(unsigned int sec);
+
+		/// Get SSDP Announce Time
+		unsigned int getSsdpAnnounceTimeSec() const;
 
 		/// Get application start time
-		time_t       getApplicationStartTime() const { return _appStartTime; }
+		time_t getApplicationStartTime() const;
+
 	protected:
 
 	private:
 		// =======================================================================
 		// Data members
 		// =======================================================================
+		Mutex         _mutex;
 		std::string   _delsysString;
 		std::string   _uuid;
 		std::string   _versionString;
 		std::string   _startPath;
 		std::string   _xSatipM3U;
+		std::string   _xmlDeviceDescriptionFile;
 		unsigned int  _bootID;
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;

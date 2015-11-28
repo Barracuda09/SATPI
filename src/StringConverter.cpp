@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
 	std::string::size_type end = fullPath.find_last_of("/\\");
@@ -52,13 +51,26 @@ bool StringConverter::getline(const std::string &msg, std::string::size_type &be
 	return false;
 }
 
+void StringConverter::addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist) {
+	char txt[1024 * 3];
+	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
+	str += txt;
+}
+
 void StringConverter::addFormattedString(std::string &str, const char *fmt, ...) {
-    char txt[1024 * 3];
     va_list arglist;
     va_start(arglist, fmt);
-    vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
+    addFormattedStringBasic(str, fmt, arglist);
     va_end(arglist);
-	str += txt;
+}
+
+std::string StringConverter::getFormattedString(const char *fmt, ...) {
+	std::string str;
+	va_list arglist;
+	va_start(arglist, fmt);
+	addFormattedStringBasic(str, fmt, arglist);
+	va_end(arglist);
+	return str;
 }
 
 bool StringConverter::isRootFile(const std::string &msg) {

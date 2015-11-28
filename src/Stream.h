@@ -18,21 +18,21 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef STREAM_H_INCLUDE
-#define STREAM_H_INCLUDE
+#define STREAM_H_INCLUDE STREAM_H_INCLUDE
 
-#include "Frontend.h"
 #include "ChannelData.h"
+#include "Frontend.h"
+#include "Mutex.h"
 #include "StreamClient.h"
-#include "RtpThread.h"
-#include "RtcpThread.h"
 #include "StreamProperties.h"
 #include "XMLSupport.h"
 
 #include <string>
 
 // Forward declarations
-class SocketClient;
 class DvbapiClient;
+class SocketClient;
+class StreamThreadBase;
 
 /// The class @c Stream carries all the data/information of an stream
 class Stream : public XMLSupport  {
@@ -43,27 +43,44 @@ class Stream : public XMLSupport  {
 		// Constructors and destructor
 		// =======================================================================
 		Stream(int streamID, DvbapiClient *dvbapi);
+
 		virtual ~Stream();
 
 		/// Get the streamID of this stream
-		int  getStreamID() const { return _properties.getStreamID(); }
+		int  getStreamID() const {
+			return _properties.getStreamID();
+		}
 
 		/// Get the describe string for this stream
-		std::string attribute_describe_string(bool &active) const { return _properties.attribute_describe_string(active); }
+		std::string attribute_describe_string(bool &active) const {
+			return _properties.attribute_describe_string(active);
+		}
 
 		/// Add the frontend paths to connect to this stream
 		void addFrontendPaths(const std::string &fe,
 		                      const std::string &dvr,
-							  const std::string &dmx) { _frontend.addFrontendPaths(fe, dvr, dmx); }
+		                      const std::string &dmx) {
+			MutexLock lock(_mutex);
+			_frontend.addFrontendPaths(fe, dvr, dmx);
+		}
 
 		/// This will read the frontend information for this stream
-		void setFrontendInfo() { _frontend.setFrontendInfo(); }
+		void setFrontendInfo() {
+			MutexLock lock(_mutex);
+			_frontend.setFrontendInfo();
+		}
 
 		/// Get the amount of delivery systems of this stream
-		size_t getDeliverySystemSize() const { return _frontend.getDeliverySystemSize(); }
+		size_t getDeliverySystemSize() const {
+			MutexLock lock(_mutex);
+			return _frontend.getDeliverySystemSize();
+		}
 
 		/// Get the possible delivery systems of this stream
-		const fe_delivery_system_t *getDeliverySystem() const { return _frontend.getDeliverySystem(); }
+		const fe_delivery_system_t *getDeliverySystem() const {
+			MutexLock lock(_mutex);
+			return _frontend.getDeliverySystem();
+		}
 
 		/// Find the clientID for the requested parameters
 		bool findClientIDFor(SocketClient &socketClient,
@@ -76,17 +93,23 @@ class Stream : public XMLSupport  {
 		void copySocketClientAttr(const SocketClient &socketClient);
 
 		/// Check is this stream used already
-		bool streamInUse() const { return _streamInUse; }
+		bool streamInUse() const {
+			MutexLock lock(_mutex);
+			return _streamInUse;
+		}
 
 		/// Check is this stream enabled, can we use it?
-		bool streamEnabled() const { return _enabled; }
+		bool streamEnabled() const {
+			MutexLock lock(_mutex);
+			return _enabled;
+		}
 
 		/// Close the stream client with clientID
 		void close(int clientID);
 
 		/// Teardown the stream client with clientID can be graceful or not
 		/// graceful means it is just closed by the client itself else a time-out
-		/// probably occurred. 
+		/// probably occurred.
 		bool teardown(int clientID, bool gracefull);
 
 		/// Check if there are any stream clients with a time-out that should be
@@ -95,52 +118,90 @@ class Stream : public XMLSupport  {
 
 		/// Add stream data to an XML for storing or web interface
 		virtual void addToXML(std::string &xml) const;
-		
+
 		/// Get stream data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml);
 
 		/// Get the stream properties for this stream
-		StreamProperties & getStreamProperties() { return _properties; }
-		
+		StreamProperties & getStreamProperties() {
+			return _properties;
+		}
+
 		/// Update the frontend of this stream
 		bool updateFrontend();
 
 		// =======================================================================
 		// Functions used for RTSP Server
 		// =======================================================================
+	public:
+
+		///
 		bool processStream(const std::string &msg, int clientID, const std::string &method);
+
+		///
 		bool update(int clientID);
-		int  getRtspFD(int clientID) const                  { return _client[clientID].getRtspFD(); }
-		int  getCSeq(int clientID) const                    { return _client[clientID].getCSeq(); }
-		const std::string &getSessionID(int clientID) const { return _client[clientID].getSessionID(); }
-		unsigned int getSessionTimeout(int clientID) const  { return _client[clientID].getSessionTimeout(); }
-		int  getRtpSocketPort(int clientID) const           { return _client[clientID].getRtpSocketPort(); }
-		int  getRtcpSocketPort(int clientID) const          { return _client[clientID].getRtcpSocketPort(); }
+
+		///
+		int getRtspFD(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getRtspFD();
+		}
+
+		///
+		int getCSeq(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getCSeq();
+		}
+
+		///
+		std::string getSessionID(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getSessionID();
+		}
+
+		///
+		unsigned int getSessionTimeout(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getSessionTimeout();
+		}
+
+		///
+		int getRtpSocketPort(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getRtpSocketPort();
+		}
+
+		///
+		int getRtcpSocketPort(int clientID) const {
+			MutexLock lock(_mutex);
+			return _client[clientID].getRtcpSocketPort();
+		}
 
 	protected:
 
 	private:
 
 		///
-		void parseStreamString(const std::string &msg, const std::string &method);
+		void parseStreamString_L(const std::string &msg, const std::string &method);
 
 		///
-		void processPID(const std::string &pids, bool add);
+		void processPID_L(const std::string &pids, bool add);
 
 		///
-		void processStopStream(int clientID, bool gracefull);
+		void processStopStream_L(int clientID, bool gracefull);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		bool             _enabled;     // is this stream enabled, could we use it?
-		bool             _streamInUse; //
-		StreamClient     *_client;     // defines the participants of this stream
-		                               // index 0 is the owner of this stream
-		StreamProperties _properties;  //
-		Frontend         _frontend;    //
-		RtpThread        _rtpThread;   //
-		RtcpThread       _rtcpThread;  //
+		Mutex             _mutex;       //
+		bool              _enabled;     // is this stream enabled, could we use it?
+		bool              _streamInUse; //
+		StreamClient     *_client;      // defines the participants of this stream
+		                                // index 0 is the owner of this stream
+		StreamThreadBase *_streaming;   //
+		DvbapiClient     *_dvbapi;      //
+		StreamProperties  _properties;  //
+		Frontend          _frontend;    //
 }; // class Stream
 
 #endif // STREAM_H_INCLUDE

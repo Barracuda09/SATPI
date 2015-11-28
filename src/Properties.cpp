@@ -37,6 +37,7 @@ Properties::Properties(const std::string &uuid, const std::string &delsysString,
 		_versionString(satpi_version),
 		_startPath(startPath),
 		_xSatipM3U("channellist.m3u"),
+		_xmlDeviceDescriptionFile("desc.xml"),
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),
@@ -45,7 +46,7 @@ Properties::Properties(const std::string &uuid, const std::string &delsysString,
 Properties::~Properties() {;}
 
 void Properties::fromXML(const std::string &xml) {
-
+	MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "data.configdata.input1.value", element)) {
 		_ssdpAnnounceTimeSec = atoi(element.c_str());
@@ -54,9 +55,79 @@ void Properties::fromXML(const std::string &xml) {
 	if (findXMLElement(xml, "data.configdata.xsatipm3u.value", element)) {
 		_xSatipM3U = element;
 	}
+	if (findXMLElement(xml, "data.configdata.xmldesc.value", element)) {
+		_xmlDeviceDescriptionFile = element;
+	}
 }
 
 void Properties::addToXML(std::string &xml) const {
+	MutexLock lock(_mutex);
 	ADD_CONFIG_NUMBER_INPUT(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
 	ADD_CONFIG_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U.c_str());
+	ADD_CONFIG_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile.c_str());
+}
+
+std::string Properties::getSoftwareVersion() const {
+	MutexLock lock(_mutex);
+	return _versionString;
+}
+
+std::string Properties::getUUID() const {
+	MutexLock lock(_mutex);
+	return _uuid;
+}
+
+std::string Properties::getDeliverySystemString() const {
+	MutexLock lock(_mutex);
+	return _delsysString;
+}
+
+std::string Properties::getStartPath() const {
+	MutexLock lock(_mutex);
+	return _startPath;
+}
+
+std::string Properties::getXSatipM3U() const {
+	MutexLock lock(_mutex);
+	return _xSatipM3U;
+}
+
+std::string Properties::getXMLDeviceDescriptionFile() const {
+	MutexLock lock(_mutex);
+	return _xmlDeviceDescriptionFile;
+}
+
+void Properties::setBootID(unsigned int bootID) {
+	MutexLock lock(_mutex);
+	_bootID = bootID;
+}
+
+unsigned int Properties::getBootID() const {
+	MutexLock lock(_mutex);
+	return _bootID;
+}
+
+void Properties::setDeviceID(unsigned int deviceID) {
+	MutexLock lock(_mutex);
+	_deviceID = deviceID;
+}
+
+unsigned int Properties::getDeviceID() const {
+	MutexLock lock(_mutex);
+	return _deviceID;
+}
+
+void Properties::setSsdpAnnounceTimeSec(unsigned int sec) {
+	MutexLock lock(_mutex);
+	_ssdpAnnounceTimeSec = sec;
+}
+
+unsigned int Properties::getSsdpAnnounceTimeSec() const {
+	MutexLock lock(_mutex);
+	return _ssdpAnnounceTimeSec;
+}
+
+time_t Properties::getApplicationStartTime() const {
+	MutexLock lock(_mutex);
+	return _appStartTime;
 }

@@ -12,9 +12,9 @@ INCLUDES =
 LDFLAGS = -pthread -lrt
 
 # Set Compiler Flags
-CFLAGS = -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS = -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
-# Build "debug", "release" or simu
+# Build "debug", "release" or "simu"
 ifeq ($(BUILD),debug)
   # "Debug" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
@@ -47,16 +47,21 @@ SOURCES = Version.cpp \
 	HttpServer.cpp \
 	RtspServer.cpp \
 	SsdpServer.cpp \
-	RtpThread.cpp \
-	RtpPacketBuffer.cpp \
 	RtcpThread.cpp \
-	XMLSupport.cpp
+	XMLSupport.cpp \
+	TSPacketBuffer.cpp \
+	StreamThreadBase.cpp \
+	RtpStreamThread.cpp
 
 # Add dvbcsa ?
 ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
   SOURCES += DvbapiClient.cpp
+endif
+
+ifeq ($(HAS_NP_FUNCTIONS),yes)
+  CFLAGS  += -DHAS_NP_FUNCTIONS
 endif
 
 # Sub dirs for project
@@ -77,7 +82,7 @@ EXECUTABLE = satpi
 # First rule is also the default rule
 # generate the Executable from all the objects
 # $@ represents the targetname
-$(EXECUTABLE): makeobj $(OBJECTS) $(HEADERS)
+$(EXECUTABLE):  makeobj $(OBJECTS) $(HEADERS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 # A pattern rule is used to build objects from 'cpp' files
@@ -95,10 +100,27 @@ makeobj:
 	@mkdir -p $(OBJ_DIR)
 
 debug:
-	make "BUILD=debug"
+	$(MAKE) "BUILD=debug"
 
 simu:
-	make "BUILD=simu"
+	$(MAKE) "BUILD=simu"
+
+testcode:
+ifndef HAS_NP_FUNCTIONS
+	@echo "#include <stdio.h>" > testcode.c
+	@echo "#ifndef _GNU_SOURCE" >> testcode.c
+	@echo "#define _GNU_SOURCE _GNU_SOURCE" >> testcode.c
+	@echo "#endif" >> testcode.c
+	@echo "#include <pthread.h>" >> testcode.c
+	@echo "int main(void) {" >> testcode.c
+	@echo "  pthread_t _thread;" >> testcode.c
+	@echo "  pthread_setname_np(_thread, \"Hello\");" >> testcode.c
+	@echo "  return 0;" >> testcode.c
+	@echo "}" >> testcode.c
+#	@$(CXX) testcode.c -o testcode -pthread 2> /dev/null ; if [ $$? -eq 0 ] ; then $(MAKE) -f Makefile.mk $(MAKECMDGOALS) HAS_NP_FUNCTIONS=yes ; else $(MAKE) -f Makefile.mk $(MAKECMDGOALS) HAS_NP_FUNCTIONS=no ; fi
+	-@$(CXX) -o testcode testcode.c -pthread > out 2>&1 ; if [ $$? -eq 0 ] ; then $(MAKE) $(MAKECMDGOALS) HAS_NP_FUNCTIONS=yes ; else $(MAKE) $(MAKECMDGOALS) HAS_NP_FUNCTIONS=no ; fi
+	@rm -rf testcode.c testcode
+endif
 
 # Install Doxygen and Graphviz/dot
 # sudo apt-get install graphviz doxygen
@@ -110,7 +132,7 @@ help:
 	@echo " - Make debug version             :  make debug"
 	@echo " - Make debug version with DVBAPI :  make debug LIBDVBCSA=yes"
 	@echo " - Make PlantUML graph            :  make plantuml"
-	@echo " - Make Doxygen docmumentation    :  make doc"
+	@echo " - Make Doxygen docmumentation    :  make docu"
 
 # Download PlaneUML from http://plantuml.com/download.html
 # and put it into the root of the project directory
@@ -121,4 +143,4 @@ plantuml:
 	clean
 
 clean:
-	rm -rf ./obj $(EXECUTABLE) src/Version.cpp src/*.*~ src/*~ /web/*.*~
+	rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp src/*.*~ src/*~ /web/*.*~

@@ -17,11 +17,13 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "Stream.h"
-#include "StringConverter.h"
-#include "SocketClient.h"
+
 #include "Configure.h"
 #include "Log.h"
+#include "RtpStreamThread.h"
+#include "SocketClient.h"
+#include "Stream.h"
+#include "StringConverter.h"
 #include "Utils.h"
 
 #include <stdio.h>
@@ -33,11 +35,11 @@ Stream::Stream(int streamID, DvbapiClient *dvbapi) :
 		_enabled(true),
 		_streamInUse(false),
 		_client(new StreamClient[MAX_CLIENTS]),
-		_properties(streamID),
-		_rtpThread(_client, _properties, dvbapi),
-		_rtcpThread(_client, _properties) {
+		_streaming(nullptr),
+		_dvbapi(dvbapi),
+		_properties(streamID) {
 	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
-		_client[i]._clientID = i;
+		_client[i].setClientID(i);
 	}
 }
 
@@ -50,6 +52,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              std::string sessionID,
                              const std::string &method,
                              int &clientID) {
+	MutexLock lock(_mutex);
 
 	// Check if frontend is enabled when we have a new session
 	if (newSession && !_enabled) {
@@ -94,10 +97,14 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 }
 
 void Stream::copySocketClientAttr(const SocketClient &socketClient) {
+	MutexLock lock(_mutex);
+
 	_client[0].copySocketClientAttr(socketClient);
 }
 
 void Stream::checkStreamClientsWithTimeout() {
+	MutexLock lock(_mutex);
+
 	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].checkWatchDogTimeout()) {
 			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
@@ -108,6 +115,8 @@ void Stream::checkStreamClientsWithTimeout() {
 }
 
 bool Stream::updateFrontend() {
+	MutexLock lock(_mutex);
+
 	if (_properties.hasPIDTableChanged()) {
 		if (_frontend.isTuned()) {
 			_frontend.update(_properties);
@@ -120,68 +129,61 @@ bool Stream::updateFrontend() {
 }
 
 bool Stream::update(int clientID) {
+	MutexLock lock(_mutex);
+
 //	_properties.printChannelInfo();
 	const bool changed = _properties.hasChannelDataChanged();
 
-	// Channel change.. pause RTP so we can clear RTP buffers
+	// first time streaming?
+	if (_streaming == nullptr) {
+		_streaming = new RtpStreamThread(_client, _properties, _dvbapi);
+		if (_streaming == nullptr) {
+			return false;
+		}
+	}
+
+	// Channel changed?.. stop/pause Stream
 	if (changed) {
-		_rtpThread.pauseStreaming(clientID);
+		_streaming->pauseStreaming(clientID);
 	}
 
 	if (!_frontend.update(_properties)) {
 		return false;
 	}
 
-	// Restart RTP again
-	if (changed) {
-		_rtpThread.restartStreaming(_frontend.get_dvr_fd(), clientID);
-	}
-
+	// start or restart streaming again
 	if (!_properties.getStreamActive()) {
-		const bool active = _rtpThread.startStreaming(_frontend.get_dvr_fd());
-		_rtcpThread.startStreaming(_frontend.get_monitor_fd());
+		const bool active = _streaming->startStreaming(_frontend.get_dvr_fd(), _frontend.get_monitor_fd());
 		_properties.setStreamActive(active);
+	} else if (changed) {
+		_streaming->restartStreaming(_frontend.get_dvr_fd(), clientID);
 	}
 	return true;
 }
 
 void Stream::close(int clientID) {
+	MutexLock lock(_mutex);
+
 	if (_client[clientID].canClose()) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
 		            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
 
-		processStopStream(clientID, false);
+		processStopStream_L(clientID, false);
 	}
 }
 
 bool Stream::teardown(int clientID, bool gracefull) {
+	MutexLock lock(_mutex);
+
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
 
-	processStopStream(clientID, gracefull);
+	processStopStream_L(clientID, gracefull);
 	return true;
 }
 
-void Stream::processStopStream(int clientID, bool gracefull) {
-	_rtpThread.stopStreaming(clientID);
-	_rtcpThread.stopStreaming(clientID);
-	_frontend.teardown(_properties);
-
-	// as last, else sessionID and IP is reset
-	_client[clientID].teardown(gracefull);
-
-	// @TODO Are all other StreamClients stopped??
-	if (clientID == 0) {
-		for (size_t i = 1; i < MAX_CLIENTS; ++i) {
-			// Not gracefully teardown for other clients
-			_client[i].teardown(false);
-		}
-		_properties.setStreamActive(false);
-		_streamInUse = false;
-	}
-}
-
 void Stream::addToXML(std::string &xml) const {
+	MutexLock lock(_mutex);
 
 	ADD_CONFIG_NUMBER(xml, "streamindex", _properties.getStreamID());
 
@@ -195,6 +197,8 @@ void Stream::addToXML(std::string &xml) const {
 }
 
 void Stream::fromXML(const std::string &xml) {
+	MutexLock lock(_mutex);
+
 	std::string element;
 	if (findXMLElement(xml, "enable.value", element)) {
 		_enabled = (element == "true") ? true : false;;
@@ -203,9 +207,11 @@ void Stream::fromXML(const std::string &xml) {
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
+	MutexLock lock(_mutex);
+
 	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
 	     StringConverter::hasTransportParameters(msg)) {
-		parseStreamString(msg, method);
+		parseStreamString_L(msg, method);
 	}
 	int port;
 	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
@@ -238,7 +244,29 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	return true;
 }
 
-void Stream::parseStreamString(const std::string &msg, const std::string &method) {
+/// private NO Locking
+void Stream::processStopStream_L(int clientID, bool gracefull) {
+
+	// Stop streaming by deleting object
+	DELETE(_streaming);
+
+	_frontend.teardown(_properties);
+
+	// as last, else sessionID and IP is reset
+	_client[clientID].teardown(gracefull);
+
+	// @TODO Are all other StreamClients stopped??
+	if (clientID == 0) {
+		for (size_t i = 1; i < MAX_CLIENTS; ++i) {
+			// Not gracefully teardown for other clients
+			_client[i].teardown(false);
+		}
+		_properties.setStreamActive(false);
+		_streamInUse = false;
+	}
+}
+
+void Stream::parseStreamString_L(const std::string &msg, const std::string &method) {
 	double doubleVal = 0.0;
 	int    intVal = 0;
 	std::string strVal;
@@ -421,15 +449,16 @@ void Stream::parseStreamString(const std::string &msg, const std::string &method
 	}
 	if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
 		StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-		processPID(strVal, true);
+		processPID_L(strVal, true);
 	}
 	if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
-		processPID(strVal, false);
+		processPID_L(strVal, false);
 	}
 	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _properties.getStreamID());
 }
 
-void Stream::processPID(const std::string &pids, bool add) {
+/// private NO Locking
+void Stream::processPID_L(const std::string &pids, bool add) {
 	std::string::size_type begin = 0;
 	if (pids == "all" ) {
 		// All pids requested then 'remove' all used PIDS

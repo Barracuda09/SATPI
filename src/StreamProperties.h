@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef STREAM_PROPERTIES_H_INCLUDE
-#define STREAM_PROPERTIES_H_INCLUDE
+#define STREAM_PROPERTIES_H_INCLUDE STREAM_PROPERTIES_H_INCLUDE
 
 #include "ChannelData.h"
 #include "Mutex.h"
@@ -65,21 +65,56 @@ class StreamProperties
 		std::string attribute_describe_string(bool &active) const;
 
 		/// Get the stream ID to identify the properties
-		int  getStreamID() const           { return _streamID; }
+		int  getStreamID() const {
+			MutexLock lock(_mutex);
+			return _streamID;
+		}
 
 		/// Set if the stream is active/in use
-		void setStreamActive(bool active)  { _streamActive = active; }
-		/// Check if the stream is busy/in use
-		bool getStreamActive()             { return _streamActive; }
+		void setStreamActive(bool active) {
+			MutexLock lock(_mutex);
+			_streamActive = active;
+		}
 
-		uint32_t     getSSRC() const       { return _ssrc; }
-		long         getTimestamp() const  { return _timestamp; }
-		double       getRtpPayload() const { return _rtp_payload; }
-		uint32_t     getSPC() const        { return _spc; }
-		uint32_t     getSOC() const        { return _soc; }
+		/// Check if the stream is busy/in use
+		bool getStreamActive() {
+			MutexLock lock(_mutex);
+			return _streamActive;
+		}
+
+		///
+		uint32_t getSSRC() const {
+			MutexLock lock(_mutex);
+			return _ssrc;
+		}
+
+		///
+		long getTimestamp() const {
+			MutexLock lock(_mutex);
+			return _timestamp;
+		}
+
+		///
+		double getRtpPayload() const {
+			MutexLock lock(_mutex);
+			return _rtp_payload;
+		}
+
+		///
+		uint32_t getSPC() const {
+			MutexLock lock(_mutex);
+			return _spc;
+		}
+
+		///
+		uint32_t getSOC() const {
+			MutexLock lock(_mutex);
+			return _soc;
+		}
 
 		/// Get the DVR buffer size
 		unsigned long getDVRBufferSize() const;
+
 
 		/// Check if DiSEqC command has to be repeated
 		bool diseqcRepeat() const;

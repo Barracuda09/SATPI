@@ -1,4 +1,4 @@
-/* RtcpThread.h
+/* RtpStreamThread.h
 
    Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,58 +17,51 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef RTCP_THREAD_H_INCLUDE
-#define RTCP_THREAD_H_INCLUDE RTCP_THREAD_H_INCLUDE
+#ifndef RTP_STREAM_THREAD_H_INCLUDE
+#define RTP_STREAM_THREAD_H_INCLUDE RTP_STREAM_THREAD_H_INCLUDE
 
-#include "ThreadBase.h"
-
-#include <stdint.h>
-
-#include <linux/dvb/frontend.h>
+#include "StreamThreadBase.h"
+#include "RtcpThread.h"
 
 // forward declaration
 class StreamClient;
 class StreamProperties;
+class DvbapiClient;
 
 /// RTSP Server
-class RtcpThread :
-		public ThreadBase {
+class RtpStreamThread :
+		public StreamThreadBase {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtcpThread(StreamClient *clients, StreamProperties &properties);
-		virtual ~RtcpThread();
+		RtpStreamThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi);
 
-		/// Start streaming
-		/// @return true if stream is started else false on error
-		bool startStreaming(int fd_fe);
+		virtual ~RtpStreamThread();
+
+		/// @see StreamThreadBase
+		virtual bool startStreaming(int fd_dvr, int fd_fe);
 
 	protected:
+
 		/// Thread function
 		virtual void threadEntry();
 
-	private:
-		///
-		uint8_t *get_app_packet(size_t *len);
-		uint8_t *get_sdes_packet(size_t *len);
-		uint8_t *get_sr_packet(size_t *len);
+		/// @see StreamThreadBase
+		virtual void sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client);
 
-		///
-		void monitorFrontend(bool showStatus);
+		/// @see StreamThreadBase
+		virtual int getStreamSocketPort(int clientID) const;
+
+	private:
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int              _socket_fd;   //
-		StreamClient     *_clients;    //
-		StreamProperties &_properties; //
-		int              _fd_fe;       //
+		int        _socket_fd_rtp;     //
+		uint16_t   _cseq;              // RTP sequence number
+		RtcpThread _rtcp;              //
 
-		uint8_t  _sr[28];              // Sender Report (SR Packet)
-		uint8_t  _srb[24];             // Sender Report Block n (SR Packet)
-		uint8_t  _sdes[24];            // Source Description (SDES Packet)
-		uint8_t  _app[500];            // Application Defined packet (APP Packet)
-}; // class RtcpThread
+}; // class RtpStreamThread
 
-#endif // RTCP_THREAD_H_INCLUDE
+#endif // RTP_STREAM_THREAD_H_INCLUDE

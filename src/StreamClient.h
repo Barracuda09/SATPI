@@ -1,6 +1,6 @@
 /* StreamClient.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,8 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef STREAM_CLIENT_H_INCLUDE
-#define STREAM_CLIENT_H_INCLUDE
+#define STREAM_CLIENT_H_INCLUDE STREAM_CLIENT_H_INCLUDE
 
+#include "Mutex.h"
 #include "SocketAttr.h"
 
 #include <string>
@@ -38,6 +39,11 @@ class StreamClient {
 		virtual ~StreamClient();
 
 		///
+		void setClientID(int id) {
+			_clientID = id;
+		}
+
+		///
 		void teardown(bool gracefull);
 
 		///
@@ -50,46 +56,86 @@ class StreamClient {
 		void copySocketClientAttr(const SocketClient &socket);
 
 		///
-		const std::string getMessage() const { return _rtspMsg; }
+		const std::string getMessage() const {
+			MutexLock lock(_mutex);
+			return _rtspMsg;
+		}
 
 		///
-		const std::string &getIPAddress() const  { return _ip_addr; }
+		std::string getIPAddress() const {
+			MutexLock lock(_mutex);
+			return _ip_addr;
+		}
 
 		///
-		const std::string &getSessionID() const         { return _sessionID; }
-		void setSessionID(const std::string &sessionID) { _sessionID = sessionID; }
+		std::string getSessionID() const {
+			MutexLock lock(_mutex);
+			return _sessionID;
+		}
 
 		///
-		unsigned int getSessionTimeout() const   { return _sessionTimeout; }
+		void setSessionID(const std::string &sessionID) {
+			MutexLock lock(_mutex);
+			_sessionID = sessionID;
+		}
 
-		int  getRtspFD() const  { return _rtspFD; }
+		///
+		unsigned int getSessionTimeout() const {
+			MutexLock lock(_mutex);
+			return _sessionTimeout;
+		}
 
+		///
+		int getRtspFD() const {
+			MutexLock lock(_mutex);
+			return _rtspFD;
+		}
+
+		///
 		void setCanClose(bool close);
-		bool canClose() const           { return _canClose;  }
 
 		///
-		void setCSeq(int cseq)  { _cseq = cseq; }
-		int  getCSeq() const    { return _cseq; }
+		bool canClose() const  {
+			MutexLock lock(_mutex);
+			return _canClose;
+		}
 
+		///
+		void setCSeq(int cseq) {
+			MutexLock lock(_mutex);
+			_cseq = cseq;
+		}
+
+		///
+		int getCSeq() const {
+			MutexLock lock(_mutex);
+			return _cseq;
+		}
+
+		///
 		void setRtpSocketPort(int port);
-		int  getRtpSocketPort() const;
 
+		///
+		int getRtpSocketPort() const;
+
+		///
 		void setRtcpSocketPort(int port);
-		int  getRtcpSocketPort() const;
 
+		///
+		int getRtcpSocketPort() const;
+
+		///
 		const struct sockaddr_in &getRtpSockAddr() const;
+
+		///
 		const struct sockaddr_in &getRtcpSockAddr() const;
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int _clientID;
-	protected:
-
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+		Mutex        _mutex;           ///
+		int          _clientID;
 		int          _rtspFD;          /// For sending reply to
 		std::string  _rtspMsg;
 		std::string  _ip_addr;         /// IP address of client

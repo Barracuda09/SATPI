@@ -1,4 +1,4 @@
-/* RtpPacketBuffer.h
+/* TSPacketBuffer.h
 
    Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef RTP_PACKET_BUFFER_H_INCLUDE
-#define RTP_PACKET_BUFFER_H_INCLUDE RTP_PACKET_BUFFER_H_INCLUDE
+#ifndef TS_PACKET_BUFFER_H_INCLUDE
+#define TS_PACKET_BUFFER_H_INCLUDE TS_PACKET_BUFFER_H_INCLUDE
 
 #include <stdio.h>
 #include <stdint.h>
@@ -27,62 +27,62 @@
 #define RTP_HEADER_LEN            12
 #define TS_PACKET_SIZE           188
 #define NUMBER_OF_TS_PACKETS       7
-#define RTP_MAX_TS_PACKET_SIZE  TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS
+#define MTU_MAX_TS_PACKET_SIZE  TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS
 
-class RtpPacketBuffer {
+class TSPacketBuffer {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtpPacketBuffer();
-		virtual ~RtpPacketBuffer();
+		TSPacketBuffer();
+		virtual ~TSPacketBuffer();
 
 		// =======================================================================
 		// Other functions
 		// =======================================================================
 
-		/// Initialize this RTP packet
+		/// Initialize this TS packet
 		void initialize(uint32_t ssrc, long timestamp);
 
-		/// Reset this RTP packet
+		/// Reset this TS packet
 		void reset() {
 			_decryptPending = false;
 			_writeIndex = RTP_HEADER_LEN;
 		}
 
 		/// This function will return the number of TS Packets that are
-		/// in this RTP Packet
+		/// in this TS Packet
 		size_t getNumberOfTSPackets() const {
 			return NUMBER_OF_TS_PACKETS;
 		}
 
-		/// get the amount of data that can be written to this RTP packet
+		/// get the amount of data that can be written to this TS packet
 		size_t getBufferSize() const {
-			return RTP_MAX_TS_PACKET_SIZE;
+			return MTU_MAX_TS_PACKET_SIZE;
 		}
 
 		/// This will return the amount of bytes that (still) need to be written
 		size_t getAmountOfBytesToWrite() const {
-			return (RTP_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
+			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
 		}
 
 		/// Add the amount of bytes written. So increment write index
-		/// @param index specifies the amount written to RTP packet
+		/// @param index specifies the amount written to TS packet
 		void addAmountOfBytesWritten(size_t index) {
 			_writeIndex += index;
 		}
 
 		/// Check if we have written all the buffer
 		bool full() const {
-			return (RTP_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
+			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
 		}
 
-		/// Get the write buffer pointer for this RTP packet
+		/// Get the write buffer pointer for this TS packet
 		unsigned char *getWriteBufferPtr() {
 			return &_buffer[_writeIndex];
 		}
 
-		/// This function will return the begin of this RTP packet
+		/// This function will return the begin of this TS packet
 		unsigned char *getReadBufferPtr() {
 			return _buffer;
 		}
@@ -104,7 +104,7 @@ class RtpPacketBuffer {
 			_decryptPending = true;
 		}
 
-		/// This function checks if this RTP packet is ready to be send.
+		/// This function checks if this TS packet is ready to be send.
 		/// When the pending decrypt flag was set, all scramble flags should be cleared from all TS packets.
 		bool isReadyToSend() const {
 			// can only be ready when buffer is full, so start from there
@@ -124,6 +124,6 @@ class RtpPacketBuffer {
 		bool          _initialized;
 		bool          _decryptPending;
 
-}; // class RtpPacketBuffer
+}; // class TSPacketBuffer
 
-#endif // RTP_PACKET_BUFFER_H_INCLUDE
+#endif // TS_PACKET_BUFFER_H_INCLUDE

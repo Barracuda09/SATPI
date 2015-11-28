@@ -4,55 +4,86 @@ hide footbox
 
 title SatPI
 
-SatPI --* DvbapiClient
-SatPI --* Streams
-SatPI --* RtspServer
-SatPI --* HttpServer
-SatPI --* SsdpServer
-SatPI --* InterfaceAttr
+SatPI *-- DvbapiClient
+SatPI *-- Streams
+SatPI *-- RtspServer
+SatPI *-- HttpServer
+SatPI *-- SsdpServer
 
-note top of InterfaceAttr : Eth0 etc.
+class SatPI {
+  Properties
+  InterfaceAttr
+}
 
-Stream --* StreamClient : " _client[..] "
-Stream --* StreamProperties
-Stream --* Frontend
-Stream --* RtpThread
-Stream --* RtcpThread
+class InterfaceAttr {
+  Eth0 etc.
+}
 
-Streams --* Stream : " _stream[..] "
+RtspServer *.. Streams : " _streams "
 
-StreamClient --* SocketAttr : " _rtp "
-StreamClient --* SocketAttr : " _rtcp "
+HttpServer *.. Streams : " _streams "
+HttpServer *.. Properties
+HttpServer *.. InterfaceAttr
+
+Stream *-- StreamClient : " _client[..] "
+Stream *-- StreamProperties
+Stream *-- Frontend
+Stream *-- StreamThreadBase
+
+Streams *-- Stream : " _stream[..] "
+
+StreamClient *-- SocketAttr : " _rtp "
+StreamClient *-- SocketAttr : " _rtcp "
+
+StreamThreadBase *.. DvbapiClient
+StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
+
+RtpStreamThread --|> StreamThreadBase
+RtpStreamThread *.. StreamProperties
+RtpStreamThread *.. StreamClient : " _client[..] "
+
+HttpStreamThread --|> StreamThreadBase
 
 SocketClient --|> SocketAttr
 
-DvbapiClientProperties --* dvbcsa_key_s
-DvbapiClientProperties --* TSTableData : " _pat "
-DvbapiClientProperties --* TSTableData : " _pmt "
+DvbapiClientProperties *-- dvbcsa_key_s
+DvbapiClientProperties *-- TSTableData : " _pat "
+DvbapiClientProperties *-- TSTableData : " _pmt "
 
-StreamProperties --* ChannelData
+StreamProperties *-- ChannelData
 StreamProperties --|> DvbapiClientProperties
 
-DvbapiClient  .  Streams : " _getStreamProperties(..)"
-DvbapiClient  .  Streams : " _updateFrontend(..)"
+DvbapiClient  .  Streams
 
-Frontend --* Lnb_t
-Frontend --* DiSEqc_t
+Frontend *-- Lnb_t
+Frontend *-- DiSEqc_t
 
-ChannelData --* PidTable
+ChannelData *-- PidTable
 
-RtpThread --|> ThreadBase
-RtpThread ..* StreamProperties
-RtpThread ..* StreamClient : " _client[..] "
-RtpThread ..* DvbapiClient
+class Stream {
+  Mutex
+}
 
-RtspServer ..* Streams : " _streams "
+class Streams {
+  Mutex
+}
 
-RtcpThread ..* StreamProperties
-RtcpThread ..* StreamClient : " _client[..] "
+class StreamProperties {
+  Mutex
+}
 
-HttpServer ..* Streams
-HttpServer ..* Properties
-HttpServer ..* InterfaceAttr
+class StreamClient {
+  Mutex
+}
+
+class DvbapiClient {
+  Mutex
+  _getStreamProperties(..)
+  _updateFrontend(..)
+}
+
+class RtpStreamThread {
+  Rtp/Rtcp
+}
 
 @enduml

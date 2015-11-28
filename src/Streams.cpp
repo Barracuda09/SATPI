@@ -46,9 +46,9 @@
 #define FE_PATH_LEN 255
 
 Streams::Streams() :
-		_stream(NULL),
+		_stream(nullptr),
 		_maxStreams(0),
-		_dummyStream(NULL) {
+		_dummyStream(nullptr) {
 }
 
 Streams::~Streams() {
@@ -59,7 +59,7 @@ Streams::~Streams() {
 	DELETE_ARRAY(_stream);
 }
 
-int Streams::getAttachedFrontendCount(const std::string &path, int count) {
+int Streams::getAttachedFrontendCount_L(const std::string &path, int count) {
 #if SIMU
 	UNUSED(path)
 	count = 2;
@@ -78,7 +78,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 	}
 #else
 	struct dirent **file_list;
-	const int n = scandir(path.c_str(), &file_list, NULL, alphasort);
+	const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
 	if (n > 0) {
 		int i;
 		for (i = 0; i < n; ++i) {
@@ -88,7 +88,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 			if (stat(full_path, &stat_buf) == 0) {
 				switch (stat_buf.st_mode & S_IFMT) {
 					case S_IFCHR: // character device
-						if (strstr(file_list[i]->d_name, "frontend") != NULL) {
+						if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
 							// check if we have an array we can fill in
 							if (_maxStreams && _stream) {
 								int fe_nr;
@@ -111,7 +111,7 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 					case S_IFDIR:
 						// do not use dir '.' an '..'
 						if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-							count = getAttachedFrontendCount(full_path, count);
+							count = getAttachedFrontendCount_L(full_path, count);
 						}
 						break;
 				}
@@ -124,6 +124,8 @@ int Streams::getAttachedFrontendCount(const std::string &path, int count) {
 }
 
 int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
+	MutexLock lock(_mutex);
+
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
@@ -139,9 +141,9 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 	_nr_dvb_c2 = 0;
 #endif
 	_dummyStream = new Stream(0, dvbapi);
-	_maxStreams = getAttachedFrontendCount(path, 0);
+	_maxStreams = getAttachedFrontendCount_L(path, 0);
 	_stream = new Stream *[_maxStreams + 1];
-	if (_stream != NULL) {
+	if (_stream != nullptr) {
 		for (int i = 0; i < _maxStreams; ++i) {
 			_stream[i] = new Stream(i, dvbapi);
 		}
@@ -150,7 +152,7 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 	}
 	SI_LOG_INFO("Frontends found: %zu", _maxStreams);
 	if (_maxStreams) {
-		getAttachedFrontendCount(path, 0);
+		getAttachedFrontendCount_L(path, 0);
 		for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
 			_stream[i]->setFrontendInfo();
 			int dvb_s2 = 0;
@@ -212,6 +214,8 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 }
 
 Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
+	MutexLock lock(_mutex);
+
 	// Here we need to find the correct Stream and StreamClient
 	assert(_stream);
 	const std::string &msg = socketClient.getMessage();
@@ -290,12 +294,14 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 	}
 	// Did not find anything
 	SI_LOG_ERROR("Found no Stream/Client of interest!");
-	return NULL;
+	return nullptr;
 }
 
 void Streams::checkStreamClientsWithTimeout() {
+	MutexLock lock(_mutex);
+
 	assert(_stream);
-	for (size_t streamID = 0; streamID < static_cast<size_t>(_maxStreams); ++streamID) {
+	for (auto streamID = 0; streamID < _maxStreams; ++streamID) {
 		if (_stream[streamID]->streamInUse()) {
 			_stream[streamID]->checkStreamClientsWithTimeout();
 		}
@@ -303,20 +309,28 @@ void Streams::checkStreamClientsWithTimeout() {
 }
 
 StreamProperties & Streams::getStreamProperties(int streamID) {
+//	MutexLock lock(_mutex);
+
 	return _stream[streamID]->getStreamProperties();
 }
 
 bool Streams::updateFrontend(int streamID) {
+//	MutexLock lock(_mutex);
+
 	return _stream[streamID]->updateFrontend();
 }
 
 std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
+	MutexLock lock(_mutex);
+
 	assert(_stream);
 	return _stream[stream]->attribute_describe_string(active);
 }
 
 void Streams::fromXML(const std::string &xml) {
-	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
+	MutexLock lock(_mutex);
+
+	for (auto i = 0; i < _maxStreams; ++i) {
 		std::string find;
 		std::string element;
 		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
@@ -326,10 +340,12 @@ void Streams::fromXML(const std::string &xml) {
 }
 
 void Streams::addToXML(std::string &xml) const {
+	MutexLock lock(_mutex);
+
 	assert(_stream);
 	// application data
 	xml += "<streams>";
-	for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
+	for (auto i = 0; i < _maxStreams; ++i) {
 		StringConverter::addFormattedString(xml, "<stream%zu>", i);
 		_stream[i]->addToXML(xml);
 		StringConverter::addFormattedString(xml, "</stream%zu>", i);

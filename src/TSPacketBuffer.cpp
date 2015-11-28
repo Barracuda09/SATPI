@@ -1,4 +1,4 @@
-/* RtpPacketBuffer.cpp
+/* TSPacketBuffer.cpp
 
    Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,20 +17,21 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "RtpPacketBuffer.h"
+#include "TSPacketBuffer.h"
 
 #include <assert.h>
 
-RtpPacketBuffer::RtpPacketBuffer() :
+static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
+
+TSPacketBuffer::TSPacketBuffer() :
 		_writeIndex(0),
 		_initialized(false),
 		_decryptPending(false) {
-	assert(RTP_MAX_TS_PACKET_SIZE < MTU);
 }
 
-RtpPacketBuffer::~RtpPacketBuffer() {}
+TSPacketBuffer::~TSPacketBuffer() {}
 
-void RtpPacketBuffer::initialize(uint32_t ssrc, long timestamp) {
+void TSPacketBuffer::initialize(uint32_t ssrc, long timestamp) {
 	// initialize RTP header
 	_buffer[0]  = 0x80;                         // version: 2, padding: 0, extension: 0, CSRC: 0
 	_buffer[1]  = 33;                           // marker: 0, payload type: 33 (MP2T)

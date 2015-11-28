@@ -26,11 +26,12 @@
 #include "XMLSupport.h"
 #include "Functor1Ret.h"
 
+#include <atomic>
 #include <string>
 
 // Forward declarations
 class StreamProperties;
-class RtpPacketBuffer;
+class TSPacketBuffer;
 
 /// The class @c DvbapiClient is for decrypting streams
 class DvbapiClient : public ThreadBase,
@@ -44,7 +45,7 @@ class DvbapiClient : public ThreadBase,
 		virtual ~DvbapiClient();
 
 		///
-		void decrypt(int streamID, RtpPacketBuffer &buffer);
+		void decrypt(int streamID, TSPacketBuffer &buffer);
 
 		///
 		bool stopDecrypt(int streamID);
@@ -81,14 +82,14 @@ class DvbapiClient : public ThreadBase,
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Mutex _mutex;
-		bool  _connected;
-		bool _enabled;
-		bool _rewritePMT;
-		SocketClient _client;
-		std::string _serverIpAddr;
-		std::string _serverName;
-		int _serverPort;
+		SocketClient     _client;
+		Mutex            _mutex;
+		std::atomic_bool _connected;
+		std::atomic_bool _enabled;
+		std::atomic_bool _rewritePMT;
+		std::atomic<int> _serverPort;
+		std::string      _serverIpAddr;
+		std::string      _serverName;
 
 		Functor1Ret<StreamProperties &, int> _getStreamProperties;
 		Functor1Ret<bool, int> _updateFrontend;

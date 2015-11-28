@@ -1,6 +1,6 @@
 /* SsdpServer.cpp
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <poll.h>
 
-
 #define UTIME_DEL    200000
 
 SsdpServer::SsdpServer(const InterfaceAttr &interface,
@@ -46,7 +45,7 @@ void SsdpServer::threadEntry() {
 #define UPNP_ROOTDEVICE	"NOTIFY * HTTP/1.1\r\n" \
 						"HOST: 239.255.255.250:1900\r\n" \
 						"CACHE-CONTROL: max-age=1800\r\n" \
-						"LOCATION: http://%s:%d/desc.xml\r\n" \
+						"LOCATION: %s\r\n" \
 						"NT: upnp:rootdevice\r\n" \
 						"NTS: ssdp:alive\r\n" \
 						"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
@@ -59,7 +58,7 @@ void SsdpServer::threadEntry() {
 #define UPNP_ALIVE	"NOTIFY * HTTP/1.1\r\n" \
 					"HOST: 239.255.255.250:1900\r\n" \
 					"CACHE-CONTROL: max-age=1800\r\n" \
-					"LOCATION: http://%s:%d/desc.xml\r\n" \
+					"LOCATION: %s\r\n" \
 					"NT: uuid:%s\r\n" \
 					"NTS: ssdp:alive\r\n" \
 					"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
@@ -72,7 +71,7 @@ void SsdpServer::threadEntry() {
 #define UPNP_DEVICE "NOTIFY * HTTP/1.1\r\n" \
 					"HOST: 239.255.255.250:1900\r\n" \
 					"CACHE-CONTROL: max-age=1800\r\n" \
-					"LOCATION: http://%s:%d/desc.xml\r\n" \
+					"LOCATION: %s\r\n" \
 					"NT: urn:ses-com:device:SatIPServer:1\r\n" \
 					"NTS: ssdp:alive\r\n" \
 					"SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
@@ -93,7 +92,7 @@ void SsdpServer::threadEntry() {
 #define UPNP_M_SEARCH_OK "HTTP/1.1 200 OK\r\n" \
                          "CACHE-CONTROL: max-age=1800\r\n" \
                          "EXT:\r\n" \
-                         "LOCATION: http://%s:%d/desc.xml\r\n" \
+                         "LOCATION: %s\r\n" \
                          "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
                          "ST: urn:ses-com:device:SatIPServer:1\r\n" \
                          "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
@@ -103,9 +102,14 @@ void SsdpServer::threadEntry() {
                          "\r\n"
 
 	std::string fileBootID = _properties.getStartPath() + "/bootID";
-	_properties.setBootID(read_bootID_from_file(fileBootID.c_str()));
+	_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
 
 	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", _properties.getBootID());
+
+	// Get file and constuct new location
+	std::string location;
+	std::string xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
+	StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), HTTP_PORT, xmlDeviceDescriptionFile.c_str());
 
 	init_udp_socket(_udpMultiSend, SSDP_PORT, inet_addr("239.255.255.250"));
 	init_mutlicast_udp_socket(_udpMultiListen, SSDP_PORT, _interface.getIPAddress().c_str());
@@ -167,7 +171,7 @@ void SsdpServer::threadEntry() {
 
 									// send message back
 									char msg[1024];
-									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, _interface.getIPAddress().c_str(), HTTP_PORT,
+									snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, location.c_str(),
 									        _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(),
 									        _properties.getDeviceID());
 									if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
@@ -175,10 +179,10 @@ void SsdpServer::threadEntry() {
 									}
 									// we should increment DEVICEID and send bye bye
 									_properties.setDeviceID(_properties.getDeviceID() + 1);
-									send_byebye(_properties.getDeviceID(), _properties.getUUID().c_str());
+									sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());
 
 									// now increment bootID
-									_properties.setBootID(read_bootID_from_file(fileBootID.c_str()));
+									_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
 									SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 									// reset repeat time to annouce new DEVICEID
@@ -188,11 +192,11 @@ void SsdpServer::threadEntry() {
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST", st_param)) {
 									if (st_param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
 										// client is sending a discover
-										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending an reply", ip_addr);
+										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr);
 
 										// send message back
 										char msg[1024];
-										snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, _interface.getIPAddress().c_str(), HTTP_PORT,
+										snprintf(msg, sizeof(msg), UPNP_M_SEARCH_OK, location.c_str(),
 										         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(),
 										         _properties.getBootID(), _properties.getDeviceID());
 										if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
@@ -201,12 +205,30 @@ void SsdpServer::threadEntry() {
 									}
 								}
 							}
-
 						}
 					}
 				}
 			}
 		}
+
+		// Did the Device Description File change?
+		if (xmlDeviceDescriptionFile != _properties.getXMLDeviceDescriptionFile()) {
+			// Get new file and constuct new location
+			xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
+			location.clear();
+			StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), HTTP_PORT, xmlDeviceDescriptionFile.c_str());
+
+			// we should send bye bye
+			sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());
+
+			// now increment bootID
+			_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
+			SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
+
+			// reset repeat time to annouce new 'Device Description File'
+			repeat_time =  time(NULL) + 5;
+		}
+
 		// Notify/announce ourself
 		const time_t curr_time = time(NULL);
 		if (repeat_time < curr_time) {
@@ -215,7 +237,7 @@ void SsdpServer::threadEntry() {
 			repeat_time = _properties.getSsdpAnnounceTimeSec() + curr_time;
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, _interface.getIPAddress().c_str(), HTTP_PORT,
+			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, location.c_str(),
 			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
 			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_ROOTDEVICE");
@@ -223,15 +245,15 @@ void SsdpServer::threadEntry() {
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_ALIVE, _interface.getIPAddress().c_str(), HTTP_PORT,
-			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
+			snprintf(msg, sizeof(msg), UPNP_ALIVE, location.c_str(),
+			         _properties.getUUID().c_str(), _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
 			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_ALIVE");
 			}
 			usleep(UTIME_DEL);
 
 			// broadcast message
-			snprintf(msg, sizeof(msg), UPNP_DEVICE, _interface.getIPAddress().c_str(), HTTP_PORT,
+			snprintf(msg, sizeof(msg), UPNP_DEVICE, location.c_str(),
 			         _properties.getSoftwareVersion().c_str(), _properties.getUUID().c_str(), _properties.getBootID(), _properties.getDeviceID());
 			if (sendto(_udpMultiSend.getFD(), msg, strlen(msg), 0, (struct sockaddr *)&_udpMultiSend._addr, sizeof(_udpMultiSend._addr)) == -1) {
 				PERROR("send UPNP_DEVICE");
@@ -240,7 +262,7 @@ void SsdpServer::threadEntry() {
 	}
 }
 
-bool SsdpServer::send_byebye(unsigned int bootId, const char *uuid) {
+bool SsdpServer::sendByeBye(unsigned int bootId, const char *uuid) {
 #define UPNP_ROOTDEVICE_BB "NOTIFY * HTTP/1.1\r\n" \
                            "HOST: 239.255.255.250:1900\r\n" \
                            "NT: upnp:rootdevice\r\n" \
@@ -292,11 +314,12 @@ bool SsdpServer::send_byebye(unsigned int bootId, const char *uuid) {
 		PERROR("send");
 		return false;
 	}
+	usleep(UTIME_DEL);
 
 	return true;
 }
 
-unsigned int SsdpServer::read_bootID_from_file(const char *file) {
+unsigned int SsdpServer::readBootIDFromFile(const char *file) {
 #define BOOTID_STR "bootID=%d"
 
 	// Get BOOTID from file, increment and save it again

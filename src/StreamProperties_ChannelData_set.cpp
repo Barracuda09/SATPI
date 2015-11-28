@@ -35,26 +35,32 @@ void StreamProperties::addPIDData(int pid, uint8_t cc) {
 }
 
 void StreamProperties::resetPid(int pid) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.resetPid(pid);
 }
 
 void StreamProperties::setDMXFileDescriptor(int pid, int fd) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.setDMXFileDescriptor(pid, fd);
 }
 
 void StreamProperties::closeDMXFileDescriptor(int pid) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.closeDMXFileDescriptor(pid);
 }
 
 void StreamProperties::resetPIDTableChanged() {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.resetPIDTableChanged();
 }
 
 void StreamProperties::setPID(int pid, bool val) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.setPID(pid, val);
 }
 
 void StreamProperties::setAllPID(bool val) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.setAllPID(val);
 }
 

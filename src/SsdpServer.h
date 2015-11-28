@@ -1,6 +1,6 @@
 /* SsdpServer.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef SSDP_SERVER_H_INCLUDE
-#define SSDP_SERVER_H_INCLUDE
+#define SSDP_SERVER_H_INCLUDE SSDP_SERVER_H_INCLUDE
 
 #include "ThreadBase.h"
 #include "SocketAttr.h"
@@ -44,22 +44,21 @@ class SsdpServer :
 	protected:
 		/// Thread function
 		virtual void threadEntry();
-		
+
 	private:
 		///
-		unsigned int read_bootID_from_file(const char *file);
-		
+		unsigned int readBootIDFromFile(const char *file);
+
 		///
-		bool send_byebye(unsigned int bootId, const char *uuid);
+		bool sendByeBye(unsigned int bootId, const char *uuid);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		const InterfaceAttr &_interface;
-		Properties &_properties;
-		
-		SocketClient _udpMultiListen;
-		SocketClient _udpMultiSend;
+		Properties          &_properties;
+		SocketClient        _udpMultiListen;
+		SocketClient        _udpMultiSend;
 }; // class SsdpServer
 
 #endif // SSDP_SERVER_H_INCLUDE

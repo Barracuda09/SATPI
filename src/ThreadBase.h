@@ -18,14 +18,20 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef THREAD_BASE_H_INCLUDE
-#define THREAD_BASE_H_INCLUDE
+#define THREAD_BASE_H_INCLUDE THREAD_BASE_H_INCLUDE
 
 #include "Log.h"
-#include "Mutex.h"
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE _GNU_SOURCE
+#endif
 
 #include <pthread.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 #include <string>
+#include <atomic>
+
 
 /// ThreadBase can be use to implement thread functionality
 class ThreadBase {
@@ -41,7 +47,7 @@ class ThreadBase {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		ThreadBase(const std::string &name) : _run(false), _exit(false), _name(name) {}
+		ThreadBase(std::string name) : _run(false), _exit(false), _name(name) {}
 		virtual ~ThreadBase() {}
 
 		/// Start the Thread
@@ -49,32 +55,38 @@ class ThreadBase {
 		bool startThread() {
 			_run = true;
 			_exit = false;
-			const bool ok = (pthread_create(&_thread, NULL, threadEntryFunc, this) == 0);
+			const bool ok = (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
 			if (ok) {
+#ifdef HAS_NP_FUNCTIONS
 				pthread_setname_np(_thread, _name.c_str());
+#else
+				prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
+#endif
 			}
 			return ok;
 		}
 
 		/// Is thread still running
 		bool running() const {
-			MutexLock lock(_mutex);
 			return _run;
+		}
+
+		///
+		void terminateThread() {
+			stopThread();
+			joinThread();
 		}
 
 		/// Stop the running thread give 5.0 sec to stop else cancel it
 		void stopThread() {
-			{
-				MutexLock lock(_mutex);
-				_run = false;
-			}
+			_run = false;
 			size_t timeout = 0;
-			while (!exit()) {
+			while (!_exit) {
 				usleep(100000);
 				++timeout;
 				if (timeout > 50) {
 					cancelThread();
-					SI_LOG_DEBUG("Thread did not stop within timeout?");
+					SI_LOG_DEBUG("%s: Thread did not stop within timeout?  !!TIMEOUT!!", _name.c_str());
 					break;
 				}
 			}
@@ -83,24 +95,24 @@ class ThreadBase {
 		/// Cancel the running thread
 		void cancelThread() {
 			pthread_cancel(_thread);
-			{
-				MutexLock lock(_mutex);
-				_exit = true;
-			}
+			_exit = true;
 		}
 
 		/// Will not return until the internal thread has exited.
 		void joinThread() {
-			(void) pthread_join(_thread, NULL);
+			(void) pthread_join(_thread, nullptr);
 		}
 
 		/// This will set the threads affinity (which CPU is used).
 		/// @param cpu Set threads affinity with this CPU.
 		void setAffinity(int cpu) {
-			cpu_set_t cpus;
-			CPU_ZERO(&cpus);
-			CPU_SET(cpu, &cpus);
-			pthread_setaffinity_np(_thread, sizeof(cpu_set_t), &cpus);
+			if (cpu > 0 && cpu < getNumberOfProcessorsOnline()) {
+				cpu_set_t cpus;
+				CPU_ZERO(&cpus);
+				CPU_SET(cpu, &cpus);
+//				pthread_setaffinity_np(_thread, sizeof(cpu_set_t), &cpus);
+				sched_setaffinity(_thread, sizeof(cpu_set_t), &cpus);
+			}
 		}
 
 		/// This will get the scheduled affinity of this thread.
@@ -132,7 +144,7 @@ class ThreadBase {
 					factor = 0.0;
 					break;
 				default:
-					SI_LOG_ERROR("setPriority: Unknown case");
+					SI_LOG_ERROR("%s: setPriority: Unknown case", _name.c_str());
 					return false;
 			}
 			int policy = 0;
@@ -163,32 +175,22 @@ class ThreadBase {
 		virtual void threadEntry() = 0;
 
 	private:
-		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return NULL;}
+		static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return nullptr;}
 
 		void threadEntryBase() {
-			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-			pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+			pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 			threadEntry();
-			{
-				MutexLock lock(_mutex);
-				_exit = true;
-			}
-		}
-
-		/// Is thread exit
-		bool exit() const {
-			MutexLock lock(_mutex);
-			return _exit;
+			_exit = true;
 		}
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		pthread_t   _thread;
-		bool        _run;
-		bool        _exit;
-		std::string _name;
-		Mutex       _mutex;
+		pthread_t        _thread;
+		std::atomic_bool _run;
+		std::atomic_bool _exit;
+		std::string      _name;
 }; // class ThreadBase
 
 #endif // THREAD_BASE_H_INCLUDE

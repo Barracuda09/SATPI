@@ -1,6 +1,6 @@
 /* InterfaceAttr.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef INTERFACE_ATTR_H_INCLUDE
-#define INTERFACE_ATTR_H_INCLUDE
+#define INTERFACE_ATTR_H_INCLUDE INTERFACE_ATTR_H_INCLUDE
 
 #include "Log.h"
 #include "Utils.h"
@@ -98,15 +98,44 @@ class InterfaceAttr {
 			// free linked list
 			freeifaddrs(ifaddr);
 		}
-		
+
 		const std::string &getIPAddress() const {
 			return _ip_addr;
 		}
-		
+
 		std::string getUUID() const {
 			char uuid[50];
 			snprintf(uuid, sizeof(uuid), "50c958a8-e839-4b96-b7ae-%s", _mac_addr.c_str());
-			return uuid;			
+			return uuid;
+		}
+
+		static int getNetworkUDPBufferSize() {
+			int socket_fd = -1;
+			if ((socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+				PERROR("socket");
+				return 0;
+			}
+			int bufferSize = getNetworkUDPBufferSize(socket_fd);
+			CLOSE_FD(socket_fd);
+			return bufferSize / 2;
+		}
+
+		static int getNetworkUDPBufferSize(int socket_fd) {
+			int bufferSize;
+			socklen_t optlen = sizeof(bufferSize);
+			if (getsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {
+				PERROR("getsockopt");
+				bufferSize = 0;
+			}
+			return bufferSize / 2;
+		}
+
+		static bool setNetworkUDPBufferSize(int fd, int size) {
+			if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1) {
+				PERROR("setsockopt");
+				return false;
+			}
+			return true;
 		}
 
 	protected:

@@ -88,22 +88,27 @@ void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set
 }
 
 void StreamProperties::getECMFilterData(int &demux, int &filter, int pid) const {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.getECMFilterData(demux, filter, pid);
 }
 
 bool StreamProperties::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
+	MutexLock lock(_mutex);
 	return _channelData._pidTable.getActiveECMFilterData(demux, filter, pid);
 }
 
 bool StreamProperties::isECM(int pid) const {
+	MutexLock lock(_mutex);
 	return _channelData._pidTable.isECM(pid);
 }
 
 void StreamProperties::setKeyParity(int pid, int parity) {
+	MutexLock lock(_mutex);
 	_channelData._pidTable.setKeyParity(pid, parity);
 }
 
 int StreamProperties::getKeyParity(int pid) const {
+	MutexLock lock(_mutex);
 	return _channelData._pidTable.getKeyParity(pid);
 }
 ////////////////////////////////////
@@ -274,6 +279,8 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 }
 
 void StreamProperties::printChannelInfo() const {
+	MutexLock lock(_mutex);
+
 	SI_LOG_INFO("freq:         %d", _channelData.freq);
 	SI_LOG_INFO("srate:        %d", _channelData.srate);
 	SI_LOG_INFO("MSYS:         %s", StringConverter::delsys_to_string(_channelData.delsys));

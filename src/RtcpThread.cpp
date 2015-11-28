@@ -46,42 +46,34 @@ RtcpThread::RtcpThread(StreamClient *clients, StreamProperties &properties) :
 }
 
 RtcpThread::~RtcpThread() {
-	cancelThread();
-	joinThread();
+	terminateThread();
+	CLOSE_FD(_fd_fe);
+	CLOSE_FD(_socket_fd);
+	SI_LOG_INFO("Stream: %d, Stop RTCP stream", _properties.getStreamID());
 }
 
 bool RtcpThread::startStreaming(int fd_fe) {
 	_fd_fe = fd_fe;
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			PERROR("socket RTP ");
+			PERROR("socket RTCP");
 			return false;
 		}
 
 		const int val = 1;
 		if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-			PERROR("RTP setsockopt SO_REUSEADDR");
+			PERROR("RTCP setsockopt SO_REUSEADDR");
 			return false;
 		}
 	}
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, ERROR  Start RTCP stream to %s:%d", _properties.getStreamID(),
+		SI_LOG_ERROR("Stream: %d, Start RTCP stream to %s:%d ERROR", _properties.getStreamID(),
 		             _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
 		return false;
 	}
-	SI_LOG_INFO("Stream: %d, Start  RTCP stream to %s:%d", _properties.getStreamID(),
-	            _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
+	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d (fd: %d)", _properties.getStreamID(),
+	            _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort(), _fd_fe);
 	return true;
-}
-
-void RtcpThread::stopStreaming(int clientID) {
-	if (running()) {
-		stopThread();
-		joinThread();
-		CLOSE_FD(_fd_fe);
-		SI_LOG_INFO("Stream: %d, Stop  RTCP stream to %s:%d", _properties.getStreamID(),
-		            _clients[clientID].getIPAddress().c_str(), _clients[clientID].getRtcpSocketPort());
-	}
 }
 
 void RtcpThread::monitorFrontend(bool showStatus) {

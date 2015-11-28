@@ -1,6 +1,6 @@
 /* Mutex.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,9 +18,13 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef MUTEX_H_INCLUDE
-#define MUTEX_H_INCLUDE
+#define MUTEX_H_INCLUDE MUTEX_H_INCLUDE
+
+#include "Log.h"
 
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/prctl.h>
 
 /// The class @c Mutex can be locked exclusively per thread
 /// to guarantee thread safety.
@@ -38,14 +42,27 @@ class Mutex {
 		virtual ~Mutex() {
 			pthread_mutex_destroy(&mutex);
 		}
-		
+
 		/// Exclusively lock the @c Mutex per thread.
 		void lock() const {
 			pthread_mutex_lock(&mutex);
-
 		}
-		
-		// @TODO make tryLock function ?
+
+		/// Exclusively try to lock the @c Mutex per thread for a maximum time of
+		/// timeout msec.
+		/// @param timeout specifies the time, in msec, to try locking this mutex.
+		bool tryLock(unsigned int timeout) const {
+			bool locked = true;
+			while (pthread_mutex_trylock(&mutex) != 0) {
+				usleep(1000);
+				--timeout;
+				if (timeout == 0) {
+					locked = false;
+					break;
+				}
+			}
+			return locked;
+		}
 
 		/// Unlocking of the @c Mutex.
 		void unlock() const {
@@ -64,11 +81,33 @@ class Mutex {
 /// The class @c MutexLock can be used for @c Mutex to 'auto' lock and unlock
 class MutexLock {
 	public:
+		static const unsigned int TIMEOUT_15SEC = 15000;
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		MutexLock(const Mutex &mutex) : _mutex(mutex) { _mutex.lock(); }
-		virtual ~MutexLock() { _mutex.unlock();	}
+/*
+		MutexLock(const Mutex &mutex) : _mutex(mutex) {
+			_mutex.lock();
+		}
+*/
+		MutexLock(const Mutex &mutex, unsigned int timeout = TIMEOUT_15SEC) : _mutex(mutex) {
+			if (!_mutex.tryLock(timeout)) {
+				char name[32];
+#ifdef HAS_NP_FUNCTIONS
+				pthread_t thread = pthread_self();
+				pthread_getname_np(thread, name, sizeof(name));
+#else
+				prctl(PR_GET_NAME, name, 0, 0, 0);
+#endif
+				SI_LOG_ERROR("Mutex in %s did not lock within timeout?  !!DEADLOCK!!", name);
+			}
+		}
+
+		virtual ~MutexLock() {
+			_mutex.unlock();
+		}
+
 	protected:
 
 	private:

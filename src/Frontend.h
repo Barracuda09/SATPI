@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef FRONTEND_H_INCLUDE
-#define FRONTEND_H_INCLUDE
+#define FRONTEND_H_INCLUDE FRONTEND_H_INCLUDE
 
 #include "dvbfix.h"
 
@@ -93,13 +93,19 @@ class Frontend  {
 		bool setFrontendInfo();
 
 		///
-		int get_dvr_fd() const { return _fd_dvr; }
+		int get_dvr_fd() const {
+			return _fd_dvr;
+		}
 
 		/// caller should release fd
-		int get_monitor_fd() const { return open_fe(_path_to_fe, true); }
+		int get_monitor_fd() const {
+			return open_fe(_path_to_fe, true);
+		}
 
 		/// Check if this frontend is tuned
-		bool isTuned() const {return (_fd_dvr != -1) && _tuned; }
+		bool isTuned() const {
+			return (_fd_dvr != -1) && _tuned;
+		}
 
 		///
 		bool capableOf(fe_delivery_system_t msys);
@@ -111,9 +117,14 @@ class Frontend  {
 		bool teardown(StreamProperties &properties);
 
 		///
-		size_t getDeliverySystemSize() const { return _del_sys_size; }
+		size_t getDeliverySystemSize() const {
+			return _del_sys_size;
+		}
 
-		const fe_delivery_system_t *getDeliverySystem() const { return _info_del_sys; }
+		///
+		const fe_delivery_system_t *getDeliverySystem() const {
+			return _info_del_sys;
+		}
 
 	protected:
 		///
@@ -133,7 +144,7 @@ class Frontend  {
 
 		///
 		bool diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-		                     fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
+		                   fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
 
 		///
 		bool sendDiseqc(int streamID, bool repeatDiseqc);

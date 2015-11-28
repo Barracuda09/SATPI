@@ -20,8 +20,9 @@
 #ifndef STREAMS_H_INCLUDE
 #define STREAMS_H_INCLUDE
 
-#include "StreamClient.h"
 #include "dvbfix.h"
+#include "Mutex.h"
+#include "StreamClient.h"
 #include "XMLSupport.h"
 
 #include <string>
@@ -54,19 +55,34 @@ class Streams :
 		void checkStreamClientsWithTimeout();
 
 		///
-		const std::string &getXMLDeliveryString() const { return _del_sys_str;	}
+		const std::string &getXMLDeliveryString() const {
+			MutexLock lock(_mutex);
+			return _del_sys_str;
+		}
 
 		///
-		int getMaxStreams() const { return _maxStreams; }
+		int getMaxStreams() const {
+			MutexLock lock(_mutex);
+			return _maxStreams;
+		}
 
 		///
-		int getMaxDvbSat() const { return _nr_dvb_s2; }
+		int getMaxDvbSat() const {
+			MutexLock lock(_mutex);
+			return _nr_dvb_s2;
+		}
 
 		///
-		int getMaxDvbTer() const { return _nr_dvb_t; }
+		int getMaxDvbTer() const {
+			MutexLock lock(_mutex);
+			return _nr_dvb_t;
+		}
 
 		///
-		int getMaxDvbCable() const { return _nr_dvb_c; }
+		int getMaxDvbCable() const {
+			MutexLock lock(_mutex);
+			return _nr_dvb_c;
+		}
 
 		///
 		std::string attribute_describe_string(unsigned int stream, bool &active) const;
@@ -87,22 +103,22 @@ class Streams :
 
 	private:
 		///
-		int getAttachedFrontendCount(const std::string &path, int count);
+		int getAttachedFrontendCount_L(const std::string &path, int count);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Stream **_stream;
-		int  _maxStreams;
-		Stream *_dummyStream;
-		std::string _del_sys_str;
-
-		int _nr_dvb_s2;
-		int _nr_dvb_t;
-		int _nr_dvb_t2;
-		int _nr_dvb_c;
+		Mutex        _mutex;       //
+		Stream     **_stream;
+		int          _maxStreams;
+		Stream      *_dummyStream;
+		std::string  _del_sys_str;
+		int          _nr_dvb_s2;
+		int          _nr_dvb_t;
+		int          _nr_dvb_t2;
+		int          _nr_dvb_c;
 #if FULL_DVB_API_VERSION >= 0x0505
-		int _nr_dvb_c2;
+		int          _nr_dvb_c2;
 #endif
 
 }; // class Streams

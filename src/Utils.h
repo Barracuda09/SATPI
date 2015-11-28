@@ -22,8 +22,11 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define UNUSED(x)
+
+#define ASSERT(EXPRESSION) assert(EXPRESSION)
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))
 
@@ -31,27 +34,27 @@
 
 #define FREE_PTR(x) \
 	{ \
-		if (x != NULL) { \
+		if (x != nullptr) { \
 			::free(x); \
-			x = NULL; \
+			x = nullptr; \
 		} \
 	}
 
-/// If @a pointer is not NULL, delete it and set it to NULL.
+/// If @a pointer is not nullptr, delete it and set it to nullptr.
 #define DELETE(pointer)        \
 	{                          \
-		if (pointer != NULL) { \
+		if (pointer != nullptr) { \
 			delete pointer;    \
-			pointer = NULL;    \
+			pointer = nullptr;    \
 		}                      \
 	}
 
-/// If @a arrayPointer is not NULL, delete[] it and set it to NULL.
+/// If @a arrayPointer is not nullptr, delete[] it and set it to nullptr.
 #define DELETE_ARRAY(arrayPointer)   \
 	{                                \
-		if (arrayPointer != NULL) {  \
+		if (arrayPointer != nullptr) {  \
 			delete[] arrayPointer;   \
-			arrayPointer = NULL;     \
+			arrayPointer = nullptr;     \
 		}                            \
 	}
 
