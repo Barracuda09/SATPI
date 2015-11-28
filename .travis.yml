@@ -13,8 +13,11 @@ addons:
     - gcc-4.8
     - g++-4.8
 
-script:
+install:
   - g++-4.8 --version
+  - export CXXSUFFIX=-4.8
+
+script:
   - make
   - make clean
   - make debug
