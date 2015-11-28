@@ -7,8 +7,6 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-addons:
-  apt:
     packages:
     - gcc-4.8
     - g++-4.8
