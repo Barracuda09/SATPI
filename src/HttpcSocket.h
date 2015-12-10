@@ -1,6 +1,6 @@
 /* HttpcSocket.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,12 +18,16 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef HTTPC_SOCKET_H_INCLUDE
-#define HTTPC_SOCKET_H_INCLUDE
+#define HTTPC_SOCKET_H_INCLUDE HTTPC_SOCKET_H_INCLUDE
 
 #include "SocketAttr.h"
 
 #include <poll.h>
 #include <netinet/in.h>
+
+#define HTTP_PORT 8875
+#define RTSP_PORT 554
+#define SSDP_PORT 1900
 
 // Forward declarations
 class SocketClient;
@@ -31,6 +35,8 @@ class SocketClient;
 /// HTTPC Socket related functions
 class HttpcSocket  {
 	public:
+		static const int HTTPC_TIMEOUT;
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
@@ -38,14 +44,22 @@ class HttpcSocket  {
 		virtual ~HttpcSocket();
 
 	protected:
-		///
+		/// Receive an HTTP message from client
+		/// @param client
+		/// @param recv_flags
+		/// @return the amount of bytes red
 		ssize_t recvHttpcMessage(SocketClient &client, int recv_flags);
 
-		///
+		/// Receive an HTTP message from client
+		/// @param client
+		/// @param recv_flags
+		/// @param si_other
+		/// @param addrlen
+		/// @return the amount of bytes red
 		ssize_t recvfromHttpcMessage(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen);
 
 	private:
-		///
+		/// Main receive HTTP message from client
 		ssize_t recv_recvfrom_httpc_message(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen);
 
 }; // class HttpcSocket

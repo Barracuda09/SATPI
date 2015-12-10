@@ -87,7 +87,7 @@ void applog(int priority, const char *fmt, ...) {
 		char asc_time[30];
 		ctime_r(&time_stamp.tv_sec, asc_time);
 		// remove '\n' from string
-		const size_t l = strlen(asc_time);
+		const std::size_t l = strlen(asc_time);
 		asc_time[l-1] = 0;
 		// cut line to insert nsec '.000000000'
 		asc_time[19] = 0;

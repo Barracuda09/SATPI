@@ -29,8 +29,8 @@
 #include <stdlib.h>
 
 StreamClient::StreamClient() :
-		_rtspFD(-1),
-		_rtspMsg(""),
+		_httpcFD(nullptr),
+		_httpcMsg(""),
 		_ip_addr("0.0.0.0"),
 		_sessionID("-1"),
 		_watchdog(0),
@@ -55,38 +55,37 @@ void StreamClient::teardown(bool gracefull) {
 	if (!gracefull) {
 		_sessionID = "-1";
 		_ip_addr = "0.0.0.0";
-
-		CLOSE_FD(_rtspFD);
 	}
-	_rtspFD = -1;
 }
 
 void StreamClient::restartWatchDog() {
 	MutexLock lock(_mutex);
 
 	// reset watchdog and give some extra timeout
-	_watchdog = time(NULL) + _sessionTimeout + 15;
+	_watchdog = time(nullptr) + _sessionTimeout + 15;
 }
 
 bool StreamClient::checkWatchDogTimeout() {
 	MutexLock lock(_mutex);
 
-	return _watchdog != 0 && _watchdog < time(NULL);
+	return (getHttpcFD() == -1) &&
+	       (_watchdog != 0) &&
+	       (_watchdog < time(nullptr));
 }
 
 void StreamClient::copySocketClientAttr(const SocketClient &socket) {
 	MutexLock lock(_mutex);
 
-	_rtspFD = socket.getFD();
+	_httpcFD = socket.getFDPtr();
 	_ip_addr = socket.getIPAddress();
-	_rtspMsg = socket.getMessage().c_str();
+	_httpcMsg = socket.getMessage();
 }
 
 void StreamClient::setRtpSocketPort(int port) {
 	MutexLock lock(_mutex);
 
 	_rtp._addr.sin_family = AF_INET;
-	_rtp._addr.sin_addr.s_addr = inet_addr(_ip_addr.c_str());
+	_rtp._addr.sin_addr.s_addr = inet_addr(getIPAddress().c_str());
 	_rtp._addr.sin_port = htons(port);
 }
 
@@ -100,7 +99,7 @@ void StreamClient::setRtcpSocketPort(int port) {
 	MutexLock lock(_mutex);
 
 	_rtcp._addr.sin_family = AF_INET;
-	_rtcp._addr.sin_addr.s_addr = inet_addr(_ip_addr.c_str());
+	_rtcp._addr.sin_addr.s_addr = inet_addr(getIPAddress().c_str());
 	_rtcp._addr.sin_port = htons(port);
 }
 

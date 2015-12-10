@@ -28,7 +28,7 @@ class StreamClient;
 class StreamProperties;
 class DvbapiClient;
 
-/// RTSP Server
+/// RTP Streaming thread
 class RtpStreamThread :
 		public StreamThreadBase {
 	public:

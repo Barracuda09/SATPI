@@ -115,7 +115,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 	}
 }
 
-uint8_t *RtcpThread::get_app_packet(size_t *len) {
+uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	uint8_t app[1024 * 2];
 
 	uint32_t ssrc = _properties.getSSRC();
@@ -163,7 +163,7 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 
 	// Alloc and copy data and adjust length
 	uint8_t *appPtr = new uint8_t[*len];
-	if (appPtr != NULL) {
+	if (appPtr != nullptr) {
 		memcpy(appPtr, app, *len);
 		int ws = (*len / 4) - 1;
 		appPtr[2] = (ws >> 8) & 0xff;
@@ -178,7 +178,7 @@ uint8_t *RtcpThread::get_app_packet(size_t *len) {
 /*
  *
  */
-uint8_t *RtcpThread::get_sr_packet(size_t *len) {
+uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	uint8_t sr[28];
 
 	long     timestamp = _properties.getTimestamp();
@@ -196,7 +196,7 @@ uint8_t *RtcpThread::get_sr_packet(size_t *len) {
 	sr[6]  = (ssrc >>  8) & 0xff;          // synchronization source
 	sr[7]  = (ssrc >>  0) & 0xff;          // synchronization source
 
-	const time_t ntp = time(NULL);
+	const time_t ntp = time(nullptr);
 	                                       // NTP integer part
 	sr[8]  = (ntp >> 24) & 0xff;           // NTP most sign word
 	sr[9]  = (ntp >> 16) & 0xff;           // NTP most sign word
@@ -225,7 +225,7 @@ uint8_t *RtcpThread::get_sr_packet(size_t *len) {
 
 	// Alloc and copy data and adjust length
 	uint8_t *srPtr = new uint8_t[*len];
-	if (srPtr != NULL) {
+	if (srPtr != nullptr) {
 		memcpy(srPtr, sr, sizeof(sr));
 		int ws = (*len / 4) - 1;
 		srPtr[2] = (ws >> 8) & 0xff;
@@ -237,7 +237,7 @@ uint8_t *RtcpThread::get_sr_packet(size_t *len) {
 /*
  *
  */
-uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
+uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 	uint8_t sdes[20];
 	uint32_t ssrc = _properties.getSSRC();
 
@@ -271,7 +271,7 @@ uint8_t *RtcpThread::get_sdes_packet(size_t *len) {
 
 	// Alloc and copy data and adjust length
 	uint8_t *sdesPtr = new uint8_t[*len];
-	if (sdesPtr != NULL) {
+	if (sdesPtr != nullptr) {
 		memcpy(sdesPtr, sdes, sizeof(sdes));
 		int ws = (*len / 4) - 1;
 		sdesPtr[2] = (ws >> 8) & 0xff;
@@ -293,16 +293,16 @@ void RtcpThread::threadEntry() {
 			--mon_update;
 		}
 		// RTCP compound packets must start with a SR, SDES then APP
-		size_t srlen   = 0;
-		size_t sdeslen = 0;
-		size_t applen  = 0;
+		std::size_t srlen   = 0;
+		std::size_t sdeslen = 0;
+		std::size_t applen  = 0;
 		uint8_t *sdes  = get_sdes_packet(&sdeslen);
 		uint8_t *sr    = get_sr_packet(&srlen);
 		uint8_t *app   = get_app_packet(&applen);
 
 		if (sr && sdes && app) {
 
-			const size_t rtcplen = srlen + sdeslen + applen;
+			const std::size_t rtcplen = srlen + sdeslen + applen;
 
 			uint8_t *rtcp = new uint8_t[rtcplen];
 			if (rtcp) {

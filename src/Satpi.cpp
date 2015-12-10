@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 	bool ssdp = true;
 	bool daemon = true;
 	int i;
-	char *user = NULL;
+	char *user = nullptr;
 	extern const char *satpi_version;
 	exitApp = 0;
 
@@ -259,14 +259,14 @@ int main(int argc, char *argv[]) {
 	DvbapiClient dvbapi(getStreamProperties, updateFrontend);
 	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
-	HttpServer httpserver(interface, streams, properties, &dvbapi);
+	HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
-	streams.enumerateFrontends("/dev/dvb", NULL);
+	streams.enumerateFrontends("/dev/dvb", nullptr);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
-	HttpServer httpserver(interface, streams, properties, NULL);
+	HttpServer httpserver(streams, interface, properties, nullptr);
 #endif
 
-	RtspServer server(streams, interface.getIPAddress());
+	RtspServer server(streams, interface);
 
 	SsdpServer ssdpserver(interface, properties);
 	if (ssdp) {

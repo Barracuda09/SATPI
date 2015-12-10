@@ -73,10 +73,10 @@ bool StreamProperties::isPMT(int pid) const {
 void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set) {
 	MutexLock lock(_mutex);
 #ifdef LIBDVBCSA
-	if(_key[0] == NULL) {
+	if(_key[0] == nullptr) {
 		_key[0] = dvbcsa_bs_key_alloc();
 	}
-	if(_key[1] == NULL) {
+	if(_key[1] == nullptr) {
 		_key[1] = dvbcsa_bs_key_alloc();
 	}
 #endif

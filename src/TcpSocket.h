@@ -1,6 +1,6 @@
 /* TcpSocket.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef TCP_SOCKET_H_INCLUDE
-#define TCP_SOCKET_H_INCLUDE
+#define TCP_SOCKET_H_INCLUDE TCP_SOCKET_H_INCLUDE
 
 #include "HttpcSocket.h"
 #include "SocketAttr.h"
@@ -36,33 +36,44 @@ class TcpSocket :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		TcpSocket(int maxClients, int port, bool nonblock);
+		TcpSocket(int maxClients, const std::string &protocol, int port, bool nonblock);
+
 		virtual ~TcpSocket();
 
+		/// Call this function periodically to check for messages
+		/// @param timeout specifies the timeout 'poll' should use
 		int poll(int timeout);
 
 	protected:
-		///
+		/// Callback function if an messages was received
+		/// @param client specifies the client that sended the message etc.
 		virtual bool process(SocketClient &client) = 0;
 
-		///
+		/// Callback when an connection is closed
+		/// @param client specifies the client that closed the connection
 		virtual bool closeConnection(SocketClient &client) = 0;
+
+		/// Get the protocol string
+		const std::string &getProtocolString() const {
+			return _protocolString;
+		}
 
 	private:
 		///
 		bool initServerSocket(int maxClients, int port, bool nonblock);
 
-		/// Accept an connection save client IP address
+		/// Accept an connection and save client IP address etc.
 		bool acceptConnection(SocketClient &client, bool showLogInfo);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		size_t _MAX_CLIENTS;
-		size_t _MAX_POLL;
-		struct pollfd *_pfd;
-		SocketAttr _server;
-		SocketClient *_client;
+		std::size_t        _MAX_CLIENTS;   //
+		std::size_t        _MAX_POLL;      //
+		struct pollfd     *_pfd;           //
+		SocketAttr         _server;        //
+		SocketClient      *_client;        //
+		const std::string  _protocolString;//
 
 }; // class TcpSocket
 

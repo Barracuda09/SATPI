@@ -1,6 +1,6 @@
 /* RtspServer.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,9 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef RTSP_SERVER_H_INCLUDE
-#define RTSP_SERVER_H_INCLUDE
+#define RTSP_SERVER_H_INCLUDE RTSP_SERVER_H_INCLUDE
 
-#include "TcpSocket.h"
+#include "HttpcServer.h"
 #include "ThreadBase.h"
 
 // Forward declarations
@@ -31,49 +31,40 @@ class StreamClient;
 /// RTSP Server
 class RtspServer :
 		public ThreadBase,
-		public TcpSocket {
+		public HttpcServer {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtspServer(Streams &streams, const std::string &server_ip_addr);
+		RtspServer(Streams &streams, const InterfaceAttr &interface);
+
 		virtual ~RtspServer();
 
 	protected:
 		/// Thread function
 		virtual void threadEntry();
-		
-		///
-		virtual bool process(SocketClient &client);
-
-		///
-		virtual bool closeConnection(SocketClient &client);
 
 	private:
-		///
-		bool processReply(Stream &stream, int clientID, const std::string method);
 
 		///
-		bool methodSetup(Stream &stream, int clientID);
+		virtual bool methodSetup(Stream &stream, int clientID, std::string &htmlBody);
 
 		///
-		bool methodPlay(Stream &stream, int clientID);
-		
-		///
-		bool methodOptions(Stream &stream, int clientID);
-		
-		///
-		bool methodDescribe(Stream &stream, int clientID);
-		
-		///
-		bool methodTeardown(Stream &stream, int clientID);
+		virtual bool methodPlay(Stream &stream, int clientID, std::string &htmlBody);
 
-		
+		///
+		virtual bool methodOptions(Stream &stream, int clientID, std::string &htmlBody);
+
+		///
+		virtual bool methodDescribe(Stream &stream, int clientID, std::string &htmlBody);
+
+		///
+		virtual bool methodTeardown(Stream &stream, int clientID, std::string &htmlBody);
+
+
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Streams    &_streams;
-		std::string _server_ip_addr;
 
 }; // class RtspServer
 

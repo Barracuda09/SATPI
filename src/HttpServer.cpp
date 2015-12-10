@@ -21,6 +21,7 @@
 #include "InterfaceAttr.h"
 #include "Properties.h"
 #include "Streams.h"
+#include "Stream.h"
 #include "Log.h"
 #include "SocketClient.h"
 #include "StringConverter.h"
@@ -36,36 +37,12 @@
 #include <cstdlib>
 #include <fcntl.h>
 
-
-#define HTML_BODY_CONT	"HTTP/1.1 %s\r\n" \
-						"Server: SatPI WebServer v0.1\r\n" \
-						"Location: %s\r\n" \
-						"cache-control: no-cache\r\n" \
-						"Content-Type: %s\r\n" \
-						"Content-Length: %d\r\n" \
-						"\r\n"
-
-#define HTML_OK            "200 OK"
-#define HTML_NO_RESPONSE   "204 No Response"
-#define HTML_NOT_FOUND     "404 Not Found"
-#define HTML_MOVED_PERMA   "301 Moved Permanently"
-
-
-#define CONTENT_TYPE_XML   "text/xml; charset=UTF-8"
-#define CONTENT_TYPE_HTML  "text/html; charset=UTF-8"
-#define CONTENT_TYPE_JS    "text/javascript; charset=UTF-8"
-#define CONTENT_TYPE_CSS   "text/css; charset=UTF-8"
-#define CONTENT_TYPE_PNG   "image/png"
-#define CONTENT_TYPE_ICO   "image/x-icon"
-
-HttpServer::HttpServer(const InterfaceAttr &interface,
-                       Streams &streams,
+HttpServer::HttpServer(Streams &streams,
+                       const InterfaceAttr &interface,
                        Properties &properties,
                        DvbapiClient *dvbapi) :
 		ThreadBase("HttpServer"),
-		TcpSocket(20, HTTP_PORT, true),
-		_interface(interface),
-		_streams(streams),
+		HttpcServer(20, "HTTP", HTTP_PORT, true, streams, interface),
 		_properties(properties),
 		_dvbapi(dvbapi) {
 	startThread();
@@ -85,47 +62,30 @@ void HttpServer::threadEntry() {
 	}
 }
 
-bool HttpServer::process(SocketClient &client) {
-//	SI_LOG_INFO("%s", client.getMessage().c_str());
-
-	// parse HTML
-	std::string method;
-	if (StringConverter::getMethod(client.getMessage().c_str(), method)) {
-		if (method.compare("GET") == 0) {
-			getMethod(client);
-		} else if (method.compare("POST") == 0) {
-			postMethod(client);
-		} else {
-			SI_LOG_ERROR("Unknown HTML message connection: %s", client.getMessage().c_str());
-		}
-	}
-	return true;
-}
-
-int read_file(const char *file, std::string &data) {
+int HttpServer::readFile(const char *file, std::string &data) {
 	int file_size = 0;
-	int fd;
-	if ((fd = open(file, O_RDONLY | O_NONBLOCK)) < 0) {
-		SI_LOG_ERROR("GET %s", file);
+	int fd_file;
+	if ((fd_file = open(file, O_RDONLY | O_NONBLOCK)) < 0) {
+		SI_LOG_ERROR("readFile %s", file);
 		PERROR("File not found");
 		return 0;
 	}
-	const off_t size = lseek(fd, 0, SEEK_END);
-	lseek(fd, 0, SEEK_SET);
+	const off_t size = lseek(fd_file, 0, SEEK_END);
+	lseek(fd_file, 0, SEEK_SET);
 	char *buf = new char[size];
-	if (buf) {
-		file_size = read(fd, buf, size);
+	if (buf != nullptr) {
+		file_size = read(fd_file, buf, size);
 		data.assign(buf, file_size);
 		DELETE_ARRAY(buf);
 	}
-	CLOSE_FD(fd);
+	CLOSE_FD(fd_file);
 //	SI_LOG_DEBUG("GET %s (size %d)", file, file_size);
 	return file_size;
 }
 
-bool HttpServer::postMethod(const SocketClient &client) {
+bool HttpServer::methodPost(const SocketClient &client) {
 	std::string content;
-	if (StringConverter::getContentTypeFrom(client.getMessage(), content)) {
+	if (StringConverter::getContentFrom(client.getMessage(), content)) {
 		std::string file;
 		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
 			if (file.compare("/data.xml") == 0) {
@@ -142,7 +102,7 @@ bool HttpServer::postMethod(const SocketClient &client) {
 	}
 	// setup reply
 	std::string htmlBody;
-	StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0);
+	getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 
 	// send 'htmlBody' to client
 	if (send(client.getFD(), htmlBody.c_str(), htmlBody.size(), 0) == -1) {
@@ -152,7 +112,7 @@ bool HttpServer::postMethod(const SocketClient &client) {
 	return true;
 }
 
-bool HttpServer::getMethod(const SocketClient &client) {
+bool HttpServer::methodGet(SocketClient &client) {
 	std::string htmlBody;
 	std::string docType;
 	std::string file;
@@ -172,70 +132,77 @@ bool HttpServer::getMethod(const SocketClient &client) {
                    "</html>"
 		StringConverter::addFormattedString(docType, HTML_MOVED, _interface.getIPAddress().c_str(), HTTP_PORT, "/index.html");
 		docTypeSize = docType.size();
-		StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_HTML, docTypeSize);
+
+		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
 	} else {
-		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
+		if (StringConverter::hasTransportParameters(client.getMessage())){
+			processStreamingRequest(client);
+		} else if (StringConverter::getRequestedFile(client.getMessage(), file)) {
 			std::string path = _properties.getStartPath() + "/web";
 			path += file;
 			if (file.compare("/data.xml") == 0) {
 				make_data_xml(docType);
 				docTypeSize = docType.size();
 
-				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/streams.xml") == 0) {
 				make_streams_xml(docType);
 				docTypeSize = docType.size();
 
-				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/config.xml") == 0) {
 				make_config_xml(docType);
 				docTypeSize = docType.size();
 
-				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/log.xml") == 0) {
 				docType = make_log_xml();
 				docTypeSize = docType.size();
 
-				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+				getHtmlBodyWithContent(htmlBody,  HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/STOP") == 0) {
 				// KILL
 				std::exit(0);
-			} else if ((docTypeSize = read_file(path.c_str(), docType))) {
+			} else if ((docTypeSize = readFile(path.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
 						SI_LOG_DEBUG("Client: %s requesed %s", client.getIPAddress().c_str(), file.c_str());
 						// check did we get our desc.xml (we assume there are some %s in there)
 						if (docType.find("%s") != std::string::npos) {
-							docTypeSize -= 4 * 2; // minus 3x %s
+							docTypeSize -= 4 * 2; // minus 4x %s
 							docTypeSize += _properties.getDeliverySystemString().size();
 							docTypeSize += _properties.getUUID().size();
 							docTypeSize += _properties.getSoftwareVersion().size();
 							docTypeSize += _properties.getXSatipM3U().size();
 							char *doc_desc_xml = new char[docTypeSize + 1];
-							snprintf(doc_desc_xml, docTypeSize+1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-							         _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
-							         _properties.getXSatipM3U().c_str());
-							docType = doc_desc_xml;
-							DELETE_ARRAY(doc_desc_xml);
+							if (doc_desc_xml != nullptr) {
+								snprintf(doc_desc_xml, docTypeSize+1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
+										 _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
+										 _properties.getXSatipM3U().c_str());
+								docType = doc_desc_xml;
+								DELETE_ARRAY(doc_desc_xml);
+							}
 						}
 					}
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
 
 				} else if (file.find(".html") != std::string::npos) {
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
 				} else if (file.find(".js") != std::string::npos) {
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_JS, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_JS, docTypeSize, 0);
 				} else if (file.find(".css") != std::string::npos) {
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_CSS, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_CSS, docTypeSize, 0);
+				} else if (file.find(".m3u") != std::string::npos) {
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_VIDEO, docTypeSize, 0);
 				} else if ((file.find(".png") != std::string::npos) ||
 						   (file.find(".ico") != std::string::npos)) {
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_PNG, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_PNG, docTypeSize, 0);
 				} else {
-					StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
 				}
-			} else if ((docTypeSize = read_file("web/404.html", docType))) {
-				StringConverter::addFormattedString(htmlBody, HTML_BODY_CONT, HTML_NOT_FOUND, file.c_str(), CONTENT_TYPE_HTML, docTypeSize);
+			} else if ((docTypeSize = readFile("web/404.html", docType))) {
+				getHtmlBodyWithContent(htmlBody, HTML_NOT_FOUND, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
 			}
 		}
 	}
@@ -281,7 +248,7 @@ void HttpServer::make_data_xml(std::string &xml) {
 
 	// application data
 	xml += "<appdata>";
-	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", time(NULL) - _properties.getApplicationStartTime());
+	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", time(nullptr) - _properties.getApplicationStartTime());
 	StringConverter::addFormattedString(xml, "<appversion>%s</appversion>", _properties.getSoftwareVersion().c_str());
 	StringConverter::addFormattedString(xml, "<uuid>%s</uuid>", _properties.getUUID().c_str());
 	StringConverter::addFormattedString(xml, "<bootID>%d</bootID>", _properties.getBootID());

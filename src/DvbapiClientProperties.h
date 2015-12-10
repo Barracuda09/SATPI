@@ -34,8 +34,8 @@ class DvbapiClientProperties {
 		// Constructors and destructor
 		// =======================================================================
 		DvbapiClientProperties() {
-			_key[0] = NULL;
-			_key[1] = NULL;
+			_key[0] = nullptr;
+			_key[1] = nullptr;
 			_batchSize = dvbcsa_bs_batch_size();
 			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
 			_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
@@ -77,21 +77,21 @@ class DvbapiClientProperties {
 		/// This function will decrypt the batch upon success it will clear scramble flag
 		/// on failure it will make a NULL TS Packet and clear scramble flag
 		void decryptBatch() {
-			if (_key[_parity] != NULL) {
+			if (_key[_parity] != nullptr) {
 				// terminate batch buffer
-				setBatchData(NULL, 0, _parity, NULL);
+				setBatchData(nullptr, 0, _parity, nullptr);
 				// decrypt it
 				dvbcsa_bs_decrypt(_key[_parity], _batch, 184);
 
 				// clear scramble flags, so we can send it.
 				unsigned int i = 0;
-				while (_ts[i].data != NULL) {
+				while (_ts[i].data != nullptr) {
 					_ts[i].data[3] &= 0x3F;
 					++i;
 				}
 			} else {
 				unsigned int i = 0;
-				while (_ts[i].data != NULL) {
+				while (_ts[i].data != nullptr) {
 					// set decrypt failed by setting NULL packet ID..
 					_ts[i].data[1] |= 0x1F;
 					_ts[i].data[2] |= 0xFF;
@@ -109,8 +109,8 @@ class DvbapiClientProperties {
 		void freeKeys() {
 			dvbcsa_bs_key_free(_key[0]);
 			dvbcsa_bs_key_free(_key[1]);
-			_key[0] = NULL;
-			_key[1] = NULL;
+			_key[0] = nullptr;
+			_key[1] = nullptr;
 
 			_batchCount = 0;
 		}

@@ -186,7 +186,7 @@ void SsdpServer::threadEntry() {
 									SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 									// reset repeat time to annouce new DEVICEID
-									repeat_time =  time(NULL) + 5;
+									repeat_time =  time(nullptr) + 5;
 								}
 								std::string st_param;
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST", st_param)) {
@@ -226,11 +226,11 @@ void SsdpServer::threadEntry() {
 			SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 			// reset repeat time to annouce new 'Device Description File'
-			repeat_time =  time(NULL) + 5;
+			repeat_time =  time(nullptr) + 5;
 		}
 
 		// Notify/announce ourself
-		const time_t curr_time = time(NULL);
+		const time_t curr_time = time(nullptr);
 		if (repeat_time < curr_time) {
 			char msg[1024];
 			// set next announce time

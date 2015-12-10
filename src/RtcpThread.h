@@ -50,9 +50,9 @@ class RtcpThread :
 
 	private:
 		///
-		uint8_t *get_app_packet(size_t *len);
-		uint8_t *get_sdes_packet(size_t *len);
-		uint8_t *get_sr_packet(size_t *len);
+		uint8_t *get_app_packet(std::size_t *len);
+		uint8_t *get_sdes_packet(std::size_t *len);
+		uint8_t *get_sr_packet(std::size_t *len);
 
 		///
 		void monitorFrontend(bool showStatus);

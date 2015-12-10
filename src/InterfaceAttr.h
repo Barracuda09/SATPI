@@ -44,8 +44,10 @@ class InterfaceAttr {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		InterfaceAttr() { get_interface_properties(); }
-		virtual ~InterfaceAttr() {;}
+		InterfaceAttr() {
+			get_interface_properties();
+		}
+		virtual ~InterfaceAttr() {}
 
 		void get_interface_properties() {
 			struct ifaddrs *ifaddr, *ifa;
@@ -55,8 +57,8 @@ class InterfaceAttr {
 				return;
 			}
 			// go through list, find first usable interface
-			for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-				if (ifa->ifa_addr == NULL) {
+			for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+				if (ifa->ifa_addr == nullptr) {
 					// try next one
 					continue;
 				}
@@ -66,7 +68,7 @@ class InterfaceAttr {
 					char host[NI_MAXHOST];
 					int s, fd;
 					if ((s = getnameinfo(ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
-					                     host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) != 0) {
+					                     host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST)) != 0) {
 						GAI_PERROR("getnameinfo()", s);
 						continue;
 					}

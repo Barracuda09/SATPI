@@ -52,7 +52,7 @@ template <class P1, class P2, class P3, class FUNC>
 class FunctionWrapper3 : public Functor3<P1, P2, P3> {
 	public:
 		FunctionWrapper3(FUNC func) :
-			Functor3<P1, P2, P3>(functionFunctor, NULL, (void *)func, 0) {}
+			Functor3<P1, P2, P3>(functionFunctor, nullptr, (void *)func, 0) {}
 
 		static void functionFunctor(const FunctorBase &ftor, P1 p1, P2 p2, P3 p3) {
 			(FUNC(ftor._callback))(p1, p2, p3);

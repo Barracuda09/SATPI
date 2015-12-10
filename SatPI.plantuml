@@ -9,6 +9,9 @@ SatPI *-- Streams
 SatPI *-- RtspServer
 SatPI *-- HttpServer
 SatPI *-- SsdpServer
+SatPI *-- Properties
+SatPI *-- InterfaceAttr
+
 
 class SatPI {
   Properties
@@ -19,32 +22,99 @@ class InterfaceAttr {
   Eth0 etc.
 }
 
-RtspServer *.. Streams : " _streams "
+class HttpcSocket {
+  recvHttpcMessage(..)
+  recvfromHttpcMessage(..)
+}
 
-HttpServer *.. Streams : " _streams "
+SocketClient --|> SocketAttr
+class SocketClient {
+  std::string _msg
+  std::string _protocolString
+  std::string _sessionID
+}
+
+class SocketAttr {
+  _fd
+  std::string _ip_addr
+}
+
+TcpSocket --|> HttpcSocket
+TcpSocket *-- SocketAttr : "_server"
+TcpSocket *-- SocketClient : "_client[..]"
+class TcpSocket {
+  poll(..)
+  process(..)
+  closeConnection(..)
+  std::string _protocolString
+}
+
+UdpSocket --|> HttpcSocket
+class UdpSocket {
+  init_udp_socket(..)
+  init_mutlicast_udp_socket(..)
+}
+
+SsdpServer --|> UdpSocket
+
+RtspServer --|> HttpcServer
+
+HttpServer --|> HttpcServer
 HttpServer *.. Properties
-HttpServer *.. InterfaceAttr
+HttpServer *.. DvbapiClient
+
+HttpcServer --|> TcpSocket
+HttpcServer *.. Streams : "_streams"
+HttpcServer *.. InterfaceAttr
 
 Stream *-- StreamClient : " _client[..] "
 Stream *-- StreamProperties
 Stream *-- Frontend
 Stream *-- StreamThreadBase
+class Stream {
+  Mutex
+  streamInUse
+  enabled
+  StreamingType
+}
 
 Streams *-- Stream : " _stream[..] "
+class Streams {
+  Mutex
+}
 
 StreamClient *-- SocketAttr : " _rtp "
 StreamClient *-- SocketAttr : " _rtcp "
+StreamClient *.. SocketAttr : " httpcFD "
+class StreamClient {
+  Mutex
+  const int *httpcFD
+  watchdog
+  canClose
+  cseq
+}
 
 StreamThreadBase *.. DvbapiClient
 StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
+StreamThreadBase *.. StreamClient
+StreamThreadBase *.. StreamProperties
+
 
 RtpStreamThread --|> StreamThreadBase
-RtpStreamThread *.. StreamProperties
-RtpStreamThread *.. StreamClient : " _client[..] "
+RtpStreamThread *-- RtcpThread
+class RtpStreamThread {
+  socket_fd_rtp
+  cseq
+}
+
+RtcpThread *.. StreamClient
+RtcpThread *.. StreamProperties
+class RtcpThread {
+  socket_fd
+  fd_fe
+}
 
 HttpStreamThread --|> StreamThreadBase
-
-SocketClient --|> SocketAttr
 
 DvbapiClientProperties *-- dvbcsa_key_s
 DvbapiClientProperties *-- TSTableData : " _pat "
@@ -52,38 +122,21 @@ DvbapiClientProperties *-- TSTableData : " _pmt "
 
 StreamProperties *-- ChannelData
 StreamProperties --|> DvbapiClientProperties
-
-DvbapiClient  .  Streams
-
-Frontend *-- Lnb_t
-Frontend *-- DiSEqc_t
-
-ChannelData *-- PidTable
-
-class Stream {
-  Mutex
-}
-
-class Streams {
-  Mutex
-}
-
 class StreamProperties {
   Mutex
 }
 
-class StreamClient {
-  Mutex
-}
-
+DvbapiClient  .  Streams
 class DvbapiClient {
   Mutex
   _getStreamProperties(..)
   _updateFrontend(..)
 }
 
-class RtpStreamThread {
-  Rtp/Rtcp
-}
+Frontend *-- Lnb_t
+Frontend *-- DiSEqc_t
+
+ChannelData *-- PidTable
 
 @enduml
+

@@ -93,8 +93,8 @@ bool StreamThreadBase::startStreaming(int fd_dvr) {
 //	setAffinity(3);
 
 	_state = Running;
-	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d (fd: %d)", streamID, _protocol.c_str(),
-		_clients[clientID].getIPAddress().c_str(), getStreamSocketPort(clientID), _pfd[0].fd);
+	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d (Client fd: %d) (DVR fd: %d)", streamID, _protocol.c_str(),
+		_clients[clientID].getIPAddress().c_str(), getStreamSocketPort(clientID), _clients[clientID].getHttpcFD(), _pfd[0].fd);
 
 	return true;
 }

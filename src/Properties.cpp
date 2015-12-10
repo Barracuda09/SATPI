@@ -41,7 +41,7 @@ Properties::Properties(const std::string &uuid, const std::string &delsysString,
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),
-		_appStartTime(time(NULL)) {;}
+		_appStartTime(time(nullptr)) {;}
 
 Properties::~Properties() {;}
 

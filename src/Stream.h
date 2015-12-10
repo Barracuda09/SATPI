@@ -71,7 +71,7 @@ class Stream : public XMLSupport  {
 		}
 
 		/// Get the amount of delivery systems of this stream
-		size_t getDeliverySystemSize() const {
+		std::size_t getDeliverySystemSize() const {
 			MutexLock lock(_mutex);
 			return _frontend.getDeliverySystemSize();
 		}
@@ -142,12 +142,6 @@ class Stream : public XMLSupport  {
 		bool update(int clientID);
 
 		///
-		int getRtspFD(int clientID) const {
-			MutexLock lock(_mutex);
-			return _client[clientID].getRtspFD();
-		}
-
-		///
 		int getCSeq(int clientID) const {
 			MutexLock lock(_mutex);
 			return _client[clientID].getCSeq();
@@ -190,18 +184,26 @@ class Stream : public XMLSupport  {
 		///
 		void processStopStream_L(int clientID, bool gracefull);
 
+
+		enum StreamingType {
+			NONE,
+			HTTP,
+			RTSP
+		};
+
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Mutex             _mutex;       //
-		bool              _enabled;     // is this stream enabled, could we use it?
-		bool              _streamInUse; //
-		StreamClient     *_client;      // defines the participants of this stream
-		                                // index 0 is the owner of this stream
-		StreamThreadBase *_streaming;   //
-		DvbapiClient     *_dvbapi;      //
-		StreamProperties  _properties;  //
-		Frontend          _frontend;    //
+		Mutex             _mutex;         //
+		StreamingType     _streamingType; //
+		bool              _enabled;       // is this stream enabled, could we use it?
+		bool              _streamInUse;   //
+		StreamClient     *_client;        // defines the participants of this stream
+		                                  // index 0 is the owner of this stream
+		StreamThreadBase *_streaming;     //
+		DvbapiClient     *_dvbapi;        //
+		StreamProperties  _properties;    //
+		Frontend          _frontend;      //
 }; // class Stream
 
 #endif // STREAM_H_INCLUDE

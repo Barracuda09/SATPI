@@ -18,7 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef UTILS_H_INCLUDE
-#define UTILS_H_INCLUDE
+#define UTILS_H_INCLUDE UTILS_H_INCLUDE
+
+#include "Log.h"
 
 #include <unistd.h>
 #include <stdlib.h>
