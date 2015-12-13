@@ -61,12 +61,12 @@ class SocketAttr {
 		}
 
 		/// Set the Receive and Send timeout in Sec for this socket
-		void setSocketTimeoutInSec(int timeout) {
+		void setSocketTimeoutInSec(unsigned int timeout) {
 			struct timeval tv;
 			tv.tv_sec = timeout;
 			tv.tv_usec = 0;
 
-			SI_LOG_DEBUG("Set Timeout (fd: %d)", _fd);
+			SI_LOG_DEBUG("Set Timeout to %d Sec (fd: %d)", timeout, _fd);
 
 			if (setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval))) {
 				PERROR("setsockopt: SO_RCVTIMEO");

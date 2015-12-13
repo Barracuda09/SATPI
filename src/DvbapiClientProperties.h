@@ -154,7 +154,7 @@ class DvbapiClientProperties {
 					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
 					setTableCollected(tableID, false);
 				}
-			} else {
+			} else if (getTableDataSize(tableID) > 0) {
 				const unsigned char *cData = getTableData(tableID);
 				const int sectionLength    = ((cData[6] & 0x0F) << 8) | cData[7];
 

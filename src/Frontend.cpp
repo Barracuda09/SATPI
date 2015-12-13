@@ -529,7 +529,8 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 }
 
 static void resetPid(StreamProperties &properties, int pid) {
-	if (ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+	if (properties.getDMXFileDescriptor(pid) != -1 &&
+	    ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 		PERROR("DMX_STOP");
 	}
 	properties.closeDMXFileDescriptor(pid);
