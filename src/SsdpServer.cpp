@@ -156,7 +156,7 @@ void SsdpServer::threadEntry() {
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST", st_param)) {
 									if (st_param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
 										// client is sending a discover
-										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back %s", ip_addr, _udpMultiListen.getMessage().c_str());
+										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr);
 
 										// send message back
 										char msg[1024];
