@@ -25,28 +25,28 @@
 				<width>48</width>
 				<height>48</height>
 				<depth>24</depth>
-				<url>/icons/sm.png</url>
+				<url>/assets/images/icons/sm.png</url>
 			</icon>
 			<icon>
 				<mimetype>image/png</mimetype>
 				<width>120</width>
 				<height>120</height>
 				<depth>24</depth>
-				<url>/icons/lr.png</url>
+				<url>/assets/images/icons/lr.png</url>
 			</icon>
 			<icon>
 				<mimetype>image/jpeg</mimetype>
 				<width>48</width>
 				<height>48</height>
 				<depth>24</depth>
-				<url>/icons/sm.jpg</url>
+				<url>/assets/images/icons/sm.jpg</url>
 			</icon>
 			<icon>
 				<mimetype>image/jpeg</mimetype>
 				<width>120</width>
 				<height>120</height>
 				<depth>24</depth>
-				<url>/icons/lr.jpg</url>
+				<url>/assets/images/icons/lr.jpg</url>
 			</icon>
 		</iconList>
 		<presentationURL>/</presentationURL>

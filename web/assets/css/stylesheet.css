@@ -21,7 +21,7 @@ div.log {
 }
 
 textarea.logtext {
-	background-image: url("bg-grain.png");
+	background-image: url("../images/bg-grain.png");
 	font-size: 12px;
 	height: 100%;
 	overflow: scroll;
