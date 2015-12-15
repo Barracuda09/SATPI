@@ -77,12 +77,27 @@ bool StringConverter::isRootFile(const std::string &msg) {
 	return msg.find("/ ") != std::string::npos;
 }
 
+bool StringConverter::getProtocol(const std::string &msg, std::string &protocol) {
+	// Protocol should be in the first line
+	std::string::size_type nextline = 0;
+	std::string line;
+	if (StringConverter::getline(msg, nextline, line, "\r\n")) {
+		const std::string::size_type begin = line.find_last_of(" ") + 1;
+		const std::string::size_type end   = line.find_last_of("/");
+		if (begin != std::string::npos && end != std::string::npos) {
+			protocol = line.substr(begin, end - begin);
+			return true;
+		}
+	}
+	return false;
+}
+
 bool StringConverter::getRequestedFile(const std::string &msg, std::string &file) {
 	std::string param;
-	if (StringConverter::getHeaderFieldParameter(msg, "GET", param) || 
+	if (StringConverter::getHeaderFieldParameter(msg, "GET", param) ||
 	    StringConverter::getHeaderFieldParameter(msg, "POST", param)) {
-		std::string::size_type begin = param.find_first_of("/");
-		std::string::size_type end = param.find_first_of(" ", begin);
+		const std::string::size_type begin = param.find_first_of("/");
+		const std::string::size_type end   = param.find_first_of(" ", begin);
 		file = param.substr(begin, end - begin);
 		return true;
 	}
@@ -108,12 +123,12 @@ bool StringConverter::getMethod(const std::string &msg, std::string &method) {
 	return true;
 }
 
-bool StringConverter::getContentTypeFrom(const std::string &msg, std::string &content) {
+bool StringConverter::getContentFrom(const std::string &msg, std::string &content) {
 	bool ret = false;
 	std::string parameter;
-	StringConverter::getHeaderFieldParameter(msg, "Content-Length", parameter);
-	const size_t contentLength = atoi(parameter.c_str());
-	if (contentLength) {
+	const std::size_t contentLength = StringConverter::getHeaderFieldParameter(msg, "Content-Length", parameter) ?
+		atoi(parameter.c_str()) : 0;
+	if (contentLength > 0) {
 		const std::string::size_type headerSize = msg.find("\r\n\r\n", 0);
 		if (headerSize != std::string::npos) {
 			content = msg.substr(headerSize + 4);
@@ -129,7 +144,7 @@ bool StringConverter::hasTransportParameters(const std::string &msg) {
 	std::string line;
 
 	if (StringConverter::getline(msg, nextline, line, "\r\n")) {
-		std::string::size_type found = line.find_first_of("?");
+		const std::string::size_type found = line.find_first_of("?");
 		if (found != std::string::npos) {
 			return true;
 		}

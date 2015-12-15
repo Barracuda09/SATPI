@@ -30,20 +30,24 @@
 #include "Log.h"
 #include "Utils.h"
 
-TcpSocket::TcpSocket(int maxClients, int port, bool nonblock) :
+TcpSocket::TcpSocket(int maxClients, const std::string &protocol, int port, bool nonblock) :
 		_MAX_CLIENTS(maxClients),
 		_MAX_POLL(maxClients+1),
 		_pfd(new pollfd[maxClients+1]),
-		_client(new SocketClient[maxClients]) {
+		_client(new SocketClient[maxClients]),
+		_protocolString(protocol) {
 	if (initServerSocket(maxClients, port, nonblock)) {
 		_pfd[0].fd = _server.getFD();
 		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 		_pfd[0].revents = 0;
-		for (size_t i = 1; i < _MAX_POLL; ++i) {
+		for (std::size_t i = 1; i < _MAX_POLL; ++i) {
 			_pfd[i].fd = -1;
 			_pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 			_pfd[i].revents = 0;
 		}
+	}
+	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
+		_client[i].setProtocol(protocol);
 	}
 }
 
@@ -56,11 +60,11 @@ TcpSocket::~TcpSocket() {
 int TcpSocket::poll(int timeout) {
 	if (::poll(_pfd, _MAX_POLL, timeout) > 0) {
 		// Check who is sending data, so iterate over pfd
-		for (size_t i = 0; i < _MAX_POLL; ++i) {
+		for (std::size_t i = 0; i < _MAX_POLL; ++i) {
 			if (_pfd[i].revents != 0) {
 				if (i == 0) {
 					// Try to find a free poll entry
-					for (size_t j = 0; j < _MAX_CLIENTS; ++j) {
+					for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
 						if (_pfd[j+1].fd == -1) {
 							if (acceptConnection(_client[j], 1) == 1) {
 								// setup polling
@@ -78,11 +82,11 @@ int TcpSocket::poll(int timeout) {
 						process(_client[i-1]);
 					} else {
 						// Try to find the client that requested to close
-						size_t j;
+						std::size_t j;
 						for (j = 0; j < _MAX_CLIENTS; ++j) {
 							if (_client[j].getFD() == _pfd[i].fd) {
-								SI_LOG_DEBUG("%s Client %s: Connection closed with fd: %d", _client[j].getProtocolString(),
-								                    _client[j].getIPAddress().c_str(), _client[j].getFD());
+								SI_LOG_DEBUG("%s Client %s: Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
+								             _client[j].getIPAddress().c_str(), _client[j].getFD());
 								closeConnection(_client[j]);
 								_client[j].closeFD();
 								break;
@@ -109,6 +113,7 @@ bool TcpSocket::initServerSocket(int maxClients, int port, bool nonblock) {
 		return false;
 	}
 	_server.setFD(fd);
+	_server.setSocketTimeoutInSec(2);
 
 	int val = 1;
 	if (setsockopt(_server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
@@ -116,7 +121,7 @@ bool TcpSocket::initServerSocket(int maxClients, int port, bool nonblock) {
 		return false;
 	}
 
-	// bind the socket to the port number 
+	// bind the socket to the port number
 	if (bind(_server.getFD(), (struct sockaddr *) &_server._addr, sizeof(_server._addr)) == -1) {
 		PERROR("Server bind");
 		return false;
@@ -138,15 +143,15 @@ bool TcpSocket::acceptConnection(SocketClient &client, bool showLogInfo) {
 		// save connected file descriptor
 		client.setFD(fd_conn);
 
+		client.setSocketTimeoutInSec(2);
+
 		// save client ip address
 		client.setIPAddress(inet_ntoa(client._addr.sin_addr));
-		
-		client.setProtocol(ntohs(_server._addr.sin_port));
 
 		// Show who is connected
 		if (showLogInfo) {
-			SI_LOG_INFO("%s Connection from %s Port %d (fd: %d)", client.getProtocolString(), client.getIPAddress().c_str(),
-			                  ntohs(client._addr.sin_port), fd_conn);
+			SI_LOG_INFO("%s Connection from %s Port %d (fd: %d)", client.getProtocolString().c_str(),
+			            client.getIPAddress().c_str(), ntohs(client._addr.sin_port), fd_conn);
 		}
 		return true;
 	}

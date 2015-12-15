@@ -73,8 +73,10 @@ class ThreadBase {
 
 		///
 		void terminateThread() {
-			stopThread();
-			joinThread();
+			if (_run) {
+				stopThread();
+				joinThread();
+			}
 		}
 
 		/// Stop the running thread give 5.0 sec to stop else cancel it

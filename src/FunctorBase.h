@@ -30,7 +30,7 @@ class FunctorBase {
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
-		FunctorBase() : _callback(NULL), _callee(NULL) {}
+		FunctorBase() : _callback(nullptr), _callee(nullptr) {}
 
 		FunctorBase(const void *callee, const void *callback, size_t Size)  {
 			if (callee) {

@@ -45,13 +45,15 @@ SOURCES = Version.cpp \
 	Streams.cpp \
 	Stream.cpp \
 	HttpServer.cpp \
+	HttpcServer.cpp \
 	RtspServer.cpp \
 	SsdpServer.cpp \
 	RtcpThread.cpp \
 	XMLSupport.cpp \
 	TSPacketBuffer.cpp \
 	StreamThreadBase.cpp \
-	RtpStreamThread.cpp
+	RtpStreamThread.cpp \
+	HttpStreamThread.cpp
 
 # Add dvbcsa ?
 ifeq ($(LIBDVBCSA),yes)

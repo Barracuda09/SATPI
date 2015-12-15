@@ -1,6 +1,6 @@
 /* SocketClient.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,15 +18,11 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef SOCKET_CLIENT_H_INCLUDE
-#define SOCKET_CLIENT_H_INCLUDE
+#define SOCKET_CLIENT_H_INCLUDE SOCKET_CLIENT_H_INCLUDE
 
 #include "SocketAttr.h"
 
 #include <stdio.h>
-
-#define HTTP_PORT 8875
-#define RTSP_PORT 554
-#define SSDP_PORT 1900
 
 ///
 class SocketClient :
@@ -35,50 +31,66 @@ class SocketClient :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		SocketClient() {;}
-		virtual ~SocketClient() {;}
+		SocketClient() {}
 
-		int getFD() const { return _fd; }
-		
-		void closeFD()    { SocketAttr::closeFD(); }
+		virtual ~SocketClient() {}
 
-		///
-		void clearMessage() { _msg.clear(); }
-
-		///
-		void addMessage(const std::string &msg) { _msg += msg; }
-
-		///
-		const std::string &getMessage() const { return _msg; }
-
-		///
-		void setIPAddress(const std::string addr) { _ip_addr = addr; }
-		const std::string &getIPAddress() const { return _ip_addr; }
-
-		///
-		void setSessionID(const std::string sessionID) { _sessionID = sessionID; }
-		const std::string &getSessionID() const { return _sessionID; }
-		
-		///
-		void setProtocol(int protocol) {
-			switch (protocol) {
-				case RTSP_PORT:
-					_protocolString = "RTSP";
-					break;
-				case HTTP_PORT:
-					_protocolString = "HTTP";
-					break;
-				case SSDP_PORT:
-					_protocolString = "SSDP";
-					break;
-				default:
-					_protocolString = "Unkown Proto";
-					break;
-			}
+		/// Clear the HTTP message from this client
+		void clearMessage() {
+			_msg.clear();
 		}
 
-		///
-		const char *getProtocolString() const { return _protocolString.c_str();	}
+		/// Add HTTP message to this client
+		/// @param msg specifiet the message to set/add
+		void addMessage(const std::string &msg) {
+			_msg += msg;
+		}
+
+		/// Get the HTTP message from this client
+		const std::string &getMessage() const {
+			return _msg;
+		}
+
+		/// Set the IP address of this client
+		/// @param addr specifies the IP address of this client
+		void setIPAddress(const std::string addr) {
+			_ip_addr = addr;
+		}
+
+		/// Get the IP address of this client
+		const std::string &getIPAddress() const {
+			return _ip_addr;
+		}
+
+		/// Set the session ID for this client
+		/// @param specifies the the session ID to use
+		void setSessionID(const std::string sessionID) {
+			_sessionID = sessionID;
+		}
+
+		/// Get the session ID for this client
+		const std::string &getSessionID() const {
+			return _sessionID;
+		}
+
+		/// Set protocol string
+		/// @param protocol specifies the protocol this client is using
+		void setProtocol(const std::string &protocol) {
+			_protocolString = protocol;
+		}
+
+		/// Get the protocol string
+		const std::string &getProtocolString() const {
+			return _protocolString;
+		}
+
+		/// Close the file descriptor of this Socket
+		virtual void closeFD() {
+			SocketAttr::closeFD();
+			_sessionID = "-1";
+			_msg.clear();
+		}
+
 	protected:
 	private:
 		// =======================================================================

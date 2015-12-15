@@ -18,9 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef HTTP_SERVER_H_INCLUDE
-#define HTTP_SERVER_H_INCLUDE
+#define HTTP_SERVER_H_INCLUDE HTTP_SERVER_H_INCLUDE
 
-#include "TcpSocket.h"
+#include "HttpcServer.h"
 #include "ThreadBase.h"
 
 // forward declaration
@@ -29,16 +29,16 @@ class Properties;
 class Streams;
 class DvbapiClient;
 
-/// HTTP Server serves the XML and other related web pages
+/// HTTP Server
 class HttpServer :
 		public ThreadBase,
-		public TcpSocket {
+		public HttpcServer {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpServer(const InterfaceAttr &interface,
-		           Streams &streams,
+		HttpServer(Streams &streams,
+		           const InterfaceAttr &interface,
 		           Properties &properties,
 		           DvbapiClient *dvbapi);
 
@@ -49,17 +49,13 @@ class HttpServer :
 		virtual void threadEntry();
 
 		/// Method for getting the required files
-		bool getMethod(const SocketClient &client);
+		virtual bool methodGet(SocketClient &client);
 
 		/// Method for getting the required files
-		bool postMethod(const SocketClient &client);
+		virtual bool methodPost(const SocketClient &client);
 
-		/// Process the @c SocketClient when there is data received
-		virtual bool process(SocketClient &client);
-
-		/// Is called when the connection is closed by the client and should
-		/// take appropriate action
-		virtual bool closeConnection(SocketClient &/*client*/) { return true; }
+		///
+		int readFile(const char *file, std::string &data);
 
 		///
 		void make_data_xml(std::string &xml);
@@ -69,13 +65,11 @@ class HttpServer :
 
 		///
 		void make_streams_xml(std::string &xml);
-	private:
+
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		/// @c InterfaceAttr has all network items
-		const InterfaceAttr &_interface;
-		Streams             &_streams;
+	private:
 		Properties          &_properties;
 		DvbapiClient        *_dvbapi;
 

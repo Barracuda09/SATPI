@@ -26,8 +26,7 @@ static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
 TSPacketBuffer::TSPacketBuffer() :
 		_writeIndex(0),
 		_initialized(false),
-		_decryptPending(false) {
-}
+		_decryptPending(false) {}
 
 TSPacketBuffer::~TSPacketBuffer() {}
 

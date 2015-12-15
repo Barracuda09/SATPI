@@ -52,7 +52,7 @@ class TSTableData {
 			return reinterpret_cast<const unsigned char *>(_data.c_str());
 		}
 
-		/// Get the current size of the Table Packet !!Whitout the CRC (4Bytes)!!
+		/// Get the current size of the Table Packet
 		int getDataSize() const {
 			return _data.size();
 		}

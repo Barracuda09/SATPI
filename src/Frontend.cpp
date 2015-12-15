@@ -37,7 +37,7 @@ Frontend::Frontend() :
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dvr(-1) {
-	for (size_t i = 0; i < MAX_LNB; ++i) {
+	for (std::size_t i = 0; i < MAX_LNB; ++i) {
 		_diseqc.LNB[i].type        = LNB_UNIVERSAL;
 		_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
 		_diseqc.LNB[i].switchlof   = DEFAULT_SWITCH_LOF;
@@ -93,7 +93,7 @@ bool Frontend::set_demux_filter(int fd, uint16_t pid) {
 }
 
 bool Frontend::capableOf(fe_delivery_system_t msys) {
-	for (size_t i = 0; i < MAX_DELSYS; ++i) {
+	for (std::size_t i = 0; i < MAX_DELSYS; ++i) {
 		// we no not like SYS_UNDEFINED
 		if (_info_del_sys[i] != SYS_UNDEFINED && msys == _info_del_sys[i]) {
 			return true;
@@ -193,12 +193,12 @@ bool Frontend::setFrontendInfo() {
 	CLOSE_FD(fd_fe);
 #endif
 	// clear delsys
-	for (size_t i = 0; i < MAX_DELSYS; ++i) {
+	for (std::size_t i = 0; i < MAX_DELSYS; ++i) {
 		_info_del_sys[i] = SYS_UNDEFINED;
 	}
 	// get capability of fe and save it
 	_del_sys_size = dtvProperty.u.buffer.len;
-	for (size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
+	for (std::size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
 		switch (dtvProperty.u.buffer.data[i]) {
 			case SYS_DSS:
 				_info_del_sys[i] = SYS_DSS;
@@ -445,7 +445,7 @@ bool Frontend::tune_it(StreamProperties &properties) {
 
 bool Frontend::update(StreamProperties &properties) {
 	SI_LOG_DEBUG("Stream: %d, Updating frontend...", properties.getStreamID());
-
+#ifndef SIMU
 	// Setup, tune and set PID Filters
 	if (properties.hasChannelDataChanged()) {
 		properties.resetChannelDataChanged();
@@ -453,7 +453,7 @@ bool Frontend::update(StreamProperties &properties) {
 		CLOSE_FD(_fd_dvr);
 	}
 
-	size_t timeout = 0;
+	std::size_t timeout = 0;
 	while (!setupAndTune(properties)) {
 		usleep(50000);
 		++timeout;
@@ -463,6 +463,7 @@ bool Frontend::update(StreamProperties &properties) {
 	}
 
 	updatePIDFilters(properties);
+#endif
 
 	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", properties.getStreamID());
 	return true;
@@ -477,7 +478,7 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_fe.c_str(), _fd_fe);
 		}
 		// try tuning
-		size_t timeout = 0;
+		std::size_t timeout = 0;
 		while (!tune_it(properties)) {
 			usleep(450000);
 			++timeout;
@@ -509,7 +510,7 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 	// Check if we have already a DVR open and are tuned
 	if (_fd_dvr == -1 && _tuned) {
 		// try opening DVR, try again if fails
-		size_t timeout = 0;
+		std::size_t timeout = 0;
 		while ((_fd_dvr = open_dvr(_path_to_dvr)) == -1) {
 			usleep(150000);
 			++timeout;
@@ -528,7 +529,8 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 }
 
 static void resetPid(StreamProperties &properties, int pid) {
-	if (ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+	if (properties.getDMXFileDescriptor(pid) != -1 &&
+	    ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 		PERROR("DMX_STOP");
 	}
 	properties.closeDMXFileDescriptor(pid);
@@ -547,7 +549,7 @@ bool Frontend::updatePIDFilters(StreamProperties &properties) {
 				// check if we have no DMX for this PID, then open one
 				if (properties.getDMXFileDescriptor(i) == -1) {
 					properties.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
-					size_t timeout = 0;
+					std::size_t timeout = 0;
 					while (set_demux_filter(properties.getDMXFileDescriptor(i), i) != 1) {
 						usleep(350000);
 						++timeout;
@@ -571,7 +573,7 @@ bool Frontend::updatePIDFilters(StreamProperties &properties) {
 
 bool Frontend::teardown(StreamProperties &properties) {
 	const int streamID = properties.getStreamID();
-	for (size_t i = 0; i < MAX_PIDS; ++i) {
+	for (std::size_t i = 0; i < MAX_PIDS; ++i) {
 		if (properties.isPIDUsed(i)) {
 			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
 			             streamID, i, properties.getDMXFileDescriptor(i), properties.getPacketCounter(i));

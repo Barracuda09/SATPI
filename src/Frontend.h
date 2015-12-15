@@ -117,7 +117,7 @@ class Frontend  {
 		bool teardown(StreamProperties &properties);
 
 		///
-		size_t getDeliverySystemSize() const {
+		std::size_t getDeliverySystemSize() const {
 			return _del_sys_size;
 		}
 
@@ -170,7 +170,7 @@ class Frontend  {
 		std::string              _path_to_dmx;
 		struct dvb_frontend_info _fe_info;
 		fe_delivery_system_t     _info_del_sys[MAX_DELSYS];
-		size_t                   _del_sys_size;
+		std::size_t                   _del_sys_size;
 		// =======================================================================
 		//
 		// =======================================================================

@@ -49,6 +49,9 @@ class StringConverter  {
 		static bool isRootFile(const std::string &msg);
 
 		///
+		static bool getProtocol(const std::string &msg, std::string &protocol);
+
+		///
 		static bool getRequestedFile(const std::string &msg, std::string &file);
 
 		///
@@ -58,7 +61,7 @@ class StringConverter  {
 		static bool getMethod(const std::string &msg, std::string &method);
 
 		///
-		static bool getContentTypeFrom(const std::string &msg, std::string &content);
+		static bool getContentFrom(const std::string &msg, std::string &content);
 
 		///
 		static bool hasTransportParameters(const std::string &msg);
@@ -79,12 +82,25 @@ class StringConverter  {
 		///
 		static fe_delivery_system_t getMSYSParameter(const std::string &msg, const std::string &header_field);
 
+		///
 		static const char *transmode_to_string(int transmission_mode);
+
+		///
 		static const char *rolloff_to_sting(int rolloff);
+
+		///
 		static const char *modtype_to_sting(int modtype);
+
+		///
 		static const char *fec_to_string(int fec);
+
+		///
 		static const char *delsys_to_string(int delsys);
+
+		///
 		static const char *guardinter_to_string(int guard_interval);
+
+		///
 		static const char *pilot_tone_to_string(int pilot);
 
 }; // class StringConverter

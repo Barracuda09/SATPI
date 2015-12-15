@@ -153,7 +153,7 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 	SI_LOG_INFO("Frontends found: %zu", _maxStreams);
 	if (_maxStreams) {
 		getAttachedFrontendCount_L(path, 0);
-		for (size_t i = 0; i < static_cast<size_t>(_maxStreams); ++i) {
+		for (auto i = 0; i < _maxStreams; ++i) {
 			_stream[i]->setFrontendInfo();
 			int dvb_s2 = 0;
 			int dvb_t  = 0;

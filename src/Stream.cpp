@@ -21,6 +21,7 @@
 #include "Configure.h"
 #include "Log.h"
 #include "RtpStreamThread.h"
+#include "HttpStreamThread.h"
 #include "SocketClient.h"
 #include "Stream.h"
 #include "StringConverter.h"
@@ -32,13 +33,14 @@
 const unsigned int Stream::MAX_CLIENTS = 8;
 
 Stream::Stream(int streamID, DvbapiClient *dvbapi) :
+		_streamingType(NONE),
 		_enabled(true),
 		_streamInUse(false),
 		_client(new StreamClient[MAX_CLIENTS]),
 		_streaming(nullptr),
 		_dvbapi(dvbapi),
 		_properties(streamID) {
-	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
+	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		_client[i].setClientID(i);
 	}
 }
@@ -69,7 +71,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	}
 
 	// if we have a session ID try to find it among our StreamClients
-	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
+	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		// If we have a new session we like to find an empty slot so '-1'
 		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != SYS_UNDEFINED) {
@@ -105,7 +107,7 @@ void Stream::copySocketClientAttr(const SocketClient &socketClient) {
 void Stream::checkStreamClientsWithTimeout() {
 	MutexLock lock(_mutex);
 
-	for (size_t i = 0; i < MAX_CLIENTS; ++i) {
+	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].checkWatchDogTimeout()) {
 			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
 			             _properties.getStreamID(), i, _client[i].getSessionID().c_str());
@@ -136,7 +138,18 @@ bool Stream::update(int clientID) {
 
 	// first time streaming?
 	if (_streaming == nullptr) {
-		_streaming = new RtpStreamThread(_client, _properties, _dvbapi);
+		switch (_streamingType) {
+			case NONE:
+				_streaming = nullptr;
+				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _properties.getStreamID());
+				break;
+			case HTTP:
+				_streaming = new HttpStreamThread(_client, _properties, _dvbapi);
+				break;
+			case RTSP:
+				_streaming = new RtpStreamThread(_client, _properties, _dvbapi);
+				break;
+		};
 		if (_streaming == nullptr) {
 			return false;
 		}
@@ -209,17 +222,20 @@ void Stream::fromXML(const std::string &xml) {
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
 	MutexLock lock(_mutex);
 
-	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 || method.compare("PLAY") == 0) &&
+	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 ||
+	     method.compare("PLAY") == 0 || method.compare("GET") == 0) &&
 	     StringConverter::hasTransportParameters(msg)) {
+
+		_streamingType = (method.compare("GET") == 0) ? HTTP : RTSP;
 		parseStreamString_L(msg, method);
 	}
-	int port;
+	int port = 0;
 	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
 		_client[clientID].setRtpSocketPort(port);
 		_client[clientID].setRtcpSocketPort(port+1);
 	}
 
-	std::string cseq;
+	std::string cseq("0");
 	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
 	}
@@ -257,7 +273,7 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 
 	// @TODO Are all other StreamClients stopped??
 	if (clientID == 0) {
-		for (size_t i = 1; i < MAX_CLIENTS; ++i) {
+		for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
 			// Not gracefully teardown for other clients
 			_client[i].teardown(false);
 		}
@@ -462,7 +478,7 @@ void Stream::processPID_L(const std::string &pids, bool add) {
 	std::string::size_type begin = 0;
 	if (pids == "all" ) {
 		// All pids requested then 'remove' all used PIDS
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
+		for (std::size_t i = 0; i < MAX_PIDS; ++i) {
 			_properties.setPID(i, false);
 		}
 		_properties.setAllPID(add);

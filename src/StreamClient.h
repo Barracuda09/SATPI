@@ -22,11 +22,11 @@
 
 #include "Mutex.h"
 #include "SocketAttr.h"
+#include "SocketClient.h"
 
 #include <string>
 
 // Forward declarations
-class SocketClient;
 class Stream;
 
 /// StreamClient defines the owner/participants of an stream
@@ -58,7 +58,7 @@ class StreamClient {
 		///
 		const std::string getMessage() const {
 			MutexLock lock(_mutex);
-			return _rtspMsg;
+			return _httpcMsg;
 		}
 
 		///
@@ -86,9 +86,9 @@ class StreamClient {
 		}
 
 		///
-		int getRtspFD() const {
+		int getHttpcFD() const {
 			MutexLock lock(_mutex);
-			return _rtspFD;
+			return _httpcFD == nullptr ? -1 : *_httpcFD;
 		}
 
 		///
@@ -136,13 +136,14 @@ class StreamClient {
 	private:
 		Mutex        _mutex;           ///
 		int          _clientID;
-		int          _rtspFD;          /// For sending reply to
-		std::string  _rtspMsg;
+		const int   *_httpcFD;         /// For sending reply to and checking
+		                               /// connection
+		std::string  _httpcMsg;        /// message from client
 		std::string  _ip_addr;         /// IP address of client
-		std::string  _sessionID;
+		std::string  _sessionID;       ///
 		time_t       _watchdog;        /// watchdog
 		unsigned int _sessionTimeout;
-		int          _cseq;
+		int          _cseq;            /// RTSP sequence number
 		bool         _canClose;
 		SocketAttr   _rtp;
 		SocketAttr   _rtcp;
