@@ -195,8 +195,10 @@ static void printUsage(const char *prog_name) {
            "\t--help         show this help and exit\r\n" \
            "\t--version      show the version number\r\n" \
            "\t--user xx      run as user\r\n" \
+           "\t--http-path    set http path\r\n" \
            "\t--no-daemon    do NOT daemonize\r\n" \
            "\t--no-ssdp      do NOT advertise server\r\n", prog_name);
+
 }
 
 /*
@@ -214,7 +216,7 @@ int main(int argc, char *argv[]) {
 	std::string file;
 	StringConverter::splitPath(argv[0], path, file);
 
-	// Check options
+	// Check options std::string startPath,
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-ssdp") == 0) {
 			ssdp = false;
@@ -223,6 +225,9 @@ int main(int argc, char *argv[]) {
 			++i; // because next was the user-name
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
 			daemon = false;
+		} else if (strcmp(argv[i], "--http-path") == 0) {
+			path = argv[i+1];
+			++i;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			printf("SatPI version: %s\r\n", satpi_version);
 			return EXIT_SUCCESS;
@@ -259,6 +264,7 @@ int main(int argc, char *argv[]) {
 	DvbapiClient dvbapi(getStreamProperties, updateFrontend);
 	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
+
 	HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
 	streams.enumerateFrontends("/dev/dvb", nullptr);
