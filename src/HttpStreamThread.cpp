@@ -23,6 +23,7 @@
 #include "StreamProperties.h"
 #include "InterfaceAttr.h"
 #include "Utils.h"
+#include "TimeCounter.h"
 #ifdef LIBDVBCSA
 	#include "DvbapiClient.h"
 #endif
@@ -85,7 +86,7 @@ void HttpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &
 
 	const unsigned int size = buffer.getBufferSize();
 	
-	const long timestamp = getmsec() * 90;
+	const long timestamp = TimeCounter::getTicks() * 90;
 
 	// RTP packet octet count (Bytes)
 	_properties.addRtpData(size, timestamp);

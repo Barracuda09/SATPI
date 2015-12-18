@@ -144,22 +144,22 @@ bool HttpServer::methodGet(SocketClient &client) {
 				make_data_xml(docType);
 				docTypeSize = docType.size();
 
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/streams.xml") == 0) {
 				make_streams_xml(docType);
 				docTypeSize = docType.size();
 
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/config.xml") == 0) {
 				make_config_xml(docType);
 				docTypeSize = docType.size();
 
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/log.xml") == 0) {
 				docType = make_log_xml();
 				docTypeSize = docType.size();
 
-				getHtmlBodyWithContent(htmlBody,  HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody,  HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/STOP") == 0) {
 				// KILL
 				std::exit(0);
@@ -185,24 +185,24 @@ bool HttpServer::methodGet(SocketClient &client) {
 							}
 						}
 					}
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_XML, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 
 				} else if (file.find(".html") != std::string::npos) {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 				} else if (file.find(".js") != std::string::npos) {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_JS, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_JS, docTypeSize, 0);
 				} else if (file.find(".css") != std::string::npos) {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_CSS, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_CSS, docTypeSize, 0);
 				} else if (file.find(".m3u") != std::string::npos) {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_VIDEO, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_VIDEO, docTypeSize, 0);
 				} else if ((file.find(".png") != std::string::npos) ||
 						   (file.find(".ico") != std::string::npos)) {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_PNG, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_PNG, docTypeSize, 0);
 				} else {
-					getHtmlBodyWithContent(htmlBody, HTML_OK, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 				}
 			} else if ((docTypeSize = readFile("web/404.html", docType))) {
-				getHtmlBodyWithContent(htmlBody, HTML_NOT_FOUND, file.c_str(), CONTENT_TYPE_HTML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody, HTML_NOT_FOUND, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 			}
 		}
 	}

@@ -37,6 +37,7 @@ SOURCES = Version.cpp \
 	Properties.cpp \
 	StringConverter.cpp \
 	Log.cpp \
+	TimeCounter.cpp \
 	HttpcSocket.cpp \
 	TcpSocket.cpp \
 	UdpSocket.cpp \

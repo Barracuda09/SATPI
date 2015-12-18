@@ -182,12 +182,14 @@ void DvbapiClient::decrypt(int streamID, TSPacketBuffer &buffer) {
 					// check if the parity changed in this batch (but should not be the begin of the batch)
 					// or check if this batch full, then decrypt this batch
 					if (countBatch != 0 && (parity != parityBatch || countBatch >= properties.getMaximumBatchSize())) {
+
+						const bool final = parity != parityBatch;
 						//
-						SI_LOG_COND_DEBUG(parity != parityBatch, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
+						SI_LOG_COND_DEBUG(final, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
 						   streamID, parityBatch, parity, countBatch);
 
 						// decrypt this batch
-						properties.decryptBatch();
+						properties.decryptBatch(final);
 					}
 
 					// Can we add this packet to the batch
@@ -253,7 +255,7 @@ bool DvbapiClient::stopDecrypt(int streamID) {
 		SI_LOG_BIN_DEBUG(caPMT, sizeof(caPMT), "Stream: %d, Stop CA Decrypt DMX: %d  PID: %d", streamID, demux, pid);
 
 		// cleaning tables
-		SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables...", streamID);
+		SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
 		properties.setTableCollected(PAT_TABLE_ID, false);
 		properties.setTableCollected(PMT_TABLE_ID, false);
 		properties.freeKeys();
@@ -618,54 +620,70 @@ void DvbapiClient::threadEntry() {
 		if (pollRet > 0) {
 			if (pfd[0].revents != 0) {
 				char buf[1024];
+				auto i = 0;
 				struct sockaddr_in si_other;
 				socklen_t addrlen = sizeof(si_other);
 				const ssize_t size = recvfrom(_client.getFD(), buf, sizeof(buf)-1, MSG_DONTWAIT, (struct sockaddr *)&si_other, &addrlen);
 				if (size > 0) {
-					// get command
-					const uint32_t cmd = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
-					SI_LOG_DEBUG("Stream: %d, Receive data  len: %d  cmd: %X", buf[4], size, cmd);
+					while (i < size) {
+						// get command
+						const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
+						const std::size_t cmdSize = buf[i + 1] + 5;
+						SI_LOG_DEBUG("Stream: %d, Receive data  len: %d  cmd: %X", buf[i + 4], cmdSize, cmd);
 
-					if (cmd == DVBAPI_SERVER_INFO) {
-						_serverName.assign(&buf[7], buf[6]);
-						SI_LOG_INFO("Connected to %s", _serverName.c_str());
-						_connected = true;
-					} else if (cmd == DVBAPI_DMX_SET_FILTER) {
-						const int adapter =  buf[4];
-						const int demux   =  buf[5];
-						const int filter  =  buf[6];
-						const int pid     = (buf[7] << 8) | buf[8];
+						if (cmd == DVBAPI_SERVER_INFO) {
+							_serverName.assign(&buf[i + 7], buf[i + 6]);
+							SI_LOG_INFO("Connected to %s", _serverName.c_str());
+							_connected = true;
 
-						StreamProperties &properties = _getStreamProperties(adapter);
-						properties.setECMFilterData(demux, filter, pid, true);
-						// now update frontend, PID list has changed
-						_updateFrontend(adapter);
-					} else if (cmd == DVBAPI_DMX_STOP) {
-						const int adapter =  buf[4];
-						const int demux   =  buf[5];
-						const int filter  =  buf[6];
-						const int pid     = (buf[7] << 8) | buf[8];
+							i += cmdSize;
+						} else if (cmd == DVBAPI_DMX_SET_FILTER) {
+							const int adapter =  buf[i + 4];
+							const int demux   =  buf[i + 5];
+							const int filter  =  buf[i + 6];
+							const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
-						StreamProperties &properties = _getStreamProperties(adapter);
-						properties.setECMFilterData(demux, filter, pid, false);
-						// now update frontend, PID list has changed
-						_updateFrontend(adapter);
-					} else if (cmd == DVBAPI_CA_SET_DESCR) {
-						const int adapter =  buf[4];
-						const int index   = (buf[5] << 24) | (buf[ 6] << 16) | (buf[ 7] << 8) | buf[ 8];
-						const int parity  = (buf[9] << 24) | (buf[10] << 16) | (buf[11] << 8) | buf[12];
-						const unsigned char *cw = reinterpret_cast<unsigned char *>(&buf[13]);
+							StreamProperties &properties = _getStreamProperties(adapter);
+							properties.setECMFilterData(demux, filter, pid, true);
+							// now update frontend, PID list has changed
+							_updateFrontend(adapter);
 
-						StreamProperties &properties = _getStreamProperties(adapter);
-						properties.setKey(cw, parity, index);
-						SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
-						             adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
-					} else if (cmd == DVBAPI_ECM_INFO) {
-						const int adapter =  buf[4];
-//						StreamProperties &properties = _getStreamProperties(adapter);
-						SI_LOG_DEBUG("Stream: %d, Receive ECM Info", adapter);
-					} else {
-						SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
+							i += cmdSize;
+						} else if (cmd == DVBAPI_DMX_STOP) {
+							const int adapter =  buf[i + 4];
+							const int demux   =  buf[i + 5];
+							const int filter  =  buf[i + 6];
+							const int pid     = (buf[i + 7] << 8) | buf[i + 8];
+
+							StreamProperties &properties = _getStreamProperties(adapter);
+							properties.setECMFilterData(demux, filter, pid, false);
+							// now update frontend, PID list has changed
+							_updateFrontend(adapter);
+
+							i += cmdSize;
+						} else if (cmd == DVBAPI_CA_SET_DESCR) {
+							const int adapter =  buf[i + 4];
+							const int index   = (buf[i + 5] << 24) | (buf[i +  6] << 16) | (buf[i +  7] << 8) | buf[i +  8];
+							const int parity  = (buf[i + 9] << 24) | (buf[i + 10] << 16) | (buf[i + 11] << 8) | buf[i + 12];
+							const unsigned char *cw = reinterpret_cast<unsigned char *>(&buf[i + 13]);
+
+							StreamProperties &properties = _getStreamProperties(adapter);
+							properties.setKey(cw, parity, index);
+							SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
+										 adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
+
+							i += cmdSize;
+						} else if (cmd == DVBAPI_ECM_INFO) {
+							const int adapter =  buf[i + 4];
+	//						StreamProperties &properties = _getStreamProperties(adapter);
+							SI_LOG_DEBUG("Stream: %d, Receive ECM Info", adapter);
+
+							i += cmdSize;
+						} else {
+							SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
+
+							i += cmdSize;
+						}
 					}
 				} else {
 					// connection closed, try to reconnect

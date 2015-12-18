@@ -23,19 +23,70 @@
 #include "TSTableData.h"
 #include "Log.h"
 #include "Utils.h"
+#include "TimeCounter.h"
+
+#include <utility>
+#include <queue>
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
 
+///
+class Keys {
+	public:
+		typedef std::pair<long, dvbcsa_bs_key_s *> KeyPair;
+		typedef std::queue<KeyPair> KeyQueue;
+
+		// =======================================================================
+		// Constructors and destructor
+		// =======================================================================
+		Keys() {}
+
+		virtual ~Keys() {}
+
+		void set(const unsigned char *cw, int parity, int /*index*/) {
+			dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
+			dvbcsa_bs_key_set(cw, k);
+			_key[parity].push(std::make_pair(TimeCounter::getTicks(), k));
+		}
+
+		const dvbcsa_bs_key_s *get(int parity) const {
+			if (!_key[parity].empty()) {
+				const KeyPair pair = _key[parity].front();
+				return pair.second;
+			} else {
+				return nullptr;
+			}
+		}
+
+		void remove(int parity) {
+			const KeyPair pair = _key[parity].front();
+			dvbcsa_bs_key_free(pair.second);
+			_key[parity].pop();
+		}
+
+		void freeKeys() {
+			while (!_key[0].empty()) {
+				remove(0);
+			}
+			while (!_key[1].empty()) {
+				remove(1);
+			}
+		}
+
+	private:
+		KeyQueue _key[2];
+};
+
+///
 class DvbapiClientProperties {
 	public:
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
 		DvbapiClientProperties() {
-			_key[0] = nullptr;
-			_key[1] = nullptr;
 			_batchSize = dvbcsa_bs_batch_size();
 			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
 			_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
@@ -76,12 +127,17 @@ class DvbapiClientProperties {
 
 		/// This function will decrypt the batch upon success it will clear scramble flag
 		/// on failure it will make a NULL TS Packet and clear scramble flag
-		void decryptBatch() {
-			if (_key[_parity] != nullptr) {
+		void decryptBatch(bool final) {
+			if (_keys.get(_parity) != nullptr) {
 				// terminate batch buffer
 				setBatchData(nullptr, 0, _parity, nullptr);
 				// decrypt it
-				dvbcsa_bs_decrypt(_key[_parity], _batch, 184);
+				dvbcsa_bs_decrypt(_keys.get(_parity), _batch, 184);
+
+				// Final, then remove this key
+				if (final) {
+					_keys.remove(_parity);
+				}
 
 				// clear scramble flags, so we can send it.
 				unsigned int i = 0;
@@ -107,22 +163,18 @@ class DvbapiClientProperties {
 
 		///
 		void freeKeys() {
-			dvbcsa_bs_key_free(_key[0]);
-			dvbcsa_bs_key_free(_key[1]);
-			_key[0] = nullptr;
-			_key[1] = nullptr;
-
+			_keys.freeKeys();
 			_batchCount = 0;
 		}
 
 		///
-		void setKey(const unsigned char *cw, int parity, int /*index*/) {
-			dvbcsa_bs_key_set(cw, _key[parity]);
+		void setKey(const unsigned char *cw, int parity, int index) {
+			_keys.set(cw, parity, index);
 		}
 
 		///
-		dvbcsa_bs_key_s *getKey(int parity) const {
-			return _key[parity];
+		const dvbcsa_bs_key_s *getKey(int parity) const {
+			return _keys.get(parity);
 		}
 
 		const char* getTableTXT(int tableID) {
@@ -239,15 +291,14 @@ class DvbapiClientProperties {
 			}
 		}
 
-	protected:
-		struct dvbcsa_bs_key_s   *_key[2];
+	private:
 		struct dvbcsa_bs_batch_s *_batch;
 		struct dvbcsa_bs_batch_s *_ts;
 
-		int _batchSize;
-		int _batchCount;
-		int _parity;
-
+		int         _batchSize;
+		int         _batchCount;
+		int         _parity;
+		Keys        _keys;
 		TSTableData _pat;
 		TSTableData _pmt;
 
