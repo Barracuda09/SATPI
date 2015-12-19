@@ -23,6 +23,7 @@
 #include "StreamProperties.h"
 #include "InterfaceAttr.h"
 #include "Utils.h"
+#include "TimeCounter.h"
 #ifdef LIBDVBCSA
 	#include "DvbapiClient.h"
 #endif
@@ -116,7 +117,7 @@ void RtpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &c
 	rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
 
 	// update timestamp
-	const long timestamp = getmsec() * 90;
+	const long timestamp = TimeCounter::getTicks() * 90;
 	rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
 	rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
 	rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp

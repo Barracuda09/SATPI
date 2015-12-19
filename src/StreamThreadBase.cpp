@@ -154,12 +154,6 @@ bool StreamThreadBase::readFullTSPacket(TSPacketBuffer &buffer) {
 	return false;
 }
 
-long StreamThreadBase::getmsec() {
-  struct timeval tv;
-  gettimeofday(&tv, nullptr);
-  return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
-}
-
 void StreamThreadBase::pollDVR(const StreamClient &client) {
 	// call poll with a timeout of 100 ms
 	const int pollRet = poll(_pfd, 1, 100);

@@ -78,9 +78,6 @@ class StreamThreadBase :
 		virtual int getStreamSocketPort(int clientID) const = 0;
 
 		///
-		long getmsec();
-
-		///
 		bool readFullTSPacket(TSPacketBuffer &buffer);
 
 		// =======================================================================

@@ -72,14 +72,7 @@ bool StreamProperties::isPMT(int pid) const {
 
 void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set) {
 	MutexLock lock(_mutex);
-#ifdef LIBDVBCSA
-	if(_key[0] == nullptr) {
-		_key[0] = dvbcsa_bs_key_alloc();
-	}
-	if(_key[1] == nullptr) {
-		_key[1] = dvbcsa_bs_key_alloc();
-	}
-#endif
+
 	const bool isSet = _channelData.isPIDUsed(pid);
 	if (!isSet || !set) {
 		SI_LOG_INFO("Stream: %d, %s ECM PID: %d  demux: %d  filter: %d", _streamID, set ? "Set" : "Clear", pid, demux, filter);
