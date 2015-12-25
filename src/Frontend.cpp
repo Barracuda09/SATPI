@@ -284,6 +284,9 @@ bool Frontend::tune(const StreamProperties &properties) {
 			FILL_PROP(DTV_TRANSMISSION_MODE, properties.getTransmissionMode());
 			FILL_PROP(DTV_GUARD_INTERVAL,    properties.getGuardInverval());
 			FILL_PROP(DTV_HIERARCHY,         properties.getHierarchy());
+#if FULL_DVB_API_VERSION >= 0x0509
+			FILL_PROP(DTV_LNA,               1);
+#endif
 			break;
 #if FULL_DVB_API_VERSION >= 0x0505
 		case SYS_DVBC_ANNEX_A:
@@ -455,7 +458,7 @@ bool Frontend::update(StreamProperties &properties) {
 
 	std::size_t timeout = 0;
 	while (!setupAndTune(properties)) {
-		usleep(50000);
+		usleep(150000);
 		++timeout;
 		if (timeout > 3) {
 			return false;
@@ -503,7 +506,7 @@ bool Frontend::setupAndTune(StreamProperties &properties) {
 					SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", streamID, status);
 				}
 			}
-			usleep(50000);
+			usleep(150000);
 			++timeout;
 		}
 	}
