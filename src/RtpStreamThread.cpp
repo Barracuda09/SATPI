@@ -28,7 +28,6 @@
 	#include "DvbapiClient.h"
 #endif
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -130,7 +129,8 @@ void RtpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &c
 
 	// send the RTP packet
 	if (sendto(_socket_fd_rtp, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,
-			  (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
+	           (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
+
 		PERROR("send RTP");
 	}
 }

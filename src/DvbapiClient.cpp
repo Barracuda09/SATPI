@@ -45,6 +45,7 @@ extern "C" {
 
 #define DVBAPI_CA_SET_PID      0x40086f87
 #define DVBAPI_CA_SET_DESCR    0x40106f86
+#define DVBAPI_CA_SET_PID      0x40086f87
 #define DVBAPI_DMX_SET_FILTER  0x403c6f2b
 #define DVBAPI_DMX_STOP        0x00006f2a
 
@@ -628,15 +629,15 @@ void DvbapiClient::threadEntry() {
 					while (i < size) {
 						// get command
 						const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
-						const std::size_t cmdSize = buf[i + 1] + 5;
-						SI_LOG_DEBUG("Stream: %d, Receive data  len: %d  cmd: %X", buf[i + 4], cmdSize, cmd);
+						SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: %X", buf[i + 4], size, cmd);
 
 						if (cmd == DVBAPI_SERVER_INFO) {
 							_serverName.assign(&buf[i + 7], buf[i + 6]);
 							SI_LOG_INFO("Connected to %s", _serverName.c_str());
 							_connected = true;
 
-							i += cmdSize;
+							// Goto next cmd
+							i += 7 + _serverName.size();
 						} else if (cmd == DVBAPI_DMX_SET_FILTER) {
 							const int adapter =  buf[i + 4];
 							const int demux   =  buf[i + 5];
@@ -648,7 +649,8 @@ void DvbapiClient::threadEntry() {
 							// now update frontend, PID list has changed
 							_updateFrontend(adapter);
 
-							i += cmdSize;
+							// Goto next cmd
+							i += 65;
 						} else if (cmd == DVBAPI_DMX_STOP) {
 							const int adapter =  buf[i + 4];
 							const int demux   =  buf[i + 5];
@@ -660,29 +662,56 @@ void DvbapiClient::threadEntry() {
 							// now update frontend, PID list has changed
 							_updateFrontend(adapter);
 
-							i += cmdSize;
+							// Goto next cmd
+							i += 9;
 						} else if (cmd == DVBAPI_CA_SET_DESCR) {
 							const int adapter =  buf[i + 4];
 							const int index   = (buf[i + 5] << 24) | (buf[i +  6] << 16) | (buf[i +  7] << 8) | buf[i +  8];
 							const int parity  = (buf[i + 9] << 24) | (buf[i + 10] << 16) | (buf[i + 11] << 8) | buf[i + 12];
-							const unsigned char *cw = reinterpret_cast<unsigned char *>(&buf[i + 13]);
+							unsigned char cw[9];
+							memcpy(cw, &buf[i + 13], 8);
+							cw[8] = 0;
 
 							StreamProperties &properties = _getStreamProperties(adapter);
 							properties.setKey(cw, parity, index);
 							SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
 										 adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
 
-							i += cmdSize;
+							i += 21;
+						} else if (cmd == DVBAPI_CA_SET_PID) {
+							i += 13;
 						} else if (cmd == DVBAPI_ECM_INFO) {
-							const int adapter =  buf[i + 4];
-	//						StreamProperties &properties = _getStreamProperties(adapter);
-							SI_LOG_DEBUG("Stream: %d, Receive ECM Info", adapter);
+							const int adapter   =  buf[i +  4];
+							const int serviceID = (buf[i +  5] <<  8) |  buf[i +  6];
+							const int caID      = (buf[i +  7] <<  8) |  buf[i +  8];
+							const int pid       = (buf[i +  9] <<  8) |  buf[i + 10];
+							const int provID    = (buf[i + 11] << 24) | (buf[i + 12] << 16) | (buf[i + 13] << 8) | buf[i + 14];
+							const int emcTime   = (buf[i + 15] << 24) | (buf[i + 16] << 16) | (buf[i + 17] << 8) | buf[i + 18];
+							i += 19;
+							std::string cardSystem;
+							cardSystem.assign(&buf[i + 1], buf[i + 0]);
+							i += buf[i + 0] + 1;
+							std::string readerName;
+							readerName.assign(&buf[i + 1], buf[i + 0]);
+							i += buf[i + 0] + 1;
+							std::string sourceName;
+							sourceName.assign(&buf[i + 1], buf[i + 0]);
+							i += buf[i + 0] + 1;
+							std::string protocolName;
+							protocolName.assign(&buf[i + 1], buf[i + 0]);
+							i += buf[i + 0] + 1;
+							const int hops = buf[i];
+							++i;
 
-							i += cmdSize;
+							StreamProperties &properties = _getStreamProperties(adapter);
+							properties.setECMInfo(pid, serviceID, caID, provID, emcTime,
+								cardSystem, readerName, sourceName, protocolName, hops);
+							SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s",
+							             adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str());
 						} else {
 							SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
 
-							i += cmdSize;
+							i = size;
 						}
 					}
 				} else {

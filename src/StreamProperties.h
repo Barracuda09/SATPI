@@ -248,6 +248,20 @@ class StreamProperties
 
 		///
 		int getKeyParity(int pid) const;
+
+		///
+		void setECMInfo(
+			int pid,
+			int serviceID,
+			int caID,
+			int provID,
+			int emcTime,
+			const std::string &cardSystem,
+			const std::string &readerName,
+			const std::string &sourceName,
+			const std::string &protocolName,
+			int hops);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 
