@@ -155,32 +155,36 @@ bool Frontend::setFrontendInfo() {
 	if (ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
 		// If we are here it can mean we have an DVB-API <= 5.4
 		SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
-		dtvProperty.u.buffer.len = 1;
+		auto index = 0;
 		switch (_fe_info.type) {
 			case FE_QPSK:
 				if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-					dtvProperty.u.buffer.data[0] = SYS_DVBS2;
-				} else {
-					dtvProperty.u.buffer.data[0] = SYS_DVBS;
+					dtvProperty.u.buffer.data[index] = SYS_DVBS2;
+					++index;
 				}
+				dtvProperty.u.buffer.data[index] = SYS_DVBS;
+				++index;
 				break;
 			case FE_OFDM:
 				if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-					dtvProperty.u.buffer.data[0] = SYS_DVBT2;
-				} else {
-					dtvProperty.u.buffer.data[0] = SYS_DVBT;
+					dtvProperty.u.buffer.data[index] = SYS_DVBT2;
+					++index;
 				}
+				dtvProperty.u.buffer.data[index] = SYS_DVBT;
+				++index;
 				break;
 			case FE_QAM:
 #if FULL_DVB_API_VERSION >= 0x0505
-				dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_A;
+				dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_A;
 #else
-				dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_AC;
+				dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_AC;
 #endif
+				++index;
 				break;
 			case FE_ATSC:
 				if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
-					dtvProperty.u.buffer.data[0] = SYS_DVBC_ANNEX_B;
+					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_B;
+					++index;
 					break;
 				}
 				// Fall-through
@@ -189,6 +193,7 @@ bool Frontend::setFrontendInfo() {
 				CLOSE_FD(fd_fe);
 				return false;
 		}
+		dtvProperty.u.buffer.len = index;
 	}
 	CLOSE_FD(fd_fe);
 #endif
