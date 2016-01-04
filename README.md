@@ -74,7 +74,7 @@ If you need to clean the project (because there was something wrong), use:
 
     make clean
 
-If you like to try DVBAPI (but be aware it still buggy), use:
+If you like to try DVBAPI (OSCam), use:
 
     make debug LIBDVBCSA=yes
 
