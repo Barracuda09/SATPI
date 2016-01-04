@@ -61,10 +61,16 @@ class HttpServer :
 		void make_data_xml(std::string &xml);
 
 		///
-		void make_config_xml(std::string &xml);
+		std::string  make_config_xml(std::string &xml);
 
 		///
 		void make_streams_xml(std::string &xml);
+
+		///
+		void save_config_xml(std::string xml);
+
+		///
+		void parse_config_xml();
 
 		// =======================================================================
 		// Data members

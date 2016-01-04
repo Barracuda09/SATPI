@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <fcntl.h>
+#include <iostream>
+#include <fstream>
 
 HttpServer::HttpServer(Streams &streams,
                        const InterfaceAttr &interface,
@@ -97,6 +99,7 @@ bool HttpServer::methodPost(const SocketClient &client) {
 #ifdef LIBDVBCSA
 				_dvbapi->fromXML(content);
 #endif
+			save_config_xml(make_config_xml(content));
 			}
 		}
 	}
@@ -151,6 +154,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 			} else if (file.compare("/config.xml") == 0) {
+				parse_config_xml();
 				make_config_xml(docType);
 				docTypeSize = docType.size();
 
@@ -224,7 +228,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 	return false;
 }
 
-void HttpServer::make_config_xml(std::string &xml) {
+std::string HttpServer::make_config_xml(std::string &xml) {
 	// make config xml
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
@@ -239,6 +243,36 @@ void HttpServer::make_config_xml(std::string &xml) {
 	xml += "</configdata>\r\n";
 
 	xml += "</data>\r\n";
+	return xml;
+}
+
+// Save Config file
+void HttpServer::save_config_xml(std::string xml)
+{
+	//
+	std::string path = _properties.getStartPath() + "/web/config.xml";
+	std::ofstream configFile;
+	configFile.open(path);
+	if (configFile.is_open()){
+		configFile << xml;
+	}
+	configFile.close();
+}
+
+void HttpServer::parse_config_xml()
+{
+	std::string path = _properties.getStartPath() + "/web/config.xml";
+	std::ifstream configFile;
+	configFile.open(path);
+	if (configFile.is_open()){
+		std::string cfig((std::istreambuf_iterator<char>(configFile)), std::istreambuf_iterator<char>());
+		// Parse config file
+		_properties.fromXML(cfig);
+	#ifdef LIBDVBCSA
+		_dvbapi->fromXML(cfig);
+	#endif
+	}
+	configFile.close();
 }
 
 void HttpServer::make_data_xml(std::string &xml) {
