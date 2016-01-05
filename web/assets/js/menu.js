@@ -18,8 +18,8 @@ function buildmenu() {
 	menu +=         "<li id=\"log\"      class=\"\"><a href=\"log.html\"><span class=\"glyphicon glyphicon-list\"></span> Log</a></li>";
 	menu +=         "<li id=\"frontend\" class=\"\"><a href=\"frontend.html\"><span class=\"glyphicon glyphicon-info-sign\"></span> Frontend</a></li>";
 	menu +=         "<li id=\"config\"   class=\"\"><a href=\"config.html\"><span class=\"glyphicon glyphicon-cog\"></span> Configure</a></li>";
-	menu +=         "<li id=\"contact\"  class=\"\"><a href=\"#contact\">Contact</a></li>";
-	menu +=         "<li id=\"about\"    class=\"\"><a href=\"#about\">About</a></li>";
+	menu +=         "<li id=\"contact\"  class=\"\"><a href=\"contact.html\"><span class=\"glyphicon glyphicon-envelope\"></span> Contact</a></li>";
+	menu +=         "<li id=\"about\"    class=\"\"><a href=\"about.html\"><span class=\"glyphicon glyphicon-book\"></span> About</a></li>";
 	menu +=       "</ul>";
 	menu +=       "<ul class=\"nav navbar-nav navbar-right\">";
 	menu +=         "<li id=\"stop\" class=\"\"><a href=\"STOP\"><span class=\"glyphicon glyphicon-off\"></span> Stop</a></li>";
@@ -27,6 +27,16 @@ function buildmenu() {
 	menu +=     "</div>";
 	menu +=   "</div>";
 	menu += "</nav><!-- nav end -->";
+	return menu;
+}
+
+function buildfooter() {
+	var menu = "";
+	menu += "<div class=\"navbar navbar-default navbar-fixed-bottom\">";
+	menu += "	<div class=\"container\">";
+	menu += "		<p class=\"navbar-text pull-left\">Copyright &#169; 2015, 2016 Marc Postema</p>";
+	menu += "	</div>";
+	menu += "</div>";
 	return menu;
 }
 

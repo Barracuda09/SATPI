@@ -6,13 +6,12 @@
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
 
-<title>404 Not Found</title>
+<title>SAT>IP About Page</title>
 
 <script src="assets/js/menu.js"></script>
 <script src="assets/js/loadxmldoc.js"></script>
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
-
 </head>
 <body>
 <div id="menu"></div>
@@ -20,15 +19,20 @@
 
 <div class="container-fluid">
 	<div class="start">
-		<h1>404 Not Found</h1>
+		<h3>About</h3>
 
-		<div id="content"></div>
+		<div id="content">SatPI is an SAT>IP server which supports DVB-C DVB-T/T2 and DVB-S/S2</div>
+		<div>=================================================================================</div>
+		<div>Thanks go out to:</div>
+		<div>issue for his contibutions</div>
+		<div>Axel Hartmann for kindly suppling hardware</div>
+		<div>All who have tested this Software and gave feedback</div>
 
 		<script>
 			// make menu
 			document.getElementById("menu").innerHTML = buildmenu();
 			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("index");
+			setMenuItemActive("about");
 		</script>
 
 	</div>

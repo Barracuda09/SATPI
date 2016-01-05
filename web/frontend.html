@@ -102,6 +102,7 @@
 </head>
 <body>
 <div id="menu"></div>
+<div id="footer"></div>
 
 <div class="container-fluid">
 	<div class="start">
@@ -112,6 +113,7 @@
 			<script>
 				// make menu
 				document.getElementById("menu").innerHTML = buildmenu();
+				document.getElementById("footer").innerHTML = buildfooter();
 				setMenuItemActive("frontend");
 
 				// Call the ajax refresh each refresh_time seconds
@@ -123,10 +125,5 @@
 	</div>
 </div>
 
-<div class="navbar navbar-default navbar-fixed-bottom">
-	<div class="container">
-		<p class="navbar-text pull-left">Copyright &#169; 2015 Marc Postema</p>
-	</div>
-</div>
 </body>
 </html>
