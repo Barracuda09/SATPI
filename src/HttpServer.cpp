@@ -141,7 +141,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 		if (StringConverter::hasTransportParameters(client.getMessage())){
 			processStreamingRequest(client);
 		} else if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-			std::string path = _properties.getStartPath() + "/web";
+			std::string path = _properties.getWebPath();
 			path += file;
 			if (file.compare("/data.xml") == 0) {
 				make_data_xml(docType);
@@ -250,7 +250,7 @@ std::string HttpServer::make_config_xml(std::string &xml) {
 void HttpServer::save_config_xml(std::string xml)
 {
 	//
-	std::string path = _properties.getStartPath() + "/web/config.xml";
+	std::string path = _properties.getWebPath() + "/config.xml";
 	std::ofstream configFile;
 	configFile.open(path);
 	if (configFile.is_open()){
@@ -261,7 +261,7 @@ void HttpServer::save_config_xml(std::string xml)
 
 void HttpServer::parse_config_xml()
 {
-	std::string path = _properties.getStartPath() + "/web/config.xml";
+	std::string path = _properties.getWebPath() + "/config.xml";
 	std::ifstream configFile;
 	configFile.open(path);
 	if (configFile.is_open()){

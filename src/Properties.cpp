@@ -87,6 +87,11 @@ std::string Properties::getStartPath() const {
 	return _startPath;
 }
 
+std::string Properties::getWebPath() const {
+	MutexLock lock(_mutex);
+	return _startPath + "/web";
+}
+
 std::string Properties::getXSatipM3U() const {
 	MutexLock lock(_mutex);
 	return _xSatipM3U;
