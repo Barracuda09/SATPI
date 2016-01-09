@@ -54,6 +54,9 @@ class Properties : public XMLSupport  {
 		std::string getStartPath() const;
 
 		///
+		std::string getWebPath() const;
+
+		///
 		std::string getXSatipM3U() const;
 
 		///
