@@ -49,6 +49,8 @@
 int exitApp;
 static int retval;
 static int otherSig;
+int httpPort;
+int rtspPort;
 
 /*
  *
@@ -196,6 +198,8 @@ static void printUsage(const char *prog_name) {
            "\t--version      show the version number\r\n" \
            "\t--user xx      run as user\r\n" \
            "\t--http-path    set http path\r\n" \
+					 "\t--http-port    set http port\r\n" \
+					 "\t--rtsp-port    set rtsp port\r\n" \
            "\t--no-daemon    do NOT daemonize\r\n" \
            "\t--no-ssdp      do NOT advertise server\r\n", prog_name);
 
@@ -227,6 +231,12 @@ int main(int argc, char *argv[]) {
 			daemon = false;
 		} else if (strcmp(argv[i], "--http-path") == 0) {
 			path = argv[i+1];
+			++i;
+		} else if (strcmp(argv[i], "--http-port") == 0) {
+		  httpPort = atoi(argv[i+1]);
+			++i;
+		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
+			rtspPort = atoi(argv[i+1]);
 			++i;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			printf("SatPI version: %s\r\n", satpi_version);
@@ -264,15 +274,19 @@ int main(int argc, char *argv[]) {
 	DvbapiClient dvbapi(getStreamProperties, updateFrontend);
 	streams.enumerateFrontends("/dev/dvb", &dvbapi);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
-
+	if(httpPort > 1){properties.setHttpPort(httpPort);}
+	if(rtspPort > 1){properties.setRtspPort(rtspPort);}
 	HttpServer httpserver(streams, interface, properties, &dvbapi);
+
 #else
 	streams.enumerateFrontends("/dev/dvb", nullptr);
 	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
+	if(httpPort > 1){properties.setHttpPort(httpPort);}
+	if(rtspPort > 1){properties.setRtspPort(rtspPort);}
 	HttpServer httpserver(streams, interface, properties, nullptr);
 #endif
 
-	RtspServer server(streams, interface);
+	RtspServer server(streams, properties, interface);
 
 	SsdpServer ssdpserver(interface, properties);
 	if (ssdp) {
@@ -292,5 +306,3 @@ int main(int argc, char *argv[]) {
 
 	return EXIT_SUCCESS;
 }
-
-

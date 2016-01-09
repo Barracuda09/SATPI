@@ -74,6 +74,18 @@ class Properties : public XMLSupport  {
 		/// Get DeviceID
 		unsigned int getDeviceID() const;
 
+		/// Set Httport
+		void setHttpPort(unsigned int bootID);
+
+		/// Get HttpPort
+		unsigned int getHttpPort() const;
+
+		/// Set RtspPort
+		void setRtspPort(unsigned int bootID);
+
+		/// Get RtspPort
+		unsigned int getRtspPort() const;
+
 		/// Set SSDP Announce Time
 		void setSsdpAnnounceTimeSec(unsigned int sec);
 
@@ -83,6 +95,7 @@ class Properties : public XMLSupport  {
 		/// Get application start time
 		time_t getApplicationStartTime() const;
 
+void parse_config_xml();
 	protected:
 
 	private:
@@ -99,6 +112,8 @@ class Properties : public XMLSupport  {
 		unsigned int  _bootID;
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;
+		unsigned int  _httpPort;
+		unsigned int  _rtspPort;
 		time_t        _appStartTime;         // the application start time (EPOCH)
 }; // class Properties
 

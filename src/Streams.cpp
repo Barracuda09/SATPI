@@ -208,7 +208,7 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 				   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c);
 #endif
 	} else {
-		_del_sys_str = "Noting Found";
+		_del_sys_str = "Nothing Found";
 	}
 	return _maxStreams;
 }
@@ -352,4 +352,3 @@ void Streams::addToXML(std::string &xml) const {
 	}
 	xml += "</streams>";
 }
-

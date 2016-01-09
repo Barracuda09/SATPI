@@ -25,8 +25,6 @@
 #include <poll.h>
 #include <netinet/in.h>
 
-#define HTTP_PORT 8875
-#define RTSP_PORT 554
 #define SSDP_PORT 1900
 
 // Forward declarations
