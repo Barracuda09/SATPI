@@ -16,7 +16,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
+ */
 #include "HttpServer.h"
 #include "InterfaceAttr.h"
 #include "Properties.h"
@@ -29,7 +29,7 @@
 #include "XMLSupport.h"
 
 #ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
+	#  include "DvbapiClient.h"
 #endif
 
 #include <stdio.h>
@@ -40,13 +40,13 @@
 #include <fstream>
 
 HttpServer::HttpServer(Streams &streams,
-                       const InterfaceAttr &interface,
-                       Properties &properties,
-                       DvbapiClient *dvbapi) :
-		ThreadBase("HttpServer"),
-		HttpcServer(20, "HTTP", HTTP_PORT, true, streams, interface),
-		_properties(properties),
-		_dvbapi(dvbapi) {
+		const InterfaceAttr &interface,
+		Properties &properties,
+		DvbapiClient *dvbapi) :
+	ThreadBase("HttpServer"),
+	HttpcServer(20, "HTTP", HTTP_PORT, true, streams, interface),
+	_properties(properties),
+	_dvbapi(dvbapi) {
 	startThread();
 }
 
@@ -58,7 +58,7 @@ HttpServer::~HttpServer() {
 void HttpServer::threadEntry() {
 	SI_LOG_INFO("Setting up HTTP server");
 
-	for (;;) {
+	for (;; ) {
 		// call poll with a timeout of 500 ms
 		poll(500);
 	}
@@ -91,15 +91,15 @@ bool HttpServer::methodPost(const SocketClient &client) {
 		std::string file;
 		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
 			if (file.compare("/data.xml") == 0) {
-
+				// not used yet
 			} else if (file.compare("/streams.xml") == 0) {
 				_streams.fromXML(content);
 			} else if (file.compare("/config.xml") == 0) {
 				_properties.fromXML(content);
 #ifdef LIBDVBCSA
+			} else if (file.compare("/dvbapi.xml") == 0) {
 				_dvbapi->fromXML(content);
 #endif
-			save_config_xml(make_config_xml(content));
 			}
 		}
 	}
@@ -118,56 +118,66 @@ bool HttpServer::methodPost(const SocketClient &client) {
 bool HttpServer::methodGet(SocketClient &client) {
 	std::string htmlBody;
 	std::string docType;
-	std::string file;
 	int docTypeSize = 0;
+	bool exitRequest = false;
 
 	// Parse what to get
 	if (StringConverter::isRootFile(client.getMessage())) {
-#define HTML_MOVED "<html>\r\n" \
-                   "<head>\r\n" \
-                   "<title>Page is moved</title>\r\n" \
-                   "</head>\r\n" \
-                   "<body>\r\n" \
-                   "<h1>Moved</h1>\r\n" \
-                   "<p>This page is moved:\r\n" \
-                   "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
-                   "</body>\r\n" \
-                   "</html>"
-		StringConverter::addFormattedString(docType, HTML_MOVED, _interface.getIPAddress().c_str(), HTTP_PORT, "/index.html");
+		const std::string HTML_MOVED = "<html>\r\n"                            \
+		                               "<head>\r\n"                            \
+		                               "<title>Page is moved</title>\r\n"      \
+		                               "</head>\r\n"                           \
+		                               "<body>\r\n"                            \
+		                               "<h1>Moved</h1>\r\n"                    \
+		                               "<p>This page is moved:\r\n"            \
+		                               "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
+		                               "</body>\r\n"                           \
+		                               "</html>";
+		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _interface.getIPAddress().c_str(), HTTP_PORT, "/index.html");
 		docTypeSize = docType.size();
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
 	} else {
-		if (StringConverter::hasTransportParameters(client.getMessage())){
+		std::string file;
+		if (StringConverter::hasTransportParameters(client.getMessage())) {
 			processStreamingRequest(client);
 		} else if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-			std::string path = _properties.getWebPath();
-			path += file;
-			if (file.compare("/data.xml") == 0) {
-				make_data_xml(docType);
+			// remove first '/'
+			file.erase(0, 1);
+
+			const std::string filePath = _properties.getWebPath() + "/" + file;
+			if (file.compare("data.xml") == 0) {
+				makeDataXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("/streams.xml") == 0) {
-				make_streams_xml(docType);
+			} else if (file.compare("streams.xml") == 0) {
+				makeStreamsXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("/config.xml") == 0) {
-				parse_config_xml();
-				make_config_xml(docType);
+			} else if (file.compare(_properties.getFileName()) == 0) {
+				_properties.addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("/log.xml") == 0) {
+#ifdef LIBDVBCSA
+			} else if (file.compare(_dvbapi->getFileName()) == 0) {
+				_dvbapi->addToXML(docType);
+				docTypeSize = docType.size();
+
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
+#endif
+			} else if (file.compare("log.xml") == 0) {
 				docType = make_log_xml();
 				docTypeSize = docType.size();
 
-				getHtmlBodyWithContent(htmlBody,  HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("/STOP") == 0) {
-				// KILL
-				std::exit(0);
-			} else if ((docTypeSize = readFile(path.c_str(), docType))) {
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
+			} else if (file.compare("STOP") == 0) {
+				exitRequest = true;
+
+				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
+			} else if ((docTypeSize = readFile(filePath.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
@@ -181,9 +191,9 @@ bool HttpServer::methodGet(SocketClient &client) {
 							docTypeSize += _properties.getXSatipM3U().size();
 							char *doc_desc_xml = new char[docTypeSize + 1];
 							if (doc_desc_xml != nullptr) {
-								snprintf(doc_desc_xml, docTypeSize+1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-										 _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
-										 _properties.getXSatipM3U().c_str());
+								snprintf(doc_desc_xml, docTypeSize + 1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
+										_properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
+										_properties.getXSatipM3U().c_str());
 								docType = doc_desc_xml;
 								DELETE_ARRAY(doc_desc_xml);
 							}
@@ -200,12 +210,14 @@ bool HttpServer::methodGet(SocketClient &client) {
 				} else if (file.find(".m3u") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_VIDEO, docTypeSize, 0);
 				} else if ((file.find(".png") != std::string::npos) ||
-						   (file.find(".ico") != std::string::npos)) {
+				           (file.find(".ico") != std::string::npos)) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_PNG, docTypeSize, 0);
 				} else {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 				}
-			} else if ((docTypeSize = readFile("web/404.html", docType))) {
+			} else {
+				file = _properties.getWebPath() + "/" + "404.html";
+				docTypeSize = readFile(file.c_str(), docType);
 				getHtmlBodyWithContent(htmlBody, HTML_NOT_FOUND, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 			}
 		}
@@ -225,57 +237,14 @@ bool HttpServer::methodGet(SocketClient &client) {
 		}
 		return true;
 	}
+	// check did we have stop request
+	if (exitRequest) {
+		_properties.setExitApplication();
+	}
 	return false;
 }
 
-std::string HttpServer::make_config_xml(std::string &xml) {
-	// make config xml
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-
-	// application data
-	xml += "<configdata>\r\n";
-
-	_properties.addToXML(xml);
-#ifdef LIBDVBCSA
-	_dvbapi->addToXML(xml);
-#endif
-	xml += "</configdata>\r\n";
-
-	xml += "</data>\r\n";
-	return xml;
-}
-
-// Save Config file
-void HttpServer::save_config_xml(std::string xml)
-{
-	//
-	std::string path = _properties.getWebPath() + "/config.xml";
-	std::ofstream configFile;
-	configFile.open(path);
-	if (configFile.is_open()){
-		configFile << xml;
-	}
-	configFile.close();
-}
-
-void HttpServer::parse_config_xml()
-{
-	std::string path = _properties.getWebPath() + "/config.xml";
-	std::ifstream configFile;
-	configFile.open(path);
-	if (configFile.is_open()){
-		std::string cfig((std::istreambuf_iterator<char>(configFile)), std::istreambuf_iterator<char>());
-		// Parse config file
-		_properties.fromXML(cfig);
-	#ifdef LIBDVBCSA
-		_dvbapi->fromXML(cfig);
-	#endif
-	}
-	configFile.close();
-}
-
-void HttpServer::make_data_xml(std::string &xml) {
+void HttpServer::makeDataXML(std::string &xml) {
 	// make data xml
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
@@ -292,7 +261,7 @@ void HttpServer::make_data_xml(std::string &xml) {
 	xml += "</data>\r\n";
 }
 
-void HttpServer::make_streams_xml(std::string &xml) {
+void HttpServer::makeStreamsXML(std::string &xml) {
 	// make data xml
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";

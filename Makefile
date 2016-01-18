@@ -71,11 +71,14 @@ endif
 OBJ_DIR = obj
 SRC_DIR = src
 
+#SOURCES_UNC is identical to Sourcelist except that it adds SRC_DIR
+SOURCES_UNC = $(SOURCES:%.cpp=$(SRC_DIR)/%.cpp)
+
 # use wildcard expansion when the variable is assigned.
 # (otherwise the variable will just contain the string '*.h' instead of the complete file list)
 HEADERS = $(wildcard $(SRC_DIR)/*.h)
 
-#Objectlist is identical to Sourcelist except that all .c extensions need to be replaced by .o extension.
+#Objectlist is identical to Sourcelist except that all .cpp extensions need to be replaced by .o extension.
 # and add OBJ_DIR to path
 OBJECTS = $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 
@@ -132,15 +135,21 @@ docu:
 
 help:
 	@echo "Help, use these command for building this project:"
-	@echo " - Make debug version             :  make debug"
-	@echo " - Make debug version with DVBAPI :  make debug LIBDVBCSA=yes"
-	@echo " - Make PlantUML graph            :  make plantuml"
-	@echo " - Make Doxygen docmumentation    :  make docu"
+	@echo " - Make debug version              :  make debug"
+	@echo " - Make debug version with DVBAPI  :  make debug LIBDVBCSA=yes"
+	@echo " - Make PlantUML graph             :  make plantuml"
+	@echo " - Make Doxygen docmumentation     :  make docu"
+	@echo " - Make Uncrustify Code Beautifier :  make uncrustify"
 
 # Download PlaneUML from http://plantuml.com/download.html
 # and put it into the root of the project directory
 plantuml:
 	java -jar plantuml.jar -tsvg SatPI.plantuml
+
+uncrustify:
+	uncrustify -c SatPI.uncrustify --replace $(SOURCES_UNC)
+	uncrustify -c SatPI.uncrustify --replace $(HEADERS)
+	@echo uncrustify Done
 
 .PHONY:
 	clean

@@ -138,9 +138,11 @@ static uint32_t calculateCRC32(const unsigned char *data, int len) {
 #define CRC(data, sectionLength) (data[sectionLength - 4 + 8]     << 24) | (data[sectionLength - 4 + 8 + 1] << 16) | \
                                  (data[sectionLength - 4 + 8 + 2] <<  8) |  data[sectionLength - 4 + 8 + 3]
 
-DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties,
+DvbapiClient::DvbapiClient(const std::string &xmlFilePath,
+			const Functor1Ret<StreamProperties &, int> &getStreamProperties,
 			const Functor1Ret<bool, int> &updateFrontend) :
 		ThreadBase("DvbapiClient"),
+		XMLSupport(xmlFilePath),
 		_connected(false),
 		_enabled(false),
 		_rewritePMT(false),
@@ -149,6 +151,7 @@ DvbapiClient::DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStream
 		_serverName("Not connected"),
 		_getStreamProperties(getStreamProperties),
 		_updateFrontend(updateFrontend) {
+	restoreXML();
 	startThread();
 }
 
@@ -731,26 +734,33 @@ void DvbapiClient::fromXML(const std::string &xml) {
 	MutexLock lock(_mutex);
 
 	std::string element;
-	if (findXMLElement(xml, "data.configdata.OSCamIP.value", element)) {
+	if (findXMLElement(xml, "OSCamIP.value", element)) {
 		_serverIpAddr = element;
 	}
-	if (findXMLElement(xml, "data.configdata.OSCamPORT.value", element)) {
+	if (findXMLElement(xml, "OSCamPORT.value", element)) {
 		_serverPort = atoi(element.c_str());
 	}
-	if (findXMLElement(xml, "data.configdata.OSCamEnabled.value", element)) {
+	if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 		_enabled = (element == "true") ? true : false;
 	}
-	if (findXMLElement(xml, "data.configdata.RewritePMT.value", element)) {
+	if (findXMLElement(xml, "RewritePMT.value", element)) {
 		_rewritePMT = (element == "true") ? true : false;
 	}
+	saveXML(xml);
 }
 
 void DvbapiClient::addToXML(std::string &xml) const {
 	MutexLock lock(_mutex);
+
+	// make data xml
+	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+	xml += "<data>\r\n";
 
 	ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 	ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
 	ADD_CONFIG_IP_INPUT(xml, "OSCamIP", _serverIpAddr.c_str());
 	ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
 	ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
+
+	xml += "</data>\r\n";
 }

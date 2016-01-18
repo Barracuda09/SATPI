@@ -40,7 +40,8 @@ class DvbapiClient : public ThreadBase,
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClient(const Functor1Ret<StreamProperties &, int> &getStreamProperties,
+		DvbapiClient(const std::string &xmlFilePath,
+			const Functor1Ret<StreamProperties &, int> &getStreamProperties,
 			const Functor1Ret<bool, int> &updateFrontend);
 		virtual ~DvbapiClient();
 

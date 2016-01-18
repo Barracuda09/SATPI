@@ -17,7 +17,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 
-*/
+ */
 #include "RtspServer.h"
 #include "HttpServer.h"
 #include "SsdpServer.h"
@@ -46,7 +46,7 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-int exitApp;
+bool exitApp;
 static int retval;
 static int otherSig;
 
@@ -55,28 +55,28 @@ static int otherSig;
  */
 static void child_handler(int signum) {
 	switch(signum) {
-		case SIGCHLD:
-			// fall-through
-		case SIGINT:
-			// fall-through
-		case SIGALRM:
-			retval = EXIT_FAILURE;
-			exitApp = 1;
-			break;
-		case SIGKILL:
-			SI_LOG_INFO("stopping (KILL)" );
-			// fall-through
-		case SIGUSR1:
-			// fall-through
-		case SIGHUP:
-			// fall-through
-		case SIGTERM:
-			retval = EXIT_SUCCESS;
-			exitApp = 1;
-			break;
-		default:
-			otherSig = 1;
-			break;
+	case SIGCHLD:
+	// fall-through
+	case SIGINT:
+	// fall-through
+	case SIGALRM:
+		retval = EXIT_FAILURE;
+		exitApp = true;
+		break;
+	case SIGKILL:
+		SI_LOG_INFO("stopping (KILL)" );
+	// fall-through
+	case SIGUSR1:
+	// fall-through
+	case SIGHUP:
+	// fall-through
+	case SIGTERM:
+		retval = EXIT_SUCCESS;
+		exitApp = true;
+		break;
+	default:
+		otherSig = 1;
+		break;
 	}
 }
 
@@ -92,7 +92,6 @@ static void daemonize(const char *lockfile, const char *user) {
 	if ( getppid() == 1 ) {
 		return;
 	}
-
 
 	// create the lock file as the current user
 	// give group 'rw' permission and other users 'r' permissions
@@ -192,13 +191,13 @@ static void daemonize(const char *lockfile, const char *user) {
  */
 static void printUsage(const char *prog_name) {
 	printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
-           "\t--help         show this help and exit\r\n" \
-           "\t--version      show the version number\r\n" \
-           "\t--user xx      run as user\r\n" \
-           "\t--http-path    set http path\r\n" \
-           "\t--no-daemon    do NOT daemonize\r\n" \
-           "\t--no-ssdp      do NOT advertise server\r\n", prog_name);
-
+	       "\t--help           show this help and exit\r\n" \
+	       "\t--version        show the version number\r\n" \
+	       "\t--user xx        run as user\r\n" \
+	       "\t--app-data-path  set path for application state data, like xml etc\r\n" \
+	       "\t--http-path      set root path of web/http pages\r\n" \
+	       "\t--no-daemon      do NOT daemonize\r\n" \
+	       "\t--no-ssdp        do NOT advertise server\r\n", prog_name);
 }
 
 /*
@@ -210,13 +209,17 @@ int main(int argc, char *argv[]) {
 	int i;
 	char *user = nullptr;
 	extern const char *satpi_version;
-	exitApp = 0;
+	exitApp = false;
 
-	std::string path;
+	std::string currentPath;
+	std::string appdataPath;
+	std::string webPath;
 	std::string file;
-	StringConverter::splitPath(argv[0], path, file);
+	StringConverter::splitPath(argv[0], currentPath, file);
+	appdataPath = currentPath;
+	webPath = currentPath + "/" + "web";
 
-	// Check options std::string startPath,
+	// Check options
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-ssdp") == 0) {
 			ssdp = false;
@@ -226,7 +229,10 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
 			daemon = false;
 		} else if (strcmp(argv[i], "--http-path") == 0) {
-			path = argv[i+1];
+			webPath = argv[i+1];
+			++i;
+		} else if (strcmp(argv[i], "--app-data-path") == 0) {
+			appdataPath = argv[i+1];
 			++i;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			printf("SatPI version: %s\r\n", satpi_version);
@@ -248,7 +254,7 @@ int main(int argc, char *argv[]) {
 
 	// Daemonize
 	if (daemon) {
-		daemonize("/tmp/" LOCK_FILE, user);
+		daemonize("/var/lock/" LOCK_FILE, user);
 	}
 
 	// notify we are alive
@@ -256,32 +262,33 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Number of processors online: %d", ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 
-	InterfaceAttr interface;
-	Streams streams;
+	{
+		InterfaceAttr interface;
+		Streams streams;
 #ifdef LIBDVBCSA
-	Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((Functor1Ret<StreamProperties &, int>*)0, streams, &Streams::getStreamProperties);
-	Functor1Ret<bool, int> updateFrontend = makeFunctor((Functor1Ret<bool, int>*)0, streams, &Streams::updateFrontend);
-	DvbapiClient dvbapi(getStreamProperties, updateFrontend);
-	streams.enumerateFrontends("/dev/dvb", &dvbapi);
-	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
+		Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((Functor1Ret<StreamProperties &, int>*) 0, streams, &Streams::getStreamProperties);
+		Functor1Ret<bool, int> updateFrontend = makeFunctor((Functor1Ret<bool, int>*) 0, streams, &Streams::updateFrontend);
+		DvbapiClient dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamProperties, updateFrontend);
+		streams.enumerateFrontends("/dev/dvb", &dvbapi);
+		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(), streams.getXMLDeliveryString(), appdataPath, webPath);
 
-	HttpServer httpserver(streams, interface, properties, &dvbapi);
+		HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
-	streams.enumerateFrontends("/dev/dvb", nullptr);
-	Properties properties(interface.getUUID(), streams.getXMLDeliveryString(), path);
-	HttpServer httpserver(streams, interface, properties, nullptr);
+		streams.enumerateFrontends("/dev/dvb", nullptr);
+		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(), streams.getXMLDeliveryString(), appdataPath, webPath);
+		HttpServer httpserver(streams, interface, properties, nullptr);
 #endif
+		RtspServer server(streams, interface);
 
-	RtspServer server(streams, interface);
+		SsdpServer ssdpserver(interface, properties);
+		if (ssdp) {
+			ssdpserver.startThread();
+		}
 
-	SsdpServer ssdpserver(interface, properties);
-	if (ssdp) {
-		ssdpserver.startThread();
-	}
-
-	// Loop
-	while (!exitApp) {
-		usleep(12000);
+		// Loop
+		while (!exitApp && !properties.exitApplication()) {
+			usleep(12000);
+		}
 	}
 	SI_LOG_INFO("--- stopped ---");
 
@@ -292,5 +299,3 @@ int main(int argc, char *argv[]) {
 
 	return EXIT_SUCCESS;
 }
-
-

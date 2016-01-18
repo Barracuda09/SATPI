@@ -2,6 +2,7 @@
 /obj
 /html
 /latex
+/*.xml
 *.*~
 *~
 satpi

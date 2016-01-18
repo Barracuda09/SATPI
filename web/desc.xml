@@ -19,6 +19,7 @@
 		<!-- filled in by server -->
 		<UDN>uuid:%s</UDN>
 		<!-- filled in by server -->
+		<UPC>123456789012</UPC>
 		<iconList>
 			<icon>
 				<mimetype>image/png</mimetype>

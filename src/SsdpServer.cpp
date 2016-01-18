@@ -42,7 +42,7 @@ SsdpServer::~SsdpServer() {
 }
 
 void SsdpServer::threadEntry() {
-	std::string fileBootID = _properties.getStartPath() + "/bootID";
+	std::string fileBootID = _properties.getAppDataPath() + "/" + "bootID";
 	_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
 
 	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", _properties.getBootID());

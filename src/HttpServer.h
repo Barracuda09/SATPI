@@ -31,20 +31,22 @@ class DvbapiClient;
 
 /// HTTP Server
 class HttpServer :
-		public ThreadBase,
-		public HttpcServer {
+	public ThreadBase,
+	public HttpcServer {
 	public:
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
 		HttpServer(Streams &streams,
-		           const InterfaceAttr &interface,
-		           Properties &properties,
-		           DvbapiClient *dvbapi);
+			const InterfaceAttr &interface,
+			Properties &properties,
+			DvbapiClient *dvbapi);
 
 		virtual ~HttpServer();
 
 	protected:
+
 		/// Thread function
 		virtual void threadEntry();
 
@@ -58,26 +60,19 @@ class HttpServer :
 		int readFile(const char *file, std::string &data);
 
 		///
-		void make_data_xml(std::string &xml);
+		void makeDataXML(std::string &xml);
 
 		///
-		std::string  make_config_xml(std::string &xml);
-
-		///
-		void make_streams_xml(std::string &xml);
-
-		///
-		void save_config_xml(std::string xml);
-
-		///
-		void parse_config_xml();
+		void makeStreamsXML(std::string &xml);
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
+
 	private:
-		Properties          &_properties;
-		DvbapiClient        *_dvbapi;
+
+		Properties &_properties;
+		DvbapiClient *_dvbapi;
 
 }; // class HttpServer
 

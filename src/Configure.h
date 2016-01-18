@@ -23,21 +23,21 @@
 #include "StringConverter.h"
 
 #define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE);
+  StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE)
 
 #define ADD_CONFIG_NUMBER(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME ">%d</" VARNAME ">", VALUE);
+  StringConverter::addFormattedString(XML, "<" VARNAME ">%d</" VARNAME ">", VALUE)
 
 #define ADD_CONFIG_CHECKBOX(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>checkbox</inputtype><value>%s</value></" VARNAME ">", VALUE);
+  StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>checkbox</inputtype><value>%s</value></" VARNAME ">", VALUE)
 
 #define ADD_CONFIG_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></" VARNAME ">", VALUE, MIN, MAX);
+  StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></" VARNAME ">", VALUE, MIN, MAX)
 
 #define ADD_CONFIG_TEXT_INPUT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>text</inputtype><value>%s</value></" VARNAME ">", VALUE);
+  StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>text</inputtype><value>%s</value></" VARNAME ">", VALUE)
 
 #define ADD_CONFIG_IP_INPUT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>ip</inputtype><value>%s</value></" VARNAME ">", VALUE);
+  StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>ip</inputtype><value>%s</value></" VARNAME ">", VALUE)
 
 #endif // CONFIGURE_H_INCLUDE

@@ -25,10 +25,11 @@
 /// The class @c XMLSupport has some basic functions to handle XML strings
 class XMLSupport {
 	public:
+
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		XMLSupport();
+		XMLSupport(const std::string &filePath = "");
 		virtual ~XMLSupport();
 
 		/// Add data to an XML for storing or web interface
@@ -37,18 +38,30 @@ class XMLSupport {
 		/// Get data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml) = 0;
 
+		/// Get the file name for this XML
+		std::string getFileName() const;
+
 	protected:
+
 		///
 		bool findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element);
 
 		///
 		std::string makeXMLString(const std::string &msg);
 
+		/// Save XML file
+		void saveXML(const std::string &xml) const;
+
+		/// Restores/Loads XML file
+		bool restoreXML();
+
 	private:
 
-		/// Very basic/simple XML parser
+		/// Very basic/simple recursive XML parser
 		bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
 			std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
+
+		std::string _filePath;
 
 }; // class XMLSupport
 

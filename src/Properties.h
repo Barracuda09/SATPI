@@ -31,7 +31,12 @@ class Properties : public XMLSupport  {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		Properties(const std::string &uuid, const std::string &delsysString, const std::string &startPath);
+		Properties(
+			const std::string &xmlFilePath,
+			const std::string &uuid,
+			const std::string &delsysString,
+			const std::string &appdataPath,
+			const std::string &webPath);
 
 		virtual ~Properties();
 
@@ -51,7 +56,7 @@ class Properties : public XMLSupport  {
 		std::string getDeliverySystemString() const;
 
 		///
-		std::string getStartPath() const;
+		std::string getAppDataPath() const;
 
 		///
 		std::string getWebPath() const;
@@ -83,6 +88,12 @@ class Properties : public XMLSupport  {
 		/// Get application start time
 		time_t getApplicationStartTime() const;
 
+		/// Check do we need to exit the application
+		bool exitApplication() const;
+
+		/// Sets the exit application flag
+		void setExitApplication();
+
 	protected:
 
 	private:
@@ -93,13 +104,15 @@ class Properties : public XMLSupport  {
 		std::string   _delsysString;
 		std::string   _uuid;
 		std::string   _versionString;
-		std::string   _startPath;
+		std::string   _appdataPath;
+		std::string   _webPath;
 		std::string   _xSatipM3U;
 		std::string   _xmlDeviceDescriptionFile;
 		unsigned int  _bootID;
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;
 		time_t        _appStartTime;         // the application start time (EPOCH)
+		bool          _exitApplication;
 }; // class Properties
 
 #endif // PROPERTIES_H_INCLUDE

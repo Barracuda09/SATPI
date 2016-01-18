@@ -18,11 +18,15 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #include "XMLSupport.h"
+#include "StringConverter.h"
 #include "Log.h"
 
 #include <stdio.h>
 
-XMLSupport::XMLSupport() {}
+#include <iostream>
+#include <fstream>
+
+XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {}
 
 XMLSupport::~XMLSupport() {}
 
@@ -119,7 +123,7 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 						return false;
 					}
 				}
-			break;
+				break;
 			case TAG_END:
 				if (*it == '>') {
 					++itBegin;
@@ -168,3 +172,38 @@ std::string XMLSupport::makeXMLString(const std::string &msg) {
 	}
 	return xml;
 }
+
+std::string XMLSupport::getFileName() const {
+	std::string file("");
+	if (!_filePath.empty()) {
+		std::string path;
+		StringConverter::splitPath(_filePath, path, file);
+	}
+	return file;
+}
+
+void XMLSupport::saveXML(const std::string &xml) const {
+	if (!_filePath.empty()) {
+		std::ofstream file;
+		file.open(_filePath);
+		if (file.is_open()) {
+			file << xml;
+			file.close();
+		}
+	}
+}
+
+bool XMLSupport::restoreXML() {
+	if (!_filePath.empty()) {
+		std::ifstream file;
+		file.open(_filePath);
+		if (file.is_open()) {
+			std::string xml((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			file.close();
+			fromXML(xml);
+			return true;
+		}
+	}
+	return false;
+}
+

@@ -15,9 +15,10 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/addtableentry.js"></script>
 <script>
-	var filename = "config.xml";
+	var filename;
 	var autoload = 1;
 	var xmlLoaded;
+	var content;
 
 	function addTableLineEntry(labelstring, xmlDoc, tagName) {
 		var page = "";
@@ -33,22 +34,19 @@
 	function buildcontent(xmlDoc) {
 		var length = 1;
 		var page = "<table class=\"table table-bordered table-striped\">";
-
-		page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\">General</th></tr>";
-		page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
-		page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
-		page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");
-
-		// check if OSCam part is there
-		if (xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {
-			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\">OSCam</th></tr>";
+		if (content == "general") {
+			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
+			page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
+			page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
+			page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");
+		} else if (content == "oscam" && xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {
+			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
 			page += addTableLineEntry("OSCam server Enabled", xmlDoc, "OSCamEnabled");
 			page += addTableLineEntry("OSCam server name", xmlDoc, "OSCamServerName");
 			page += addTableLineEntry("OSCam server IP", xmlDoc, "OSCamIP");
 			page += addTableLineEntry("OSCam server PORT", xmlDoc, "OSCamPORT");
 			page += addTableLineEntry("Rewrite PMT", xmlDoc, "RewritePMT");
 		}
-
 		page +=	 "</table><br>";
 		return page;
 	}
@@ -59,10 +57,9 @@
 	function xmlloaded(xml) {
 		if (autoload == 1) {
 			xmlLoaded = xml;
-			document.getElementById("content").innerHTML = buildcontent(xml);
+			document.getElementById(content).innerHTML = buildcontent(xml);
 		}
 	}
-
 </script>
 
 </head>
@@ -72,21 +69,54 @@
 
 <div class="container-fluid">
 	<div class="start">
-		<h3>Main Configure Page</h3>
-		<div class="table-responsive">
-			<div id="content"></div>
-			<script>
-				// make menu
-				document.getElementById("menu").innerHTML = buildmenu();
-				document.getElementById("footer").innerHTML = buildfooter();
-				setMenuItemActive("config");
+		<h3>Configure Page</h3>
 
-				// Call the ajax refresh each refresh_time seconds
-				var refresh_time = 3000;
-				updatePage();
-				setInterval("updatePage()", refresh_time);
-			</script>
+		<ul class="nav nav-tabs">
+			<li class="active"><a data-toggle="tab" href="#generalTab">General</a></li>
+			<li>               <a data-toggle="tab" href="#oscamTab">OSCam</a></li>
+		</ul>
+		<div class="tab-content">
+			<div id="generalTab" class="tab-pane fade in active">
+				<div class="table-responsive"><div id="general"></div></div>
+			</div>
+			<div id="oscamTab" class="tab-pane fade">
+				<div class="table-responsive"><div id="oscam"></div></div>
+			</div>
 		</div>
+
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			document.getElementById("footer").innerHTML = buildfooter();
+			setMenuItemActive("config");
+
+			filename = "config.xml";
+			content = "general";
+
+			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 3000;
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+
+			// Catch events from Tab
+			$(document).ready(function() {
+				$(".nav-tabs a").click(function() {
+					$(this).tab('show');
+				});
+				$('.nav-tabs a').on('shown.bs.tab', function(event) {
+					var menuName = $(event.target).attr("href");
+					if (menuName == "#generalTab") {
+						filename = "config.xml";
+						content = "general";
+					} else if (menuName == "#oscamTab") {
+						filename = "dvbapi.xml";
+						content = "oscam";
+					}
+					updatePage();
+				});
+			});
+
+		</script>
 	</div>
 </div>
 

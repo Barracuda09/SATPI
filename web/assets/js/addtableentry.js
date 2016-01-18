@@ -4,7 +4,7 @@ function validateIPaddress(value) {
 	if (value.match(ipformat)) {
 		return true;
 	} else {
-		alert("You have entered an invalid IP address!");
+		alert("You have entered an invalid IP address! (" + value + ")");
 		return false;
 	}
 }
@@ -33,7 +33,7 @@ function changeXMLAndPost(id, tagName, value) {
 	}
 	var input = sub.getElementsByTagName(tagName)[0];
 	input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
-	var xmlString = (new XMLSerializer()).serializeToString(xmlLoaded);
+	var xmlString = (new XMLSerializer()).serializeToString(sub);
 	postData(filename, xmlString);
 }
 
