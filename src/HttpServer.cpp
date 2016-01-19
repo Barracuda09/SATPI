@@ -36,8 +36,6 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <fcntl.h>
-#include <iostream>
-#include <fstream>
 
 HttpServer::HttpServer(Streams &streams,
 		const InterfaceAttr &interface,
