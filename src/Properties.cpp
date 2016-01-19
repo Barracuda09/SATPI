@@ -22,6 +22,9 @@
 #include "Utils.h"
 #include "Configure.h"
 
+#include <iostream>
+#include <fstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +35,7 @@
 extern const char *satpi_version;
 
 Properties::Properties(const std::string &xmlFilePath, const std::string &uuid, const std::string &delsysString,
-	const std::string &appdataPath, const std::string &webPath) :
+	const std::string &appdataPath, const std::string &webPath, unsigned int httpPort, unsigned int rtspPort) :
 		XMLSupport(xmlFilePath),
 		_delsysString(delsysString),
 		_uuid(uuid),
@@ -44,6 +47,8 @@ Properties::Properties(const std::string &xmlFilePath, const std::string &uuid, 
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),
+		_httpPort(httpPort),
+		_rtspPort(rtspPort),
 		_appStartTime(time(nullptr)),
 		_exitApplication(false) {
 	restoreXML();
@@ -64,6 +69,14 @@ void Properties::fromXML(const std::string &xml) {
 	if (findXMLElement(xml, "data.configdata.xmldesc.value", element)) {
 		_xmlDeviceDescriptionFile = element;
 	}
+	if (findXMLElement(xml, "data.configdata.httpport.value", element)) {
+		_httpPort = atoi(element.c_str());
+//		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
+	}
+	if (findXMLElement(xml, "data.configdata.rtspport.value", element)) {
+		_rtspPort = atoi(element.c_str());
+//		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
+	}
 	saveXML(xml);
 }
 
@@ -75,6 +88,8 @@ void Properties::addToXML(std::string &xml) const {
 	xml += "<data>\r\n";
 	xml += "<configdata>\r\n";
 
+	ADD_CONFIG_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
+	ADD_CONFIG_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
 	ADD_CONFIG_NUMBER_INPUT(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
 	ADD_CONFIG_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U.c_str());
 	ADD_CONFIG_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile.c_str());
@@ -136,6 +151,26 @@ void Properties::setDeviceID(unsigned int deviceID) {
 unsigned int Properties::getDeviceID() const {
 	MutexLock lock(_mutex);
 	return _deviceID;
+}
+
+void Properties::setHttpPort(unsigned int httpPort) {
+	MutexLock lock(_mutex);
+	_httpPort = httpPort;
+}
+
+unsigned int Properties::getHttpPort() const {
+	MutexLock lock(_mutex);
+	return _httpPort;
+}
+
+void Properties::setRtspPort(unsigned int rtspPort) {
+	MutexLock lock(_mutex);
+	_rtspPort = rtspPort;
+}
+
+unsigned int Properties::getRtspPort() const {
+	MutexLock lock(_mutex);
+	return _rtspPort;
 }
 
 void Properties::setSsdpAnnounceTimeSec(unsigned int sec) {

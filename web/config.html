@@ -36,6 +36,8 @@
 		var page = "<table class=\"table table-bordered table-striped\">";
 		if (content == "general") {
 			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
+			page += addTableLineEntry("HTTP Port", xmlDoc, "httpport");
+			page += addTableLineEntry("RTSP Port", xmlDoc, "rtspport");
 			page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
 			page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
 			page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");

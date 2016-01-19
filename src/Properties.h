@@ -36,7 +36,9 @@ class Properties : public XMLSupport  {
 			const std::string &uuid,
 			const std::string &delsysString,
 			const std::string &appdataPath,
-			const std::string &webPath);
+			const std::string &webPath,
+			unsigned int httpPort,
+			unsigned int rtspPort);
 
 		virtual ~Properties();
 
@@ -79,6 +81,18 @@ class Properties : public XMLSupport  {
 		/// Get DeviceID
 		unsigned int getDeviceID() const;
 
+		/// Set HttpPort
+		void setHttpPort(unsigned int bootID);
+
+		/// Get HttpPort
+		unsigned int getHttpPort() const;
+
+		/// Set RtspPort
+		void setRtspPort(unsigned int bootID);
+
+		/// Get RtspPort
+		unsigned int getRtspPort() const;
+
 		/// Set SSDP Announce Time
 		void setSsdpAnnounceTimeSec(unsigned int sec);
 
@@ -111,6 +125,8 @@ class Properties : public XMLSupport  {
 		unsigned int  _bootID;
 		unsigned int  _deviceID;
 		unsigned int  _ssdpAnnounceTimeSec;
+		unsigned int  _httpPort;
+		unsigned int  _rtspPort;
 		time_t        _appStartTime;         // the application start time (EPOCH)
 		bool          _exitApplication;
 }; // class Properties

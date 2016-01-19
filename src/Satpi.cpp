@@ -196,6 +196,8 @@ static void printUsage(const char *prog_name) {
 	       "\t--user xx        run as user\r\n" \
 	       "\t--app-data-path  set path for application state data, like xml etc\r\n" \
 	       "\t--http-path      set root path of web/http pages\r\n" \
+	       "\t--http-port      set http port default 8875 (1024 - 65535)\r\n" \
+	       "\t--rtsp-port      set rtsp port default 554  ( 554 - 65535)\r\n" \
 	       "\t--no-daemon      do NOT daemonize\r\n" \
 	       "\t--no-ssdp        do NOT advertise server\r\n", prog_name);
 }
@@ -211,6 +213,8 @@ int main(int argc, char *argv[]) {
 	extern const char *satpi_version;
 	exitApp = false;
 
+	unsigned int httpPort = 8875;
+	unsigned int rtspPort = 554;
 	std::string currentPath;
 	std::string appdataPath;
 	std::string webPath;
@@ -234,6 +238,20 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
 			appdataPath = argv[i+1];
 			++i;
+		} else if (strcmp(argv[i], "--http-port") == 0) {
+			httpPort = atoi(argv[i+1]);
+			++i;
+			if (httpPort < 1024 || httpPort > 65535) {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
+		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
+			rtspPort = atoi(argv[i+1]);
+			++i;
+			if (rtspPort <  554 || rtspPort > 65535) {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--version") == 0) {
 			printf("SatPI version: %s\r\n", satpi_version);
 			return EXIT_SUCCESS;
@@ -270,16 +288,16 @@ int main(int argc, char *argv[]) {
 		Functor1Ret<bool, int> updateFrontend = makeFunctor((Functor1Ret<bool, int>*) 0, streams, &Streams::updateFrontend);
 		DvbapiClient dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamProperties, updateFrontend);
 		streams.enumerateFrontends("/dev/dvb", &dvbapi);
-		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(), streams.getXMLDeliveryString(), appdataPath, webPath);
-
+		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
+			streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
 		streams.enumerateFrontends("/dev/dvb", nullptr);
-		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(), streams.getXMLDeliveryString(), appdataPath, webPath);
+		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
+			streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, nullptr);
 #endif
-		RtspServer server(streams, interface);
-
+		RtspServer server(streams, properties, interface);
 		SsdpServer ssdpserver(interface, properties);
 		if (ssdp) {
 			ssdpserver.startThread();

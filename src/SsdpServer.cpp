@@ -50,7 +50,7 @@ void SsdpServer::threadEntry() {
 	// Get file and constuct new location
 	std::string location;
 	std::string xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
-	StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), HTTP_PORT, xmlDeviceDescriptionFile.c_str());
+	StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), _properties.getHttpPort(), xmlDeviceDescriptionFile.c_str());
 
 	init_udp_socket(_udpMultiSend, SSDP_PORT, inet_addr("239.255.255.250"));
 	init_mutlicast_udp_socket(_udpMultiListen, SSDP_PORT, _interface.getIPAddress().c_str());
@@ -180,7 +180,7 @@ void SsdpServer::threadEntry() {
 			// Get new file and constuct new location
 			xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
 			location.clear();
-			StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), HTTP_PORT, xmlDeviceDescriptionFile.c_str());
+			StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(), _properties.getHttpPort(), xmlDeviceDescriptionFile.c_str());
 
 			// we should send bye bye
 			sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());

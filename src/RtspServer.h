@@ -21,6 +21,7 @@
 #define RTSP_SERVER_H_INCLUDE RTSP_SERVER_H_INCLUDE
 
 #include "HttpcServer.h"
+#include "Properties.h"
 #include "ThreadBase.h"
 
 // Forward declarations
@@ -36,7 +37,7 @@ class RtspServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtspServer(Streams &streams, const InterfaceAttr &interface);
+		RtspServer(Streams &streams, const Properties &properties, const InterfaceAttr &interface);
 
 		virtual ~RtspServer();
 

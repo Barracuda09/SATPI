@@ -42,7 +42,7 @@ HttpServer::HttpServer(Streams &streams,
 		Properties &properties,
 		DvbapiClient *dvbapi) :
 	ThreadBase("HttpServer"),
-	HttpcServer(20, "HTTP", HTTP_PORT, true, streams, interface),
+	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streams, interface),
 	_properties(properties),
 	_dvbapi(dvbapi) {
 	startThread();
@@ -131,7 +131,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 		                               "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
 		                               "</body>\r\n"                           \
 		                               "</html>";
-		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _interface.getIPAddress().c_str(), HTTP_PORT, "/index.html");
+		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _interface.getIPAddress().c_str(), _properties.getHttpPort(), "/index.html");
 		docTypeSize = docType.size();
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);

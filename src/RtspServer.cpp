@@ -31,9 +31,9 @@
 
 static const char *RTSP_OPTIONS_SESSION = "Session: %s\r\n";
 
-RtspServer::RtspServer(Streams &streams, const InterfaceAttr &interface) :
+RtspServer::RtspServer(Streams &streams, const Properties &properties, const InterfaceAttr &interface) :
 		ThreadBase("RtspServer"),
-		HttpcServer(5, "RTSP", RTSP_PORT, true, streams, interface) {
+		HttpcServer(5, "RTSP", properties.getRtspPort(), true, streams, interface) {
 	startThread();
 }
 
@@ -185,4 +185,3 @@ bool RtspServer::methodTeardown(Stream &stream, int clientID, std::string &htmlB
 
 	return true;
 }
-
