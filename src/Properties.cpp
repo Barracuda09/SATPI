@@ -47,11 +47,11 @@ Properties::Properties(const std::string &xmlFilePath, const std::string &uuid, 
 		_bootID(1),
 		_deviceID(1),
 		_ssdpAnnounceTimeSec(60),
-		_httpPort(httpPort),
-		_rtspPort(rtspPort),
 		_appStartTime(time(nullptr)),
 		_exitApplication(false) {
 	restoreXML();
+	_httpPort = httpPort;
+	_rtspPort = rtspPort;
 }
 
 Properties::~Properties() {;}
