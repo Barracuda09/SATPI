@@ -1,6 +1,6 @@
 /* HttpServer.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,7 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include "HttpServer.h"
+#include <HttpServer.h>
+
 #include "InterfaceAttr.h"
 #include "Properties.h"
 #include "Streams.h"
@@ -25,11 +26,10 @@
 #include "Log.h"
 #include "SocketClient.h"
 #include "StringConverter.h"
-#include "Configure.h"
-#include "XMLSupport.h"
+#include <base/XMLSupport.h>
 
 #ifdef LIBDVBCSA
-	#  include "DvbapiClient.h"
+	#include <decrypt/dvbapi/Client.h>
 #endif
 
 #include <stdio.h>
@@ -38,13 +38,13 @@
 #include <fcntl.h>
 
 HttpServer::HttpServer(Streams &streams,
-		const InterfaceAttr &interface,
-		Properties &properties,
-		DvbapiClient *dvbapi) :
+                       const InterfaceAttr &interface,
+                       Properties &properties,
+                       decrypt::dvbapi::Client *decrypt) :
 	ThreadBase("HttpServer"),
 	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streams, interface),
 	_properties(properties),
-	_dvbapi(dvbapi) {
+	_decrypt(decrypt) {
 	startThread();
 }
 
@@ -96,7 +96,7 @@ bool HttpServer::methodPost(const SocketClient &client) {
 				_properties.fromXML(content);
 #ifdef LIBDVBCSA
 			} else if (file.compare("/dvbapi.xml") == 0) {
-				_dvbapi->fromXML(content);
+				_decrypt->fromXML(content);
 #endif
 			}
 		}
@@ -160,8 +160,8 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 #ifdef LIBDVBCSA
-			} else if (file.compare(_dvbapi->getFileName()) == 0) {
-				_dvbapi->addToXML(docType);
+			} else if (file.compare(_decrypt->getFileName()) == 0) {
+				_decrypt->addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
@@ -190,8 +190,8 @@ bool HttpServer::methodGet(SocketClient &client) {
 							char *doc_desc_xml = new char[docTypeSize + 1];
 							if (doc_desc_xml != nullptr) {
 								snprintf(doc_desc_xml, docTypeSize + 1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-										_properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
-										_properties.getXSatipM3U().c_str());
+								         _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
+								         _properties.getXSatipM3U().c_str());
 								docType = doc_desc_xml;
 								DELETE_ARRAY(doc_desc_xml);
 							}

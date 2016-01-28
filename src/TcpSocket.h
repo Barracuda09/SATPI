@@ -1,6 +1,6 @@
 /* TcpSocket.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,14 +20,14 @@
 #ifndef TCP_SOCKET_H_INCLUDE
 #define TCP_SOCKET_H_INCLUDE TCP_SOCKET_H_INCLUDE
 
-#include "HttpcSocket.h"
-#include "SocketAttr.h"
+#include <FwDecl.h>
+#include <HttpcSocket.h>
+#include <SocketAttr.h>
 
 #include <poll.h>
 #include <netinet/in.h>
 
-// Forward declarations
-class SocketClient;
+FW_DECL_NS0(SocketClient);
 
 /// TCP Socket
 class TcpSocket :

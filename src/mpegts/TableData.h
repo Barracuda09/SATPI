@@ -1,6 +1,6 @@
-/* TSTableData.h
+/* TableData.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,10 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef TS_TABLE_DATA_H_INCLUDE
-#define TS_TABLE_DATA_H_INCLUDE
+#ifndef MPEGTS_TABLE_DATA_H_INCLUDE
+#define MPEGTS_TABLE_DATA_H_INCLUDE MPEGTS_TABLE_DATA_H_INCLUDE
 
-class TSTableData {
+namespace mpegts {
+
+class TableData {
 #define PAT_TABLE_ID           0x00
 #define PMT_TABLE_ID           0x02
 
@@ -28,8 +30,8 @@ class TSTableData {
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		TSTableData() : _cc(-1), _pid(-1), _collected(false) {}
-		virtual ~TSTableData() {}
+		TableData() : _cc(-1), _pid(-1), _collected(false) {}
+		virtual ~TableData() {}
 
 		/// Add Table data that was collected
 		bool addData(int tableID, const unsigned char *data, int length, int pid, int cc) {
@@ -77,6 +79,8 @@ class TSTableData {
 		int _cc;
 		int _pid;
 		bool _collected;
-}; // class TSTableData
+};
 
-#endif // TS_TABLE_DATA_H_INCLUDE
+} // namespace mpegts
+
+#endif // MPEGTS_TABLE_DATA_H_INCLUDE

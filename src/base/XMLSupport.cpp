@@ -1,6 +1,6 @@
 /* XMLSupport.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
+ */
 #include "XMLSupport.h"
 #include "StringConverter.h"
 #include "Log.h"
@@ -26,9 +26,13 @@
 #include <iostream>
 #include <fstream>
 
-XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {}
+namespace base {
 
-XMLSupport::~XMLSupport() {}
+XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {
+}
+
+XMLSupport::~XMLSupport() {
+}
 
 bool XMLSupport::findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element) {
 	std::string tag;
@@ -41,7 +45,7 @@ bool XMLSupport::findXMLElement(const std::string &xml, const std::string &eleme
 }
 
 bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
-		std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement) {
+                          std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement) {
 	enum StateXML {
 		SEARCH_START_TAG,
 		COMMENT,
@@ -56,98 +60,98 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 	std::string tag;
 	for (; it != xml.end(); ++it) {
 		switch (state) {
-			case SEARCH_START_TAG:
-				// Check begin of 'tag'?
-				if (*it == '<') {
-					++it;
-					if (it != xml.end()) {
-						itBegin = it;
-						switch (*it) {
-							case '!':
-								state = COMMENT;
-								break;
-							case '?':
-								state = XML_DECL;
-								break;
-							case '/':
-								itEndElement = it - 1;
-								state = TAG_END;
-								break;
-							case '&':
-								state = ESCAPE;
-								break;
-							default:
-								state = TAG_START;
-								break;
-						}
-					} else {
-						return false;
+		case SEARCH_START_TAG:
+			// Check begin of 'tag'?
+			if (*it == '<') {
+				++it;
+				if (it != xml.end()) {
+					itBegin = it;
+					switch (*it) {
+					case '!':
+						state = COMMENT;
+						break;
+					case '?':
+						state = XML_DECL;
+						break;
+					case '/':
+						itEndElement = it - 1;
+						state = TAG_END;
+						break;
+					case '&':
+						state = ESCAPE;
+						break;
+					default:
+						state = TAG_START;
+						break;
 					}
 				} else {
+					return false;
+				}
+			} else {
+				itBegin = it;
+				state = ELEMENT;
+			}
+			break;
+		case XML_DECL:
+			if (*it == '?') {
+				++it;
+				if (it != xml.end() && *it == '>') {
+					state = SEARCH_START_TAG;
+				} else {
+					return false;
+				}
+			}
+			break;
+		case TAG_START:
+			if (*it == '>') {
+				tag = xml.substr(itBegin - xml.begin(), it - itBegin);
+				const std::string::size_type end = elementToFind.find_first_of('.', 0);
+				const std::string findTag = elementToFind.substr(0, end);
+				const bool tagMatch = findTag == tag;
+				const std::string nextElementToFind = (tagMatch) ? ((end != std::string::npos) ? elementToFind.substr(end + 1) : "") : elementToFind;
+				++it;
+				if (it != xml.end()) {
 					itBegin = it;
-					state = ELEMENT;
-				}
-				break;
-			case XML_DECL:
-				if (*it == '?') {
-					++it;
-					if (it != xml.end() && *it == '>') {
-						state = SEARCH_START_TAG;
-					} else {
+					if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
 						return false;
 					}
-				}
-				break;
-			case TAG_START:
-				if (*it == '>') {
-					tag = xml.substr(itBegin - xml.begin(), it - itBegin);
-					const std::string::size_type end = elementToFind.find_first_of('.', 0);
-					const std::string findTag = elementToFind.substr(0, end);
-					const bool tagMatch = findTag == tag;
-					const std::string nextElementToFind = (tagMatch) ? ((end != std::string::npos) ? elementToFind.substr(end + 1) : "") : elementToFind;
-					++it;
-					if (it != xml.end()) {
-						itBegin = it;
-						if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
-							return false;
-						}
-						if (tag != tagEnd) {
-							return false;
-						}
-						if (tagMatch && end == std::string::npos) {
-							element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
-							found = true;
-						}
-						state = SEARCH_START_TAG;
-					} else {
+					if (tag != tagEnd) {
 						return false;
 					}
-				}
-				break;
-			case TAG_END:
-				if (*it == '>') {
-					++itBegin;
-					tagEnd = xml.substr(itBegin - xml.begin(), it - itBegin);
-					return true;
-				}
-				break;
-			case COMMENT:
-				if (*it == '>') {
+					if (tagMatch && end == std::string::npos) {
+						element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
+						found = true;
+					}
 					state = SEARCH_START_TAG;
+				} else {
+					return false;
 				}
-				break;
-			case ESCAPE:
-				if (*it == ';') {
-					state = SEARCH_START_TAG;
-				}
-				break;
-			case ELEMENT:
-				if (*it == '<') {
-					itEndElement = it - 1;
-					state = SEARCH_START_TAG;
-					--it;
-				}
-				break;
+			}
+			break;
+		case TAG_END:
+			if (*it == '>') {
+				++itBegin;
+				tagEnd = xml.substr(itBegin - xml.begin(), it - itBegin);
+				return true;
+			}
+			break;
+		case COMMENT:
+			if (*it == '>') {
+				state = SEARCH_START_TAG;
+			}
+			break;
+		case ESCAPE:
+			if (*it == ';') {
+				state = SEARCH_START_TAG;
+			}
+			break;
+		case ELEMENT:
+			if (*it == '<') {
+				itEndElement = it - 1;
+				state = SEARCH_START_TAG;
+				--it;
+			}
+			break;
 		}
 	}
 	return true;
@@ -206,4 +210,4 @@ bool XMLSupport::restoreXML() {
 	}
 	return false;
 }
-
+} // namespace base

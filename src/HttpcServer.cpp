@@ -1,6 +1,6 @@
 /* HttpcServer.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -25,12 +25,6 @@
 #include "Log.h"
 #include "SocketClient.h"
 #include "StringConverter.h"
-#include "Configure.h"
-#include "XMLSupport.h"
-
-#ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

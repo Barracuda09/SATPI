@@ -1,6 +1,6 @@
-/* TSPacketBuffer.h
+/* PacketBuffer.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,13 +17,15 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef TS_PACKET_BUFFER_H_INCLUDE
-#define TS_PACKET_BUFFER_H_INCLUDE TS_PACKET_BUFFER_H_INCLUDE
+#ifndef MPEGTS_PACKET_BUFFER_H_INCLUDE
+#define MPEGTS_PACKET_BUFFER_H_INCLUDE MPEGTS_PACKET_BUFFER_H_INCLUDE
 
 #include <stdio.h>
 #include <stdint.h>
 
 #include <cstddef>
+
+namespace mpegts {
 
 #define MTU                     1500
 #define RTP_HEADER_LEN            12
@@ -31,13 +33,13 @@
 #define NUMBER_OF_TS_PACKETS       7
 #define MTU_MAX_TS_PACKET_SIZE  TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS
 
-class TSPacketBuffer {
+class PacketBuffer {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		TSPacketBuffer();
-		virtual ~TSPacketBuffer();
+		PacketBuffer();
+		virtual ~PacketBuffer();
 
 		// =======================================================================
 		// Other functions
@@ -131,6 +133,8 @@ class TSPacketBuffer {
 		bool          _initialized;
 		bool          _decryptPending;
 
-}; // class TSPacketBuffer
+};
 
-#endif // TS_PACKET_BUFFER_H_INCLUDE
+} // namespace mpegts
+
+#endif // MPEGTS_PACKET_BUFFER_H_INCLUDE

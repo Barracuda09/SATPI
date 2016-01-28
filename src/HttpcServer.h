@@ -1,6 +1,6 @@
 /* HttpcServer.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,17 +20,17 @@
 #ifndef HTTPC_SERVER_H_INCLUDE
 #define HTTPC_SERVER_H_INCLUDE HTTPC_SERVER_H_INCLUDE
 
-#include "TcpSocket.h"
-#include "Utils.h"
+#include <FwDecl.h>
+#include <TcpSocket.h>
+#include <Utils.h>
 
-// forward declaration
-class Streams;
-class Stream;
-class InterfaceAttr;
+FW_DECL_NS0(Streams);
+FW_DECL_NS0(Stream);
+FW_DECL_NS0(InterfaceAttr);
 
 /// HTTP Client Server
 class HttpcServer :
-		public TcpSocket {
+	public TcpSocket {
 	private:
 		static const char *HTML_BODY_WITH_CONTENT;
 		static const char *HTML_BODY_NO_CONTENT;

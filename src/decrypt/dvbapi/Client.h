@@ -1,6 +1,6 @@
-/* DvbapiClient.h
+/* Client.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,36 +17,40 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef DVB_API_CLIENT_H_INCLUDE
-#define DVB_API_CLIENT_H_INCLUDE DVB_API_CLIENT_H_INCLUDE
+#ifndef DECRYPT_DVBAPI_CLIENT_H_INCLUDE
+#define DECRYPT_DVBAPI_CLIENT_H_INCLUDE DECRYPT_DVBAPI_CLIENT_H_INCLUDE
 
-#include "ThreadBase.h"
-#include "SocketClient.h"
-#include "Mutex.h"
-#include "XMLSupport.h"
-#include "Functor1Ret.h"
+#include <FwDecl.h>
+#include <SocketClient.h>
+#include <base/Mutex.h>
+#include <base/Functor1Ret.h>
+#include <base/ThreadBase.h>
+#include <base/XMLSupport.h>
 
 #include <atomic>
 #include <string>
 
-// Forward declarations
-class StreamProperties;
-class TSPacketBuffer;
+FW_DECL_NS0(StreamProperties);
+FW_DECL_NS1(mpegts, PacketBuffer);
 
-/// The class @c DvbapiClient is for decrypting streams
-class DvbapiClient : public ThreadBase,
-                     public XMLSupport {
+namespace decrypt {
+namespace dvbapi {
+
+/// The class @c Client is for decrypting streams
+class Client :
+	public base::ThreadBase,
+	public base::XMLSupport {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClient(const std::string &xmlFilePath,
-			const Functor1Ret<StreamProperties &, int> &getStreamProperties,
-			const Functor1Ret<bool, int> &updateFrontend);
-		virtual ~DvbapiClient();
+		Client(const std::string &xmlFilePath,
+			const base::Functor1Ret<StreamProperties &, int> &getStreamProperties,
+			const base::Functor1Ret<bool, int> &updateFrontend);
+		virtual ~Client();
 
 		///
-		void decrypt(int streamID, TSPacketBuffer &buffer);
+		void decrypt(int streamID, mpegts::PacketBuffer &buffer);
 
 		///
 		bool stopDecrypt(int streamID);
@@ -84,7 +88,7 @@ class DvbapiClient : public ThreadBase,
 		// Data members
 		// =======================================================================
 		SocketClient     _client;
-		Mutex            _mutex;
+		base::Mutex      _mutex;
 		std::atomic_bool _connected;
 		std::atomic_bool _enabled;
 		std::atomic_bool _rewritePMT;
@@ -92,9 +96,12 @@ class DvbapiClient : public ThreadBase,
 		std::string      _serverIpAddr;
 		std::string      _serverName;
 
-		Functor1Ret<StreamProperties &, int> _getStreamProperties;
-		Functor1Ret<bool, int> _updateFrontend;
+		base::Functor1Ret<StreamProperties &, int> _getStreamProperties;
+		base::Functor1Ret<bool, int> _updateFrontend;
 
-}; // class DvbapiClient
+}; // class Client
 
-#endif // DVB_API_CLIENT_H_INCLUDE
+} // namespace dvbapi
+} // namespace decrypt
+
+#endif // DECRYPT_DVBAPI_CLIENT_H_INCLUDE

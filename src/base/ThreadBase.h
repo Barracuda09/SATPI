@@ -1,6 +1,6 @@
 /* ThreadBase.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef THREAD_BASE_H_INCLUDE
-#define THREAD_BASE_H_INCLUDE THREAD_BASE_H_INCLUDE
+#ifndef BASE_THREAD_BASE_H_INCLUDE
+#define BASE_THREAD_BASE_H_INCLUDE BASE_THREAD_BASE_H_INCLUDE
 
 #include "Log.h"
 
@@ -32,6 +32,7 @@
 #include <string>
 #include <atomic>
 
+namespace base {
 
 /// ThreadBase can be use to implement thread functionality
 class ThreadBase {
@@ -195,4 +196,6 @@ class ThreadBase {
 		std::string      _name;
 }; // class ThreadBase
 
-#endif // THREAD_BASE_H_INCLUDE
+} // namespace base
+
+#endif // BASE_THREAD_BASE_H_INCLUDE

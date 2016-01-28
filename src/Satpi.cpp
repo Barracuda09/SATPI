@@ -20,14 +20,14 @@
  */
 #include "RtspServer.h"
 #include "HttpServer.h"
-#include "SsdpServer.h"
+#include <upnp/ssdp/Server.h>
 #include "Streams.h"
 #include "InterfaceAttr.h"
 #include "Properties.h"
 #include "Log.h"
 #include "StringConverter.h"
 #ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
+	#include <decrypt/dvbapi/Client.h>
 #endif
 
 #include <stdio.h>
@@ -277,28 +277,28 @@ int main(int argc, char *argv[]) {
 
 	// notify we are alive
 	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
-	SI_LOG_INFO("Number of processors online: %d", ThreadBase::getNumberOfProcessorsOnline());
+	SI_LOG_INFO("Number of processors online: %d", base::ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 
 	{
 		InterfaceAttr interface;
 		Streams streams;
 #ifdef LIBDVBCSA
-		Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((Functor1Ret<StreamProperties &, int>*) 0, streams, &Streams::getStreamProperties);
-		Functor1Ret<bool, int> updateFrontend = makeFunctor((Functor1Ret<bool, int>*) 0, streams, &Streams::updateFrontend);
-		DvbapiClient dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamProperties, updateFrontend);
+		base::Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((base::Functor1Ret<StreamProperties &, int>*) 0, streams, &Streams::getStreamProperties);
+		base::Functor1Ret<bool, int> updateFrontend = makeFunctor((base::Functor1Ret<bool, int>*) 0, streams, &Streams::updateFrontend);
+		decrypt::dvbapi::Client dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamProperties, updateFrontend);
 		streams.enumerateFrontends("/dev/dvb", &dvbapi);
 		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-			streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
 		streams.enumerateFrontends("/dev/dvb", nullptr);
 		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-			streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, nullptr);
 #endif
 		RtspServer server(streams, properties, interface);
-		SsdpServer ssdpserver(interface, properties);
+		upnp::ssdp::Server ssdpserver(interface, properties);
 		if (ssdp) {
 			ssdpserver.startThread();
 		}

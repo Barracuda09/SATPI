@@ -1,6 +1,6 @@
-/* SsdpServer.h
+/* Server.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,10 +17,10 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef SSDP_SERVER_H_INCLUDE
-#define SSDP_SERVER_H_INCLUDE SSDP_SERVER_H_INCLUDE
+#ifndef UPNP_SSDP_SSDP_SERVER_H_INCLUDE
+#define UPNP_SSDP_SSDP_SERVER_H_INCLUDE UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 
-#include "ThreadBase.h"
+#include <base/ThreadBase.h>
 #include "SocketAttr.h"
 #include "SocketClient.h"
 #include "UdpSocket.h"
@@ -29,17 +29,20 @@
 class InterfaceAttr;
 class Properties;
 
-/// RTSP Server
-class SsdpServer :
-		public ThreadBase,
+namespace upnp {
+namespace ssdp {
+	
+/// SSDP Server
+class Server :
+		public base::ThreadBase,
 		public UdpSocket {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		SsdpServer(const InterfaceAttr &interface,
+		Server(const InterfaceAttr &interface,
 		           Properties &properties);
-		virtual ~SsdpServer();
+		virtual ~Server();
 
 	protected:
 		/// Thread function
@@ -59,6 +62,9 @@ class SsdpServer :
 		Properties          &_properties;
 		SocketClient        _udpMultiListen;
 		SocketClient        _udpMultiSend;
-}; // class SsdpServer
+}; // class Server
 
-#endif // SSDP_SERVER_H_INCLUDE
+} // namespace ssdp
+} // namespace upnp
+
+#endif // UPNP_SSDP_SSDP_SERVER_H_INCLUDE

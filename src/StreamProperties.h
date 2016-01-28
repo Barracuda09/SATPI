@@ -1,6 +1,6 @@
 /* StreamProperties.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,22 +20,22 @@
 #ifndef STREAM_PROPERTIES_H_INCLUDE
 #define STREAM_PROPERTIES_H_INCLUDE STREAM_PROPERTIES_H_INCLUDE
 
-#include "ChannelData.h"
-#include "Mutex.h"
-#include "XMLSupport.h"
+#include <ChannelData.h>
+#include <base/Mutex.h>
+#include <base/XMLSupport.h>
 #ifdef LIBDVBCSA
-	#include "DvbapiClientProperties.h"
+	#include <decrypt/dvbapi/ClientProperties.h>
 #endif
 
 #include <string>
 
 /// The class @c StreamProperties carries all the available/open StreamProperties
-class StreamProperties
+class StreamProperties :
 #ifdef LIBDVBCSA
-            : public XMLSupport,
-              public DvbapiClientProperties {
+	public base::XMLSupport,
+	public decrypt::dvbapi::ClientProperties {
 #else
-            : public XMLSupport {
+	public base::XMLSupport {
 #endif
 	public:
 		// =======================================================================
@@ -62,53 +62,53 @@ class StreamProperties
 		virtual void fromXML(const std::string &xml);
 
 		/// Get the stream Description for RTCP and DESCRIBE command
-		std::string attribute_describe_string(bool &active) const;
+		std::string attributeDescribeString(bool &active) const;
 
 		/// Get the stream ID to identify the properties
 		int  getStreamID() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _streamID;
 		}
 
 		/// Set if the stream is active/in use
 		void setStreamActive(bool active) {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			_streamActive = active;
 		}
 
 		/// Check if the stream is busy/in use
 		bool getStreamActive() {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _streamActive;
 		}
 
 		///
 		uint32_t getSSRC() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _ssrc;
 		}
 
 		///
 		long getTimestamp() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _timestamp;
 		}
 
 		///
 		double getRtpPayload() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _rtp_payload;
 		}
 
 		///
 		uint32_t getSPC() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _spc;
 		}
 
 		///
 		uint32_t getSOC() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _soc;
 		}
 
@@ -123,7 +123,7 @@ class StreamProperties
 		unsigned int getRtcpSignalUpdateFrequency() const;
 
 		///
-		void addRtpData(const uint32_t byte, long timestamp);
+		void addRtpData(uint32_t byte, long timestamp);
 
 		// =======================================================================
 		// Data members for ChannelData
@@ -135,8 +135,10 @@ class StreamProperties
 		/// Reset/clear the 'Channel Data changed' flag
 		void resetChannelDataChanged();
 
-		/// Get/Set the intermediate frequency in Mhz
+		/// Get the intermediate frequency in Mhz
 		uint32_t getIntermediateFrequency() const;
+
+		/// Set the intermediate frequency in Mhz
 		void setIntermediateFrequency(uint32_t frequency);
 
 		/// Reset the pid
@@ -272,7 +274,7 @@ class StreamProperties
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Mutex       _mutex;          //
+		base::Mutex _mutex;          //
 		int         _streamID;       //
 		bool        _streamActive;   //
 

@@ -1,6 +1,6 @@
 /* Log.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,9 +16,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
-#include "Log.h"
-#include "StringConverter.h"
+ */
+#include <Log.h>
+#include <StringConverter.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +31,6 @@ static LogBuffer_t appLog;
 static pthread_mutex_t mutex;
 int syslog_on = 1;
 
-/*
- *
- */
 void open_app_log() {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
@@ -53,11 +50,11 @@ void binlog(int priority, const unsigned char *p, int length, const char *fmt, .
 			StringConverter::addFormattedString(strData, "\r\n");
 		}
 	}
-    char txt[2048];
-    va_list arglist;
-    va_start(arglist, fmt);
-    vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
-    va_end(arglist);
+	char txt[2048];
+	va_list arglist;
+	va_start(arglist, fmt);
+	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
+	va_end(arglist);
 
 	applog(priority, "%s\r\n%s\r\nEND\r\n", txt, strData.c_str());
 }
@@ -65,11 +62,11 @@ void binlog(int priority, const unsigned char *p, int length, const char *fmt, .
 void applog(int priority, const char *fmt, ...) {
 	pthread_mutex_lock(&mutex);
 
-    char txt[2048];
-    va_list arglist;
-    va_start(arglist, fmt);
-    vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
-    va_end(arglist);
+	char txt[2048];
+	va_list arglist;
+	va_start(arglist, fmt);
+	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
+	va_end(arglist);
 
 	struct timespec time_stamp;
 	clock_gettime(CLOCK_REALTIME, &time_stamp);
@@ -100,7 +97,7 @@ void applog(int priority, const char *fmt, ...) {
 
 		// save to deque
 		if (appLog.size() == LOG_SIZE) {
-		  appLog.pop_front();
+			appLog.pop_front();
 		}
 		appLog.push_back(elem);
 
@@ -127,7 +124,7 @@ std::string make_log_xml() {
 		for (LogBuffer_t::iterator it = appLog.begin(); it != appLog.end(); ++it) {
 			LogElem_t elem = *it;
 			StringConverter::addFormattedString(log, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
-												elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(), elem.priority);
+			                                    elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(), elem.priority);
 		}
 	}
 	pthread_mutex_unlock(&mutex);

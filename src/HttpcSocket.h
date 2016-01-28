@@ -1,6 +1,6 @@
 /* HttpcSocket.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,15 +20,15 @@
 #ifndef HTTPC_SOCKET_H_INCLUDE
 #define HTTPC_SOCKET_H_INCLUDE HTTPC_SOCKET_H_INCLUDE
 
-#include "SocketAttr.h"
+#include <FwDecl.h>
+#include <SocketAttr.h>
 
 #include <poll.h>
 #include <netinet/in.h>
 
 #define SSDP_PORT 1900
 
-// Forward declarations
-class SocketClient;
+FW_DECL_NS0(SocketClient);
 
 /// HTTPC Socket related functions
 class HttpcSocket  {

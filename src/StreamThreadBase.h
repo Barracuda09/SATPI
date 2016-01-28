@@ -1,6 +1,6 @@
 /* StreamThreadBase.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,48 +20,53 @@
 #ifndef STREAM_THREAD_BASE_H_INCLUDE
 #define STREAM_THREAD_BASE_H_INCLUDE STREAM_THREAD_BASE_H_INCLUDE
 
-#include "ThreadBase.h"
-#include "TSPacketBuffer.h"
+#include <FwDecl.h>
+#include <base/ThreadBase.h>
+#include <mpegts/PacketBuffer.h>
 
 #include <poll.h>
 #include <atomic>
 
 #define MAX_BUF 150
 
-// forward declaration
-class StreamClient;
-class StreamProperties;
-class DvbapiClient;
+FW_DECL_NS0(StreamClient);
+FW_DECL_NS0(StreamInterface);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// Streaming thread
 class StreamThreadBase :
-		public ThreadBase {
+	public base::ThreadBase {
 	public:
 		// =======================================================================
-		// Constructors and destructor
+		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
-		StreamThreadBase(std::string protocol, StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi);
+		StreamThreadBase(
+			std::string protocol,
+			StreamInterface &stream,
+			decrypt::dvbapi::Client *decrypt);
 
 		virtual ~StreamThreadBase();
 
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
 		/// Start streaming
-		/// @param fd_dvr
 		/// @return true if stream is started else false on error
-		virtual bool startStreaming(int fd_dvr);
-
+		virtual bool startStreaming();
+/*
 		/// Start streaming should be implemented by the subclasses that needs an frontend monitor.
 		/// @param fd_dvr
 		/// @param fd_fe
 		/// @return true if stream is started else false on error
-		virtual bool startStreaming(int /*fd_dvr*/, int /*fd_fe*/) { return false; }
-
+		virtual bool startStreaming(int fd_dvr, int fd_fe) { return false; }
+*/
 		/// Pause streaming
 		/// @return true if stream is paused else false on error
 		virtual bool pauseStreaming(int clientID);
 
 		/// Restart streaming
 		/// @return true if stream is restarted else false on error
-		virtual bool restartStreaming(int fd_dvr, int clientID);
+		virtual bool restartStreaming(int clientID);
 
 	protected:
 		/// @see ThreadBase
@@ -72,13 +77,13 @@ class StreamThreadBase :
 		virtual void pollDVR(const StreamClient &client);
 
 		/// send the TS packets to client
-		virtual void sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client) = 0;
+		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) = 0;
 
 		///
 		virtual int getStreamSocketPort(int clientID) const = 0;
 
 		///
-		bool readFullTSPacket(TSPacketBuffer &buffer);
+		bool readFullTSPacket(mpegts::PacketBuffer &buffer);
 
 		// =======================================================================
 		// Data members
@@ -90,20 +95,19 @@ class StreamThreadBase :
 			Paused,
 		};
 
-		StreamProperties   &_properties;     //
-		StreamClient       *_clients;        //
-		std::string         _protocol;       //
-		std::atomic<State>  _state;          //
+		StreamInterface &_stream;
+		std::string _protocol;
+		std::atomic<State> _state;
 
 		// =======================================================================
 		// Data members
 		// =======================================================================
 	private:
-		TSPacketBuffer   _tsBuffer[MAX_BUF]; //
-		size_t           _writeIndex;        //
-		size_t           _readIndex;         //
-		struct pollfd    _pfd[1];            //
-		DvbapiClient     *_dvbapi;           //
+		mpegts::PacketBuffer _tsBuffer[MAX_BUF];
+		size_t _writeIndex;
+		size_t _readIndex;
+		struct pollfd _pfd[1];
+		decrypt::dvbapi::Client *_decrypt;
 
 }; // class StreamThreadBase
 

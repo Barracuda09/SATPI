@@ -1,6 +1,6 @@
 /* RtcpThread.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,24 +20,24 @@
 #ifndef RTCP_THREAD_H_INCLUDE
 #define RTCP_THREAD_H_INCLUDE RTCP_THREAD_H_INCLUDE
 
-#include "ThreadBase.h"
+#include <FwDecl.h>
+#include <base/ThreadBase.h>
 
 #include <stdint.h>
 
 #include <linux/dvb/frontend.h>
 
-// forward declaration
-class StreamClient;
-class StreamProperties;
+FW_DECL_NS0(StreamClient);
+FW_DECL_NS0(StreamInterface);
 
 /// RTSP Server
 class RtcpThread :
-		public ThreadBase {
+		public base::ThreadBase {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtcpThread(StreamClient *clients, StreamProperties &properties);
+		RtcpThread(StreamInterface &stream);
 		virtual ~RtcpThread();
 
 		/// Start streaming
@@ -60,15 +60,14 @@ class RtcpThread :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int              _socket_fd;   //
-		StreamClient     *_clients;    //
-		StreamProperties &_properties; //
-		int              _fd_fe;       //
+		int _socket_fd;
+		StreamInterface &_stream;
+		int _fd_fe;
 
-		uint8_t  _sr[28];              // Sender Report (SR Packet)
-		uint8_t  _srb[24];             // Sender Report Block n (SR Packet)
-		uint8_t  _sdes[24];            // Source Description (SDES Packet)
-		uint8_t  _app[500];            // Application Defined packet (APP Packet)
+		uint8_t _sr[28];              // Sender Report (SR Packet)
+		uint8_t _srb[24];             // Sender Report Block n (SR Packet)
+		uint8_t _sdes[24];            // Source Description (SDES Packet)
+		uint8_t _app[500];            // Application Defined packet (APP Packet)
 }; // class RtcpThread
 
 #endif // RTCP_THREAD_H_INCLUDE

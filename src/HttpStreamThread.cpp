@@ -1,6 +1,6 @@
 /* HttpStreamThread.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,17 +16,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
-#include "HttpStreamThread.h"
-#include "StreamClient.h"
-#include "Log.h"
-#include "StreamProperties.h"
-#include "InterfaceAttr.h"
-#include "Utils.h"
-#include "TimeCounter.h"
-#ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
-#endif
+ */
+#include <HttpStreamThread.h>
+
+#include <InterfaceAttr.h>
+#include <Log.h>
+#include <Stream.h>
+#include <StreamClient.h>
+#include <Utils.h>
+#include <base/TimeCounter.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -41,55 +39,51 @@
 
 #include <fcntl.h>
 
-HttpStreamThread::HttpStreamThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi) :
-		StreamThreadBase("HTTP", clients, properties, dvbapi) {}
+HttpStreamThread::HttpStreamThread(
+	StreamInterface &stream,
+	decrypt::dvbapi::Client *decrypt) :
+	StreamThreadBase("HTTP", stream, decrypt) {
+}
 
 HttpStreamThread::~HttpStreamThread() {
 	terminateThread();
 }
 
-bool HttpStreamThread::startStreaming(int fd_dvr, int fd_fe) {
-	// Close FD we don't need it here.
-	CLOSE_FD(fd_fe);
-	StreamThreadBase::startStreaming(fd_dvr);
-	return true;
-}
-
 int HttpStreamThread::getStreamSocketPort(int clientID) const {
-	return _clients[clientID].getRtpSocketPort();
+	return _stream.getStreamClient(clientID).getRtpSocketPort();
 }
 
 void HttpStreamThread::threadEntry() {
-	const StreamClient &client = _clients[0];
+	const StreamClient &client = _stream.getStreamClient(0);
 	while (running()) {
 		switch (_state) {
-			case Pause:
-				_state = Paused;
-				break;
-			case Paused:
-				// Do nothing here, just wait
-				usleep(50000);
-				break;
-			case Running:
-				pollDVR(client);
-				break;
-			default:
-				PERROR("Wrong State");
-				usleep(50000);
-				break;
+		case Pause:
+			_state = Paused;
+			break;
+		case Paused:
+			// Do nothing here, just wait
+			usleep(50000);
+			break;
+		case Running:
+			pollDVR(client);
+			break;
+		default:
+			PERROR("Wrong State");
+			usleep(50000);
+			break;
 		}
 	}
 }
 
-void HttpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client) {
+void HttpStreamThread::sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) {
 	unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 	const unsigned int size = buffer.getBufferSize();
-	
-	const long timestamp = TimeCounter::getTicks() * 90;
+
+	const long timestamp = base::TimeCounter::getTicks() * 90;
 
 	// RTP packet octet count (Bytes)
-	_properties.addRtpData(size, timestamp);
+	_stream.addRtpData(size, timestamp);
 
 	// send the HTTP packet
 	if (send(client.getHttpcFD(), tsBuffer, size, MSG_NOSIGNAL) == -1) {

@@ -1,6 +1,6 @@
 /* Functor2.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,10 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef FUNCTORBASE_H_INCLUDE
-#define FUNCTORBASE_H_INCLUDE FUNCTORBASE_H_INCLUDE
+#ifndef BASE_FUNCTORBASE_H_INCLUDE
+#define BASE_FUNCTORBASE_H_INCLUDE BASE_FUNCTORBASE_H_INCLUDE
 
 #include <string.h>
+
+namespace base {
 
 /// The class @c FunctorBase
 class FunctorBase {
@@ -52,4 +54,6 @@ class FunctorBase {
 		void *_callee;
 };
 
-#endif // FUNCTORBASE_H_INCLUDE
+} // namespace base
+
+#endif // BASE_FUNCTORBASE_H_INCLUDE

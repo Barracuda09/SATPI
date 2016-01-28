@@ -12,7 +12,7 @@ INCLUDES =
 LDFLAGS = -pthread -lrt
 
 # Set Compiler Flags
-CFLAGS = -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS = -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq ($(BUILD),debug)
@@ -35,32 +35,32 @@ SOURCES = Version.cpp \
 	StreamProperties_ChannelData_get.cpp \
 	StreamProperties_ChannelData_set.cpp \
 	Properties.cpp \
-	StringConverter.cpp \
-	Log.cpp \
-	TimeCounter.cpp \
 	HttpcSocket.cpp \
 	TcpSocket.cpp \
 	UdpSocket.cpp \
-	Frontend.cpp \
 	StreamClient.cpp \
 	Streams.cpp \
 	Stream.cpp \
 	HttpServer.cpp \
 	HttpcServer.cpp \
 	RtspServer.cpp \
-	SsdpServer.cpp \
 	RtcpThread.cpp \
-	XMLSupport.cpp \
-	TSPacketBuffer.cpp \
 	StreamThreadBase.cpp \
 	RtpStreamThread.cpp \
-	HttpStreamThread.cpp
+	HttpStreamThread.cpp \
+	Log.cpp \
+	StringConverter.cpp \
+	base/TimeCounter.cpp \
+	base/XMLSupport.cpp \
+	input/dvb/Frontend.cpp \
+	mpegts/PacketBuffer.cpp \
+	upnp/ssdp/Server.cpp
 
 # Add dvbcsa ?
 ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
-  SOURCES += DvbapiClient.cpp
+  SOURCES += decrypt/dvbapi/Client.cpp
 endif
 
 ifeq ($(HAS_NP_FUNCTIONS),yes)
@@ -104,6 +104,12 @@ $(OBJ_DIR)/Version.o:
 
 makeobj:
 	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(OBJ_DIR)/base
+	@mkdir -p $(OBJ_DIR)/mpegts
+	@mkdir -p $(OBJ_DIR)/input
+	@mkdir -p $(OBJ_DIR)/input/dvb
+	@mkdir -p $(OBJ_DIR)/upnp/ssdp
+	@mkdir -p $(OBJ_DIR)/decrypt/dvbapi
 
 debug:
 	$(MAKE) "BUILD=debug"
@@ -155,4 +161,5 @@ uncrustify:
 	clean
 
 clean:
-	rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp src/*.*~ src/*~ /web/*.*~
+	rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp /web/*.*~
+	rm -rf src/*.*~ src/*~

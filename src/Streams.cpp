@@ -1,6 +1,6 @@
 /* Streams.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,19 +17,14 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "Streams.h"
-#include "Stream.h"
-#include "Log.h"
-#include "Utils.h"
-#include "Frontend.h"
-#include "StreamClient.h"
-#include "SocketClient.h"
-#include "StringConverter.h"
-#include "Configure.h"
+#include <Streams.h>
 
-#ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
-#endif
+#include <Stream.h>
+#include <Log.h>
+#include <Utils.h>
+#include <StreamClient.h>
+#include <SocketClient.h>
+#include <StringConverter.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -123,8 +118,8 @@ int Streams::getAttachedFrontendCount_L(const std::string &path, int count) {
 	return count;
 }
 
-int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
-	MutexLock lock(_mutex);
+int Streams::enumerateFrontends(const std::string &path, decrypt::dvbapi::Client *decrypt) {
+	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
@@ -140,12 +135,12 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 #if FULL_DVB_API_VERSION >= 0x0505
 	_nr_dvb_c2 = 0;
 #endif
-	_dummyStream = new Stream(0, dvbapi);
+	_dummyStream = new Stream(0, decrypt);
 	_maxStreams = getAttachedFrontendCount_L(path, 0);
 	_stream = new Stream *[_maxStreams + 1];
 	if (_stream != nullptr) {
 		for (int i = 0; i < _maxStreams; ++i) {
-			_stream[i] = new Stream(i, dvbapi);
+			_stream[i] = new Stream(i, decrypt);
 		}
 	} else {
 		_maxStreams = 0;
@@ -214,7 +209,7 @@ int Streams::enumerateFrontends(const std::string &path, DvbapiClient *dvbapi) {
 }
 
 Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	// Here we need to find the correct Stream and StreamClient
 	assert(_stream);
@@ -298,7 +293,7 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 }
 
 void Streams::checkStreamClientsWithTimeout() {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	assert(_stream);
 	for (auto streamID = 0; streamID < _maxStreams; ++streamID) {
@@ -309,26 +304,26 @@ void Streams::checkStreamClientsWithTimeout() {
 }
 
 StreamProperties & Streams::getStreamProperties(int streamID) {
-//	MutexLock lock(_mutex);
+//	base::MutexLock lock(_mutex);
 
 	return _stream[streamID]->getStreamProperties();
 }
 
 bool Streams::updateFrontend(int streamID) {
-//	MutexLock lock(_mutex);
+//	base::MutexLock lock(_mutex);
 
 	return _stream[streamID]->updateFrontend();
 }
 
-std::string Streams::attribute_describe_string(unsigned int stream, bool &active) const {
-	MutexLock lock(_mutex);
+std::string Streams::attributeDescribeString(unsigned int stream, bool &active) const {
+	base::MutexLock lock(_mutex);
 
 	assert(_stream);
-	return _stream[stream]->attribute_describe_string(active);
+	return _stream[stream]->attributeDescribeString(active);
 }
 
 void Streams::fromXML(const std::string &xml) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	for (auto i = 0; i < _maxStreams; ++i) {
 		std::string find;
@@ -340,7 +335,7 @@ void Streams::fromXML(const std::string &xml) {
 }
 
 void Streams::addToXML(std::string &xml) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	assert(_stream);
 	// application data

@@ -1,6 +1,6 @@
 /* Functor1.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,10 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef FUNCTOR1_H_INCLUDE
-#define FUNCTOR1_H_INCLUDE FUNCTOR1_H_INCLUDE
+#ifndef BASE_FUNCTOR1_H_INCLUDE
+#define BASE_FUNCTOR1_H_INCLUDE BASE_FUNCTOR1_H_INCLUDE
 
-#include "FunctorBase.h"
+#include <base/FunctorBase.h>
+
+namespace base {
 
 /// The class @c Functor1 is functor with 1 argument with no return
 template <class P1>
@@ -92,4 +94,5 @@ makeFunctor(Functor1<P1>*, const CALLEE &callee, RETURN (CALL_TYPE::* const &fun
 	return MemberFunctionWrapper1<P1, const CALLEE, FUNC>(callee, func);
 }
 
-#endif // FUNCTOR1_H_INCLUDE
+} // namespace base
+#endif // BASE_FUNCTOR1_H_INCLUDE

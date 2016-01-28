@@ -67,6 +67,8 @@ HttpcServer --|> TcpSocket
 HttpcServer *.. Streams : "_streams"
 HttpcServer *.. InterfaceAttr
 
+StreamInterface --|> Stream
+
 Stream *-- StreamClient : " _client[..] "
 Stream *-- StreamProperties
 Stream *-- Frontend
@@ -96,8 +98,9 @@ class StreamClient {
 
 StreamThreadBase *.. DvbapiClient
 StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
-StreamThreadBase *.. StreamClient
-StreamThreadBase *.. StreamProperties
+StreamThreadBase *.. StreamInterface
+class StreamThreadBase {
+}
 
 
 RtpStreamThread --|> StreamThreadBase
@@ -107,8 +110,7 @@ class RtpStreamThread {
   cseq
 }
 
-RtcpThread *.. StreamClient
-RtcpThread *.. StreamProperties
+RtcpThread *.. StreamInterface
 class RtcpThread {
   socket_fd
   fd_fe

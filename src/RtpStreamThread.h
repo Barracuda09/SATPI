@@ -1,6 +1,6 @@
 /* RtpStreamThread.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,27 +20,27 @@
 #ifndef RTP_STREAM_THREAD_H_INCLUDE
 #define RTP_STREAM_THREAD_H_INCLUDE RTP_STREAM_THREAD_H_INCLUDE
 
-#include "StreamThreadBase.h"
-#include "RtcpThread.h"
+#include <FwDecl.h>
+#include <StreamThreadBase.h>
+#include <RtcpThread.h>
 
-// forward declaration
-class StreamClient;
-class StreamProperties;
-class DvbapiClient;
+FW_DECL_NS0(StreamClient);
+FW_DECL_NS0(StreamInterface);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// RTP Streaming thread
 class RtpStreamThread :
-		public StreamThreadBase {
+	public StreamThreadBase {
 	public:
 		// =======================================================================
-		// Constructors and destructor
+		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
-		RtpStreamThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi);
+		RtpStreamThread(StreamInterface &stream, decrypt::dvbapi::Client *decrypt);
 
 		virtual ~RtpStreamThread();
 
 		/// @see StreamThreadBase
-		virtual bool startStreaming(int fd_dvr, int fd_fe);
+		virtual bool startStreaming();
 
 	protected:
 
@@ -48,7 +48,7 @@ class RtpStreamThread :
 		virtual void threadEntry();
 
 		/// @see StreamThreadBase
-		virtual void sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client);
+		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client);
 
 		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const;
@@ -58,9 +58,9 @@ class RtpStreamThread :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		int        _socket_fd_rtp;     //
-		uint16_t   _cseq;              // RTP sequence number
-		RtcpThread _rtcp;              //
+		int _socket_fd_rtp;     //
+		uint16_t _cseq;         // RTP sequence number
+		RtcpThread _rtcp;       //
 
 }; // class RtpStreamThread
 

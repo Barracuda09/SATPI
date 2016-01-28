@@ -1,6 +1,6 @@
 /* Streams.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,23 +20,22 @@
 #ifndef STREAMS_H_INCLUDE
 #define STREAMS_H_INCLUDE
 
-#include "dvbfix.h"
-#include "Mutex.h"
-#include "StreamClient.h"
-#include "XMLSupport.h"
+#include <FwDecl.h>
+#include <dvbfix.h>
+#include <StreamClient.h>
+#include <base/Mutex.h>
+#include <base/XMLSupport.h>
 
 #include <string>
 
-// Forward declarations
-class DvbapiClient;
-class SocketClient;
-class Stream;
-class StreamProperties;
+FW_DECL_NS0(SocketClient);
+FW_DECL_NS0(Stream);
+FW_DECL_NS0(StreamProperties);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// The class @c Streams carries all the available/open streams
 class Streams :
-		public XMLSupport {
-
+	public base::XMLSupport {
 	public:
 		// =======================================================================
 		// Constructors and destructor
@@ -46,7 +45,7 @@ class Streams :
 
 		/// enumerate all available frontends
 		/// @param path
-		int enumerateFrontends(const std::string &path, DvbapiClient *dvbapi);
+		int enumerateFrontends(const std::string &path, decrypt::dvbapi::Client *decrypt);
 
 		///
 		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -56,36 +55,36 @@ class Streams :
 
 		///
 		const std::string &getXMLDeliveryString() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _del_sys_str;
 		}
 
 		///
 		int getMaxStreams() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _maxStreams;
 		}
 
 		///
 		int getMaxDvbSat() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _nr_dvb_s2;
 		}
 
 		///
 		int getMaxDvbTer() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _nr_dvb_t;
 		}
 
 		///
 		int getMaxDvbCable() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _nr_dvb_c;
 		}
 
 		///
-		std::string attribute_describe_string(unsigned int stream, bool &active) const;
+		std::string attributeDescribeString(unsigned int stream, bool &active) const;
 
 		/// Add streams data to an XML for storing or web interface
 		virtual void addToXML(std::string &xml) const;
@@ -108,7 +107,7 @@ class Streams :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		Mutex        _mutex;       //
+		base::Mutex   _mutex;       //
 		Stream     **_stream;
 		int          _maxStreams;
 		Stream      *_dummyStream;

@@ -1,6 +1,6 @@
 /* TimeCounter.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,12 +17,16 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "TimeCounter.h"
+#include <base/TimeCounter.h>
 
 #include <sys/time.h>
+
+namespace base {
 
 long TimeCounter::getTicks() {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
   return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
+
+} // namespace base

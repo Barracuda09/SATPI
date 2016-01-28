@@ -1,6 +1,6 @@
 /* RtspServer.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -147,7 +147,7 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	for (auto i = 0; i < _streams.getMaxStreams(); ++i) {
 		bool active = false;
-		std::string desc_attr = _streams.attribute_describe_string(i, active);
+		std::string desc_attr = _streams.attributeDescribeString(i, active);
 		if (desc_attr.size() > 5) {
 			++streams_setup;
 			StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT2, i, desc_attr.c_str(), (active) ? "sendonly" : "inactive");

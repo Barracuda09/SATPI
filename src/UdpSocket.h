@@ -1,6 +1,6 @@
 /* UdpSocket.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,19 +20,19 @@
 #ifndef UDP_SOCKET_H_INCLUDE
 #define UDP_SOCKET_H_INCLUDE UDP_SOCKET_H_INCLUDE
 
-#include "HttpcSocket.h"
-#include "SocketClient.h"
-#include "SocketAttr.h"
+#include <FwDecl.h>
+#include <HttpcSocket.h>
+#include <SocketClient.h>
+#include <SocketAttr.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
 
-// Forward declarations
-class SocketAttr;
+FW_DECL_NS0(SocketAttr);
 
 /// UDP Socket
 class UdpSocket :
-		public HttpcSocket {
+	public HttpcSocket {
 	public:
 		// =======================================================================
 		// Constructors and destructor

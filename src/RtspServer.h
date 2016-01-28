@@ -1,6 +1,6 @@
 /* RtspServer.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,18 +20,18 @@
 #ifndef RTSP_SERVER_H_INCLUDE
 #define RTSP_SERVER_H_INCLUDE RTSP_SERVER_H_INCLUDE
 
-#include "HttpcServer.h"
-#include "Properties.h"
-#include "ThreadBase.h"
+#include <FwDecl.h>
+#include <HttpcServer.h>
+#include <Properties.h>
+#include <base/ThreadBase.h>
 
-// Forward declarations
-class Stream;
-class Streams;
-class StreamClient;
+FW_DECL_NS0(Stream);
+FW_DECL_NS0(Streams);
+FW_DECL_NS0(StreamClient);
 
 /// RTSP Server
 class RtspServer :
-		public ThreadBase,
+		public base::ThreadBase,
 		public HttpcServer {
 	public:
 		// =======================================================================

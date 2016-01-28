@@ -1,6 +1,6 @@
 /* Stream.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,30 +16,31 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
+ */
+#include <Stream.h>
 
-#include "Configure.h"
-#include "Log.h"
-#include "RtpStreamThread.h"
-#include "HttpStreamThread.h"
-#include "SocketClient.h"
-#include "Stream.h"
-#include "StringConverter.h"
-#include "Utils.h"
+#include <Log.h>
+#include <RtpStreamThread.h>
+#include <HttpStreamThread.h>
+#include <SocketClient.h>
+#include <StringConverter.h>
+#include <Utils.h>
+#include <input/dvb/Frontend.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 const unsigned int Stream::MAX_CLIENTS = 8;
 
-Stream::Stream(int streamID, DvbapiClient *dvbapi) :
-		_streamingType(NONE),
-		_enabled(true),
-		_streamInUse(false),
-		_client(new StreamClient[MAX_CLIENTS]),
-		_streaming(nullptr),
-		_dvbapi(dvbapi),
-		_properties(streamID) {
+Stream::Stream(int streamID, decrypt::dvbapi::Client *decrypt) :
+	_streamingType(NONE),
+	_enabled(true),
+	_streamInUse(false),
+	_client(new StreamClient[MAX_CLIENTS]),
+	_streaming(nullptr),
+	_decrypt(decrypt),
+	_properties(streamID),
+	_frontend(new input::dvb::Frontend) {
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		_client[i].setClientID(i);
 	}
@@ -49,12 +50,69 @@ Stream::~Stream() {
 	DELETE_ARRAY(_client);
 }
 
+// ===========================================================================
+// -- StreamInterface --------------------------------------------------------
+// ===========================================================================
+
+int Stream::getStreamID() const {
+	return _properties.getStreamID();
+}
+
+StreamClient &Stream::getStreamClient(std::size_t clientNr) const {
+	return _client[clientNr];
+}
+
+input::Device *Stream::getInputDevice() const {
+	return _frontend;
+}
+
+uint32_t Stream::getSSRC() const {
+	return _properties.getSSRC();
+}
+
+long Stream::getTimestamp() const {
+	return _properties.getTimestamp();
+}
+
+uint32_t Stream::getSPC() const {
+	return _properties.getSPC();
+}
+
+unsigned int Stream::getRtcpSignalUpdateFrequency() const {
+	return _properties.getRtcpSignalUpdateFrequency();
+}
+
+uint32_t Stream::getSOC() const {
+	return _properties.getSOC();
+}
+
+void Stream::addRtpData(uint32_t byte, long timestamp) {
+	_properties.addRtpData(byte, timestamp);
+}
+
+double Stream::getRtpPayload() const {
+	return _properties.getRtpPayload();
+}
+
+std::string Stream::attributeDescribeString(bool &active) const {
+	return _properties.attributeDescribeString(active);
+}
+
+void Stream::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
+		uint32_t ber, uint32_t ublocks) {
+	_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+}
+
+// ===========================================================================
+// -- Other member functions -------------------------------------------------
+// ===========================================================================
+
 bool Stream::findClientIDFor(SocketClient &socketClient,
                              bool newSession,
                              std::string sessionID,
                              const std::string &method,
                              int &clientID) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	// Check if frontend is enabled when we have a new session
 	if (newSession && !_enabled) {
@@ -64,7 +122,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 
 	fe_delivery_system_t msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
 	// Check if frontend is capable if handling 'msys' when we have a new session
-	if (newSession && !_frontend.capableOf(msys)) {
+	if (newSession && !_frontend->capableOf(msys)) {
 		SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
 		            _properties.getStreamID(), StringConverter::delsys_to_string(msys));
 		return false;
@@ -99,39 +157,39 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 }
 
 void Stream::copySocketClientAttr(const SocketClient &socketClient) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	_client[0].copySocketClientAttr(socketClient);
 }
 
 void Stream::checkStreamClientsWithTimeout() {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].checkWatchDogTimeout()) {
 			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
-			             _properties.getStreamID(), i, _client[i].getSessionID().c_str());
+			            _properties.getStreamID(), i, _client[i].getSessionID().c_str());
 			teardown(i, false);
 		}
 	}
 }
 
 bool Stream::updateFrontend() {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	if (_properties.hasPIDTableChanged()) {
-		if (_frontend.isTuned()) {
-			_frontend.update(_properties);
+		if (_frontend->isTuned()) {
+			_frontend->update(_properties);
 		} else {
 			SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
-			             _properties.getStreamID());
+			            _properties.getStreamID());
 		}
 	}
 	return true;
 }
 
 bool Stream::update(int clientID) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 //	_properties.printChannelInfo();
 	const bool changed = _properties.hasChannelDataChanged();
@@ -139,16 +197,16 @@ bool Stream::update(int clientID) {
 	// first time streaming?
 	if (_streaming == nullptr) {
 		switch (_streamingType) {
-			case NONE:
-				_streaming = nullptr;
-				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _properties.getStreamID());
-				break;
-			case HTTP:
-				_streaming = new HttpStreamThread(_client, _properties, _dvbapi);
-				break;
-			case RTSP:
-				_streaming = new RtpStreamThread(_client, _properties, _dvbapi);
-				break;
+		case NONE:
+			_streaming = nullptr;
+			SI_LOG_ERROR("Stream: %d, No streaming type found!!", _properties.getStreamID());
+			break;
+		case HTTP:
+			_streaming = new HttpStreamThread(*this, _decrypt);
+			break;
+		case RTSP:
+			_streaming = new RtpStreamThread(*this, _decrypt);
+			break;
 		};
 		if (_streaming == nullptr) {
 			return false;
@@ -160,22 +218,22 @@ bool Stream::update(int clientID) {
 		_streaming->pauseStreaming(clientID);
 	}
 
-	if (!_frontend.update(_properties)) {
+	if (!_frontend->update(_properties)) {
 		return false;
 	}
 
 	// start or restart streaming again
 	if (!_properties.getStreamActive()) {
-		const bool active = _streaming->startStreaming(_frontend.get_dvr_fd(), _frontend.get_monitor_fd());
+		const bool active = _streaming->startStreaming();
 		_properties.setStreamActive(active);
 	} else if (changed) {
-		_streaming->restartStreaming(_frontend.get_dvr_fd(), clientID);
+		_streaming->restartStreaming(clientID);
 	}
 	return true;
 }
 
 void Stream::close(int clientID) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	if (_client[clientID].canClose()) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
@@ -186,7 +244,7 @@ void Stream::close(int clientID) {
 }
 
 bool Stream::teardown(int clientID, bool gracefull) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _properties.getStreamID(), clientID, _client[clientID].getSessionID().c_str());
@@ -196,7 +254,7 @@ bool Stream::teardown(int clientID, bool gracefull) {
 }
 
 void Stream::addToXML(std::string &xml) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	ADD_CONFIG_NUMBER(xml, "streamindex", _properties.getStreamID());
 
@@ -205,12 +263,12 @@ void Stream::addToXML(std::string &xml) const {
 	ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
 	ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
 
-	_frontend.addToXML(xml);
+	_frontend->addToXML(xml);
 	_properties.addToXML(xml);
 }
 
 void Stream::fromXML(const std::string &xml) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	std::string element;
 	if (findXMLElement(xml, "enable.value", element)) {
@@ -220,11 +278,11 @@ void Stream::fromXML(const std::string &xml) {
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 ||
 	     method.compare("PLAY") == 0 || method.compare("GET") == 0) &&
-	     StringConverter::hasTransportParameters(msg)) {
+	    StringConverter::hasTransportParameters(msg)) {
 
 		_streamingType = (method.compare("GET") == 0) ? HTTP : RTSP;
 		parseStreamString_L(msg, method);
@@ -250,12 +308,12 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	_client[clientID].setCanClose(canClose);
 
 /*
-	// Close connection or keep-alive
-	std::string connState;
-	const bool foundConnection = StringConverter::getHeaderFieldParameter(msg, "Connection:", connState);
-	const bool connectionClose = foundConnection && (strncasecmp(connState.c_str(), "Close", 5) == 0);
-	_client[clientID].setCanClose(!connectionClose);
-*/
+        // Close connection or keep-alive
+        std::string connState;
+        const bool foundConnection = StringConverter::getHeaderFieldParameter(msg, "Connection:", connState);
+        const bool connectionClose = foundConnection && (strncasecmp(connState.c_str(), "Close", 5) == 0);
+        _client[clientID].setCanClose(!connectionClose);
+ */
 	_client[clientID].restartWatchDog();
 	return true;
 }
@@ -266,7 +324,7 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 	// Stop streaming by deleting object
 	DELETE(_streaming);
 
-	_frontend.teardown(_properties);
+	_frontend->teardown(_properties);
 
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);
@@ -284,7 +342,7 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 
 void Stream::parseStreamString_L(const std::string &msg, const std::string &method) {
 	double doubleVal = 0.0;
-	int    intVal = 0;
+	int intVal = 0;
 	std::string strVal;
 	fe_delivery_system_t msys;
 
@@ -386,27 +444,27 @@ void Stream::parseStreamString_L(const std::string &msg, const std::string &meth
 	} else if (msys != SYS_UNDEFINED) {
 		// no 'mtype' set so guess one according to 'msys'
 		switch (msys) {
-			case SYS_DVBS:
-				_properties.setModulationType(QPSK);
-				break;
-			case SYS_DVBS2:
-				_properties.setModulationType(PSK_8);
-				break;
-			case SYS_DVBT:
-			case SYS_DVBT2:
+		case SYS_DVBS:
+			_properties.setModulationType(QPSK);
+			break;
+		case SYS_DVBS2:
+			_properties.setModulationType(PSK_8);
+			break;
+		case SYS_DVBT:
+		case SYS_DVBT2:
 #if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_B:
-			case SYS_DVBC_ANNEX_C:
+		case SYS_DVBC_ANNEX_A:
+		case SYS_DVBC_ANNEX_B:
+		case SYS_DVBC_ANNEX_C:
 #else
-			case SYS_DVBC_ANNEX_AC:
-			case SYS_DVBC_ANNEX_B:
+		case SYS_DVBC_ANNEX_AC:
+		case SYS_DVBC_ANNEX_B:
 #endif
-				_properties.setModulationType(QAM_AUTO);
-				break;
-			default:
-				SI_LOG_ERROR("Not supported delivery system");
-				break;
+			_properties.setModulationType(QAM_AUTO);
+			break;
+		default:
+			SI_LOG_ERROR("Not supported delivery system");
+			break;
 		}
 	}
 	if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
@@ -464,7 +522,7 @@ void Stream::parseStreamString_L(const std::string &msg, const std::string &meth
 		_properties.setSISOMISO(intVal);
 	}
 	if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
-		StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
+	    StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
 		processPID_L(strVal, true);
 	}
 	if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
@@ -483,7 +541,7 @@ void Stream::processPID_L(const std::string &pids, bool add) {
 		}
 		_properties.setAllPID(add);
 	} else {
-		for (;;) {
+		for (;; ) {
 			std::string::size_type end = pids.find_first_of(",", begin);
 			if (end != std::string::npos) {
 				const int pid = atoi(pids.substr(begin, end - begin).c_str());

@@ -1,6 +1,6 @@
 /* HttpServer.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,18 +20,18 @@
 #ifndef HTTP_SERVER_H_INCLUDE
 #define HTTP_SERVER_H_INCLUDE HTTP_SERVER_H_INCLUDE
 
-#include "HttpcServer.h"
-#include "ThreadBase.h"
+#include <FwDecl.h>
+#include <base/ThreadBase.h>
+#include <HttpcServer.h>
 
-// forward declaration
-class InterfaceAttr;
-class Properties;
-class Streams;
-class DvbapiClient;
+FW_DECL_NS0(InterfaceAttr);
+FW_DECL_NS0(Properties);
+FW_DECL_NS0(Streams);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// HTTP Server
 class HttpServer :
-	public ThreadBase,
+	public base::ThreadBase,
 	public HttpcServer {
 	public:
 
@@ -41,7 +41,7 @@ class HttpServer :
 		HttpServer(Streams &streams,
 			const InterfaceAttr &interface,
 			Properties &properties,
-			DvbapiClient *dvbapi);
+			decrypt::dvbapi::Client *decrypt);
 
 		virtual ~HttpServer();
 
@@ -72,7 +72,7 @@ class HttpServer :
 	private:
 
 		Properties &_properties;
-		DvbapiClient *_dvbapi;
+		decrypt::dvbapi::Client *_decrypt;
 
 }; // class HttpServer
 

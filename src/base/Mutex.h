@@ -1,6 +1,6 @@
 /* Mutex.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,14 +17,16 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef MUTEX_H_INCLUDE
-#define MUTEX_H_INCLUDE MUTEX_H_INCLUDE
+#ifndef BASE_MUTEX_H_INCLUDE
+#define BASE_MUTEX_H_INCLUDE BASE_MUTEX_H_INCLUDE
 
-#include "Log.h"
+#include <Log.h>
 
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/prctl.h>
+
+namespace base {
 
 /// The class @c Mutex can be locked exclusively per thread
 /// to guarantee thread safety.
@@ -115,6 +117,8 @@ class MutexLock {
 		// Data members
 		// =======================================================================
 		const Mutex &_mutex;
-}; // class Mutex
+};
 
-#endif // MUTEX_H_INCLUDE
+} // namespace base
+
+#endif // BASE_MUTEX_H_INCLUDE

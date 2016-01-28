@@ -1,6 +1,6 @@
 /* StreamThreadBase.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,15 +16,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
-#include "StreamThreadBase.h"
-#include "StreamClient.h"
-#include "StringConverter.h"
-#include "Log.h"
-#include "StreamProperties.h"
-#include "Utils.h"
+ */
+#include <StreamThreadBase.h>
+
+#include <Stream.h>
+#include <StreamClient.h>
+#include <StringConverter.h>
+#include <Log.h>
+#include <Utils.h>
+#include <input/Device.h>
 #ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
+	#include <decrypt/dvbapi/Client.h>
 #endif
 
 #include <assert.h>
@@ -40,21 +42,21 @@
 
 #include <fcntl.h>
 
-StreamThreadBase::StreamThreadBase(std::string protocol, StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi) :
-		ThreadBase(StringConverter::getFormattedString("Streaming%d", properties.getStreamID())),
-		_properties(properties),
-		_clients(clients),
-		_protocol(protocol),
-		_state(Paused),
-		_dvbapi(dvbapi) {
+StreamThreadBase::StreamThreadBase(std::string protocol, StreamInterface &stream,
+                                   decrypt::dvbapi::Client *decrypt) :
+	ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
+	_stream(stream),
+	_protocol(protocol),
+	_state(Paused),
+	_decrypt(decrypt) {
 #ifdef LIBDVBCSA
-	assert(_dvbapi);
+	assert(_decrypt);
 #endif
 	_pfd[0].fd = -1;
 
 	// Initialize all TS packets
-	uint32_t ssrc = _properties.getSSRC();
-	long timestamp = _properties.getTimestamp();
+	uint32_t ssrc = _stream.getSSRC();
+	long timestamp = _stream.getTimestamp();
 	for (size_t i = 0; i < MAX_BUF; ++i) {
 		_tsBuffer[i].initialize(ssrc, timestamp);
 	}
@@ -62,18 +64,19 @@ StreamThreadBase::StreamThreadBase(std::string protocol, StreamClient *clients, 
 
 StreamThreadBase::~StreamThreadBase() {
 #ifdef LIBDVBCSA
-	// Do not destroy _dvbapi here
-	_dvbapi->stopDecrypt(_properties.getStreamID());
+	// Do not destroy decrypt here
+	_decrypt->stopDecrypt(_stream.getStreamID());
 #endif
-	const int streamID = _properties.getStreamID();
+	const int streamID = _stream.getStreamID();
 	SI_LOG_INFO("Stream: %d, Destroy %s stream", streamID, _protocol.c_str());
 }
 
-bool StreamThreadBase::startStreaming(int fd_dvr) {
-	const int streamID = _properties.getStreamID();
+bool StreamThreadBase::startStreaming() {
+	const int streamID = _stream.getStreamID();
 	const int clientID = 0;
+	const StreamClient &client = _stream.getStreamClient(clientID);
 
-	_pfd[0].fd         = fd_dvr;
+	_pfd[0].fd         = _stream.getInputDevice()->getReadDataFD();
 	_pfd[0].events     = POLLIN | POLLPRI;
 	_pfd[0].revents    = 0;
 
@@ -83,7 +86,7 @@ bool StreamThreadBase::startStreaming(int fd_dvr) {
 
 	if (!startThread()) {
 		SI_LOG_ERROR("Stream: %d, Start %s Start stream to %s:%d ERROR", streamID, _protocol.c_str(),
-			_clients[clientID].getIPAddress().c_str(), getStreamSocketPort(clientID));
+		             client.getIPAddress().c_str(), getStreamSocketPort(clientID));
 		return false;
 	}
 	// Set priority above normal for this Thread
@@ -94,21 +97,21 @@ bool StreamThreadBase::startStreaming(int fd_dvr) {
 
 	_state = Running;
 	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d (Client fd: %d) (DVR fd: %d)", streamID, _protocol.c_str(),
-		_clients[clientID].getIPAddress().c_str(), getStreamSocketPort(clientID), _clients[clientID].getHttpcFD(), _pfd[0].fd);
+	            client.getIPAddress().c_str(), getStreamSocketPort(clientID), client.getHttpcFD(), _pfd[0].fd);
 
 	return true;
 }
 
-bool StreamThreadBase::restartStreaming(int fd_dvr, int clientID) {
+bool StreamThreadBase::restartStreaming(int clientID) {
 	// Check if thread is running
 	if (running()) {
 		_writeIndex = 0;
 		_readIndex  = 0;
 		_tsBuffer[_writeIndex].reset();
-		_pfd[0].fd = fd_dvr;
+		_pfd[0].fd = _stream.getInputDevice()->getReadDataFD();
 		_state = Running;
-		SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d (fd: %d)", _properties.getStreamID(),
-			_protocol.c_str(), _clients[clientID].getIPAddress().c_str(), getStreamSocketPort(clientID), _pfd[0].fd);
+		SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d (fd: %d)", _stream.getStreamID(),
+		            _protocol.c_str(), _stream.getStreamClient(clientID).getIPAddress().c_str(), getStreamSocketPort(clientID), _pfd[0].fd);
 	}
 	return true;
 }
@@ -118,7 +121,8 @@ bool StreamThreadBase::pauseStreaming(int clientID) {
 	// Check if thread is running
 	if (running()) {
 		_state = Pause;
-		const double payload = _properties.getRtpPayload() / (1024.0 * 1024.0);
+		const StreamClient &client = _stream.getStreamClient(clientID);
+		const double payload = _stream.getRtpPayload() / (1024.0 * 1024.0);
 		// try waiting on pause
 		auto timeout = 0;
 		while (_state != Paused) {
@@ -126,25 +130,25 @@ bool StreamThreadBase::pauseStreaming(int clientID) {
 			++timeout;
 			if (timeout > 50) {
 				SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
-					_properties.getStreamID(), _protocol.c_str(), _clients[clientID].getIPAddress().c_str(),
-					getStreamSocketPort(clientID), payload);
+				             _stream.getStreamID(), _protocol.c_str(), client.getIPAddress().c_str(),
+				             getStreamSocketPort(clientID), payload);
 				paused = false;
 				break;
 			}
 		}
 		if (paused) {
 			SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
-				_properties.getStreamID(), _protocol.c_str(), _clients[clientID].getIPAddress().c_str(),
-				getStreamSocketPort(clientID), payload);
+			            _stream.getStreamID(), _protocol.c_str(), client.getIPAddress().c_str(),
+			            getStreamSocketPort(clientID), payload);
 		}
 #ifdef LIBDVBCSA
-		_dvbapi->stopDecrypt(_properties.getStreamID());
+		_decrypt->stopDecrypt(_stream.getStreamID());
 #endif
 	}
 	return paused;
 }
 
-bool StreamThreadBase::readFullTSPacket(TSPacketBuffer &buffer) {
+bool StreamThreadBase::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	// try read maximum amount of bytes from DVR
 	const int bytes = read(_pfd[0].fd, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (bytes > 0) {
@@ -155,6 +159,9 @@ bool StreamThreadBase::readFullTSPacket(TSPacketBuffer &buffer) {
 }
 
 void StreamThreadBase::pollDVR(const StreamClient &client) {
+	
+	input::Device *inputDevice = _stream.getInputDevice();
+	
 	// call poll with a timeout of 100 ms
 	const int pollRet = poll(_pfd, 1, 100);
 	if (pollRet > 0) {
@@ -162,15 +169,15 @@ void StreamThreadBase::pollDVR(const StreamClient &client) {
 /*
 			// sync byte then check cc
 			if (_bufferPtrWrite[0] == 0x47 && bytes_read > 3) {
-				// get PID and CC from TS
-				const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
-				const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
-				_properties.addPIDData(pid, cc);
+					// get PID and CC from TS
+					const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
+					const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
+					_stream.addPIDData(pid, cc);
 			}
-*/
+ */
 #ifdef LIBDVBCSA
 			//
-			_dvbapi->decrypt(_properties.getStreamID(), _tsBuffer[_writeIndex]);
+			_decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
 #endif
 			// goto next, so inc write index
 			++_writeIndex;

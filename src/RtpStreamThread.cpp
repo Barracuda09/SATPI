@@ -1,6 +1,6 @@
 /* RtpStreamThread.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,43 +16,40 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
-#include "RtpStreamThread.h"
-#include "StreamClient.h"
-#include "Log.h"
-#include "StreamProperties.h"
-#include "InterfaceAttr.h"
-#include "Utils.h"
-#include "TimeCounter.h"
-#ifdef LIBDVBCSA
-	#include "DvbapiClient.h"
-#endif
+ */
+#include <RtpStreamThread.h>
+
+#include <StreamClient.h>
+#include <Log.h>
+#include <Stream.h>
+#include <InterfaceAttr.h>
+#include <Utils.h>
+#include <base/TimeCounter.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
-
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <fcntl.h>
-
-RtpStreamThread::RtpStreamThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi) :
-		StreamThreadBase("RTP", clients, properties, dvbapi),
-		_socket_fd_rtp(-1),
-		_cseq(0),
-		_rtcp(clients, properties) {}
+RtpStreamThread::RtpStreamThread(StreamInterface &stream, decrypt::dvbapi::Client *decrypt) :
+	StreamThreadBase("RTP", stream, decrypt),
+	_socket_fd_rtp(-1),
+	_cseq(0),
+	_rtcp(stream) {
+}
 
 RtpStreamThread::~RtpStreamThread() {
 	terminateThread();
 	CLOSE_FD(_socket_fd_rtp);
 }
 
-bool RtpStreamThread::startStreaming(int fd_dvr, int fd_fe) {
-	const int streamID = _properties.getStreamID();
+bool RtpStreamThread::startStreaming() {
+	const int streamID = _stream.getStreamID();
 
 	// RTP
 	if (_socket_fd_rtp == -1) {
@@ -74,40 +71,40 @@ bool RtpStreamThread::startStreaming(int fd_dvr, int fd_fe) {
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 	}
 	// RTCP
-	_rtcp.startStreaming(fd_fe);
+	_rtcp.startStreaming(_stream.getInputDevice()->getMonitorFD());
 
 	_cseq = 0x0000;
-	StreamThreadBase::startStreaming(fd_dvr);
+	StreamThreadBase::startStreaming();
 	return true;
 }
 
 int RtpStreamThread::getStreamSocketPort(int clientID) const {
-	return _clients[clientID].getRtpSocketPort();
+	return  _stream.getStreamClient(clientID).getRtpSocketPort();
 }
 
 void RtpStreamThread::threadEntry() {
-	const StreamClient &client = _clients[0];
+	const StreamClient &client = _stream.getStreamClient(0);
 	while (running()) {
 		switch (_state) {
-			case Pause:
-				_state = Paused;
-				break;
-			case Paused:
-				// Do nothing here, just wait
-				usleep(50000);
-				break;
-			case Running:
-				pollDVR(client);
-				break;
-			default:
-				PERROR("Wrong State");
-				usleep(50000);
-				break;
+		case Pause:
+			_state = Paused;
+			break;
+		case Paused:
+			// Do nothing here, just wait
+			usleep(50000);
+			break;
+		case Running:
+			pollDVR(client);
+			break;
+		default:
+			PERROR("Wrong State");
+			usleep(50000);
+			break;
 		}
 	}
 }
 
-void RtpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client) {
+void RtpStreamThread::sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) {
 	unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 
 	// update sequence number
@@ -116,7 +113,7 @@ void RtpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &c
 	rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
 
 	// update timestamp
-	const long timestamp = TimeCounter::getTicks() * 90;
+	const long timestamp = base::TimeCounter::getTicks() * 90;
 	rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
 	rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
 	rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
@@ -125,7 +122,7 @@ void RtpStreamThread::sendTSPacket(TSPacketBuffer &buffer, const StreamClient &c
 	const unsigned int size = buffer.getBufferSize();
 
 	// RTP packet octet count (Bytes)
-	_properties.addRtpData(size, timestamp);
+	_stream.addRtpData(size, timestamp);
 
 	// send the RTP packet
 	if (sendto(_socket_fd_rtp, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,

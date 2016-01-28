@@ -1,6 +1,6 @@
 /* StreamClient.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,14 +20,14 @@
 #ifndef STREAM_CLIENT_H_INCLUDE
 #define STREAM_CLIENT_H_INCLUDE STREAM_CLIENT_H_INCLUDE
 
-#include "Mutex.h"
-#include "SocketAttr.h"
-#include "SocketClient.h"
+#include <FwDecl.h>
+#include <SocketAttr.h>
+#include <SocketClient.h>
+#include <base/Mutex.h>
 
 #include <string>
 
-// Forward declarations
-class Stream;
+FW_DECL_NS0(Stream);
 
 /// StreamClient defines the owner/participants of an stream
 class StreamClient {
@@ -57,37 +57,37 @@ class StreamClient {
 
 		///
 		const std::string getMessage() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _httpcMsg;
 		}
 
 		///
 		std::string getIPAddress() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _ip_addr;
 		}
 
 		///
 		std::string getSessionID() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _sessionID;
 		}
 
 		///
 		void setSessionID(const std::string &sessionID) {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			_sessionID = sessionID;
 		}
 
 		///
 		unsigned int getSessionTimeout() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _sessionTimeout;
 		}
 
 		///
 		int getHttpcFD() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _httpcFD == nullptr ? -1 : *_httpcFD;
 		}
 
@@ -96,19 +96,19 @@ class StreamClient {
 
 		///
 		bool canClose() const  {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _canClose;
 		}
 
 		///
 		void setCSeq(int cseq) {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			_cseq = cseq;
 		}
 
 		///
 		int getCSeq() const {
-			MutexLock lock(_mutex);
+			base::MutexLock lock(_mutex);
 			return _cseq;
 		}
 
@@ -134,7 +134,7 @@ class StreamClient {
 		// Data members
 		// =======================================================================
 	private:
-		Mutex        _mutex;           ///
+		base::Mutex  _mutex;           ///
 		int          _clientID;
 		const int   *_httpcFD;         /// For sending reply to and checking
 		                               /// connection

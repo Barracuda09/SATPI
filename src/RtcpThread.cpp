@@ -1,6 +1,6 @@
 /* RtcpThread.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 */
 #include "RtcpThread.h"
 #include "StreamClient.h"
-#include "StreamProperties.h"
+#include "Stream.h"
 #include "Log.h"
 #include "Utils.h"
 
@@ -37,11 +37,10 @@
 #include <fcntl.h>
 
 
-RtcpThread::RtcpThread(StreamClient *clients, StreamProperties &properties) :
+RtcpThread::RtcpThread(StreamInterface &stream) :
 		ThreadBase("RtcpThread"),
 		_socket_fd(-1),
-		_clients(clients),
-		_properties(properties),
+		_stream(stream),
 		_fd_fe(-1) {
 }
 
@@ -49,10 +48,11 @@ RtcpThread::~RtcpThread() {
 	terminateThread();
 	CLOSE_FD(_fd_fe);
 	CLOSE_FD(_socket_fd);
-	SI_LOG_INFO("Stream: %d, Stop RTCP stream", _properties.getStreamID());
+	SI_LOG_INFO("Stream: %d, Stop RTCP stream", _stream.getStreamID());
 }
 
 bool RtcpThread::startStreaming(int fd_fe) {
+	const StreamClient &client = _stream.getStreamClient(0);
 	_fd_fe = fd_fe;
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
@@ -67,12 +67,12 @@ bool RtcpThread::startStreaming(int fd_fe) {
 		}
 	}
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, Start RTCP stream to %s:%d ERROR", _properties.getStreamID(),
-		             _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort());
+		SI_LOG_ERROR("Stream: %d, Start RTCP stream to %s:%d ERROR", _stream.getStreamID(),
+		             client.getIPAddress().c_str(), client.getRtcpSocketPort());
 		return false;
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d (fd: %d)", _properties.getStreamID(),
-	            _clients[0].getIPAddress().c_str(), _clients[0].getRtcpSocketPort(), _fd_fe);
+	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d (fd: %d)", _stream.getStreamID(),
+	            client.getIPAddress().c_str(), client.getRtcpSocketPort(), _fd_fe);
 	return true;
 }
 
@@ -102,7 +102,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 		strength = (strength * 240) / 0xffff;
 		snr = (snr * 15) / 0xffff;
 
-		_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+		_stream.setFrontendMonitorData(status, strength, snr, ber, ublocks);
 
 		// Print Status
 		if (showStatus) {
@@ -118,7 +118,7 @@ void RtcpThread::monitorFrontend(bool showStatus) {
 uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	uint8_t app[1024 * 2];
 
-	uint32_t ssrc = _properties.getSSRC();
+	uint32_t ssrc = _stream.getSSRC();
 
 	// Application Defined packet  (APP Packet)
 	app[0]  = 0x80;                // version: 2, padding: 0, subtype: 0
@@ -140,7 +140,7 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	                               // Now the App defined data is added
 
 	bool active = false;
-	std::string desc = _properties.attribute_describe_string(active);
+	std::string desc = _stream.attributeDescribeString(active);
 	const char *attr_desc_str = desc.c_str();
 	memcpy(app + 16, attr_desc_str, desc.size());
 #if 0
@@ -181,10 +181,10 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	uint8_t sr[28];
 
-	long     timestamp = _properties.getTimestamp();
-	uint32_t ssrc = _properties.getSSRC();
-	uint32_t spc = _properties.getSPC();
-	uint32_t soc = _properties.getSOC();
+	long     timestamp = _stream.getTimestamp();
+	uint32_t ssrc = _stream.getSSRC();
+	uint32_t spc = _stream.getSPC();
+	uint32_t soc = _stream.getSOC();
 
 	// Sender Report (SR Packet)
 	sr[0]  = 0x80;                         // version: 2, padding: 0, sr blocks: 0
@@ -239,7 +239,7 @@ uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
  */
 uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 	uint8_t sdes[20];
-	uint32_t ssrc = _properties.getSSRC();
+	uint32_t ssrc = _stream.getSSRC();
 
 	// Source Description (SDES Packet)
 	sdes[0]  = 0x81;                           // version: 2, padding: 0, sc blocks: 1
@@ -281,14 +281,14 @@ uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 }
 
 void RtcpThread::threadEntry() {
-	const StreamClient &client = _clients[0];
+	const StreamClient &client = _stream.getStreamClient(0);
 	int mon_update = 0;
 
 	while (running()) {
 		// check do we need to update frontend monitor
 		if (mon_update == 0) {
 			monitorFrontend(false);
-			mon_update = _properties.getRtcpSignalUpdateFrequency();
+			mon_update = _stream.getRtcpSignalUpdateFrequency();
 		} else {
 			--mon_update;
 		}

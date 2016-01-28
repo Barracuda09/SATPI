@@ -1,6 +1,6 @@
-/* TSPacketBuffer.cpp
+/* PacketBuffer.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,20 +17,22 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "TSPacketBuffer.h"
+#include <mpegts/PacketBuffer.h>
 
 #include <assert.h>
 
+namespace mpegts {
+
 static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
 
-TSPacketBuffer::TSPacketBuffer() :
+PacketBuffer::PacketBuffer() :
 		_writeIndex(0),
 		_initialized(false),
 		_decryptPending(false) {}
 
-TSPacketBuffer::~TSPacketBuffer() {}
+PacketBuffer::~PacketBuffer() {}
 
-void TSPacketBuffer::initialize(uint32_t ssrc, long timestamp) {
+void PacketBuffer::initialize(uint32_t ssrc, long timestamp) {
 	// initialize RTP header
 	_buffer[0]  = 0x80;                         // version: 2, padding: 0, extension: 0, CSRC: 0
 	_buffer[1]  = 33;                           // marker: 0, payload type: 33 (MP2T)
@@ -47,3 +49,5 @@ void TSPacketBuffer::initialize(uint32_t ssrc, long timestamp) {
 
 	_initialized = true;
 }
+
+} // namespace mpegts

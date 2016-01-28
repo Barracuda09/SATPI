@@ -1,6 +1,6 @@
 /* HttpStreamThread.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,27 +20,25 @@
 #ifndef HTTP_STREAM_THREAD_H_INCLUDE
 #define HTTP_STREAM_THREAD_H_INCLUDE HTTP_STREAM_THREAD_H_INCLUDE
 
-#include "StreamThreadBase.h"
-#include "RtcpThread.h"
+#include <FwDecl.h>
+#include <StreamThreadBase.h>
 
-// forward declaration
-class StreamClient;
-class StreamProperties;
-class DvbapiClient;
+FW_DECL_NS0(StreamClient);
+FW_DECL_NS0(StreamInterface);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// HTTP Streaming thread
 class HttpStreamThread :
-		public StreamThreadBase {
+	public StreamThreadBase {
 	public:
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpStreamThread(StreamClient *clients, StreamProperties &properties, DvbapiClient *dvbapi);
+		HttpStreamThread(
+			StreamInterface &stream,
+			decrypt::dvbapi::Client *decrypt);
 
 		virtual ~HttpStreamThread();
-
-		/// @see StreamThreadBase
-		virtual bool startStreaming(int fd_dvr, int fd_fe);
 
 	protected:
 
@@ -48,7 +46,7 @@ class HttpStreamThread :
 		virtual void threadEntry();
 
 		/// @see StreamThreadBase
-		virtual void sendTSPacket(TSPacketBuffer &buffer, const StreamClient &client);
+		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client);
 
 		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const;

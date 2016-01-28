@@ -1,6 +1,6 @@
 /* FileDescriptor.h
 
-   Copyright (C) 2015 Marc Postema (m.a.postema -at- alice.nl)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License

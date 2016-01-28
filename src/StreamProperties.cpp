@@ -1,6 +1,6 @@
 /* StreamProperties.cpp
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,13 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "StreamProperties.h"
-#include "StringConverter.h"
-#include "Log.h"
-#include "dvbfix.h"
-#include "Frontend.h"
-#include "Configure.h"
-#include "Utils.h"
+#include <StreamProperties.h>
+
+#include <StringConverter.h>
+#include <Log.h>
+#include <Utils.h>
+#include <input/dvb/Frontend.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +46,7 @@ StreamProperties::StreamProperties(int streamID) :
 StreamProperties::~StreamProperties() {}
 
 void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	// inc RTP packet counter
 	++_spc;
@@ -61,17 +60,17 @@ void StreamProperties::addRtpData(const uint32_t byte, long timestamp) {
 ////////////////////////////////////
 
 void StreamProperties::setPMT(int pid, bool set) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	_channelData._pidTable.setPMT(pid, set);
 }
 
 bool StreamProperties::isPMT(int pid) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _channelData._pidTable.isPMT(pid);
 }
 
 void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	const bool isSet = _channelData.isPIDUsed(pid);
 	if (!isSet || !set) {
@@ -81,27 +80,27 @@ void StreamProperties::setECMFilterData(int demux, int filter, int pid, bool set
 }
 
 void StreamProperties::getECMFilterData(int &demux, int &filter, int pid) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	_channelData._pidTable.getECMFilterData(demux, filter, pid);
 }
 
 bool StreamProperties::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _channelData._pidTable.getActiveECMFilterData(demux, filter, pid);
 }
 
 bool StreamProperties::isECM(int pid) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _channelData._pidTable.isECM(pid);
 }
 
 void StreamProperties::setKeyParity(int pid, int parity) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	_channelData._pidTable.setKeyParity(pid, parity);
 }
 
 int StreamProperties::getKeyParity(int pid) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _channelData._pidTable.getKeyParity(pid);
 }
 
@@ -123,7 +122,7 @@ void StreamProperties::setECMInfo(
 
 void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
                                               uint32_t ber, uint32_t ublocks) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	_status = status;
 	_strength = strength;
@@ -133,27 +132,27 @@ void StreamProperties::setFrontendMonitorData(fe_status_t status, uint16_t stren
 }
 
 fe_status_t StreamProperties::getFrontendStatus() const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _status;
 }
 
 unsigned long StreamProperties::getDVRBufferSize() const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _dvrBufferSize;
 }
 
 bool StreamProperties::diseqcRepeat() const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _diseqcRepeat;
 }
 
 unsigned int StreamProperties::getRtcpSignalUpdateFrequency() const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	return _rtcpSignalUpdate;
 }
 
 void StreamProperties::fromXML(const std::string &xml) {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	std::string element;
 	if (findXMLElement(xml, "diseqc_repeat.value", element)) {
@@ -168,7 +167,7 @@ void StreamProperties::fromXML(const std::string &xml) {
 }
 
 void StreamProperties::addToXML(std::string &xml) const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	//
 	StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc);
@@ -197,8 +196,8 @@ void StreamProperties::addToXML(std::string &xml) const {
 	ADD_CONFIG_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 }
 
-std::string StreamProperties::attribute_describe_string(bool &active) const {
-	MutexLock lock(_mutex);
+std::string StreamProperties::attributeDescribeString(bool &active) const {
+	base::MutexLock lock(_mutex);
 
 	active = _streamActive;
 	double freq = _channelData.freq / 1000.0;
@@ -286,7 +285,7 @@ std::string StreamProperties::attribute_describe_string(bool &active) const {
 }
 
 void StreamProperties::printChannelInfo() const {
-	MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 
 	SI_LOG_INFO("freq:         %d", _channelData.freq);
 	SI_LOG_INFO("srate:        %d", _channelData.srate);

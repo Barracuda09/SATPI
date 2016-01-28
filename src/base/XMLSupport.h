@@ -1,6 +1,6 @@
 /* XMLSupport.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -16,15 +16,19 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
-*/
-#ifndef XML_SUPPORT_H_INCLUDE
-#define XML_SUPPORT_H_INCLUDE XML_SUPPORT_H_INCLUDE
+ */
+#ifndef BASE_XML_SUPPORT_H_INCLUDE
+#define BASE_XML_SUPPORT_H_INCLUDE BASE_XML_SUPPORT_H_INCLUDE
+
+#include <StringConverter.h>
 
 #include <string>
 
-/// The class @c XMLSupport has some basic functions to handle XML strings
-class XMLSupport {
-	public:
+namespace base {
+
+	/// The class @c XMLSupport has some basic functions to handle XML strings
+	class XMLSupport {
+		public:
 
 		// =======================================================================
 		// Constructors and destructor
@@ -41,7 +45,7 @@ class XMLSupport {
 		/// Get the file name for this XML
 		std::string getFileName() const;
 
-	protected:
+		protected:
 
 		///
 		bool findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element);
@@ -55,14 +59,34 @@ class XMLSupport {
 		/// Restores/Loads XML file
 		bool restoreXML();
 
-	private:
+		private:
 
 		/// Very basic/simple recursive XML parser
 		bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
-			std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
+					  std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
 
 		std::string _filePath;
 
-}; // class XMLSupport
+	};
 
-#endif // XML_SUPPORT_H_INCLUDE
+} // namespace base
+
+#define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE)
+
+#define ADD_CONFIG_NUMBER(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME ">%d</" VARNAME ">", VALUE)
+
+#define ADD_CONFIG_CHECKBOX(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>checkbox</inputtype><value>%s</value></" VARNAME ">", VALUE)
+
+#define ADD_CONFIG_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></" VARNAME ">", VALUE, MIN, MAX)
+
+#define ADD_CONFIG_TEXT_INPUT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>text</inputtype><value>%s</value></" VARNAME ">", VALUE)
+
+#define ADD_CONFIG_IP_INPUT(XML, VARNAME, VALUE) \
+	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>ip</inputtype><value>%s</value></" VARNAME ">", VALUE)
+
+#endif // BASE_XML_SUPPORT_H_INCLUDE

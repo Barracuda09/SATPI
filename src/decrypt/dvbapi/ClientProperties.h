@@ -1,6 +1,6 @@
-/* DvbapiClientProperties.h
+/* ClientProperties.h
 
-   Copyright (C) 2015 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,13 +17,13 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef DVB_API_CLIENT_PROPERTIES_H_INCLUDE
-#define DVB_API_CLIENT_PROPERTIES_H_INCLUDE DVB_API_CLIENT_PROPERTIES_H_INCLUDE
+#ifndef DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
+#define DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 
-#include "TSTableData.h"
-#include "Log.h"
-#include "Utils.h"
-#include "TimeCounter.h"
+#include <Log.h>
+#include <Utils.h>
+#include <mpegts/TableData.h>
+#include <base/TimeCounter.h>
 
 #include <utility>
 #include <queue>
@@ -31,6 +31,9 @@
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
+
+namespace decrypt {
+namespace dvbapi {
 
 ///
 class Keys {
@@ -48,7 +51,7 @@ class Keys {
 		void set(const unsigned char *cw, int parity, int /*index*/) {
 			dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
 			dvbcsa_bs_key_set(cw, k);
-			_key[parity].push(std::make_pair(TimeCounter::getTicks(), k));
+			_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
 		}
 
 		const dvbcsa_bs_key_s *get(int parity) const {
@@ -80,19 +83,19 @@ class Keys {
 };
 
 ///
-class DvbapiClientProperties {
+class ClientProperties {
 	public:
 
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		DvbapiClientProperties() {
+		ClientProperties() {
 			_batchSize = dvbcsa_bs_batch_size();
 			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
 			_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
 			_batchCount = 0;
 		}
-		virtual ~DvbapiClientProperties() {
+		virtual ~ClientProperties() {
 			DELETE_ARRAY(_batch);
 			DELETE_ARRAY(_ts);
 			freeKeys();
@@ -299,9 +302,12 @@ class DvbapiClientProperties {
 		int         _batchCount;
 		int         _parity;
 		Keys        _keys;
-		TSTableData _pat;
-		TSTableData _pmt;
+		mpegts::TableData _pat;
+		mpegts::TableData _pmt;
 
-}; // class DvbapiClientProperties
+}; // class ClientProperties
 
-#endif // DVB_API_CLIENT_PROPERTIES_H_INCLUDE
+} // namespace dvbapi
+} // namespace decrypt
+
+#endif // DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
