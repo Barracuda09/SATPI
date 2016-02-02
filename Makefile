@@ -61,6 +61,7 @@ ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
+  SOURCES += Stream_InterfaceDecrypt.cpp
 endif
 
 ifeq ($(HAS_NP_FUNCTIONS),yes)

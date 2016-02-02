@@ -21,23 +21,12 @@
 
 #include <InterfaceAttr.h>
 #include <Log.h>
-#include <Stream.h>
+#include <StreamInterface.h>
 #include <StreamClient.h>
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-
-#include <fcntl.h>
 
 HttpStreamThread::HttpStreamThread(
 	StreamInterface &stream,
@@ -65,7 +54,7 @@ void HttpStreamThread::threadEntry() {
 			usleep(50000);
 			break;
 		case Running:
-			pollDVR(client);
+			readDataFromInputDevice(client);
 			break;
 		default:
 			PERROR("Wrong State");
@@ -75,7 +64,7 @@ void HttpStreamThread::threadEntry() {
 	}
 }
 
-void HttpStreamThread::sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) {
+void HttpStreamThread::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client) {
 	unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 	const unsigned int size = buffer.getBufferSize();

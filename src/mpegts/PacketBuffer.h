@@ -20,7 +20,6 @@
 #ifndef MPEGTS_PACKET_BUFFER_H_INCLUDE
 #define MPEGTS_PACKET_BUFFER_H_INCLUDE MPEGTS_PACKET_BUFFER_H_INCLUDE
 
-#include <stdio.h>
 #include <stdint.h>
 
 #include <cstddef>

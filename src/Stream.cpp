@@ -48,6 +48,7 @@ Stream::Stream(int streamID, decrypt::dvbapi::Client *decrypt) :
 
 Stream::~Stream() {
 	DELETE_ARRAY(_client);
+	DELETE(_frontend);
 }
 
 // ===========================================================================
@@ -101,6 +102,10 @@ std::string Stream::attributeDescribeString(bool &active) const {
 void Stream::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
 		uint32_t ber, uint32_t ublocks) {
 	_properties.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+}
+
+void Stream::addPIDData(int pid, uint8_t cc) {
+	_properties.addPIDData(pid, cc);
 }
 
 // ===========================================================================
@@ -172,20 +177,6 @@ void Stream::checkStreamClientsWithTimeout() {
 			teardown(i, false);
 		}
 	}
-}
-
-bool Stream::updateFrontend() {
-	base::MutexLock lock(_mutex);
-
-	if (_properties.hasPIDTableChanged()) {
-		if (_frontend->isTuned()) {
-			_frontend->update(_properties);
-		} else {
-			SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
-			            _properties.getStreamID());
-		}
-	}
-	return true;
 }
 
 bool Stream::update(int clientID) {

@@ -40,20 +40,17 @@
 RtcpThread::RtcpThread(StreamInterface &stream) :
 		ThreadBase("RtcpThread"),
 		_socket_fd(-1),
-		_stream(stream),
-		_fd_fe(-1) {
+		_stream(stream) {
 }
 
 RtcpThread::~RtcpThread() {
 	terminateThread();
-	CLOSE_FD(_fd_fe);
 	CLOSE_FD(_socket_fd);
 	SI_LOG_INFO("Stream: %d, Stop RTCP stream", _stream.getStreamID());
 }
 
-bool RtcpThread::startStreaming(int fd_fe) {
+bool RtcpThread::startStreaming() {
 	const StreamClient &client = _stream.getStreamClient(0);
-	_fd_fe = fd_fe;
 	if (_socket_fd == -1) {
 		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTCP");
@@ -71,48 +68,9 @@ bool RtcpThread::startStreaming(int fd_fe) {
 		             client.getIPAddress().c_str(), client.getRtcpSocketPort());
 		return false;
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d (fd: %d)", _stream.getStreamID(),
-	            client.getIPAddress().c_str(), client.getRtcpSocketPort(), _fd_fe);
+	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d", _stream.getStreamID(),
+	            client.getIPAddress().c_str(), client.getRtcpSocketPort());
 	return true;
-}
-
-void RtcpThread::monitorFrontend(bool showStatus) {
-	fe_status_t status = FE_TIMEDOUT;
-
-	// first read status
-	if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-		uint16_t strength;
-		uint16_t snr;
-		uint32_t ber;
-		uint32_t ublocks;
-
-		// some frontends might not support all these ioctls
-		if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
-			strength = 0;
-		}
-		if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
-			snr = 0;
-		}
-		if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
-			ber = 0;
-		}
-		if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
-			ublocks = 0;
-		}
-		strength = (strength * 240) / 0xffff;
-		snr = (snr * 15) / 0xffff;
-
-		_stream.setFrontendMonitorData(status, strength, snr, ber, ublocks);
-
-		// Print Status
-		if (showStatus) {
-			SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
-				status, strength, snr, ber, ublocks,
-				(status & FE_HAS_LOCK) ? 1 : 0);
-		}
-	} else {
-		PERROR("FE_READ_STATUS failed");
-	}
 }
 
 uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
@@ -287,7 +245,14 @@ void RtcpThread::threadEntry() {
 	while (running()) {
 		// check do we need to update frontend monitor
 		if (mon_update == 0) {
-			monitorFrontend(false);
+			fe_status_t status;
+			uint16_t strength;
+			uint16_t snr;
+			uint32_t ber;
+			uint32_t ublocks;
+			_stream.getInputDevice()->monitorFrontend(status, strength, snr, ber, ublocks, false);
+			_stream.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+
 			mon_update = _stream.getRtcpSignalUpdateFrequency();
 		} else {
 			--mon_update;

@@ -23,203 +23,58 @@
 #include <Log.h>
 #include <Utils.h>
 #include <StreamClient.h>
+#include <StreamInterfaceDecrypt.h>
 #include <SocketClient.h>
 #include <StringConverter.h>
+#include <input/dvb/Frontend.h>
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#define DMX       "/dev/dvb/adapter%d/demux%d"
-#define DVR       "/dev/dvb/adapter%d/dvr%d"
-#define FRONTEND  "/dev/dvb/adapter%d/frontend%d"
-
-#define FE_PATH_LEN 255
 
 Streams::Streams() :
-		_stream(nullptr),
-		_maxStreams(0),
-		_dummyStream(nullptr) {
-}
+	_dummyStream(nullptr) {}
 
 Streams::~Streams() {
 	DELETE(_dummyStream);
-	for (int i = 0; i < _maxStreams; ++i) {
-		DELETE(_stream[i]);
+	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+		DELETE(*it);
 	}
-	DELETE_ARRAY(_stream);
 }
 
-int Streams::getAttachedFrontendCount_L(const std::string &path, int count) {
-#if SIMU
-	UNUSED(path)
-	count = 2;
-	if (_maxStreams && _stream) {
-		char fe_path[FE_PATH_LEN];
-		char dvr_path[FE_PATH_LEN];
-		char dmx_path[FE_PATH_LEN];
-		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
-		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
-		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-		_stream[0]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
-		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
-		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
-		_stream[1]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-	}
-#else
-	struct dirent **file_list;
-	const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
-	if (n > 0) {
-		int i;
-		for (i = 0; i < n; ++i) {
-			char full_path[FE_PATH_LEN];
-			snprintf(full_path, FE_PATH_LEN, "%s/%s", path.c_str(), file_list[i]->d_name);
-			struct stat stat_buf;
-			if (stat(full_path, &stat_buf) == 0) {
-				switch (stat_buf.st_mode & S_IFMT) {
-					case S_IFCHR: // character device
-						if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
-							// check if we have an array we can fill in
-							if (_maxStreams && _stream) {
-								int fe_nr;
-								sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
-								int adapt_nr;
-								sscanf(path.c_str(), "/dev/dvb/adapter%d", &adapt_nr);
-
-								// make paths and 'save' them
-								char fe_path[FE_PATH_LEN];
-								char dvr_path[FE_PATH_LEN];
-								char dmx_path[FE_PATH_LEN];
-								snprintf(fe_path,  FE_PATH_LEN, FRONTEND, adapt_nr, fe_nr);
-								snprintf(dvr_path, FE_PATH_LEN, DVR, adapt_nr, fe_nr);
-								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
-								_stream[count]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-							}
-							++count;
-						}
-					    break;
-					case S_IFDIR:
-						// do not use dir '.' an '..'
-						if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-							count = getAttachedFrontendCount_L(full_path, count);
-						}
-						break;
-				}
-			}
-			free(file_list[i]);
-		}
-	}
-#endif
-	return count;
-}
-
-int Streams::enumerateFrontends(const std::string &path, decrypt::dvbapi::Client *decrypt) {
+void Streams::enumerateDevices(decrypt::dvbapi::Client *decrypt) {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
-	SI_LOG_DEBUG("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
-	SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
-	_maxStreams = 0;
 	_nr_dvb_s2 = 0;
 	_nr_dvb_t = 0;
 	_nr_dvb_t2 = 0;
 	_nr_dvb_c = 0;
-#if FULL_DVB_API_VERSION >= 0x0505
 	_nr_dvb_c2 = 0;
-#endif
+
 	_dummyStream = new Stream(0, decrypt);
-	_maxStreams = getAttachedFrontendCount_L(path, 0);
-	_stream = new Stream *[_maxStreams + 1];
-	if (_stream != nullptr) {
-		for (int i = 0; i < _maxStreams; ++i) {
-			_stream[i] = new Stream(i, decrypt);
-		}
-	} else {
-		_maxStreams = 0;
-	}
-	SI_LOG_INFO("Frontends found: %zu", _maxStreams);
-	if (_maxStreams) {
-		getAttachedFrontendCount_L(path, 0);
-		for (auto i = 0; i < _maxStreams; ++i) {
-			_stream[i]->setFrontendInfo();
-			int dvb_s2 = 0;
-			int dvb_t  = 0;
-			int dvb_t2 = 0;
-			int dvb_c  = 0;
-			//
-			for (size_t j = 0; j < _stream[i]->getDeliverySystemSize(); j++) {
-				const fe_delivery_system_t *del_sys = _stream[i]->getDeliverySystem();
-				switch (del_sys[j]) {
-					// only count DVBS2
-					case SYS_DVBS2:
-						++dvb_s2;
-						break;
-					case SYS_DVBT:
-						++dvb_t;
-						break;
-					case SYS_DVBT2:
-						++dvb_t2;
-						break;
-#if FULL_DVB_API_VERSION >= 0x0505
-					case SYS_DVBC_ANNEX_A:
-					case SYS_DVBC_ANNEX_B:
-					case SYS_DVBC_ANNEX_C:
-						if (!dvb_c) {
-							++dvb_c;
-						}
-						break;
-#else
-					case SYS_DVBC_ANNEX_AC:
-					case SYS_DVBC_ANNEX_B:
-						if (!dvb_c) {
-							++dvb_c;
-						}
-						break;
-#endif
-					default:
-						// Not supported
-						break;
-				}
-			}
-			_nr_dvb_s2 += dvb_s2;
-			_nr_dvb_t  += dvb_t;
-			_nr_dvb_t2 += dvb_t2;
-			_nr_dvb_c  += dvb_c;
-		}
-		// make xml delivery system string
-#if FULL_DVB_API_VERSION >= 0x0505
-		StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
-				   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
-#else
-		StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu",
-				   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c);
-#endif
-	} else {
-		_del_sys_str = "Nothing Found";
-	}
-	return _maxStreams;
+	input::dvb::Frontend::enumerate(_stream, decrypt, "/dev/dvb", _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
+		_nr_dvb_c, _nr_dvb_c2);
+
+	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
+			   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
+		
 }
 
 Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	base::MutexLock lock(_mutex);
 
 	// Here we need to find the correct Stream and StreamClient
-	assert(_stream);
+	assert(!_stream.empty());
 	const std::string &msg = socketClient.getMessage();
 	std::string method;
 	StringConverter::getMethod(msg, method);
 
 	int streamID = StringConverter::getIntParameter(msg, method, "stream=");
 	const int fe_nr = StringConverter::getIntParameter(msg, method, "fe=");
-	if (streamID == -1 && fe_nr >= 1 && fe_nr <= static_cast<int>(_maxStreams)) {
+	if (streamID == -1 && fe_nr >= 1 && fe_nr <= static_cast<int>(_stream.size())) {
 		streamID = fe_nr - 1;
 	}
 
@@ -235,12 +90,12 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 			foundSessionID = true;
 			sessionID = socketClient.getSessionID();
 			SI_LOG_INFO("Found SessionID %s by SocketClient", sessionID.c_str());
-		// Do we need to make a new sessionID (only if there are transport parameters
+			// Do we need to make a new sessionID (only if there are transport parameters
 		} else if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
 			static unsigned int seedp = 0xBEEF;
 			StringConverter::addFormattedString(sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
 			newSession = true;
-		// None of the above.. so it is just an outside session give an temporary StreamClient
+			// None of the above.. so it is just an outside session give an temporary StreamClient
 		} else {
 			SI_LOG_INFO("Found message outside session");
 			socketClient.setSessionID("-1");
@@ -253,19 +108,21 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 	if (streamID == -1) {
 		if (foundSessionID) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
-			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+				Stream *stream = *it;
+				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
-					return _stream[streamID];
+					return stream;
 				}
 			}
 		} else {
 			SI_LOG_INFO("Found StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
-			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (!_stream[streamID]->streamInUse()) {
-					if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+				Stream *stream = *it;
+				if (!stream->streamInUse()) {
+					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 						socketClient.setSessionID(sessionID);
-						return _stream[streamID];
+						return stream;
 					}
 				}
 			}
@@ -276,10 +133,11 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 		// Did we find the StreamClient? else try to search in other Streams
 		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			SI_LOG_ERROR("SessionID %s not found int StreamID %d", sessionID.c_str(), streamID);
-			for (streamID = 0; streamID < (int)_maxStreams; ++streamID) {
-				if (_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+				Stream *stream = *it;
+				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
-					return _stream[streamID];
+					return stream;
 				}
 			}
 		} else {
@@ -295,54 +153,53 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 void Streams::checkStreamClientsWithTimeout() {
 	base::MutexLock lock(_mutex);
 
-	assert(_stream);
-	for (auto streamID = 0; streamID < _maxStreams; ++streamID) {
-		if (_stream[streamID]->streamInUse()) {
-			_stream[streamID]->checkStreamClientsWithTimeout();
+	assert(!_stream.empty());
+	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+		Stream *stream = *it;
+		if (stream->streamInUse()) {
+			stream->checkStreamClientsWithTimeout();
 		}
 	}
 }
 
-StreamProperties & Streams::getStreamProperties(int streamID) {
-//	base::MutexLock lock(_mutex);
-
-	return _stream[streamID]->getStreamProperties();
-}
-
-bool Streams::updateFrontend(int streamID) {
-//	base::MutexLock lock(_mutex);
-
-	return _stream[streamID]->updateFrontend();
+StreamInterfaceDecrypt *Streams::getStreamInterfaceDecrypt(int streamID) {
+#ifdef LIBDVBCSA
+	return _stream[streamID];
+#else
+	return nullptr;
+#endif
 }
 
 std::string Streams::attributeDescribeString(unsigned int stream, bool &active) const {
 	base::MutexLock lock(_mutex);
 
-	assert(_stream);
+	assert(!_stream.empty());
 	return _stream[stream]->attributeDescribeString(active);
 }
 
 void Streams::fromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
-
-	for (auto i = 0; i < _maxStreams; ++i) {
+	std::size_t i = 0;
+	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
+		Stream *stream = *it;
 		std::string find;
 		std::string element;
 		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
 		findXMLElement(xml, find, element);
-		_stream[i]->fromXML(element);
+		stream->fromXML(element);
 	}
 }
 
 void Streams::addToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
-
-	assert(_stream);
+	assert(!_stream.empty());
+	std::size_t i = 0;
 	// application data
 	xml += "<streams>";
-	for (auto i = 0; i < _maxStreams; ++i) {
+	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
+		const Stream *stream = *it;
 		StringConverter::addFormattedString(xml, "<stream%zu>", i);
-		_stream[i]->addToXML(xml);
+		stream->addToXML(xml);
 		StringConverter::addFormattedString(xml, "</stream%zu>", i);
 	}
 	xml += "</streams>";

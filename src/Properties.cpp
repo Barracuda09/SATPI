@@ -21,15 +21,10 @@
 #include <Log.h>
 #include <Utils.h>
 
-#include <iostream>
-#include <fstream>
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <iostream>
+#include <fstream>
 
 extern const char *satpi_version;
 

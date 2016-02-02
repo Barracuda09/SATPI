@@ -37,11 +37,12 @@ FW_DECL_NS2(decrypt, dvbapi, Client);
 class StreamThreadBase :
 	public base::ThreadBase {
 	public:
+
 		// =======================================================================
 		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
 		StreamThreadBase(
-			std::string protocol,
+			const std::string &protocol,
 			StreamInterface &stream,
 			decrypt::dvbapi::Client *decrypt);
 
@@ -53,13 +54,7 @@ class StreamThreadBase :
 		/// Start streaming
 		/// @return true if stream is started else false on error
 		virtual bool startStreaming();
-/*
-		/// Start streaming should be implemented by the subclasses that needs an frontend monitor.
-		/// @param fd_dvr
-		/// @param fd_fe
-		/// @return true if stream is started else false on error
-		virtual bool startStreaming(int fd_dvr, int fd_fe) { return false; }
-*/
+
 		/// Pause streaming
 		/// @return true if stream is paused else false on error
 		virtual bool pauseStreaming(int clientID);
@@ -69,26 +64,26 @@ class StreamThreadBase :
 		virtual bool restartStreaming(int clientID);
 
 	protected:
+
 		/// @see ThreadBase
 		virtual void threadEntry() = 0;
 
-		/// This function will poll the DVR (_pfd)
-		/// @param client
-		virtual void pollDVR(const StreamClient &client);
+		/// This function will read data from the input device
+		/// @param client specifies were it should be sended to
+		virtual void readDataFromInputDevice(const StreamClient &client);
 
-		/// send the TS packets to client
-		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) = 0;
+		/// send the TS packets to an output device
+		virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client) = 0;
 
 		///
 		virtual int getStreamSocketPort(int clientID) const = 0;
 
-		///
-		bool readFullTSPacket(mpegts::PacketBuffer &buffer);
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
 	protected:
+
 		enum State {
 			Running,
 			Pause,
@@ -102,11 +97,12 @@ class StreamThreadBase :
 		// =======================================================================
 		// Data members
 		// =======================================================================
+
 	private:
+
 		mpegts::PacketBuffer _tsBuffer[MAX_BUF];
 		size_t _writeIndex;
 		size_t _readIndex;
-		struct pollfd _pfd[1];
 		decrypt::dvbapi::Client *_decrypt;
 
 }; // class StreamThreadBase

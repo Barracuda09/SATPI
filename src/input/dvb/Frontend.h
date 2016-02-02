@@ -20,29 +20,39 @@
 #ifndef INPUT_FRONTEND_H_INCLUDE
 #define INPUT_FRONTEND_H_INCLUDE INPUT_FRONTEND_H_INCLUDE
 
+#include <FwDecl.h>
 #include <input/Device.h>
+
+#include <vector>
+
+FW_DECL_NS2(decrypt, dvbapi, Client);
+
+// @todo Forward decl
+FW_DECL_NS0(Stream);
+typedef std::vector<Stream *> StreamVector;
+
 
 namespace input {
 namespace dvb {
 
-	#define LNB_UNIVERSAL 0
-	#define LNB_STANDARD  1
+#define LNB_UNIVERSAL 0
+#define LNB_STANDARD  1
 
 	// slof: switch frequency of LNB
-	#define DEFAULT_SWITCH_LOF (11700*1000UL)
+	#define DEFAULT_SWITCH_LOF (11700 * 1000UL)
 
 	// lofLow: local frequency of lower LNB band
-	#define DEFAULT_LOF_LOW_UNIVERSAL (9750*1000UL)
+	#define DEFAULT_LOF_LOW_UNIVERSAL (9750 * 1000UL)
 
 	// lofHigh: local frequency of upper LNB band
-	#define DEFAULT_LOF_HIGH_UNIVERSAL (10600*1000UL)
+	#define DEFAULT_LOF_HIGH_UNIVERSAL (10600 * 1000UL)
 
 	// Lnb standard Local oscillator frequency
-	#define DEFAULT_LOF_STANDARD (10750*1000UL)
+	#define DEFAULT_LOF_STANDARD (10750 * 1000UL)
 
 	// LNB properties
 	typedef struct {
-		uint8_t  type;           // LNB  (0: UNIVERSAL , 1: STANDARD)
+		uint8_t type;        // LNB  (0: UNIVERSAL , 1: STANDARD)
 		uint32_t lofStandard;
 		uint32_t switchlof;
 		uint32_t lofLow;
@@ -51,32 +61,87 @@ namespace dvb {
 
 	// DiSEqc properties
 	typedef struct {
-	#define MAX_LNB 4
-	#define POL_H   0
-	#define POL_V   1
-		int src;                 // Source (1-4) => DiSEqC switch position (0-3)
-		int pol_v;               // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
-		int hiband;              //
-		Lnb_t LNB[MAX_LNB];      // LNB properties
+		#define MAX_LNB 4
+		#define POL_H   0
+		#define POL_V   1
+		int src;             // Source (1-4) => DiSEqC switch position (0-3)
+		int pol_v;           // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
+		int hiband;          //
+		Lnb_t LNB[MAX_LNB];  // LNB properties
 	} DiSEqc_t;
 
-	#define MAX_DELSYS       5
+	#define MAX_DELSYS 5
 
 	/// The class @c Frontend carries all the data/information of an frontend
 	/// and to tune it
-	class Frontend  :
+	class Frontend :
 		public input::Device {
 		public:
+
 			// =======================================================================
-			// Constructors and destructor
+			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
 			Frontend();
 			virtual ~Frontend();
 
+			// =======================================================================
+			//  -- Static member functions -------------------------------------------
+			// =======================================================================
+
+		public:
+			static void enumerate(
+				StreamVector &stream,
+				decrypt::dvbapi::Client *decrypt,
+				const std::string &path,
+				int &nr_dvb_s2,
+				int &nr_dvb_t,
+				int &nr_dvb_t2,
+				int &nr_dvb_c,
+				int &nr_dvb_c2);
+
+		private:
+			///
+			static int getAttachedFrontends(
+				StreamVector &stream,
+				decrypt::dvbapi::Client *decrypt,
+				const std::string &path, int count);
+
+			static void countNumberOfDeliverySystems(
+				StreamVector &stream,
+				int &nr_dvb_s2,
+				int &nr_dvb_t,
+				int &nr_dvb_t2,
+				int &nr_dvb_c,
+				int &nr_dvb_c2);
+
+			// =======================================================================
+			//  -- input::Device------------------------------------------------------
+			// =======================================================================
+
+		public:
+			/// @see Device
+			virtual bool isDataAvailable();
+
+			/// @see Device
+			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer);
+
+			/// @see Device
+			virtual bool capableOf(fe_delivery_system_t msys);
+
+			/// @see Device
+			virtual void monitorFrontend(fe_status_t &status, uint16_t &strength, uint16_t &snr, uint32_t &ber,
+				uint32_t &ublocks, bool showStatus);
+
+			/// @see Device
+			virtual bool update(StreamProperties &properties);
+
+			/// @see Device
+			virtual bool teardown(StreamProperties &properties);
+
 			///
 			virtual void addFrontendPaths(const std::string &fe,
-								  const std::string &dvr,
-								  const std::string &dmx) {
+				const std::string &dvr,
+				const std::string &dmx) {
 				_path_to_fe = fe;
 				_path_to_dvr = dvr;
 				_path_to_dmx = dmx;
@@ -86,31 +151,15 @@ namespace dvb {
 			virtual void addToXML(std::string &xml) const;
 
 			///
-			virtual bool setFrontendInfo();
+			virtual void fromXML(const std::string &xml);
 
 			///
-			virtual int getReadDataFD() const {
-				return _fd_dvr;
-			}
-
-			/// caller should release fd
-			virtual int getMonitorFD() const {
-				return open_fe(_path_to_fe, true);
-			}
+			virtual bool setFrontendInfo();
 
 			/// Check if this frontend is tuned
 			virtual bool isTuned() const {
 				return (_fd_dvr != -1) && _tuned;
 			}
-
-			///
-			virtual bool capableOf(fe_delivery_system_t msys);
-
-			/// Update the Channel and PID. Will close DVR and reopen it if channel did change
-			virtual bool update(StreamProperties &properties);
-
-			///
-			virtual bool teardown(StreamProperties &properties);
 
 			///
 			virtual std::size_t getDeliverySystemSize() const {
@@ -123,6 +172,7 @@ namespace dvb {
 			}
 
 		protected:
+
 			///
 			int open_fe(const std::string &path, bool readonly) const;
 
@@ -140,7 +190,7 @@ namespace dvb {
 
 			///
 			bool diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-							   fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
+				fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
 
 			///
 			bool sendDiseqc(int streamID, bool repeatDiseqc);
@@ -153,25 +203,29 @@ namespace dvb {
 
 			///
 			bool setupAndTune(StreamProperties &properties);
+			
+			///
+			void resetPid(StreamProperties &properties, int pid);
 
 		private:
+
 			// =======================================================================
 			// Data members
 			// =======================================================================
-			bool                     _tuned;
-			int                      _fd_fe;
-			int                      _fd_dvr;
-			std::string              _path_to_fe;
-			std::string              _path_to_dvr;
-			std::string              _path_to_dmx;
+			bool _tuned;
+			int _fd_fe;
+			int _fd_dvr;
+			std::string _path_to_fe;
+			std::string _path_to_dvr;
+			std::string _path_to_dmx;
 			struct dvb_frontend_info _fe_info;
-			fe_delivery_system_t     _info_del_sys[MAX_DELSYS];
-			std::size_t                   _del_sys_size;
+			fe_delivery_system_t _info_del_sys[MAX_DELSYS];
+			std::size_t _del_sys_size;
 			// =======================================================================
 			//
 			// =======================================================================
-			Lnb_t    _lnb[MAX_LNB];   // lnb that can be connected to this frontend
-			DiSEqc_t _diseqc;         //
+			Lnb_t _lnb[MAX_LNB];  // lnb that can be connected to this frontend
+			DiSEqc_t _diseqc;     //
 
 	};
 

@@ -30,7 +30,7 @@
 #include <atomic>
 #include <string>
 
-FW_DECL_NS0(StreamProperties);
+FW_DECL_NS0(StreamInterfaceDecrypt);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace decrypt {
@@ -45,8 +45,7 @@ class Client :
 		// Constructors and destructor
 		// =======================================================================
 		Client(const std::string &xmlFilePath,
-			const base::Functor1Ret<StreamProperties &, int> &getStreamProperties,
-			const base::Functor1Ret<bool, int> &updateFrontend);
+			const base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt);
 		virtual ~Client();
 
 		///
@@ -60,6 +59,7 @@ class Client :
 
 		/// Get data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml);
+
 	protected:
 		/// Thread function
 		virtual void threadEntry();
@@ -73,16 +73,16 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void collectPAT(StreamProperties &properties, const unsigned char *data);
+		void collectPAT(StreamInterfaceDecrypt *stream, const unsigned char *data);
 
 		///
-		void collectPMT(StreamProperties &properties, const unsigned char *data);
+		void collectPMT(StreamInterfaceDecrypt *stream, const unsigned char *data);
 
 		///
-		void cleanPMT(StreamProperties &properties, unsigned char *data);
+		void cleanPMT(StreamInterfaceDecrypt *stream, unsigned char *data);
 
 		///
-		void collectECM(StreamProperties &properties, const unsigned char *data);
+		void collectECM(StreamInterfaceDecrypt *stream, const unsigned char *data);
 
 		// =======================================================================
 		// Data members
@@ -96,8 +96,7 @@ class Client :
 		std::string      _serverIpAddr;
 		std::string      _serverName;
 
-		base::Functor1Ret<StreamProperties &, int> _getStreamProperties;
-		base::Functor1Ret<bool, int> _updateFrontend;
+		base::Functor1Ret<StreamInterfaceDecrypt *, int> _getStreamInterfaceDecrypt;
 
 }; // class Client
 

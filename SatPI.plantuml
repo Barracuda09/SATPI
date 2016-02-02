@@ -4,7 +4,7 @@ hide footbox
 
 title SatPI
 
-SatPI *-- DvbapiClient
+SatPI *-- decrypt::dvbapi::Client
 SatPI *-- Streams
 SatPI *-- RtspServer
 SatPI *-- HttpServer
@@ -61,23 +61,26 @@ RtspServer --|> HttpcServer
 
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
-HttpServer *.. DvbapiClient
+HttpServer *.. decrypt::dvbapi::Client
 
 HttpcServer --|> TcpSocket
 HttpcServer *.. Streams : "_streams"
 HttpcServer *.. InterfaceAttr
 
-StreamInterface --|> Stream
+StreamInterface        <|-- Stream
+StreamInterfaceDecrypt <|-- Stream
 
 Stream *-- StreamClient : " _client[..] "
-Stream *-- StreamProperties
-Stream *-- Frontend
+Stream *-- input::Device
 Stream *-- StreamThreadBase
 class Stream {
   Mutex
   streamInUse
   enabled
   StreamingType
+  StreamProperties
+  decrypt::dvbapi::ClientProperties
+  ChannelData
 }
 
 Streams *-- Stream : " _stream[..] "
@@ -96,7 +99,7 @@ class StreamClient {
   cseq
 }
 
-StreamThreadBase *.. DvbapiClient
+StreamThreadBase *.. decrypt::dvbapi::Client
 StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
 StreamThreadBase *.. StreamInterface
 class StreamThreadBase {
@@ -106,37 +109,37 @@ class StreamThreadBase {
 RtpStreamThread --|> StreamThreadBase
 RtpStreamThread *-- RtcpThread
 class RtpStreamThread {
-  socket_fd_rtp
+  socket_fd
   cseq
 }
 
 RtcpThread *.. StreamInterface
 class RtcpThread {
   socket_fd
-  fd_fe
 }
 
 HttpStreamThread --|> StreamThreadBase
 
-DvbapiClientProperties *-- dvbcsa_key_s
-DvbapiClientProperties *-- TSTableData : " _pat "
-DvbapiClientProperties *-- TSTableData : " _pmt "
+decrypt::dvbapi::ClientProperties *-- dvbcsa_key_s
+decrypt::dvbapi::ClientProperties *-- TSTableData : " _pat "
+decrypt::dvbapi::ClientProperties *-- TSTableData : " _pmt "
 
-StreamProperties *-- ChannelData
-StreamProperties --|> DvbapiClientProperties
-class StreamProperties {
+
+decrypt::dvbapi::Client  .  Streams
+class decrypt::dvbapi::Client {
   Mutex
+  _getStreamInterfaceDecrypt(..)
 }
 
-DvbapiClient  .  Streams
-class DvbapiClient {
-  Mutex
-  _getStreamProperties(..)
-  _updateFrontend(..)
-}
+input::Device <|-- input::dvb::Frontend
+input::Device <|-- input::file::TSReader
 
-Frontend *-- Lnb_t
-Frontend *-- DiSEqc_t
+input::dvb::Frontend <|-- DVB_S
+input::dvb::Frontend <|-- DVB_C_T
+input::dvb::Frontend <|-- ATSC
+
+DVB_S *-- Lnb_t
+DVB_S *-- DiSEqc_t
 
 ChannelData *-- PidTable
 

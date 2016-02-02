@@ -42,7 +42,7 @@ class RtcpThread :
 
 		/// Start streaming
 		/// @return true if stream is started else false on error
-		bool startStreaming(int fd_fe);
+		bool startStreaming();
 
 	protected:
 		/// Thread function
@@ -54,15 +54,11 @@ class RtcpThread :
 		uint8_t *get_sdes_packet(std::size_t *len);
 		uint8_t *get_sr_packet(std::size_t *len);
 
-		///
-		void monitorFrontend(bool showStatus);
-
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		int _socket_fd;
 		StreamInterface &_stream;
-		int _fd_fe;
 
 		uint8_t _sr[28];              // Sender Report (SR Packet)
 		uint8_t _srb[24];             // Sender Report Block n (SR Packet)

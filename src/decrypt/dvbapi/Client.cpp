@@ -22,8 +22,9 @@
 #include <Log.h>
 #include <SocketClient.h>
 #include <StringConverter.h>
-#include <StreamProperties.h>
+#include <StreamInterfaceDecrypt.h>
 #include <mpegts/PacketBuffer.h>
+#include <mpegts/TableData.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,8 +145,7 @@ static uint32_t calculateCRC32(const unsigned char *data, int len) {
 	(data[sectionLength - 4 + 8 + 2] <<  8) |  data[sectionLength - 4 + 8 + 3]
 
 Client::Client(const std::string &xmlFilePath,
-               const base::Functor1Ret<StreamProperties &, int> &getStreamProperties,
-               const base::Functor1Ret<bool, int> &updateFrontend) :
+               const base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt) :
 	ThreadBase("DvbApiClient"),
 	XMLSupport(xmlFilePath),
 	_connected(false),
@@ -154,8 +154,7 @@ Client::Client(const std::string &xmlFilePath,
 	_serverPort(15011),
 	_serverIpAddr("127.0.0.1"),
 	_serverName("Not connected"),
-	_getStreamProperties(getStreamProperties),
-	_updateFrontend(updateFrontend) {
+	_getStreamInterfaceDecrypt(getStreamInterfaceDecrypt) {
 	restoreXML();
 	startThread();
 }
@@ -167,7 +166,7 @@ Client::~Client() {
 
 void Client::decrypt(int streamID, mpegts::PacketBuffer &buffer) {
 	if (_connected && _enabled) {
-		StreamProperties &properties = _getStreamProperties(streamID);
+		StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(streamID);
 		const std::size_t size = buffer.getNumberOfTSPackets();
 		for (std::size_t i = 0; i < size; ++i) {
 			// Get TS packet from the buffer
@@ -185,12 +184,12 @@ void Client::decrypt(int streamID, mpegts::PacketBuffer &buffer) {
 					const int parity = (data[3] & 0x40) > 0;
 
 					// get batch parity and count
-					const int parityBatch = properties.getBatchParity();
-					const int countBatch  = properties.getBatchCount();
+					const int parityBatch = stream->getBatchParity();
+					const int countBatch  = stream->getBatchCount();
 
 					// check if the parity changed in this batch (but should not be the begin of the batch)
 					// or check if this batch full, then decrypt this batch
-					if (countBatch != 0 && (parity != parityBatch || countBatch >= properties.getMaximumBatchSize())) {
+					if (countBatch != 0 && (parity != parityBatch || countBatch >= stream->getMaximumBatchSize())) {
 
 						const bool final = parity != parityBatch;
 						//
@@ -198,17 +197,17 @@ void Client::decrypt(int streamID, mpegts::PacketBuffer &buffer) {
 						                  streamID, parityBatch, parity, countBatch);
 
 						// decrypt this batch
-						properties.decryptBatch(final);
+						stream->decryptBatch(final);
 					}
 
 					// Can we add this packet to the batch
-					if (properties.getKey(parity) != nullptr) {
+					if (stream->getKey(parity) != nullptr) {
 						// check is there an adaptation field we should skip, then add it to batch
 						int skip = 4;
 						if((data[3] & 0x20) && (data[4] < 183)) {
 							skip += data[4] + 1;
 						}
-						properties.setBatchData(data + skip, 188 - skip, parity, data);
+						stream->setBatchData(data + skip, 188 - skip, parity, data);
 
 						// set pending decrypt for this buffer
 						buffer.setDecryptPending();
@@ -223,15 +222,15 @@ void Client::decrypt(int streamID, mpegts::PacketBuffer &buffer) {
 				} else {
 					if (pid == 0) {
 						// Check PAT pid and start indicator and table ID
-						collectPAT(properties, data);
-					} else if (properties.isPMT(pid)) {
-						collectPMT(properties, data);
+						collectPAT(stream, data);
+					} else if (stream->isPMT(pid)) {
+						collectPMT(stream, data);
 						// Do we need to clean PMT
 						if (_rewritePMT) {
-							cleanPMT(properties, data);
+							cleanPMT(stream, data);
 						}
-					} else if (properties.isECM(pid)) {
-						collectECM(properties, data);
+					} else if (stream->isECM(pid)) {
+						collectECM(stream, data);
 					}
 				}
 			}
@@ -246,8 +245,8 @@ bool Client::stopDecrypt(int streamID) {
 		int pid = 0;
 		unsigned char caPMT[8];
 
-		StreamProperties &properties = _getStreamProperties(streamID);
-		if (!properties.getActiveECMFilterData(demux, filter, pid)) {
+		StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(streamID);
+		if (!stream->getActiveECMFilterData(demux, filter, pid)) {
 			SI_LOG_DEBUG("Stream: %d, Strange, did not find any active ECM filter!", streamID);
 		}
 		// Stop 9F 80 3f 04 83 02 00 <demux index>
@@ -265,9 +264,9 @@ bool Client::stopDecrypt(int streamID) {
 
 		// cleaning tables
 		SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
-		properties.setTableCollected(PAT_TABLE_ID, false);
-		properties.setTableCollected(PMT_TABLE_ID, false);
-		properties.freeKeys();
+		stream->setTableCollected(PAT_TABLE_ID, false);
+		stream->setTableCollected(PMT_TABLE_ID, false);
+		stream->freeKeys();
 
 		if (send(_client.getFD(), caPMT, sizeof(caPMT), MSG_DONTWAIT) == -1) {
 			SI_LOG_ERROR("Stream: %d, PMT Stop DMX - send data to server failed", streamID);
@@ -329,15 +328,15 @@ void Client::sendClientInfo() {
 	}
 }
 
-void Client::collectPAT(StreamProperties &properties, const unsigned char *data) {
-	if (!properties.isTableCollected(PAT_TABLE_ID)) {
-		const int streamID = properties.getStreamID();
+void Client::collectPAT(StreamInterfaceDecrypt *stream, const unsigned char *data) {
+	if (!stream->isTableCollected(PAT_TABLE_ID)) {
+		const int streamID = stream->getStreamID();
 		// collect PAT data
-		properties.collectTableData(streamID, PAT_TABLE_ID, data);
+		stream->collectTableData(streamID, PAT_TABLE_ID, data);
 
 		// Did we finish collecting PAT
-		if (properties.isTableCollected(PAT_TABLE_ID)) {
-			const unsigned char *cData = properties.getTableData(PAT_TABLE_ID);
+		if (stream->isTableCollected(PAT_TABLE_ID)) {
+			const unsigned char *cData = stream->getTableData(PAT_TABLE_ID);
 			// Parse PAT Data
 			const int sectionLength = ((cData[ 6] & 0x0F) << 8) | cData[ 7];
 			const int tid           =  (cData[ 8] << 8) | cData[ 9];
@@ -347,7 +346,7 @@ void Client::collectPAT(StreamProperties &properties, const unsigned char *data)
 			const int nLoop         =   cData[13];
 			const uint32_t crc      =  CRC(cData, sectionLength);
 
-//			SI_LOG_BIN_DEBUG(cData, properties.getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
+//			SI_LOG_BIN_DEBUG(cData, stream->getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
 
 			const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 			if (calccrc == crc) {
@@ -367,21 +366,21 @@ void Client::collectPAT(StreamProperties &properties, const unsigned char *data)
 						SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT: %d", streamID, prognr, pid);
 					} else {
 						SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT: %d", streamID, prognr, pid);
-						properties.setPMT(pid, true);
+						stream->setPMT(pid, true);
 					}
 				}
 			} else {
 				SI_LOG_ERROR("Stream: %d, PAT: CRC Error! Calc CRC32: %04X - Msg CRC32: %04X  Retrying to collect data...", streamID, calccrc, crc);
-				properties.setTableCollected(PAT_TABLE_ID, false);
+				stream->setTableCollected(PAT_TABLE_ID, false);
 			}
 		}
 	}
 }
 
-void Client::cleanPMT(StreamProperties &UNUSED(properties), unsigned char *data) {
+void Client::cleanPMT(StreamInterfaceDecrypt *UNUSED(stream), unsigned char *data) {
 	const unsigned char options = (data[1] & 0xE0);
 	if (options == 0x40 && data[5] == PMT_TABLE_ID) {
-//		const int streamID = properties.getStreamID();
+//		const int streamID = stream->getStreamID();
 
 //		const int pid           = ((data[1] & 0x1f) << 8) | data[2];
 //		const int cc            =   data[3] & 0x0f;
@@ -448,15 +447,15 @@ void Client::cleanPMT(StreamProperties &UNUSED(properties), unsigned char *data)
 	}
 }
 
-void Client::collectPMT(StreamProperties &properties, const unsigned char *data) {
-	if (!properties.isTableCollected(PMT_TABLE_ID)) {
-		const int streamID = properties.getStreamID();
+void Client::collectPMT(StreamInterfaceDecrypt *stream, const unsigned char *data) {
+	if (!stream->isTableCollected(PMT_TABLE_ID)) {
+		const int streamID = stream->getStreamID();
 		// collect PMT data
-		properties.collectTableData(streamID, PMT_TABLE_ID, data);
+		stream->collectTableData(streamID, PMT_TABLE_ID, data);
 
 		// Did we finish collecting PMT
-		if (properties.isTableCollected(PMT_TABLE_ID)) {
-			const unsigned char *cData = properties.getTableData(PMT_TABLE_ID);
+		if (stream->isTableCollected(PMT_TABLE_ID)) {
+			const unsigned char *cData = stream->getTableData(PMT_TABLE_ID);
 			// Parse PMT Data
 			const int sectionLength = ((cData[ 6] & 0x0F) << 8) | cData[ 7];
 			const int programNumber = ((cData[ 8]       ) << 8) | cData[ 9];
@@ -467,7 +466,7 @@ void Client::collectPMT(StreamProperties &properties, const unsigned char *data)
 			const int prgLength     = ((cData[15] & 0x0F) << 8) | cData[16];
 			const uint32_t crc      =  CRC(cData, sectionLength);
 
-			SI_LOG_BIN_DEBUG(cData, properties.getTableDataSize(PMT_TABLE_ID), "Stream: %d, PMT data", streamID);
+			SI_LOG_BIN_DEBUG(cData, stream->getTableDataSize(PMT_TABLE_ID), "Stream: %d, PMT data", streamID);
 
 			const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 			if (calccrc == crc) {
@@ -555,27 +554,27 @@ void Client::collectPMT(StreamProperties &properties, const unsigned char *data)
 				}
 			} else {
 				SI_LOG_ERROR("Stream: %d, PMT: CRC Error! Calc CRC32: %04X - Msg CRC32: %04X  Retrying to collect data...", streamID, calccrc, crc);
-				properties.setTableCollected(PMT_TABLE_ID, false);
+				stream->setTableCollected(PMT_TABLE_ID, false);
 			}
 		}
 	}
 }
 
-void Client::collectECM(StreamProperties &properties, const unsigned char *data) {
+void Client::collectECM(StreamInterfaceDecrypt *stream, const unsigned char *data) {
 	// Check Table ID of ECM
 	const uint8_t tableID = data[5];
 	if (tableID == 0x81 || tableID == 0x80) {
-		const int streamID = properties.getStreamID();
+		const int streamID = stream->getStreamID();
 		const int pid = ((data[1] & 0x1f) << 8) | data[2];
 		int demux;
 		int filter;
-		properties.getECMFilterData(demux, filter, pid);
+		stream->getECMFilterData(demux, filter, pid);
 		// Do we have and filter and did the parity change?
-		if (filter != -1 && demux != -1 && properties.getKeyParity(pid) != tableID) {
+		if (filter != -1 && demux != -1 && stream->getKeyParity(pid) != tableID) {
 //			const int cc            =    data[3] & 0x0f;
 			const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
 
-			properties.setKeyParity(pid, tableID);
+			stream->setKeyParity(pid, tableID);
 
 //			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, ECM sectionlenght: %d  data", streamID, sectionLength);
 
@@ -651,10 +650,11 @@ void Client::threadEntry() {
 							const int filter  =  buf[i + 6];
 							const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
-							StreamProperties &properties = _getStreamProperties(adapter);
-							properties.setECMFilterData(demux, filter, pid, true);
+							StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(adapter);
+							stream->setECMFilterData(demux, filter, pid, true);
+
 							// now update frontend, PID list has changed
-							_updateFrontend(adapter);
+							stream->updateInputDevice();
 
 							// Goto next cmd
 							i += 65;
@@ -664,10 +664,11 @@ void Client::threadEntry() {
 							const int filter  =  buf[i + 6];
 							const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
-							StreamProperties &properties = _getStreamProperties(adapter);
-							properties.setECMFilterData(demux, filter, pid, false);
+							StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(adapter);
+							stream->setECMFilterData(demux, filter, pid, false);
+
 							// now update frontend, PID list has changed
-							_updateFrontend(adapter);
+							stream->updateInputDevice();
 
 							// Goto next cmd
 							i += 9;
@@ -679,8 +680,8 @@ void Client::threadEntry() {
 							memcpy(cw, &buf[i + 13], 8);
 							cw[8] = 0;
 
-							StreamProperties &properties = _getStreamProperties(adapter);
-							properties.setKey(cw, parity, index);
+							StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(adapter);
+							stream->setKey(cw, parity, index);
 							SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
 							             adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
 
@@ -710,9 +711,9 @@ void Client::threadEntry() {
 							const int hops = buf[i];
 							++i;
 
-							StreamProperties &properties = _getStreamProperties(adapter);
-							properties.setECMInfo(pid, serviceID, caID, provID, emcTime,
-							                      cardSystem, readerName, sourceName, protocolName, hops);
+							StreamInterfaceDecrypt *stream = _getStreamInterfaceDecrypt(adapter);
+							stream->setECMInfo(pid, serviceID, caID, provID, emcTime,
+							                  cardSystem, readerName, sourceName, protocolName, hops);
 							SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s",
 							             adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str());
 						} else {

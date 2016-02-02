@@ -18,6 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 
  */
+#include <FwDecl.h>
 #include "RtspServer.h"
 #include "HttpServer.h"
 #include <upnp/ssdp/Server.h>
@@ -45,6 +46,9 @@
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
+
+FW_DECL_NS0(StreamInterfaceDecrypt);
+
 
 bool exitApp;
 static int retval;
@@ -284,15 +288,14 @@ int main(int argc, char *argv[]) {
 		InterfaceAttr interface;
 		Streams streams;
 #ifdef LIBDVBCSA
-		base::Functor1Ret<StreamProperties &, int> getStreamProperties = makeFunctor((base::Functor1Ret<StreamProperties &, int>*) 0, streams, &Streams::getStreamProperties);
-		base::Functor1Ret<bool, int> updateFrontend = makeFunctor((base::Functor1Ret<bool, int>*) 0, streams, &Streams::updateFrontend);
-		decrypt::dvbapi::Client dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamProperties, updateFrontend);
-		streams.enumerateFrontends("/dev/dvb", &dvbapi);
+		base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt = makeFunctor((base::Functor1Ret<StreamInterfaceDecrypt *, int>*) 0, streams, &Streams::getStreamInterfaceDecrypt);
+		decrypt::dvbapi::Client dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamInterfaceDecrypt);
+		streams.enumerateDevices(&dvbapi);
 		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
 		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, &dvbapi);
 #else
-		streams.enumerateFrontends("/dev/dvb", nullptr);
+		streams.enumerateDevices(nullptr);
 		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
 		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
 		HttpServer httpserver(streams, interface, properties, nullptr);

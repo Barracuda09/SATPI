@@ -46,7 +46,7 @@ class HttpStreamThread :
 		virtual void threadEntry();
 
 		/// @see StreamThreadBase
-		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client);
+		virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client);
 
 		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const;

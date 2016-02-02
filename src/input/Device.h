@@ -22,57 +22,68 @@
 
 #include <FwDecl.h>
 #include <dvbfix.h>
+#include <base/XMLSupport.h>
 
+#include <stdint.h>
 #include <string>
 
 FW_DECL_NS0(StreamProperties);
+FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
 
 	/// The class @c Device is an interface to some input device
 	/// like for example an DVB-S2 frontend
-	class Device  {
+	class Device :
+		public base::XMLSupport {
 		public:
+
 			// =======================================================================
-			// Constructors and destructor
+			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
 			Device() {}
+
 			virtual ~Device() {}
 
 			///
-			virtual void addFrontendPaths(const std::string &fe,
-								  const std::string &dvr,
-								  const std::string &dmx) = 0;
+			virtual bool isDataAvailable() = 0;
 
 			///
-			virtual void addToXML(std::string &xml) const = 0;
-
-			///
-			virtual bool setFrontendInfo() = 0;
-
-			///
-			virtual int getReadDataFD() const = 0;
-
-			/// caller should release fd
-			virtual int getMonitorFD() const = 0;
-
-			/// Check if this frontend is tuned
-			virtual bool isTuned() const = 0;
+			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) = 0;
 
 			///
 			virtual bool capableOf(fe_delivery_system_t msys) = 0;
+
+			///
+			virtual void monitorFrontend(fe_status_t &status, uint16_t &strength, uint16_t &snr, uint32_t &ber,
+				uint32_t &ublocks, bool showStatus) = 0;
 
 			/// Update the Channel and PID. Will close DVR and reopen it if channel did change
 			virtual bool update(StreamProperties &properties) = 0;
 
 			///
 			virtual bool teardown(StreamProperties &properties) = 0;
+			
+			
+/////////////
+
+			///
+			virtual void addFrontendPaths(const std::string &fe,
+				const std::string &dvr,
+				const std::string &dmx) = 0;
+
+			///
+			virtual bool setFrontendInfo() = 0;
+
+			/// Check if this frontend is tuned
+			virtual bool isTuned() const = 0;
 
 			///
 			virtual std::size_t getDeliverySystemSize() const = 0;
 
 			///
 			virtual const fe_delivery_system_t *getDeliverySystem() const = 0;
+
 	};
 
 } // namespace input

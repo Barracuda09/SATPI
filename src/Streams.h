@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef STREAMS_H_INCLUDE
-#define STREAMS_H_INCLUDE
+#define STREAMS_H_INCLUDE STREAMS_H_INCLUDE
 
 #include <FwDecl.h>
 #include <dvbfix.h>
@@ -27,10 +27,11 @@
 #include <base/XMLSupport.h>
 
 #include <string>
+#include <vector>
 
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(Stream);
-FW_DECL_NS0(StreamProperties);
+FW_DECL_NS0(StreamInterfaceDecrypt);
 FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// The class @c Streams carries all the available/open streams
@@ -43,9 +44,9 @@ class Streams :
 		Streams();
 		virtual ~Streams();
 
-		/// enumerate all available frontends
-		/// @param path
-		int enumerateFrontends(const std::string &path, decrypt::dvbapi::Client *decrypt);
+		/// enumerate all available devices
+		/// @param decrypt is for giving the stream/device an decrypt instance
+		void enumerateDevices(decrypt::dvbapi::Client *decrypt);
 
 		///
 		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -62,7 +63,7 @@ class Streams :
 		///
 		int getMaxStreams() const {
 			base::MutexLock lock(_mutex);
-			return _maxStreams;
+			return _stream.size();
 		}
 
 		///
@@ -93,32 +94,25 @@ class Streams :
 		virtual void fromXML(const std::string &xml);
 
 		///
-		StreamProperties &getStreamProperties(int streamID);
-
-		///
-		bool updateFrontend(int streamID);
-
+		StreamInterfaceDecrypt *getStreamInterfaceDecrypt(int streamID);
+		
 	protected:
 
 	private:
-		///
-		int getAttachedFrontendCount_L(const std::string &path, int count);
 
+		typedef std::vector<Stream *> StreamVector;
 		// =======================================================================
 		// Data members
 		// =======================================================================
 		base::Mutex   _mutex;       //
-		Stream     **_stream;
-		int          _maxStreams;
+		StreamVector  _stream;
 		Stream      *_dummyStream;
 		std::string  _del_sys_str;
 		int          _nr_dvb_s2;
 		int          _nr_dvb_t;
 		int          _nr_dvb_t2;
 		int          _nr_dvb_c;
-#if FULL_DVB_API_VERSION >= 0x0505
 		int          _nr_dvb_c2;
-#endif
 
 }; // class Streams
 

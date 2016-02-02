@@ -21,57 +21,49 @@
 
 #include <StreamClient.h>
 #include <Log.h>
-#include <Stream.h>
+#include <StreamInterface.h>
 #include <InterfaceAttr.h>
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 
 RtpStreamThread::RtpStreamThread(StreamInterface &stream, decrypt::dvbapi::Client *decrypt) :
 	StreamThreadBase("RTP", stream, decrypt),
-	_socket_fd_rtp(-1),
+	_socket_fd(-1),
 	_cseq(0),
 	_rtcp(stream) {
 }
 
 RtpStreamThread::~RtpStreamThread() {
 	terminateThread();
-	CLOSE_FD(_socket_fd_rtp);
+	CLOSE_FD(_socket_fd);
 }
 
 bool RtpStreamThread::startStreaming() {
 	const int streamID = _stream.getStreamID();
 
 	// RTP
-	if (_socket_fd_rtp == -1) {
-		if ((_socket_fd_rtp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+	if (_socket_fd == -1) {
+		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 			PERROR("socket RTP");
 			return false;
 		}
 
 		const int val = 1;
-		if (setsockopt(_socket_fd_rtp, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+		if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
 			PERROR("RTP setsockopt SO_REUSEADDR");
 			return false;
 		}
 
 		// Get default buffer size and set it twice as big
-		int bufferSize = InterfaceAttr::getNetworkUDPBufferSize(_socket_fd_rtp);
+		int bufferSize = InterfaceAttr::getNetworkUDPBufferSize(_socket_fd);
 		bufferSize *= 2;
-		InterfaceAttr::setNetworkUDPBufferSize(_socket_fd_rtp, bufferSize);
+		InterfaceAttr::setNetworkUDPBufferSize(_socket_fd, bufferSize);
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 	}
 	// RTCP
-	_rtcp.startStreaming(_stream.getInputDevice()->getMonitorFD());
+	_rtcp.startStreaming();
 
 	_cseq = 0x0000;
 	StreamThreadBase::startStreaming();
@@ -94,7 +86,7 @@ void RtpStreamThread::threadEntry() {
 			usleep(50000);
 			break;
 		case Running:
-			pollDVR(client);
+			readDataFromInputDevice(client);
 			break;
 		default:
 			PERROR("Wrong State");
@@ -104,7 +96,7 @@ void RtpStreamThread::threadEntry() {
 	}
 }
 
-void RtpStreamThread::sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client) {
+void RtpStreamThread::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client) {
 	unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 
 	// update sequence number
@@ -125,7 +117,7 @@ void RtpStreamThread::sendTSPacket(mpegts::PacketBuffer &buffer, const StreamCli
 	_stream.addRtpData(size, timestamp);
 
 	// send the RTP packet
-	if (sendto(_socket_fd_rtp, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,
+	if (sendto(_socket_fd, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,
 	           (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
 
 		PERROR("send RTP");

@@ -32,6 +32,7 @@ FW_DECL_NS2(decrypt, dvbapi, Client);
 class RtpStreamThread :
 	public StreamThreadBase {
 	public:
+
 		// =======================================================================
 		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
@@ -48,7 +49,7 @@ class RtpStreamThread :
 		virtual void threadEntry();
 
 		/// @see StreamThreadBase
-		virtual void sendTSPacket(mpegts::PacketBuffer &buffer, const StreamClient &client);
+		virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client);
 
 		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const;
@@ -56,11 +57,11 @@ class RtpStreamThread :
 	private:
 
 		// =======================================================================
-		// Data members
+		// -- Data members -------------------------------------------------------
 		// =======================================================================
-		int _socket_fd_rtp;     //
-		uint16_t _cseq;         // RTP sequence number
-		RtcpThread _rtcp;       //
+		int _socket_fd;     ///
+		uint16_t _cseq;     /// RTP sequence number
+		RtcpThread _rtcp;   ///
 
 }; // class RtpStreamThread
 
