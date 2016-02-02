@@ -23,10 +23,12 @@
 #include <Log.h>
 #include <Utils.h>
 #include <StreamClient.h>
-#include <StreamInterfaceDecrypt.h>
 #include <SocketClient.h>
 #include <StringConverter.h>
 #include <input/dvb/Frontend.h>
+#ifdef LIBDVBCSA
+#include <StreamInterfaceDecrypt.h>
+#endif
 
 #include <assert.h>
 
