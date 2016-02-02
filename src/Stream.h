@@ -24,11 +24,13 @@
 #include <ChannelData.h>
 #include <StreamClient.h>
 #include <StreamInterface.h>
-#include <StreamInterfaceDecrypt.h>
 #include <StreamProperties.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/Device.h>
+#ifdef LIBDVBCSA
+#include <StreamInterfaceDecrypt.h>
+#endif
 
 #include <string>
 #include <vector>
