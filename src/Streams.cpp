@@ -27,13 +27,22 @@
 #include <StringConverter.h>
 #include <input/dvb/Frontend.h>
 #ifdef LIBDVBCSA
-#include <StreamInterfaceDecrypt.h>
+	#include <decrypt/dvbapi/Client.h>
+	#include <StreamInterfaceDecrypt.h>
 #endif
 
 #include <assert.h>
 
-Streams::Streams() :
-	_dummyStream(nullptr) {}
+Streams::Streams(const std::string &xmlFilePath) :
+	_decrypt(nullptr),
+	_dummyStream(nullptr) {
+#ifdef LIBDVBCSA
+	base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt =
+		makeFunctor((base::Functor1Ret<StreamInterfaceDecrypt *, int>*) 0,
+			*this, &Streams::getStreamInterfaceDecrypt);
+	_decrypt = new decrypt::dvbapi::Client(xmlFilePath + "/" + "dvbapi.xml", getStreamInterfaceDecrypt);
+#endif
+}
 
 Streams::~Streams() {
 	DELETE(_dummyStream);
@@ -42,7 +51,18 @@ Streams::~Streams() {
 	}
 }
 
-void Streams::enumerateDevices(decrypt::dvbapi::Client *decrypt) {
+#ifdef LIBDVBCSA
+	StreamInterfaceDecrypt *Streams::getStreamInterfaceDecrypt(int streamID) {
+		return _stream[streamID];
+	}
+
+	decrypt::dvbapi::Client *Streams::getDecrypt() const {
+		return _decrypt;
+	}
+
+#endif
+
+void Streams::enumerateDevices() {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -56,8 +76,8 @@ void Streams::enumerateDevices(decrypt::dvbapi::Client *decrypt) {
 	_nr_dvb_c = 0;
 	_nr_dvb_c2 = 0;
 
-	_dummyStream = new Stream(0, decrypt);
-	input::dvb::Frontend::enumerate(_stream, decrypt, "/dev/dvb", _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
+	_dummyStream = new Stream(0, _decrypt);
+	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb", _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
 		_nr_dvb_c, _nr_dvb_c2);
 
 	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
@@ -162,14 +182,6 @@ void Streams::checkStreamClientsWithTimeout() {
 			stream->checkStreamClientsWithTimeout();
 		}
 	}
-}
-
-StreamInterfaceDecrypt *Streams::getStreamInterfaceDecrypt(int streamID) {
-#ifdef LIBDVBCSA
-	return _stream[streamID];
-#else
-	return nullptr;
-#endif
 }
 
 std::string Streams::attributeDescribeString(unsigned int stream, bool &active) const {

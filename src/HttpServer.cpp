@@ -39,12 +39,10 @@
 
 HttpServer::HttpServer(Streams &streams,
                        const InterfaceAttr &interface,
-                       Properties &properties,
-                       decrypt::dvbapi::Client *decrypt) :
+                       Properties &properties) :
 	ThreadBase("HttpServer"),
 	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streams, interface),
-	_properties(properties),
-	_decrypt(decrypt) {
+	_properties(properties) {
 	startThread();
 }
 
@@ -96,7 +94,7 @@ bool HttpServer::methodPost(const SocketClient &client) {
 				_properties.fromXML(content);
 #ifdef LIBDVBCSA
 			} else if (file.compare("/dvbapi.xml") == 0) {
-				_decrypt->fromXML(content);
+				_streams.getDecrypt()->fromXML(content);
 #endif
 			}
 		}
@@ -160,8 +158,8 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 #ifdef LIBDVBCSA
-			} else if (file.compare(_decrypt->getFileName()) == 0) {
-				_decrypt->addToXML(docType);
+			} else if (file.compare(_streams.getDecrypt()->getFileName()) == 0) {
+				_streams.getDecrypt()->addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);

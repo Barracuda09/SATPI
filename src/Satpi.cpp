@@ -27,9 +27,6 @@
 #include "Properties.h"
 #include "Log.h"
 #include "StringConverter.h"
-#ifdef LIBDVBCSA
-	#include <decrypt/dvbapi/Client.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +45,6 @@
 #define EXIT_FAILURE 1
 
 FW_DECL_NS0(StreamInterfaceDecrypt);
-
 
 bool exitApp;
 static int retval;
@@ -285,30 +281,25 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 
 	{
-		InterfaceAttr interface;
-		Streams streams;
-#ifdef LIBDVBCSA
-		base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt = makeFunctor((base::Functor1Ret<StreamInterfaceDecrypt *, int>*) 0, streams, &Streams::getStreamInterfaceDecrypt);
-		decrypt::dvbapi::Client dvbapi(appdataPath + "/" + "dvbapi.xml", getStreamInterfaceDecrypt);
-		streams.enumerateDevices(&dvbapi);
-		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
-		HttpServer httpserver(streams, interface, properties, &dvbapi);
-#else
-		streams.enumerateDevices(nullptr);
-		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-		                      streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
-		HttpServer httpserver(streams, interface, properties, nullptr);
-#endif
-		RtspServer server(streams, properties, interface);
-		upnp::ssdp::Server ssdpserver(interface, properties);
-		if (ssdp) {
-			ssdpserver.startThread();
-		}
+		try {
+			InterfaceAttr interface;
+			Streams streams(appdataPath);
+			streams.enumerateDevices();
+			Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
+								  streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+			HttpServer httpserver(streams, interface, properties);
+			RtspServer server(streams, properties, interface);
+			upnp::ssdp::Server ssdpserver(interface, properties);
+			if (ssdp) {
+				ssdpserver.startThread();
+			}
 
-		// Loop
-		while (!exitApp && !properties.exitApplication()) {
-			usleep(12000);
+			// Loop
+			while (!exitApp && !properties.exitApplication()) {
+				usleep(12000);
+			}
+		} catch (...) {
+			SI_LOG_ERROR("Caught an Exception");
 		}
 	}
 	SI_LOG_INFO("--- stopped ---");

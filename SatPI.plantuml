@@ -4,7 +4,6 @@ hide footbox
 
 title SatPI
 
-SatPI *-- decrypt::dvbapi::Client
 SatPI *-- Streams
 SatPI *-- RtspServer
 SatPI *-- HttpServer
@@ -61,7 +60,6 @@ RtspServer --|> HttpcServer
 
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
-HttpServer *.. decrypt::dvbapi::Client
 
 HttpcServer --|> TcpSocket
 HttpcServer *.. Streams : "_streams"
@@ -84,6 +82,7 @@ class Stream {
 }
 
 Streams *-- Stream : " _stream[..] "
+Streams *-- decrypt::dvbapi::Client
 class Streams {
   Mutex
 }

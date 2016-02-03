@@ -27,7 +27,6 @@
 FW_DECL_NS0(InterfaceAttr);
 FW_DECL_NS0(Properties);
 FW_DECL_NS0(Streams);
-FW_DECL_NS2(decrypt, dvbapi, Client);
 
 /// HTTP Server
 class HttpServer :
@@ -40,8 +39,7 @@ class HttpServer :
 		// =======================================================================
 		HttpServer(Streams &streams,
 			const InterfaceAttr &interface,
-			Properties &properties,
-			decrypt::dvbapi::Client *decrypt);
+			Properties &properties);
 
 		virtual ~HttpServer();
 
@@ -72,7 +70,6 @@ class HttpServer :
 	private:
 
 		Properties &_properties;
-		decrypt::dvbapi::Client *_decrypt;
 
 }; // class HttpServer
 

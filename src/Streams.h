@@ -41,12 +41,11 @@ class Streams :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		Streams();
+		Streams(const std::string &xmlFilePath);
 		virtual ~Streams();
 
 		/// enumerate all available devices
-		/// @param decrypt is for giving the stream/device an decrypt instance
-		void enumerateDevices(decrypt::dvbapi::Client *decrypt);
+		void enumerateDevices();
 
 		///
 		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -93,8 +92,12 @@ class Streams :
 		/// Get streams data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml);
 
+#ifdef LIBDVBCSA
 		///
 		StreamInterfaceDecrypt *getStreamInterfaceDecrypt(int streamID);
+		
+		decrypt::dvbapi::Client *getDecrypt() const;
+#endif
 		
 	protected:
 
@@ -105,6 +108,7 @@ class Streams :
 		// Data members
 		// =======================================================================
 		base::Mutex   _mutex;       //
+		decrypt::dvbapi::Client *_decrypt;
 		StreamVector  _stream;
 		Stream      *_dummyStream;
 		std::string  _del_sys_str;

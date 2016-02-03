@@ -32,11 +32,9 @@
 /// The class @c StreamProperties carries all the available/open StreamProperties
 class StreamProperties :
 #ifdef LIBDVBCSA
-	public base::XMLSupport,
-	public decrypt::dvbapi::ClientProperties {
-#else
-	public base::XMLSupport {
+	public decrypt::dvbapi::ClientProperties,
 #endif
+	public base::XMLSupport {
 	public:
 		// =======================================================================
 		// Constructors and destructor
