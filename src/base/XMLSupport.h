@@ -71,6 +71,12 @@ namespace base {
 
 } // namespace base
 
+#define ADD_XML_BEGIN_ELEMENT(XML, ELEMENTNAME) \
+	StringConverter::addFormattedString(XML, "<" ELEMENTNAME ">")
+
+#define ADD_XML_END_ELEMENT(XML, ELEMENTNAME) \
+	StringConverter::addFormattedString(XML, "</" ELEMENTNAME ">")
+
 #define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
 	StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE)
 

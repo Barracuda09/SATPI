@@ -18,7 +18,7 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #ifndef DVB_FIX_H_INCLUDE
-#define DVB_FIX_H_INCLUDE
+#define DVB_FIX_H_INCLUDE DVB_FIX_H_INCLUDE
 
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>

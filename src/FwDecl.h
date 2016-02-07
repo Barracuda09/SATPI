@@ -35,4 +35,13 @@ namespace NS2 { \
 } \
 }
 
+#define FW_DECL_NS3(NS1, NS2, NS3, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+namespace NS3 { \
+	class CLASS; \
+} \
+} \
+}
+
 #endif // FW_DECL_H_INCLUDE

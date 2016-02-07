@@ -29,8 +29,6 @@ endif
 # List of source to be compiled
 SOURCES = Version.cpp \
 	Satpi.cpp \
-	ChannelData.cpp \
-	PidTable.cpp \
 	StreamProperties.cpp \
 	StreamProperties_ChannelData_get.cpp \
 	StreamProperties_ChannelData_set.cpp \
@@ -52,7 +50,10 @@ SOURCES = Version.cpp \
 	StringConverter.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
+	input/ChannelData.cpp \
+	input/PidTable.cpp \
 	input/dvb/Frontend.cpp \
+	input/dvb/delivery/DVB_S.cpp \
 	mpegts/PacketBuffer.cpp \
 	upnp/ssdp/Server.cpp
 
@@ -109,6 +110,7 @@ makeobj:
 	@mkdir -p $(OBJ_DIR)/mpegts
 	@mkdir -p $(OBJ_DIR)/input
 	@mkdir -p $(OBJ_DIR)/input/dvb
+	@mkdir -p $(OBJ_DIR)/input/dvb/delivery
 	@mkdir -p $(OBJ_DIR)/upnp/ssdp
 	@mkdir -p $(OBJ_DIR)/decrypt/dvbapi
 

@@ -15,86 +15,129 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/addtableentry.js"></script>
 <script>
-	var filename = "streams.xml";
+	var filename;
 	var autoload = 1;
 	var xmlLoaded;
+	var streamID = 0;
+	var content;
+	var once = 0;
 
-	function addTableLineEntry(labelstring, xmlDoc, tagName) {
+	function addTableLineEntry(streamid, labelstring, xmlDoc, tagName) {
 		var page = "";
 		if (xmlDoc.getElementsByTagName(tagName).length != 0) {
 			page += "<tr>";
 			page += addTableLabel(labelstring);
-			var len = xmlDoc.getElementsByTagName("streamindex").length;
-			for (en = 0; en < len; en++) {
-				var id = "stream" + en;
-				var data = xmlDoc.getElementsByTagName(id)[0];
-				id += "." + tagName;
-				page += addTableEntry(data, tagName, id);
-			}
+			var id = "stream" + streamid;
+			var data = xmlDoc.getElementsByTagName(id)[0];
+			id += "." + tagName;
+			page += addTableEntry(data, tagName, id);
 			page += "<tr>";
 		}
 		return page;
 	}
 
-	function buildcontent(xmlDoc) {
+	function buildcontent(xmlDoc, id) {
 		var page = "";
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
 			page += "<table class=\"table table-bordered table-striped \">";
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length + 1) + "\">Frontend Info</th></tr>";
 
-			page += addTableLineEntry("Stream Index", xmlDoc, "streamindex");
+			page += addTableLineEntry(id, "Stream Index", xmlDoc, "streamindex");
 
-			page += addTableLineEntry("Enable", xmlDoc, "enable");
-			page += addTableLineEntry("Attached", xmlDoc, "attached");
-			page += addTableLineEntry("Name", xmlDoc, "frontendname");
+			page += addTableLineEntry(id, "Enable", xmlDoc, "enable");
+			page += addTableLineEntry(id, "Attached", xmlDoc, "attached");
+			page += addTableLineEntry(id, "Name", xmlDoc, "frontendname");
 
-			page += addTableLineEntry("Path", xmlDoc, "pathname");
-			page += addTableLineEntry("Freq Range", xmlDoc, "freq");
-			page += addTableLineEntry("Symbol Rate Range", xmlDoc, "symbol");
+			page += addTableLineEntry(id, "Path", xmlDoc, "pathname");
+			page += addTableLineEntry(id, "Freq Range", xmlDoc, "freq");
+			page += addTableLineEntry(id, "Symbol Rate Range", xmlDoc, "symbol");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
-			page += addTableLineEntry("Owner", xmlDoc, "owner");
-			page += addTableLineEntry("Session ID", xmlDoc, "ownerSessionID");
-			page += addTableLineEntry("RTP packet count", xmlDoc, "spc");
-			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, "payload");
+			page += addTableLineEntry(id, "Owner", xmlDoc, "owner");
+			page += addTableLineEntry(id, "Session ID", xmlDoc, "ownerSessionID");
+			page += addTableLineEntry(id, "RTP packet count", xmlDoc, "spc");
+			page += addTableLineEntry(id, "RTP streamed (MB)", xmlDoc, "payload");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
-			page += addTableLineEntry("Repeat DiSEqC", xmlDoc, "diseqc_repeat");
-			page += addTableLineEntry("DVR Buffer (Bytes)", xmlDoc, "dvrbuffer");
-			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, "rtcpSignalUpdate");
+			page += addTableLineEntry(id, "Repeat DiSEqC", xmlDoc, "diseqc_repeat");
+			page += addTableLineEntry(id, "DVR Buffer (Bytes)", xmlDoc, "dvrbuffer");
+			page += addTableLineEntry(id, "RTCP Signal Update Freq", xmlDoc, "rtcpSignalUpdate");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
-			delsys = addTableLineEntry("Delivery System", xmlDoc, "delsys");
+			delsys = addTableLineEntry(id, "Delivery System", xmlDoc, "delsys");
 			page += delsys;
-			page += addTableLineEntry("Tune Freq", xmlDoc, "tunefreq");
-			page += addTableLineEntry("Modulation", xmlDoc, "modulation");
-			page += addTableLineEntry("Fec", xmlDoc, "fec");
+			page += addTableLineEntry(id, "Tune Freq", xmlDoc, "tunefreq");
+			page += addTableLineEntry(id, "Modulation", xmlDoc, "modulation");
+			page += addTableLineEntry(id, "Fec", xmlDoc, "fec");
 
-			page += addTableLineEntry("Symbol Rate", xmlDoc, "tunesymbol");
-			page += addTableLineEntry("Rolloff", xmlDoc, "rolloff");
-			page += addTableLineEntry("Source", xmlDoc, "src");
-			page += addTableLineEntry("Polarization", xmlDoc, "pol");
+			page += addTableLineEntry(id, "Symbol Rate", xmlDoc, "tunesymbol");
+			page += addTableLineEntry(id, "Rolloff", xmlDoc, "rolloff");
+			page += addTableLineEntry(id, "Source", xmlDoc, "src");
+			page += addTableLineEntry(id, "Polarization", xmlDoc, "pol");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
-			page += addTableLineEntry("Status", xmlDoc, "status");
-			page += addTableLineEntry("Signal Strength", xmlDoc, "signal");
-			page += addTableLineEntry("snr", xmlDoc, "snr");
-			page += addTableLineEntry("ber", xmlDoc, "ber");
-			page += addTableLineEntry("unc", xmlDoc, "unc");
+			page += addTableLineEntry(id, "Status", xmlDoc, "status");
+			page += addTableLineEntry(id, "Signal Strength", xmlDoc, "signal");
+			page += addTableLineEntry(id, "snr", xmlDoc, "snr");
+			page += addTableLineEntry(id, "ber", xmlDoc, "ber");
+			page += addTableLineEntry(id, "unc", xmlDoc, "unc");
 
 			page +=	 "</table><br>";
 		}
 		return page;
 	}
+
+	function makeTabContent(xmlDoc, id) {
+		var tab = "";
+		var streams = xmlDoc.getElementsByTagName("streamindex");
+		if (streams.length > 0) {
+			var len = streams.length;
+			tab += "<ul class=\"nav nav-tabs\">";
+			for (en = 0; en < len; en++) {
+				if (en == 0) {
+					tab += "<li class=\"active\">";
+				} else {
+					tab += "<li>";
+				}
+				tab += "<a data-toggle=\"tab\" href=\"#FrontendTab" + en + "\">Frontend " + en + "</a></li>";
+			}
+			tab += "</ul>";
+			tab += "<div class=\"tab-content\">";
+			for (en = 0; en < len; en++) {
+				tab += "<div id=\"FrontendTab" + en + "\" class=\"tab-pane fade in active\">";
+				tab += 		"<div class=\"table-responsive\"><div id=\"frontend" + en + "\"></div></div>";
+				tab += "</div>";
+			}
+			tab += "</div>";
+		}
+		return tab;
+	}
+
 	function updatePage() {
 		loadXMLDoc(filename);
 	}
+
 	// function called when xml is loaded
 	function xmlloaded(xml) {
 		if (autoload == 1) {
 			xmlLoaded = xml;
-			document.getElementById("content").innerHTML = buildcontent(xml);
+			if (once == 0) {
+				document.getElementById("tabContent").innerHTML = makeTabContent(xml, streamID);
+				$(".nav-tabs a").click(function() {
+					$(this).tab('show');
+				});
+				$('.nav-tabs a').on('shown.bs.tab', function(event) {
+					var href = $(event.target).attr("href");
+					var id = href.substr(12);
+					filename = "streams.xml";
+					content = "frontend" + id;
+					streamID = id;
+					updatePage();
+				});
+				once = 1;
+			}
+			document.getElementById(content).innerHTML = buildcontent(xml, streamID);
 		}
 	}
 </script>
@@ -107,21 +150,23 @@
 <div class="container-fluid">
 	<div class="start">
 		<h3>SAT>IP Frontend Info Page</h3>
-		<div class="table-responsive">
-			<div id="content"></div>
+		<div id="tabContent"></div>
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			document.getElementById("footer").innerHTML = buildfooter();
+			setMenuItemActive("frontend");
 
-			<script>
-				// make menu
-				document.getElementById("menu").innerHTML = buildmenu();
-				document.getElementById("footer").innerHTML = buildfooter();
-				setMenuItemActive("frontend");
+			filename = "streams.xml";
+			content = "frontend0";
+			streamID = 0;
 
-				// Call the ajax refresh each refresh_time seconds
-				var refresh_time = 2000;
-				updatePage();
-				setInterval("updatePage()", refresh_time);
-			</script>
-		</div>
+			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 2000;
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+
+		</script>
 	</div>
 </div>
 

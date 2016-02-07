@@ -21,7 +21,6 @@
 #define STREAM_H_INCLUDE STREAM_H_INCLUDE
 
 #include <FwDecl.h>
-#include <ChannelData.h>
 #include <StreamClient.h>
 #include <StreamInterface.h>
 #include <StreamProperties.h>

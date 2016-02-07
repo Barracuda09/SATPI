@@ -82,7 +82,7 @@ void Streams::enumerateDevices() {
 
 	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
 			   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
-		
+
 }
 
 Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {

@@ -21,8 +21,6 @@
 #define STREAMS_H_INCLUDE STREAMS_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
-#include <StreamClient.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
 

@@ -133,9 +133,13 @@ class decrypt::dvbapi::Client {
 input::Device <|-- input::dvb::Frontend
 input::Device <|-- input::file::TSReader
 
-input::dvb::Frontend <|-- DVB_S
-input::dvb::Frontend <|-- DVB_C_T
-input::dvb::Frontend <|-- ATSC
+input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
+
+input::dvb::delivery::System <|-- DVB_S
+input::dvb::delivery::System <|-- DVB_C
+input::dvb::delivery::System <|-- DVB_T
+input::dvb::delivery::System <|-- ATSC
+
 
 DVB_S *-- Lnb_t
 DVB_S *-- DiSEqc_t

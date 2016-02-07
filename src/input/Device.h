@@ -33,7 +33,7 @@ FW_DECL_NS1(mpegts, PacketBuffer);
 namespace input {
 
 	/// The class @c Device is an interface to some input device
-	/// like for example an DVB-S2 frontend
+	/// like for example an frontend with DVB-S2 or File input
 	class Device :
 		public base::XMLSupport {
 		public:
@@ -63,8 +63,8 @@ namespace input {
 
 			///
 			virtual bool teardown(StreamProperties &properties) = 0;
-			
-			
+
+
 /////////////
 
 			///

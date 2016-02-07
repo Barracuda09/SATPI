@@ -22,14 +22,9 @@
 #include <StringConverter.h>
 #include <Log.h>
 #include <Utils.h>
-#include <input/dvb/Frontend.h>
+#include <input/dvb/delivery/DVB_S.h>
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 static unsigned int seedp = 0xFEED;
 

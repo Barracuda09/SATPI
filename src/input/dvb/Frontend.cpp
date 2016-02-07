@@ -25,6 +25,7 @@
 #include <StringConverter.h>
 #include <StreamProperties.h>
 #include <mpegts/PacketBuffer.h>
+#include <input/dvb/delivery/DVB_S.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,20 +45,16 @@ namespace dvb {
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dvr(-1) {
-		for (std::size_t i = 0; i < MAX_LNB; ++i) {
-			_diseqc.LNB[i].type        = LNB_UNIVERSAL;
-			_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
-			_diseqc.LNB[i].switchlof   = DEFAULT_SWITCH_LOF;
-			_diseqc.LNB[i].lofLow      = DEFAULT_LOF_LOW_UNIVERSAL;
-			_diseqc.LNB[i].lofHigh     = DEFAULT_LOF_HIGH_UNIVERSAL;
-		}
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		_path_to_fe  = "Not Set";
 		_path_to_dvr = "Not Set";
 		_path_to_dmx = "Not Set";
+		_deliverySystem = new input::dvb::delivery::DVB_S;
 	}
 
-	Frontend::~Frontend() {}
+	Frontend::~Frontend() {
+		DELETE(_deliverySystem);
+	}
 
 	// =======================================================================
 	//  -- Static member functions -------------------------------------------
@@ -201,6 +198,23 @@ namespace dvb {
 #undef FE_PATH_LEN
 		return count;
 	}
+
+	// =======================================================================
+	//  -- base::XMLSupport --------------------------------------------------
+	// =======================================================================
+
+	void Frontend::addToXML(std::string &xml) const {
+		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", _fe_info.name);
+		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _path_to_fe.c_str());
+		StringConverter::addFormattedString(xml, "<freq>%d Hz to %d Hz</freq>", _fe_info.frequency_min, _fe_info.frequency_max);
+		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+
+		ADD_XML_BEGIN_ELEMENT(xml, "deliverySystem");
+		_deliverySystem->addToXML(xml);
+		ADD_XML_END_ELEMENT(xml, "deliverySystem");
+	}
+
+	void Frontend::fromXML(const std::string &UNUSED(xml)) {}
 
 	// =======================================================================
 	//  -- input::Device------------------------------------------------------
@@ -350,15 +364,6 @@ namespace dvb {
 		return true;
 	}
 
-	void Frontend::addToXML(std::string &xml) const {
-		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", _fe_info.name);
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _path_to_fe.c_str());
-		StringConverter::addFormattedString(xml, "<freq>%d Hz to %d Hz</freq>", _fe_info.frequency_min, _fe_info.frequency_max);
-		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
-	}
-
-	void Frontend::fromXML(const std::string &UNUSED(xml)) {}
-
 	bool Frontend::setFrontendInfo() {
 #if SIMU
 		sprintf(_fe_info.name, "Simulation DVB-S2/C/T Card");
@@ -506,26 +511,14 @@ namespace dvb {
 		return true;
 	}
 
-	bool Frontend::tune(const StreamProperties &properties) {
+	bool Frontend::setProperties(const StreamProperties &properties) {
 		struct dtv_property p[15];
 		int size = 0;
 
-	#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; \
-}
+#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
 		FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
 		switch (properties.getDeliverySystem()) {
-			case SYS_DVBS:
-			case SYS_DVBS2:
-				FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
-				FILL_PROP(DTV_FREQUENCY,         properties.getIntermediateFrequency());
-				FILL_PROP(DTV_MODULATION,        properties.getModulationType());
-				FILL_PROP(DTV_SYMBOL_RATE,       properties.getSymbolRate());
-				FILL_PROP(DTV_INNER_FEC,         properties.getFEC());
-				FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
-				FILL_PROP(DTV_ROLLOFF,           properties.getRollOff());
-				FILL_PROP(DTV_PILOT,             properties.getPilotTones());
-				break;
 			case SYS_DVBT2:
 				FILL_PROP(DTV_STREAM_ID,         properties.getUniqueIDPlp());
 			// Fall-through
@@ -567,7 +560,7 @@ namespace dvb {
 
 		FILL_PROP(DTV_TUNE, DTV_UNDEFINED);
 
-	#undef FILL_PROP
+#undef FILL_PROP
 
 		struct dtv_properties cmdseq;
 		cmdseq.num = size;
@@ -587,119 +580,18 @@ namespace dvb {
 		return true;
 	}
 
-	struct diseqc_cmd {
-		struct dvb_diseqc_master_cmd cmd;
-		uint32_t wait;
-	};
-
-	bool Frontend::diseqcSendMsg(fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-			fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc) {
-		if (ioctl(_fd_fe, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-			PERROR("FE_SET_TONE failed");
-			return false;
-		}
-		if (ioctl(_fd_fe, FE_SET_VOLTAGE, v) == -1) {
-			PERROR("FE_SET_VOLTAGE failed");
-			return false;
-		}
-		usleep(15 * 1000);
-		if (ioctl(_fd_fe, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
-			PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
-			return false;
-		}
-		usleep(cmd->wait * 1000);
-		usleep(15 * 1000);
-		if (repeatDiseqc) {
-			usleep(100 * 1000);
-			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
-			cmd->cmd.msg[0] = 0xe1;
-			if (ioctl(_fd_fe, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
-				PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
-				return false;
-			}
-		}
-		if (ioctl(_fd_fe, FE_DISEQC_SEND_BURST, b) == -1) {
-			PERROR("FE_DISEQC_SEND_BURST failed");
-			return false;
-		}
-		usleep(15 * 1000);
-		if (ioctl(_fd_fe, FE_SET_TONE, t) == -1) {
-			PERROR("FE_SET_TONE failed");
-			return false;
-		}
-		return true;
-	}
-
-	bool Frontend::sendDiseqc(int streamID, bool repeatDiseqc) {
-		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
-		struct diseqc_cmd cmd = {
-			{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
-		};
-
-		// Framing 0xe0: Command from Master, No reply required, First transmission(or repeated transmission)
-		// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
-		// Command 0x38: Write to Port group 0 (Committed switches)
-		// Data 1  0xf0: see below
-		// Data 2  0x00: not used
-		// Data 3  0x00: not used
-		// size    0x04: send x bytes
-
-		// param: high nibble: reset bits, low nibble set bits,
-		// bits are: option, position, polarizaion, band
-		cmd.cmd.msg[3] =
-		  0xf0 | (((_diseqc.src << 2) & 0x0f) | ((_diseqc.pol_v == POL_V) ? 0 : 2) | (_diseqc.hiband ? 1 : 0));
-
-		SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", streamID, cmd.cmd.msg[0],
-				cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
-
-		return diseqcSendMsg((_diseqc.pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
-				&cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A, repeatDiseqc);
-	}
-
-	bool Frontend::tune_it(StreamProperties &properties) {
+	bool Frontend::tune(StreamProperties &properties) {
 		const int streamID = properties.getStreamID();
-		SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
 
 		const fe_delivery_system_t delsys = properties.getDeliverySystem();
 		if (delsys == SYS_DVBS || delsys == SYS_DVBS2) {
-			// DiSEqC switch position differs from src
-			const int src = properties.getDiSEqcSource() - 1;
-			Lnb_t &lnb = _diseqc.LNB[src];
-			_diseqc.src = src;
-			_diseqc.pol_v = properties.getPolarization();
-			_diseqc.hiband = 0;
-
-			const uint32_t freq = properties.getFrequency();
-			uint32_t ifreq = 0;
-			if (lnb.lofHigh) {
-				if (lnb.switchlof) {
-					// Voltage controlled switch
-					if (freq >= lnb.switchlof) {
-						_diseqc.hiband = 1;
-					}
-
-					if (_diseqc.hiband) {
-						ifreq = abs(freq - lnb.lofHigh);
-					} else {
-						ifreq = abs(freq - lnb.lofLow);
-					}
-				} else {
-					// C-Band Multi-point LNB
-					ifreq = abs(freq - (_diseqc.pol_v == POL_V ? lnb.lofLow : lnb.lofHigh));
-				}
-			} else {
-				// Mono-point LNB without switch
-				ifreq = abs(freq - lnb.lofLow);
-			}
-			properties.setIntermediateFrequency(ifreq);
-			// send diseqc
-			if (!sendDiseqc(streamID, properties.diseqcRepeat())) {
-				return false;
-			}
+			return _deliverySystem->tune(_fd_fe, properties);
 		}
 
+		SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
+
 		// Now tune
-		if (!tune(properties)) {
+		if (!setProperties(properties)) {
 			return false;
 		}
 		return true;
@@ -715,7 +607,7 @@ namespace dvb {
 			}
 			// try tuning
 			std::size_t timeout = 0;
-			while (!tune_it(properties)) {
+			while (!tune(properties)) {
 				usleep(450000);
 				++timeout;
 				if (timeout > 3) {

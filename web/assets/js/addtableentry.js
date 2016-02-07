@@ -33,8 +33,8 @@ function changeXMLAndPost(id, tagName, value) {
 	}
 	var input = sub.getElementsByTagName(tagName)[0];
 	input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
-	var xmlString = (new XMLSerializer()).serializeToString(sub);
-	postData(filename, xmlString);
+//	var xmlString = (new XMLSerializer()).serializeToString(sub);
+	postData(filename, xmlLoaded);
 }
 
 function addCheckboxInput(tagName, id, input) {
@@ -92,7 +92,7 @@ function addIPInput(tagName, id, input) {
 }
 
 function addTableLabel(labelstring) {
-	return "<td>" + labelstring + "</td>";
+	return "<td align=\"left\">" + labelstring + "</td>";
 }
 
 function addTableEntry(xmlDoc, tagName, id) {
@@ -100,7 +100,7 @@ function addTableEntry(xmlDoc, tagName, id) {
 }
 
 function addInput(xmlDoc, tagName, id) {
-	var entry = "<td>";
+	var entry = "<td align=\"left\">";
 	if (xmlDoc.getElementsByTagName(tagName).length != 0) {
 		var input = xmlDoc.getElementsByTagName(tagName)[0];
 		var inputtype = input.getElementsByTagName("inputtype");

@@ -20,9 +20,10 @@
 #ifndef STREAM_PROPERTIES_H_INCLUDE
 #define STREAM_PROPERTIES_H_INCLUDE STREAM_PROPERTIES_H_INCLUDE
 
-#include <ChannelData.h>
+#include <dvbfix.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
+#include <input/ChannelData.h>
 #ifdef LIBDVBCSA
 	#include <decrypt/dvbapi/ClientProperties.h>
 #endif
@@ -280,7 +281,7 @@ class StreamProperties :
 		uint32_t    _spc;            // sender RTP packet count  (used in SR packet)
 		uint32_t    _soc;            // sender RTP payload count (used in SR packet)
 		long        _timestamp;      //
-		ChannelData _channelData;    //
+		input::ChannelData _channelData; //
 		double      _rtp_payload;    //
 
 		unsigned long _dvrBufferSize;//

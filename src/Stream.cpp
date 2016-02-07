@@ -26,6 +26,7 @@
 #include <StringConverter.h>
 #include <Utils.h>
 #include <input/dvb/Frontend.h>
+#include <input/dvb/delivery/DVB_S.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,6 +107,34 @@ void Stream::setFrontendMonitorData(fe_status_t status, uint16_t strength, uint1
 
 void Stream::addPIDData(int pid, uint8_t cc) {
 	_properties.addPIDData(pid, cc);
+}
+
+// =======================================================================
+//  -- base::XMLSupport --------------------------------------------------
+// =======================================================================
+
+void Stream::addToXML(std::string &xml) const {
+	base::MutexLock lock(_mutex);
+
+	ADD_CONFIG_NUMBER(xml, "streamindex", _properties.getStreamID());
+
+	ADD_CONFIG_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
+	ADD_CONFIG_TEXT(xml, "attached", _streamInUse ? "yes" : "no");
+	ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
+	ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
+
+	_frontend->addToXML(xml);
+	_properties.addToXML(xml);
+}
+
+void Stream::fromXML(const std::string &xml) {
+	base::MutexLock lock(_mutex);
+
+	std::string element;
+	if (findXMLElement(xml, "enable.value", element)) {
+		_enabled = (element == "true") ? true : false;;
+	}
+	_properties.fromXML(xml);
 }
 
 // ===========================================================================
@@ -242,30 +271,6 @@ bool Stream::teardown(int clientID, bool gracefull) {
 
 	processStopStream_L(clientID, gracefull);
 	return true;
-}
-
-void Stream::addToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
-
-	ADD_CONFIG_NUMBER(xml, "streamindex", _properties.getStreamID());
-
-	ADD_CONFIG_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
-	ADD_CONFIG_TEXT(xml, "attached", _streamInUse ? "yes" : "no");
-	ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
-	ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
-
-	_frontend->addToXML(xml);
-	_properties.addToXML(xml);
-}
-
-void Stream::fromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
-
-	std::string element;
-	if (findXMLElement(xml, "enable.value", element)) {
-		_enabled = (element == "true") ? true : false;;
-	}
-	_properties.fromXML(xml);
 }
 
 bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
