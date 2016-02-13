@@ -22,12 +22,14 @@
 
 #include <FwDecl.h>
 #include <dvbfix.h>
+#include <base/Mutex.h>
 #include <input/Device.h>
+#include <input/dvb/delivery/System.h>
 
 #include <vector>
 #include <string>
 
-FW_DECL_NS0(StreamProperties);
+FW_DECL_NS1(input, DeviceData);
 FW_DECL_NS2(decrypt, dvbapi, Client);
 FW_DECL_NS3(input, dvb, delivery, System);
 
@@ -57,87 +59,61 @@ namespace dvb {
 			// =======================================================================
 
 		public:
+
 			static void enumerate(
 				StreamVector &stream,
 				decrypt::dvbapi::Client *decrypt,
-				const std::string &path,
-				int &nr_dvb_s2,
-				int &nr_dvb_t,
-				int &nr_dvb_t2,
-				int &nr_dvb_c,
-				int &nr_dvb_c2);
-
-		private:
-			///
-			static int getAttachedFrontends(
-				StreamVector &stream,
-				decrypt::dvbapi::Client *decrypt,
-				const std::string &path, int count);
-
-			static void countNumberOfDeliverySystems(
-				StreamVector &stream,
-				int &nr_dvb_s2,
-				int &nr_dvb_t,
-				int &nr_dvb_t2,
-				int &nr_dvb_c,
-				int &nr_dvb_c2);
+				const std::string &path);
 
 			// =======================================================================
-			//  -- input::Device------------------------------------------------------
+			// -- base::XMLSupport ---------------------------------------------------
 			// =======================================================================
 
 		public:
-			/// @see Device
-			virtual bool isDataAvailable();
-
-			/// @see Device
-			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer);
-
-			/// @see Device
-			virtual bool capableOf(fe_delivery_system_t msys);
-
-			/// @see Device
-			virtual void monitorFrontend(fe_status_t &status, uint16_t &strength, uint16_t &snr, uint32_t &ber,
-				uint32_t &ublocks, bool showStatus);
-
-			/// @see Device
-			virtual bool update(StreamProperties &properties);
-
-			/// @see Device
-			virtual bool teardown(StreamProperties &properties);
-
-			///
-			virtual void addFrontendPaths(const std::string &fe,
-				const std::string &dvr,
-				const std::string &dmx) {
-				_path_to_fe = fe;
-				_path_to_dvr = dvr;
-				_path_to_dmx = dmx;
-			}
-
 			///
 			virtual void addToXML(std::string &xml) const;
 
 			///
 			virtual void fromXML(const std::string &xml);
 
-			///
-			virtual bool setFrontendInfo();
+			// =======================================================================
+			//  -- input::Device------------------------------------------------------
+			// =======================================================================
 
-			/// Check if this frontend is tuned
+		public:
+
+			virtual void addDeliverySystemCount(
+				std::size_t &dvbs2,
+				std::size_t &dvbt,
+				std::size_t &dvbt2,
+				std::size_t &dvbc,
+				std::size_t &dvbc2);
+
+			virtual bool isDataAvailable();
+
+			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer);
+
+			virtual bool capableOf(fe_delivery_system_t msys);
+
+			virtual void monitorSignal(bool showStatus);
+
+			virtual bool update(int streamID, input::DeviceData *data);
+
+			virtual bool teardown(int streamID, input::DeviceData *data);
+
+			virtual bool setFrontendInfo(const std::string &fe,
+				const std::string &dvr,	const std::string &dmx);
+
+			virtual std::string attributeDescribeString(int streamID,
+				const input::DeviceData *data) const;
+
 			virtual bool isTuned() const {
 				return (_fd_dvr != -1) && _tuned;
 			}
 
-			///
-			virtual std::size_t getDeliverySystemSize() const {
-				return _del_sys_size;
-			}
-
-			///
-			virtual const fe_delivery_system_t *getDeliverySystem() const {
-				return _info_del_sys;
-			}
+			// =======================================================================
+			//  -- Other member functions --------------------------------------------
+			// =======================================================================
 
 		protected:
 
@@ -154,25 +130,23 @@ namespace dvb {
 			bool set_demux_filter(int fd, uint16_t pid);
 
 			///
-			bool setProperties(const StreamProperties &properties);
+			bool tune(int streamID, const input::dvb::FrontendData &frontendData);
 
 			///
-			bool tune(StreamProperties &properties);
+			bool updatePIDFilters(int streamID, input::dvb::FrontendData &frontendData);
 
 			///
-			bool updatePIDFilters(StreamProperties &properties);
+			bool setupAndTune(int streamID, const input::dvb::FrontendData &frontendData);
 
 			///
-			bool setupAndTune(StreamProperties &properties);
+			void resetPid(int pid, input::dvb::FrontendData &frontendData);
 
-			///
-			void resetPid(StreamProperties &properties, int pid);
+			// =======================================================================
+			// -- Data members -------------------------------------------------------
+			// =======================================================================
 
 		private:
-
-			// =======================================================================
-			// Data members
-			// =======================================================================
+			base::Mutex _mutex;          //
 			bool _tuned;
 			int _fd_fe;
 			int _fd_dvr;
@@ -180,10 +154,21 @@ namespace dvb {
 			std::string _path_to_dvr;
 			std::string _path_to_dmx;
 			struct dvb_frontend_info _fe_info;
-			fe_delivery_system_t _info_del_sys[MAX_DELSYS];
-			std::size_t _del_sys_size;
 
-			input::dvb::delivery::System *_deliverySystem;
+			input::dvb::delivery::SystemVector _deliverySystem;
+
+			std::size_t _dvbs2;
+			std::size_t _dvbt;
+			std::size_t _dvbt2;
+			std::size_t _dvbc;
+			std::size_t _dvbc2;
+
+			fe_status_t _status;    /// FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
+			uint16_t _strength;     ///
+			uint16_t _snr;          ///
+			uint32_t _ber;          ///
+			uint32_t _ublocks;      ///
+			unsigned long _dvrBufferSize; ///
 
 	};
 

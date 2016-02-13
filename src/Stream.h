@@ -23,7 +23,6 @@
 #include <FwDecl.h>
 #include <StreamClient.h>
 #include <StreamInterface.h>
-#include <StreamProperties.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/Device.h>
@@ -33,9 +32,13 @@
 
 #include <string>
 #include <vector>
+#include <cstddef>
+#include <atomic>
 
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(StreamThreadBase);
+FW_DECL_NS1(input, DeviceData);
+FW_DECL_NS2(input, dvb, FrontendData);
 FW_DECL_NS2(decrypt, dvbapi, Client);
 
 // @todo Forward decl
@@ -60,78 +63,55 @@ class Stream :
 		virtual ~Stream();
 
 #ifdef LIBDVBCSA
-
 		// =======================================================================
 		// -- StreamInterfaceDecrypt ---------------------------------------------
 		// =======================================================================
+	public:
 
-		/// @see StreamInterfaceDecrypt
 		virtual bool updateInputDevice();
 
-		/// @see StreamInterfaceDecrypt
 		virtual int getBatchCount() const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual int getBatchParity() const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual int getMaximumBatchSize() const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void decryptBatch(bool final);
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
 
-		/// @see StreamInterfaceDecrypt
 		virtual const dvbcsa_bs_key_s *getKey(int parity) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual bool isTableCollected(int tableID) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setTableCollected(int tableID, bool collected);
 
-		/// @see StreamInterfaceDecrypt
 		virtual const unsigned char *getTableData(int tableID) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void collectTableData(int streamID, int tableID, const unsigned char *data);
 
-		/// @see StreamInterfaceDecrypt
 		virtual int getTableDataSize(int tableID) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setPMT(int pid, bool set);
 
-		/// @see StreamInterfaceDecrypt
 		virtual bool isPMT(int pid) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setECMFilterData(int demux, int filter, int pid, bool set);
 
-		/// @see StreamInterfaceDecrypt
 		virtual void getECMFilterData(int &demux, int &filter, int pid) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual bool isECM(int pid) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setKey(const unsigned char *cw, int parity, int index);
 
-		/// @see StreamInterfaceDecrypt
 		virtual void freeKeys();
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setKeyParity(int pid, int parity);
 
-		/// @see StreamInterfaceDecrypt
 		virtual int getKeyParity(int pid) const;
 
-		/// @see StreamInterfaceDecrypt
 		virtual void setECMInfo(
 			int pid,
 			int serviceID,
@@ -148,75 +128,52 @@ class Stream :
 		// =======================================================================
 		// -- StreamInterface ----------------------------------------------------
 		// =======================================================================
+	public:
 
-		/// @see StreamInterface
 		virtual int  getStreamID() const;
 
-		/// @see StreamInterface
 		virtual StreamClient &getStreamClient(std::size_t clientNr) const;
 
-		/// @see StreamInterface
 		virtual input::Device *getInputDevice() const;
 
-		/// @see StreamInterface
 		virtual uint32_t getSSRC() const;
 
-		/// @see StreamInterface
 		virtual long getTimestamp() const;
 
-		/// @see StreamInterface
 		virtual uint32_t getSPC() const;
 
-		/// @see StreamInterface
 		virtual unsigned int getRtcpSignalUpdateFrequency() const;
 
-		/// @see StreamInterface
 		virtual uint32_t getSOC() const;
 
-		/// @see StreamInterface
 		virtual void addRtpData(uint32_t byte, long timestamp);
 
-		/// @see StreamInterface
 		virtual double getRtpPayload() const;
 
-		/// @see StreamInterface
 		virtual std::string attributeDescribeString(bool &active) const;
-
-		/// @see StreamInterface
-		virtual void setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
-		                            uint32_t ber, uint32_t ublocks);
-
-		/// @see StreamInterface
-		virtual void addPIDData(int pid, uint8_t cc);
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
-
-		/// Add the frontend paths to connect to this stream
-		void addFrontendPaths(const std::string &fe,
-		                      const std::string &dvr,
-		                      const std::string &dmx) {
-			base::MutexLock lock(_mutex);
-			_frontend->addFrontendPaths(fe, dvr, dmx);
-		}
+	public:
 
 		/// This will read the frontend information for this stream
-		void setFrontendInfo() {
+		void setFrontendInfo(const std::string &fe,
+		                     const std::string &dvr,
+		                     const std::string &dmx) {
 			base::MutexLock lock(_mutex);
-			_frontend->setFrontendInfo();
+			_device->setFrontendInfo(fe, dvr, dmx);
 		}
 
-		/// Get the amount of delivery systems of this stream
-		std::size_t getDeliverySystemSize() const {
+		///
+		void addDeliverySystemCount(
+				std::size_t &dvbs2,
+				std::size_t &dvbt,
+				std::size_t &dvbt2,
+				std::size_t &dvbc,
+				std::size_t &dvbc2) {
 			base::MutexLock lock(_mutex);
-			return _frontend->getDeliverySystemSize();
-		}
-
-		/// Get the possible delivery systems of this stream
-		const fe_delivery_system_t *getDeliverySystem() const {
-			base::MutexLock lock(_mutex);
-			return _frontend->getDeliverySystem();
+			_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
 		}
 
 		/// Find the clientID for the requested parameters
@@ -323,16 +280,27 @@ class Stream :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		base::Mutex       _mutex;         ///
+		base::Mutex _mutex;               ///
+		int _streamID;                    ///
+
 		StreamingType     _streamingType; ///
 		bool              _enabled;       /// is this stream enabled, could we use it?
 		bool              _streamInUse;   ///
+		bool              _streamActive;  ///
+
 		StreamClient     *_client;        /// defines the participants of this stream
 		                                  /// index 0 is the owner of this stream
 		StreamThreadBase *_streaming;     ///
 		decrypt::dvbapi::Client *_decrypt;///
-		StreamProperties _properties;     ///
-		input::Device *_frontend;         ///
+		input::Device *_device;           ///
+		input::dvb::FrontendData *_frontendData;///
+		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender
+		std::atomic<uint32_t> _spc;       /// sender RTP packet count  (used in SR packet)
+		std::atomic<uint32_t> _soc;       /// sender RTP payload count (used in SR packet)
+		std::atomic<long> _timestamp;     ///
+		std::atomic<long> _rtp_payload;   ///
+		unsigned int _rtcpSignalUpdate;   ///
+
 }; // class Stream
 
 #endif // STREAM_H_INCLUDE

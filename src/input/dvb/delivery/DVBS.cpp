@@ -1,4 +1,4 @@
-/* DVB_S.cpp
+/* DVBS.cpp
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,12 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include <input/dvb/delivery/DVB_S.h>
+#include <input/dvb/delivery/DVBS.h>
 
 #include <Log.h>
 #include <Utils.h>
 #include <StringConverter.h>
-#include <StreamProperties.h>
+#include <input/dvb/FrontendData.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -34,7 +34,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVB_S::DVB_S() {
+	DVBS::DVBS() :
+		_diseqcRepeat(true) {
 		for (std::size_t i = 0; i < MAX_LNB; ++i) {
 			_diseqc.LNB[i].type        = Universal;
 			_diseqc.LNB[i].lofStandard = DEFAULT_LOF_STANDARD;
@@ -44,12 +45,14 @@ namespace delivery {
 		}
 	}
 
-	DVB_S::~DVB_S() {}
+	DVBS::~DVBS() {}
 
 	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
-	void DVB_S::addToXML(std::string &xml) const {
+
+	void DVBS::addToXML(std::string &xml) const {
+		base::MutexLock lock(_mutex);
 		for (std::size_t i = 0; i < MAX_LNB; ++i) {
 			StringConverter::addFormattedString(xml, "<lnb%zu>", i);
 			ADD_CONFIG_NUMBER(xml, "lnbtype", _diseqc.LNB[i].type);
@@ -59,27 +62,33 @@ namespace delivery {
 			ADD_CONFIG_NUMBER(xml, "lofHigh", _diseqc.LNB[i].lofHigh);
 			StringConverter::addFormattedString(xml, "</lnb%zu>", i);
 		}
+		ADD_CONFIG_CHECKBOX(xml, "diseqc_repeat", (_diseqcRepeat ? "true" : "false"));
 	}
 
-	void DVB_S::fromXML(const std::string &UNUSED(xml)) {}
+	void DVBS::fromXML(const std::string &xml) {
+		base::MutexLock lock(_mutex);
+		std::string element;
+		if (findXMLElement(xml, "diseqc_repeat.value", element)) {
+			_diseqcRepeat = (element == "true") ? true : false;
+		}
+	}
 
 	// =======================================================================
 	// -- input::dvb::delivery::System ---------------------------------------
 	// =======================================================================
 
-	bool DVB_S::tune(int feFD, const StreamProperties &properties) {
-		const int streamID = properties.getStreamID();
-		SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
+	bool DVBS::tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) {
+		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-S(2)...", streamID);
 
 		uint32_t ifreq = 0;
 		// DiSEqC switch position differs from src
-		const int src = properties.getDiSEqcSource() - 1;
+		const int src = frontendData.getDiSEqcSource() - 1;
 		Lnb_t &lnb = _diseqc.LNB[src];
 		_diseqc.src = src;
-		_diseqc.pol_v = properties.getPolarization();
+		_diseqc.pol_v = frontendData.getPolarization();
 		_diseqc.hiband = 0;
 
-		const uint32_t freq = properties.getFrequency();
+		const uint32_t freq = frontendData.getFrequency();
 		if (lnb.lofHigh) {
 			if (lnb.switchlof) {
 				// Voltage controlled switch
@@ -101,12 +110,12 @@ namespace delivery {
 			ifreq = abs(freq - lnb.lofLow);
 		}
 		// send diseqc
-		if (!sendDiseqc(feFD, streamID, properties.diseqcRepeat())) {
+		if (!sendDiseqc(feFD, streamID)) {
 			return false;
 		}
 
 		// Now tune by setting properties
-		if (!setProperties(feFD, ifreq, properties)) {
+		if (!setProperties(feFD, ifreq, frontendData)) {
 			return false;
 		}
 		return true;
@@ -116,22 +125,22 @@ namespace delivery {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	bool DVB_S::setProperties(int feFD, const uint32_t ifreq, const StreamProperties &properties) {
+	bool DVBS::setProperties(int feFD, const uint32_t ifreq, const input::dvb::FrontendData &frontendData) {
 		struct dtv_property p[15];
 		int size = 0;
 
 		#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
-		FILL_PROP(DTV_CLEAR,             DTV_UNDEFINED);
-		FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
-		FILL_PROP(DTV_FREQUENCY,         ifreq);
-		FILL_PROP(DTV_MODULATION,        properties.getModulationType());
-		FILL_PROP(DTV_SYMBOL_RATE,       properties.getSymbolRate());
-		FILL_PROP(DTV_INNER_FEC,         properties.getFEC());
-		FILL_PROP(DTV_INVERSION,         INVERSION_AUTO);
-		FILL_PROP(DTV_ROLLOFF,           properties.getRollOff());
-		FILL_PROP(DTV_PILOT,             properties.getPilotTones());
-		FILL_PROP(DTV_TUNE,              DTV_UNDEFINED);
+		FILL_PROP(DTV_CLEAR,           DTV_UNDEFINED);
+		FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.getDeliverySystem());
+		FILL_PROP(DTV_FREQUENCY,       ifreq);
+		FILL_PROP(DTV_MODULATION,      frontendData.getModulationType());
+		FILL_PROP(DTV_SYMBOL_RATE,     frontendData.getSymbolRate());
+		FILL_PROP(DTV_INNER_FEC,       frontendData.getFEC());
+		FILL_PROP(DTV_INVERSION,       INVERSION_AUTO);
+		FILL_PROP(DTV_ROLLOFF,         frontendData.getRollOff());
+		FILL_PROP(DTV_PILOT,           frontendData.getPilotTones());
+		FILL_PROP(DTV_TUNE,            DTV_UNDEFINED);
 
 		#undef FILL_PROP
 
@@ -158,8 +167,8 @@ namespace delivery {
 		uint32_t wait;
 	};
 
-	bool DVB_S::diseqcSendMsg(int feFD, fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-			fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc) {
+	bool DVBS::diseqcSendMsg(int feFD, fe_sec_voltage_t v, struct diseqc_cmd *cmd,
+			fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b) {
 		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 			PERROR("FE_SET_TONE failed");
 			return false;
@@ -175,13 +184,16 @@ namespace delivery {
 		}
 		usleep(cmd->wait * 1000);
 		usleep(15 * 1000);
-		if (repeatDiseqc) {
-			usleep(100 * 1000);
-			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
-			cmd->cmd.msg[0] = 0xe1;
-			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
-				PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
-				return false;
+		{
+			base::MutexLock lock(_mutex);
+			if (_diseqcRepeat) {
+				usleep(100 * 1000);
+				// Framing 0xe1: Command from Master, No reply required, Repeated transmission
+				cmd->cmd.msg[0] = 0xe1;
+				if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd->cmd) == -1) {
+					PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
+					return false;
+				}
 			}
 		}
 		if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
@@ -196,7 +208,7 @@ namespace delivery {
 		return true;
 	}
 
-	bool DVB_S::sendDiseqc(int feFD, int streamID, bool repeatDiseqc) {
+	bool DVBS::sendDiseqc(int feFD, int streamID) {
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
 		struct diseqc_cmd cmd = {
 			{ {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4}, 0
@@ -219,7 +231,7 @@ namespace delivery {
 				cmd.cmd.msg[1], cmd.cmd.msg[2], cmd.cmd.msg[3]);
 
 		return diseqcSendMsg(feFD, (_diseqc.pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
-				&cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A, repeatDiseqc);
+				&cmd, _diseqc.hiband ? SEC_TONE_ON : SEC_TONE_OFF, (_diseqc.src % 2) ? SEC_MINI_B : SEC_MINI_A);
 	}
 
 } // namespace delivery

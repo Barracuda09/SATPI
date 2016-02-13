@@ -70,15 +70,7 @@ class StreamInterface {
 		///
 		virtual double getRtpPayload() const = 0;
 
-		/// Set the continuity counter for pid
-		virtual void addPIDData(int pid, uint8_t cc) = 0;
-
-
-		/// Set the frontend  status information like strength, snr etc.
-		virtual void setFrontendMonitorData(fe_status_t status, uint16_t strength, uint16_t snr,
-		                            uint32_t ber, uint32_t ublocks) = 0;
-
-		///
+		/// Get the stream Description string for RTCP and DESCRIBE command
 		virtual std::string attributeDescribeString(bool &active) const = 0;
 
 };

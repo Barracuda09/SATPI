@@ -29,9 +29,6 @@ endif
 # List of source to be compiled
 SOURCES = Version.cpp \
 	Satpi.cpp \
-	StreamProperties.cpp \
-	StreamProperties_ChannelData_get.cpp \
-	StreamProperties_ChannelData_set.cpp \
 	Properties.cpp \
 	HttpcSocket.cpp \
 	TcpSocket.cpp \
@@ -50,10 +47,13 @@ SOURCES = Version.cpp \
 	StringConverter.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
-	input/ChannelData.cpp \
-	input/PidTable.cpp \
 	input/dvb/Frontend.cpp \
-	input/dvb/delivery/DVB_S.cpp \
+	input/dvb/FrontendData.cpp \
+	input/dvb/FrontendData_set.cpp \
+	input/dvb/PidTable.cpp \
+	input/dvb/delivery/DVBS.cpp \
+	input/dvb/delivery/DVBT.cpp \
+	input/dvb/delivery/DVBC.cpp \
 	mpegts/PacketBuffer.cpp \
 	upnp/ssdp/Server.cpp
 

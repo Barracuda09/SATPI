@@ -23,9 +23,11 @@
 #include <Utils.h>
 #include <Stream.h>
 #include <StringConverter.h>
-#include <StreamProperties.h>
 #include <mpegts/PacketBuffer.h>
-#include <input/dvb/delivery/DVB_S.h>
+#include <input/dvb/FrontendData.h>
+#include <input/dvb/delivery/DVBC.h>
+#include <input/dvb/delivery/DVBS.h>
+#include <input/dvb/delivery/DVBT.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,85 +46,32 @@ namespace dvb {
 	Frontend::Frontend() :
 		_tuned(false),
 		_fd_fe(-1),
-		_fd_dvr(-1) {
+		_fd_dvr(-1),
+		_dvbs2(0),
+		_dvbt(0),
+		_dvbt2(0),
+		_dvbc(0),
+		_dvbc2(0),
+		_dvrBufferSize(40 * 188 * 1024) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		_path_to_fe  = "Not Set";
 		_path_to_dvr = "Not Set";
 		_path_to_dmx = "Not Set";
-		_deliverySystem = new input::dvb::delivery::DVB_S;
 	}
 
 	Frontend::~Frontend() {
-		DELETE(_deliverySystem);
-	}
-
-	// =======================================================================
-	//  -- Static member functions -------------------------------------------
-	// =======================================================================
-
-	void Frontend::enumerate(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
-		const std::string &path, int &nr_dvb_s2, int &nr_dvb_t, int &nr_dvb_t2,
-		int &nr_dvb_c, int &nr_dvb_c2) {
-		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
-		const int count = getAttachedFrontends(stream, decrypt, path, 0);
-		SI_LOG_INFO("Frontends found: %zu", count);
-		countNumberOfDeliverySystems(stream, nr_dvb_s2, nr_dvb_t,
-			nr_dvb_t2, nr_dvb_c, nr_dvb_c2);
-	}
-
-	void Frontend::countNumberOfDeliverySystems(StreamVector &stream, int &nr_dvb_s2,
-			int &nr_dvb_t, int &nr_dvb_t2, int &nr_dvb_c, int &nr_dvb_c2) {
-		for (StreamVector::iterator it = stream.begin(); it != stream.end(); ++it) {
-			const Stream *stream = *it;
-			int dvb_s2 = 0;
-			int dvb_t  = 0;
-			int dvb_t2 = 0;
-			int dvb_c  = 0;
-			int dvb_c2 = 0;
-			//
-			for (size_t j = 0; j < stream->getDeliverySystemSize(); j++) {
-				const fe_delivery_system_t *del_sys = stream->getDeliverySystem();
-				switch (del_sys[j]) {
-					// only count DVBS2
-					case SYS_DVBS2:
-						++dvb_s2;
-						break;
-					case SYS_DVBT:
-						++dvb_t;
-						break;
-					case SYS_DVBT2:
-						++dvb_t2;
-						break;
-#if FULL_DVB_API_VERSION >= 0x0505
-					case SYS_DVBC_ANNEX_A:
-					case SYS_DVBC_ANNEX_B:
-					case SYS_DVBC_ANNEX_C:
-						if (dvb_c == 0) {
-							++dvb_c;
-						}
-						break;
-#else
-					case SYS_DVBC_ANNEX_AC:
-					case SYS_DVBC_ANNEX_B:
-						if (dvb_c == 0) {
-							++dvb_c;
-						}
-						break;
-#endif
-					default:
-						// Not supported
-						break;
-				}
-			}
-			nr_dvb_s2 += dvb_s2;
-			nr_dvb_t  += dvb_t;
-			nr_dvb_t2 += dvb_t2;
-			nr_dvb_c  += dvb_c;
-			nr_dvb_c2 += dvb_c2;
+		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
+		     it != _deliverySystem.end();
+		     ++it) {
+			DELETE(*it);
 		}
 	}
 
-	int Frontend::getAttachedFrontends(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
+	// =======================================================================
+	//  -- Static functions --------------------------------------------------
+	// =======================================================================
+
+	int getAttachedFrontends(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
 			const std::string &path, int count) {
 #define DMX      "/dev/dvb/adapter%d/demux%d"
 #define DVR      "/dev/dvb/adapter%d/dvr%d"
@@ -139,14 +88,12 @@ namespace dvb {
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
 		stream.push_back(new Stream(0, decrypt));
-		stream[0]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-		stream[0]->setFrontendInfo();
+		stream[0]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
 		stream.push_back(new Stream(1, decrypt));
-		stream[1]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-		stream[1]->setFrontendInfo();
+		stream[1]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 #else
 		struct dirent **file_list;
 		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
@@ -174,9 +121,7 @@ namespace dvb {
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
 
 								stream.push_back(new Stream(count, decrypt));
-								stream[count]->addFrontendPaths(fe_path, dvr_path, dmx_path);
-								stream[count]->setFrontendInfo();
-
+								stream[count]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 								++count;
 							}
 							break;
@@ -200,25 +145,69 @@ namespace dvb {
 	}
 
 	// =======================================================================
+	//  -- Static member functions -------------------------------------------
+	// =======================================================================
+
+	void Frontend::enumerate(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
+		const std::string &path) {
+		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
+		const int count = getAttachedFrontends(stream, decrypt, path, 0);
+		SI_LOG_INFO("Frontends found: %zu", count);
+	}
+
+	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
 	void Frontend::addToXML(std::string &xml) const {
+		base::MutexLock lock(_mutex);
 		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", _fe_info.name);
 		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _path_to_fe.c_str());
 		StringConverter::addFormattedString(xml, "<freq>%d Hz to %d Hz</freq>", _fe_info.frequency_min, _fe_info.frequency_max);
 		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
+		// Monitor
+		StringConverter::addFormattedString(xml, "<status>%d</status>", _status);
+		StringConverter::addFormattedString(xml, "<signal>%d</signal>", _strength);
+		StringConverter::addFormattedString(xml, "<snr>%d</snr>", _snr);
+		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _ber);
+		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
+
+		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
+
 		ADD_XML_BEGIN_ELEMENT(xml, "deliverySystem");
-		_deliverySystem->addToXML(xml);
+		_deliverySystem[0]->addToXML(xml);
 		ADD_XML_END_ELEMENT(xml, "deliverySystem");
 	}
 
-	void Frontend::fromXML(const std::string &UNUSED(xml)) {}
+	void Frontend::fromXML(const std::string &xml) {
+		base::MutexLock lock(_mutex);
+		std::string element;
+		if (findXMLElement(xml, "deliverySystem", element)) {
+			_deliverySystem[0]->fromXML(element);
+		}
+		if (findXMLElement(xml, "dvrbuffer.value", element)) {
+			_dvrBufferSize = atoi(element.c_str());
+		}
+	}
 
 	// =======================================================================
-	//  -- input::Device------------------------------------------------------
+	//  -- input::Device -----------------------------------------------------
 	// =======================================================================
+
+	void Frontend::addDeliverySystemCount(
+		std::size_t &dvbs2,
+		std::size_t &dvbt,
+		std::size_t &dvbt2,
+		std::size_t &dvbc,
+		std::size_t &dvbc2) {
+		dvbs2 += _dvbs2;
+		dvbt  += _dvbt;
+		dvbt2 += _dvbt2;
+		dvbc  += _dvbc;
+		dvbc2 += _dvbc2;
+	}
+
 	bool Frontend::isDataAvailable() {
 		struct pollfd pfd[1];
 		pfd[0].fd = _fd_dvr;
@@ -231,6 +220,15 @@ namespace dvb {
 		// try read maximum amount of bytes from DVR
 		const int bytes = read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
+/*
+			// sync byte then check cc
+			if (_bufferPtrWrite[0] == 0x47 && bytes_read > 3) {
+				// get PID and CC from TS
+				const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
+				const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
+				_stream.addPIDData(pid, cc);
+			}
+*/
 			buffer.addAmountOfBytesWritten(bytes);
 			return buffer.full();
 		}
@@ -238,133 +236,107 @@ namespace dvb {
 	}
 
 	bool Frontend::capableOf(fe_delivery_system_t msys) {
-		for (std::size_t i = 0; i < MAX_DELSYS; ++i) {
-			// we no not like SYS_UNDEFINED
-			if (_info_del_sys[i] != SYS_UNDEFINED && msys == _info_del_sys[i]) {
+		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
+		     it != _deliverySystem.end();
+		     ++it) {
+			if ((*it)->isCapableOf(msys)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	void Frontend::monitorFrontend(fe_status_t &status, uint16_t &strength, uint16_t &snr, uint32_t &ber, uint32_t &ublocks, bool showStatus) {
+	void Frontend::monitorSignal(bool showStatus) {
+		base::MutexLock lock(_mutex);
 		// first read status
-		if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+		if (ioctl(_fd_fe, FE_READ_STATUS, &_status) == 0) {
 			// some frontends might not support all these ioctls
-			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
-				strength = 0;
+			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &_strength) != 0) {
+				_strength = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
-				snr = 0;
+			if (ioctl(_fd_fe, FE_READ_SNR, &_snr) != 0) {
+				_snr = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
-				ber = 0;
+			if (ioctl(_fd_fe, FE_READ_BER, &_ber) != 0) {
+				_ber = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
-				ublocks = 0;
+			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &_ublocks) != 0) {
+				_ublocks = 0;
 			}
-			strength = (strength * 240) / 0xffff;
-			snr = (snr * 15) / 0xffff;
+			_strength = (_strength * 240) / 0xffff;
+			_snr = (_snr * 15) / 0xffff;
 
 			// Print Status
 			if (showStatus) {
 				SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
-					status, strength, snr, ber, ublocks,
-					(status & FE_HAS_LOCK) ? 1 : 0);
+					_status, _strength, _snr, _ber, _ublocks,
+					(_status & FE_HAS_LOCK) ? 1 : 0);
 			}
 		} else {
 			PERROR("FE_READ_STATUS failed");
 		}
 	}
 
-	bool Frontend::update(StreamProperties &properties) {
-		SI_LOG_DEBUG("Stream: %d, Updating frontend...", properties.getStreamID());
+	bool Frontend::update(const int streamID, input::DeviceData *data) {
+		SI_LOG_DEBUG("Stream: %d, Updating frontend...", streamID);
+		input::dvb::FrontendData *frontendData = dynamic_cast<input::dvb::FrontendData *>(data);
+		if (frontendData != nullptr) {
 #ifndef SIMU
-		// Setup, tune and set PID Filters
-		if (properties.hasChannelDataChanged()) {
-			properties.resetChannelDataChanged();
-			_tuned = false;
-			CLOSE_FD(_fd_dvr);
-		}
-
-		std::size_t timeout = 0;
-		while (!setupAndTune(properties)) {
-			usleep(150000);
-			++timeout;
-			if (timeout > 3) {
-				return false;
+			// Setup, tune and set PID Filters
+			if (frontendData->hasFrontendDataChanged()) {
+				frontendData->resetFrontendDataChanged();
+				_tuned = false;
+				CLOSE_FD(_fd_dvr);
 			}
-		}
 
-		updatePIDFilters(properties);
+			std::size_t timeout = 0;
+			while (!setupAndTune(streamID, *frontendData)) {
+				usleep(150000);
+				++timeout;
+				if (timeout > 3) {
+					return false;
+				}
+			}
+
+			updatePIDFilters(streamID, *frontendData);
 #endif
-
-		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", properties.getStreamID());
-		return true;
-	}
-
-	bool Frontend::teardown(StreamProperties &properties) {
-		const int streamID = properties.getStreamID();
-		for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-			if (properties.isPIDUsed(i)) {
-				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-						streamID, i, properties.getDMXFileDescriptor(i), properties.getPacketCounter(i));
-				resetPid(properties, i);
-			} else if (properties.getDMXFileDescriptor(i) != -1) {
-				SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", streamID, i);
-				resetPid(properties, i);
-			}
-		}
-		_tuned = false;
-		CLOSE_FD(_fd_fe);
-		CLOSE_FD(_fd_dvr);
-		return true;
-	}
-
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
-	int Frontend::open_fe(const std::string &path, bool readonly) const {
-		int fd;
-		if ((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0) {
-			PERROR("FRONTEND DEVICE");
-		}
-		return fd;
-	}
-
-	int Frontend::open_dmx(const std::string &path) {
-		int fd;
-		if ((fd = open(path.c_str(), O_RDWR | O_NONBLOCK)) < 0) {
-			PERROR("DMX DEVICE");
-		}
-		return fd;
-	}
-
-	int Frontend::open_dvr(const std::string &path) {
-		int fd;
-		if ((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
-			PERROR("DVR DEVICE");
-		}
-		return fd;
-	}
-
-	bool Frontend::set_demux_filter(int fd, uint16_t pid) {
-		struct dmx_pes_filter_params pesFilter;
-
-		pesFilter.pid      = pid;
-		pesFilter.input    = DMX_IN_FRONTEND;
-		pesFilter.output   = DMX_OUT_TS_TAP;
-		pesFilter.pes_type = DMX_PES_OTHER;
-		pesFilter.flags    = DMX_IMMEDIATE_START;
-
-		if (ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-			PERROR("DMX_SET_PES_FILTER");
+			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", streamID);
+		} else {
+			SI_LOG_ERROR("Stream: %d, Updating frontend failed because of wrong data", streamID);
 			return false;
 		}
 		return true;
 	}
 
-	bool Frontend::setFrontendInfo() {
+	bool Frontend::teardown(const int streamID, input::DeviceData *data) {
+		input::dvb::FrontendData *frontendData = dynamic_cast<input::dvb::FrontendData *>(data);
+		if (frontendData != nullptr) {
+			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
+				if (frontendData->isPIDUsed(i)) {
+					SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+							streamID, i, frontendData->getDMXFileDescriptor(i), frontendData->getPacketCounter(i));
+					resetPid(i, *frontendData);
+				} else if (frontendData->getDMXFileDescriptor(i) != -1) {
+					SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", streamID, i);
+					resetPid(i, *frontendData);
+				}
+			}
+			_tuned = false;
+			CLOSE_FD(_fd_fe);
+			CLOSE_FD(_fd_dvr);
+		} else {
+			SI_LOG_ERROR("Stream: %d, Teardown frontend failed because of wrong data", streamID);
+			return false;
+		}
+		return true;
+	}
+
+	bool Frontend::setFrontendInfo(const std::string &fe,
+				const std::string &dvr,	const std::string &dmx) {
+		_path_to_fe = fe;
+		_path_to_dvr = dvr;
+		_path_to_dmx = dmx;
+
 #if SIMU
 		sprintf(_fe_info.name, "Simulation DVB-S2/C/T Card");
 		_fe_info.frequency_min = 1000000UL;
@@ -452,153 +424,227 @@ namespace dvb {
 		}
 		CLOSE_FD(fd_fe);
 #endif
-		// clear delsys
-		for (std::size_t i = 0; i < MAX_DELSYS; ++i) {
-			_info_del_sys[i] = SYS_UNDEFINED;
-		}
-		// get capability of fe and save it
-		_del_sys_size = dtvProperty.u.buffer.len;
+		// get capability of this frontend and count the delivery systems
 		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
 			switch (dtvProperty.u.buffer.data[i]) {
 				case SYS_DSS:
-					_info_del_sys[i] = SYS_DSS;
-					SI_LOG_DEBUG("Frontend Type: DSS");
+					SI_LOG_INFO("Frontend Type: DSS");
 					break;
 				case SYS_DVBS:
-					_info_del_sys[i] = SYS_DVBS;
-					SI_LOG_DEBUG("Frontend Type: Satellite (DVB-S)");
+					SI_LOG_INFO("Frontend Type: Satellite (DVB-S)");
 					break;
 				case SYS_DVBS2:
-					_info_del_sys[i] = SYS_DVBS2;
-					SI_LOG_DEBUG("Frontend Type: Satellite (DVB-S2)");
+					// we only count DVB-S2
+					++_dvbs2;
+					SI_LOG_INFO("Frontend Type: Satellite (DVB-S2)");
 					break;
 				case SYS_DVBT:
-					_info_del_sys[i] = SYS_DVBT;
-					SI_LOG_DEBUG("Frontend Type: Terrestrial (DVB-T)");
+					++_dvbt;
+					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T)");
 					break;
 				case SYS_DVBT2:
-					_info_del_sys[i] = SYS_DVBT2;
-					SI_LOG_DEBUG("Frontend Type: Terrestrial (DVB-T2)");
+					++_dvbt2;
+					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T2)");
 					break;
 #if FULL_DVB_API_VERSION >= 0x0505
 				case SYS_DVBC_ANNEX_A:
-					_info_del_sys[i] = SYS_DVBC_ANNEX_A;
-					SI_LOG_DEBUG("Frontend Type: Cable (Annex A)");
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex A)");
 					break;
 				case SYS_DVBC_ANNEX_C:
-					_info_del_sys[i] = SYS_DVBC_ANNEX_C;
-					SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
 					break;
 #else
 				case SYS_DVBC_ANNEX_AC:
-					_info_del_sys[i] = SYS_DVBC_ANNEX_AC;
-					SI_LOG_DEBUG("Frontend Type: Cable (Annex C)");
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
 					break;
 #endif
 				case SYS_DVBC_ANNEX_B:
-					_info_del_sys[i] = SYS_DVBC_ANNEX_B;
-					SI_LOG_DEBUG("Frontend Type: Cable (Annex B)");
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
 					break;
 				default:
-					_info_del_sys[i] = SYS_UNDEFINED;
-					SI_LOG_DEBUG("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
+					SI_LOG_INFO("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
 					break;
 			}
 		}
-		SI_LOG_DEBUG("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
-		SI_LOG_DEBUG("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
+		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+
+		// Set delivery systems
+		if (_dvbs2 > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBS);
+		}
+		if (_dvbt > 0 || _dvbt2 > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBT);
+		}
+		if (_dvbc > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBC);
+		}
 
 		return true;
 	}
 
-	bool Frontend::setProperties(const StreamProperties &properties) {
-		struct dtv_property p[15];
-		int size = 0;
+	std::string Frontend::attributeDescribeString(int streamID,
+			const input::DeviceData *data) const {
+		const input::dvb::FrontendData *frontendData = dynamic_cast<const input::dvb::FrontendData *>(data);
+		std::string desc;
+		if (frontendData != nullptr) {
+			const double freq = frontendData->getFrequency() / 1000.0;
+			const int srate = frontendData->getSymbolRate() / 1000;
 
-#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
+			const int locked = (_status & FE_HAS_LOCK) ? 1 : 0;
 
-		FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
-		switch (properties.getDeliverySystem()) {
-			case SYS_DVBT2:
-				FILL_PROP(DTV_STREAM_ID,         properties.getUniqueIDPlp());
-			// Fall-through
-			case SYS_DVBT:
-				FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
-				FILL_PROP(DTV_FREQUENCY,         properties.getFrequency() * 1000UL);
-				FILL_PROP(DTV_MODULATION,        properties.getModulationType());
-				FILL_PROP(DTV_INVERSION,         properties.getSpectralInversion());
-				FILL_PROP(DTV_BANDWIDTH_HZ,      properties.getBandwidthHz());
-				FILL_PROP(DTV_CODE_RATE_HP,      properties.getFEC());
-				FILL_PROP(DTV_CODE_RATE_LP,      properties.getFEC());
-				FILL_PROP(DTV_TRANSMISSION_MODE, properties.getTransmissionMode());
-				FILL_PROP(DTV_GUARD_INTERVAL,    properties.getGuardInverval());
-				FILL_PROP(DTV_HIERARCHY,         properties.getHierarchy());
-#if FULL_DVB_API_VERSION >= 0x0509
-				FILL_PROP(DTV_LNA,               1);
-#endif
-				break;
+			std::string csv = frontendData->getPidCSV();
+			switch (frontendData->getDeliverySystem()) {
+				case SYS_DVBS:
+				case SYS_DVBS2:
+					// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
+					//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
+					StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
+							frontendData->getDiSEqcSource(),
+							streamID + 1,
+							_strength,
+							locked,
+							_snr,
+							freq,
+							(frontendData->getPolarization() == POL_V) ? 'v' : 'h',
+							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
+							StringConverter::modtype_to_sting(frontendData->getModulationType()),
+							StringConverter::pilot_tone_to_string(frontendData->getPilotTones()),
+							StringConverter::rolloff_to_sting(frontendData->getRollOff()),
+							srate,
+							StringConverter::fec_to_string(frontendData->getFEC()),
+							csv.c_str());
+					break;
+				case SYS_DVBT:
+				case SYS_DVBT2:
+					// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
+					//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
+					StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+							streamID + 1,
+							_strength,
+							locked,
+							_snr,
+							freq,
+							frontendData->getBandwidthHz() / 1000000.0,
+							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
+							StringConverter::transmode_to_string(frontendData->getTransmissionMode()),
+							StringConverter::modtype_to_sting(frontendData->getModulationType()),
+							StringConverter::guardinter_to_string(frontendData->getGuardInverval()),
+							StringConverter::fec_to_string(frontendData->getFEC()),
+							frontendData->getUniqueIDPlp(),
+							frontendData->getUniqueIDT2(),
+							frontendData->getSISOMISO(),
+							csv.c_str());
+					break;
+				case SYS_DVBC_ANNEX_B:
 #if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_B:
-			case SYS_DVBC_ANNEX_C:
+				case SYS_DVBC_ANNEX_A:
+				case SYS_DVBC_ANNEX_C:
 #else
-			case SYS_DVBC_ANNEX_AC:
-			case SYS_DVBC_ANNEX_B:
+				case SYS_DVBC_ANNEX_AC:
 #endif
-				FILL_PROP(DTV_BANDWIDTH_HZ,      properties.getBandwidthHz());
-				FILL_PROP(DTV_DELIVERY_SYSTEM,   properties.getDeliverySystem());
-				FILL_PROP(DTV_FREQUENCY,         properties.getFrequency() * 1000UL);
-				FILL_PROP(DTV_INVERSION,         properties.getSpectralInversion());
-				FILL_PROP(DTV_MODULATION,        properties.getModulationType());
-				FILL_PROP(DTV_SYMBOL_RATE,       properties.getSymbolRate());
-				FILL_PROP(DTV_INNER_FEC,         properties.getFEC());
-				break;
-
-			default:
-				return false;
+					// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
+					//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
+					StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+							streamID + 1,
+							_strength,
+							locked,
+							_snr,
+							freq,
+							frontendData->getBandwidthHz() / 1000000.0,
+							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
+							StringConverter::modtype_to_sting(frontendData->getModulationType()),
+							srate,
+							frontendData->getC2TuningFrequencyType(),
+							frontendData->getDataSlice(),
+							frontendData->getUniqueIDPlp(),
+							frontendData->getSpectralInversion(),
+							csv.c_str());
+					break;
+				case SYS_UNDEFINED:
+					// Not setup yet
+					StringConverter::addFormattedString(desc, "NONE");
+					break;
+				default:
+					// Not supported/
+					StringConverter::addFormattedString(desc, "NONE");
+					break;
+			}
+		} else {
+			StringConverter::addFormattedString(desc, "NONE");
 		}
+//		SI_LOG_DEBUG("Stream: %d, %s", streamID, desc.c_str());
+		return desc;
+	}
 
-		FILL_PROP(DTV_TUNE, DTV_UNDEFINED);
+	// =======================================================================
+	//  -- Other member functions --------------------------------------------
+	// =======================================================================
+	int Frontend::open_fe(const std::string &path, bool readonly) const {
+		int fd;
+		if ((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0) {
+			PERROR("FRONTEND DEVICE");
+		}
+		return fd;
+	}
 
-#undef FILL_PROP
+	int Frontend::open_dmx(const std::string &path) {
+		int fd;
+		if ((fd = open(path.c_str(), O_RDWR | O_NONBLOCK)) < 0) {
+			PERROR("DMX DEVICE");
+		}
+		return fd;
+	}
 
-		struct dtv_properties cmdseq;
-		cmdseq.num = size;
-		cmdseq.props = p;
-		// get all pending events to clear the POLLPRI status
-		for (;; ) {
-			struct dvb_frontend_event dfe;
-			if (ioctl(_fd_fe, FE_GET_EVENT, &dfe) == -1) {
-				break;
+	int Frontend::open_dvr(const std::string &path) {
+		int fd;
+		if ((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
+			PERROR("DVR DEVICE");
+		}
+		return fd;
+	}
+
+	bool Frontend::set_demux_filter(int fd, uint16_t pid) {
+		struct dmx_pes_filter_params pesFilter;
+
+		pesFilter.pid      = pid;
+		pesFilter.input    = DMX_IN_FRONTEND;
+		pesFilter.output   = DMX_OUT_TS_TAP;
+		pesFilter.pes_type = DMX_PES_OTHER;
+		pesFilter.flags    = DMX_IMMEDIATE_START;
+
+		if (ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
+			PERROR("DMX_SET_PES_FILTER");
+			return false;
+		}
+		return true;
+	}
+
+	bool Frontend::tune(const int streamID, const input::dvb::FrontendData &frontendData) {
+		const fe_delivery_system_t delsys = frontendData.getDeliverySystem();
+		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
+		     it != _deliverySystem.end();
+		     ++it) {
+			if ((*it)->isCapableOf(delsys)) {
+				return (*it)->tune(streamID, _fd_fe, frontendData);
 			}
 		}
-		// set the tuning properties
-		if ((ioctl(_fd_fe, FE_SET_PROPERTY, &cmdseq)) == -1) {
-			PERROR("FE_SET_PROPERTY failed");
-			return false;
-		}
-		return true;
+		return false;
 	}
 
-	bool Frontend::tune(StreamProperties &properties) {
-		const int streamID = properties.getStreamID();
-
-		const fe_delivery_system_t delsys = properties.getDeliverySystem();
-		if (delsys == SYS_DVBS || delsys == SYS_DVBS2) {
-			return _deliverySystem->tune(_fd_fe, properties);
-		}
-
-		SI_LOG_DEBUG("Stream: %d, Start tuning process...", streamID);
-
-		// Now tune
-		if (!setProperties(properties)) {
-			return false;
-		}
-		return true;
-	}
-
-	bool Frontend::setupAndTune(StreamProperties &properties) {
-		const int streamID = properties.getStreamID();
+	bool Frontend::setupAndTune(const int streamID, const input::dvb::FrontendData &frontendData) {
 		if (!_tuned) {
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
@@ -607,7 +653,7 @@ namespace dvb {
 			}
 			// try tuning
 			std::size_t timeout = 0;
-			while (!tune(properties)) {
+			while (!tune(streamID, frontendData)) {
 				usleep(450000);
 				++timeout;
 				if (timeout > 3) {
@@ -648,37 +694,38 @@ namespace dvb {
 			}
 			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_dvr.c_str(), _fd_dvr);
 
-			const unsigned long size = properties.getDVRBufferSize();
-			if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) == -1) {
-				PERROR("DMX_SET_BUFFER_SIZE failed");
+			{
+				base::MutexLock lock(_mutex);
+				if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSize) == -1) {
+					PERROR("DMX_SET_BUFFER_SIZE failed");
+				}
 			}
 		}
 		return (_fd_dvr != -1) && _tuned;
 	}
 
-	void Frontend::resetPid(StreamProperties &properties, int pid) {
-		if (properties.getDMXFileDescriptor(pid) != -1 &&
-			ioctl(properties.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+	void Frontend::resetPid(int pid, input::dvb::FrontendData &frontendData) {
+		if (frontendData.getDMXFileDescriptor(pid) != -1 &&
+			ioctl(frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 			PERROR("DMX_STOP");
 		}
-		properties.closeDMXFileDescriptor(pid);
-		properties.resetPid(pid);
+		frontendData.closeDMXFileDescriptor(pid);
+		frontendData.resetPid(pid);
 	}
 
-	bool Frontend::updatePIDFilters(StreamProperties &properties) {
-		if (properties.hasPIDTableChanged()) {
-			properties.resetPIDTableChanged();
-			const int streamID = properties.getStreamID();
+	bool Frontend::updatePIDFilters(const int streamID, input::dvb::FrontendData &frontendData) {
+		if (frontendData.hasPIDTableChanged()) {
+			frontendData.resetPIDTableChanged();
 			SI_LOG_INFO("Stream: %d, Updating PID filters...", streamID);
 			int i;
 			for (i = 0; i < MAX_PIDS; ++i) {
 				// check if PID is used or removed
-				if (properties.isPIDUsed(i)) {
+				if (frontendData.isPIDUsed(i)) {
 					// check if we have no DMX for this PID, then open one
-					if (properties.getDMXFileDescriptor(i) == -1) {
-						properties.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
+					if (frontendData.getDMXFileDescriptor(i) == -1) {
+						frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
 						std::size_t timeout = 0;
-						while (set_demux_filter(properties.getDMXFileDescriptor(i), i) != 1) {
+						while (set_demux_filter(frontendData.getDMXFileDescriptor(i), i) != 1) {
 							usleep(350000);
 							++timeout;
 							if (timeout > 3) {
@@ -686,13 +733,13 @@ namespace dvb {
 							}
 						}
 						SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
-								streamID, i, properties.getDMXFileDescriptor(i), properties.isPMT(i) ? " - PMT" : "");
+								streamID, i, frontendData.getDMXFileDescriptor(i), frontendData.isPMT(i) ? " - PMT" : "");
 					}
-				} else if (properties.getDMXFileDescriptor(i) != -1) {
+				} else if (frontendData.getDMXFileDescriptor(i) != -1) {
 					// We have a DMX but no PID anymore, so reset it
 					SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-							streamID, i, properties.getDMXFileDescriptor(i), properties.getPacketCounter(i));
-					resetPid(properties, i);
+							streamID, i, frontendData.getDMXFileDescriptor(i), frontendData.getPacketCounter(i));
+					resetPid(i, frontendData);
 				}
 			}
 		}

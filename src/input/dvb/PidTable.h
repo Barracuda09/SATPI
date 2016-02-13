@@ -17,13 +17,14 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_PIDTABLE_H_INCLUDE
-#define INPUT_PIDTABLE_H_INCLUDE INPUT_PIDTABLE_H_INCLUDE
+#ifndef INPUT_DVB_PIDTABLE_H_INCLUDE
+#define INPUT_DVB_PIDTABLE_H_INCLUDE INPUT_DVB_PIDTABLE_H_INCLUDE
 
 #include <stdint.h>
 #include <string>
 
 namespace input {
+namespace dvb {
 
 	#define MAX_PIDS 8193
 
@@ -128,6 +129,7 @@ namespace input {
 
 	};
 
+} // namespace dvb
 } // namespace input
 
-#endif // INPUT_PIDTABLE_H_INCLUDE
+#endif // INPUT_DVB_PIDTABLE_H_INCLUDE

@@ -25,17 +25,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <poll.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
-
-#include <fcntl.h>
-
 
 RtcpThread::RtcpThread(StreamInterface &stream) :
 		ThreadBase("RtcpThread"),
@@ -139,7 +134,7 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	uint8_t sr[28];
 
-	long     timestamp = _stream.getTimestamp();
+	long timestamp = _stream.getTimestamp();
 	uint32_t ssrc = _stream.getSSRC();
 	uint32_t spc = _stream.getSPC();
 	uint32_t soc = _stream.getSOC();
@@ -243,15 +238,9 @@ void RtcpThread::threadEntry() {
 	int mon_update = 0;
 
 	while (running()) {
-		// check do we need to update frontend monitor
+		// check do we need to update Device monitor signals
 		if (mon_update == 0) {
-			fe_status_t status;
-			uint16_t strength;
-			uint16_t snr;
-			uint32_t ber;
-			uint32_t ublocks;
-			_stream.getInputDevice()->monitorFrontend(status, strength, snr, ber, ublocks, false);
-			_stream.setFrontendMonitorData(status, strength, snr, ber, ublocks);
+			_stream.getInputDevice()->monitorSignal(false);
 
 			mon_update = _stream.getRtcpSignalUpdateFrequency();
 		} else {

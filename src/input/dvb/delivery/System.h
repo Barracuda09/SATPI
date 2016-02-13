@@ -21,13 +21,19 @@
 #define INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE
 
 #include <FwDecl.h>
+#include <dvbfix.h>
 #include <base/XMLSupport.h>
 
-FW_DECL_NS0(StreamProperties);
+#include <vector>
+
+FW_DECL_NS2(input, dvb, FrontendData);
 
 namespace input {
 namespace dvb {
 namespace delivery {
+
+	class System;
+	typedef std::vector<System *> SystemVector;
 
 	/// The class @c System specifies the interface to an specific delivery system
 	class System :
@@ -47,7 +53,10 @@ namespace delivery {
 		public:
 
 			///
-			virtual bool tune(int feFD, const StreamProperties &properties) = 0;
+			virtual bool tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) = 0;
+
+			///
+			virtual bool isCapableOf(fe_delivery_system_t msys) const = 0;
 
 	};
 

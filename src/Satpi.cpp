@@ -280,27 +280,25 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Number of processors online: %d", base::ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 
-	{
-		try {
-			InterfaceAttr interface;
-			Streams streams(appdataPath);
-			streams.enumerateDevices();
-			Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-								  streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
-			HttpServer httpserver(streams, interface, properties);
-			RtspServer server(streams, properties, interface);
-			upnp::ssdp::Server ssdpserver(interface, properties);
-			if (ssdp) {
-				ssdpserver.startThread();
-			}
-
-			// Loop
-			while (!exitApp && !properties.exitApplication()) {
-				usleep(12000);
-			}
-		} catch (...) {
-			SI_LOG_ERROR("Caught an Exception");
+	try {
+		InterfaceAttr interface;
+		Streams streams(appdataPath);
+		streams.enumerateDevices();
+		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
+							  streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+		HttpServer httpserver(streams, interface, properties);
+		RtspServer server(streams, properties, interface);
+		upnp::ssdp::Server ssdpserver(interface, properties);
+		if (ssdp) {
+			ssdpserver.startThread();
 		}
+
+		// Loop
+		while (!exitApp && !properties.exitApplication()) {
+			usleep(12000);
+		}
+	} catch (...) {
+		SI_LOG_ERROR("Caught an Exception");
 	}
 	SI_LOG_INFO("--- stopped ---");
 

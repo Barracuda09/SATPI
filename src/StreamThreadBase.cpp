@@ -136,15 +136,6 @@ void StreamThreadBase::readDataFromInputDevice(const StreamClient &client) {
 
 	if (inputDevice->isDataAvailable()) {
 		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
-/*
-			// sync byte then check cc
-			if (_bufferPtrWrite[0] == 0x47 && bytes_read > 3) {
-				// get PID and CC from TS
-				const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
-				const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
-				_stream.addPIDData(pid, cc);
-			}
-*/
 #ifdef LIBDVBCSA
 			//
 			_decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);

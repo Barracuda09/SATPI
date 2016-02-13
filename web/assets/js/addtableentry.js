@@ -92,7 +92,7 @@ function addIPInput(tagName, id, input) {
 }
 
 function addTableLabel(labelstring) {
-	return "<td align=\"left\">" + labelstring + "</td>";
+	return "<td align=\"left\" class=\"col-md-1\">" + labelstring + "</td>";
 }
 
 function addTableEntry(xmlDoc, tagName, id) {
@@ -100,7 +100,7 @@ function addTableEntry(xmlDoc, tagName, id) {
 }
 
 function addInput(xmlDoc, tagName, id) {
-	var entry = "<td align=\"left\">";
+	var entry = "<td align=\"left\" class=\"col-md-4\">";
 	if (xmlDoc.getElementsByTagName(tagName).length != 0) {
 		var input = xmlDoc.getElementsByTagName(tagName)[0];
 		var inputtype = input.getElementsByTagName("inputtype");

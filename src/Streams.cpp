@@ -70,16 +70,18 @@ void Streams::enumerateDevices() {
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
+	_dummyStream = new Stream(0, _decrypt);
+	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
+
 	_nr_dvb_s2 = 0;
 	_nr_dvb_t = 0;
 	_nr_dvb_t2 = 0;
 	_nr_dvb_c = 0;
 	_nr_dvb_c2 = 0;
-
-	_dummyStream = new Stream(0, _decrypt);
-	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb", _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
-		_nr_dvb_c, _nr_dvb_c2);
-
+	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
+		(*it)->addDeliverySystemCount(_nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
+			_nr_dvb_c, _nr_dvb_c2);
+	}
 	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
 			   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
 
@@ -184,7 +186,7 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
-std::string Streams::attributeDescribeString(unsigned int stream, bool &active) const {
+std::string Streams::attributeDescribeString(std::size_t stream, bool &active) const {
 	base::MutexLock lock(_mutex);
 
 	assert(!_stream.empty());
@@ -199,8 +201,9 @@ void Streams::fromXML(const std::string &xml) {
 		std::string find;
 		std::string element;
 		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
-		findXMLElement(xml, find, element);
-		stream->fromXML(element);
+		if (findXMLElement(xml, find, element)) {
+			stream->fromXML(element);
+		}
 	}
 }
 

@@ -24,10 +24,10 @@
 #include <dvbfix.h>
 #include <base/XMLSupport.h>
 
-#include <stdint.h>
 #include <string>
+#include <cstddef>
 
-FW_DECL_NS0(StreamProperties);
+FW_DECL_NS1(input, DeviceData);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
@@ -45,45 +45,45 @@ namespace input {
 
 			virtual ~Device() {}
 
-			///
+			/// Add the amount of delivery systems of this device to the
+			/// specified parameters
+			virtual void addDeliverySystemCount(
+				std::size_t &dvbs2,
+				std::size_t &dvbt,
+				std::size_t &dvbt2,
+				std::size_t &dvbc,
+				std::size_t &dvbc2) = 0;
+
+			/// Check if there is data to be red from this device
 			virtual bool isDataAvailable() = 0;
 
-			///
+			/// Read the available data from this device
+			/// @param buffer
 			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) = 0;
 
-			///
+			/// Check the capability of this device
+			/// @param msys
 			virtual bool capableOf(fe_delivery_system_t msys) = 0;
 
-			///
-			virtual void monitorFrontend(fe_status_t &status, uint16_t &strength, uint16_t &snr, uint32_t &ber,
-				uint32_t &ublocks, bool showStatus) = 0;
+			/// Monitor signal of this device
+			virtual void monitorSignal(bool showStatus) = 0;
 
 			/// Update the Channel and PID. Will close DVR and reopen it if channel did change
-			virtual bool update(StreamProperties &properties) = 0;
+			virtual bool update(int streamID, input::DeviceData *data) = 0;
+
+			/// Teardown/Stop this device
+			virtual bool teardown(int streamID, input::DeviceData *data) = 0;
+
+			/// This will read the frontend information for this frontend
+			virtual bool setFrontendInfo(const std::string &fe,
+				const std::string &dvr,	const std::string &dmx) = 0;
 
 			///
-			virtual bool teardown(StreamProperties &properties) = 0;
-
-
-/////////////
-
-			///
-			virtual void addFrontendPaths(const std::string &fe,
-				const std::string &dvr,
-				const std::string &dmx) = 0;
-
-			///
-			virtual bool setFrontendInfo() = 0;
+			virtual std::string attributeDescribeString(int streamID,
+				const input::DeviceData *data) const = 0;
 
 			/// Check if this frontend is tuned
 			virtual bool isTuned() const = 0;
-
-			///
-			virtual std::size_t getDeliverySystemSize() const = 0;
-
-			///
-			virtual const fe_delivery_system_t *getDeliverySystem() const = 0;
-
 	};
 
 } // namespace input

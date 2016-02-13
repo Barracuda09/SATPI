@@ -37,7 +37,7 @@ class Streams :
 	public base::XMLSupport {
 	public:
 		// =======================================================================
-		// Constructors and destructor
+		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
 		Streams(const std::string &xmlFilePath);
 		virtual ~Streams();
@@ -58,31 +58,31 @@ class Streams :
 		}
 
 		///
-		int getMaxStreams() const {
+		std::size_t getMaxStreams() const {
 			base::MutexLock lock(_mutex);
 			return _stream.size();
 		}
 
 		///
-		int getMaxDvbSat() const {
+		std::size_t getMaxDvbSat() const {
 			base::MutexLock lock(_mutex);
 			return _nr_dvb_s2;
 		}
 
 		///
-		int getMaxDvbTer() const {
+		std::size_t getMaxDvbTer() const {
 			base::MutexLock lock(_mutex);
 			return _nr_dvb_t;
 		}
 
 		///
-		int getMaxDvbCable() const {
+		std::size_t getMaxDvbCable() const {
 			base::MutexLock lock(_mutex);
 			return _nr_dvb_c;
 		}
 
 		///
-		std::string attributeDescribeString(unsigned int stream, bool &active) const;
+		std::string attributeDescribeString(std::size_t stream, bool &active) const;
 
 		/// Add streams data to an XML for storing or web interface
 		virtual void addToXML(std::string &xml) const;
@@ -93,28 +93,27 @@ class Streams :
 #ifdef LIBDVBCSA
 		///
 		StreamInterfaceDecrypt *getStreamInterfaceDecrypt(int streamID);
-		
+
 		decrypt::dvbapi::Client *getDecrypt() const;
 #endif
-		
-	protected:
 
-	private:
 
 		typedef std::vector<Stream *> StreamVector;
 		// =======================================================================
-		// Data members
+		// -- Data members -------------------------------------------------------
 		// =======================================================================
+
+	private:
 		base::Mutex   _mutex;       //
 		decrypt::dvbapi::Client *_decrypt;
 		StreamVector  _stream;
 		Stream      *_dummyStream;
 		std::string  _del_sys_str;
-		int          _nr_dvb_s2;
-		int          _nr_dvb_t;
-		int          _nr_dvb_t2;
-		int          _nr_dvb_c;
-		int          _nr_dvb_c2;
+		std::size_t  _nr_dvb_s2;
+		std::size_t  _nr_dvb_t;
+		std::size_t  _nr_dvb_t2;
+		std::size_t  _nr_dvb_c;
+		std::size_t  _nr_dvb_c2;
 
 }; // class Streams
 

@@ -1,4 +1,4 @@
-/* DVB_S.h
+/* DVBT.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,70 +17,32 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_DVB_DELIVERY_DVB_S_H_INCLUDE
-#define INPUT_DVB_DELIVERY_DVB_S_H_INCLUDE INPUT_DVB_DELIVERY_DVB_S_H_INCLUDE
+#ifndef INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
+#define INPUT_DVB_DELIVERY_DVBT_H_INCLUDE INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
+#include <base/Mutex.h>
 #include <input/dvb/delivery/System.h>
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <string>
 
-FW_DECL_NS0(StreamProperties);
+FW_DECL_NS2(input, dvb, FrontendData);
 
 namespace input {
 namespace dvb {
 namespace delivery {
 
-	enum LNBType {
-		Universal,
-		Standard
-	};
-
-	// slof: switch frequency of LNB
-	#define DEFAULT_SWITCH_LOF (11700 * 1000UL)
-
-	// lofLow: local frequency of lower LNB band
-	#define DEFAULT_LOF_LOW_UNIVERSAL (9750 * 1000UL)
-
-	// lofHigh: local frequency of upper LNB band
-	#define DEFAULT_LOF_HIGH_UNIVERSAL (10600 * 1000UL)
-
-	// Lnb standard Local oscillator frequency
-	#define DEFAULT_LOF_STANDARD (10750 * 1000UL)
-
-	// LNB properties
-	typedef struct {
-		LNBType type;
-		uint32_t lofStandard;
-		uint32_t switchlof;
-		uint32_t lofLow;
-		uint32_t lofHigh;
-	} Lnb_t;
-
-	// DiSEqc properties
-	typedef struct {
-		#define MAX_LNB 4
-		#define POL_H   0
-		#define POL_V   1
-		int src;             // Source (1-4) => DiSEqC switch position (0-3)
-		int pol_v;           // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
-		int hiband;          //
-		Lnb_t LNB[MAX_LNB];  // LNB properties
-	} DiSEqc_t;
-
-	/// The class @c DVB_S specifies DVB-S/S2 delivery system
-	class DVB_S :
+	/// The class @c DVBT specifies DVB-T/T2 delivery system
+	class DVBT :
 		public input::dvb::delivery::System {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			DVB_S();
-			virtual ~DVB_S();
+			DVBT();
+			virtual ~DVBT();
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -100,9 +62,11 @@ namespace delivery {
 
 		public:
 
-			///
-			virtual bool tune(int feFD, const StreamProperties &properties);
+			virtual bool tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData);
 
+			virtual bool isCapableOf(fe_delivery_system_t msys) const {
+				return msys == SYS_DVBT2 || msys == SYS_DVBT;
+			}
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
@@ -110,23 +74,15 @@ namespace delivery {
 
 		private:
 			///
-			bool setProperties(int feFD, uint32_t ifreq, const StreamProperties &properties);
-
-			///
-			bool diseqcSendMsg(int feFD, fe_sec_voltage_t v, struct diseqc_cmd *cmd,
-				fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b, bool repeatDiseqc);
-
-			///
-			bool sendDiseqc(int feFD, int streamID, bool repeatDiseqc);
+			bool setProperties(int feFD, const input::dvb::FrontendData &frontendData);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
-
-			Lnb_t _lnb[MAX_LNB];  // lnb that can be connected to this frontend
-			DiSEqc_t _diseqc;     //
+			base::Mutex _mutex;   ///
+			unsigned int _lna;    ///
 
 	};
 
@@ -134,4 +90,4 @@ namespace delivery {
 } // namespace dvb
 } // namespace input
 
-#endif // INPUT_DVB_DELIVERY_DVB_S_H_INCLUDE
+#endif // INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
