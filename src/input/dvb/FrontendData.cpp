@@ -20,6 +20,7 @@
 #include <input/dvb/FrontendData.h>
 
 #include <Log.h>
+#include <Utils.h>
 
 namespace input {
 namespace dvb {
