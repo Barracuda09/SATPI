@@ -88,8 +88,10 @@ class Stream :
 		// =======================================================================
 	public:
 
+#ifdef LIBDVBCSA
 		///
 		input::dvb::FrontendDecryptInterface *getFrontendDecryptInterface();
+#endif
 
 		/// This will read the frontend information for this stream
 		void setFrontendInfo(const std::string &fe,

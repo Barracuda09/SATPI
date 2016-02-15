@@ -154,9 +154,11 @@ void Stream::fromXML(const std::string &xml) {
 // ===========================================================================
 // -- Other member functions -------------------------------------------------
 // ===========================================================================
+#ifdef LIBDVBCSA
 input::dvb::FrontendDecryptInterface *Stream::getFrontendDecryptInterface() {
 	return dynamic_cast<input::dvb::FrontendDecryptInterface *>(_device);
 }
+#endif
 
 bool Stream::findClientIDFor(SocketClient &socketClient,
                              bool newSession,
