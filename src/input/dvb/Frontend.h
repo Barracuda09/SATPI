@@ -25,9 +25,10 @@
 #include <base/Mutex.h>
 #include <input/Device.h>
 #include <input/dvb/delivery/System.h>
-
 #include <input/dvb/FrontendData.h>
+#ifdef LIBDVBCSA
 #include <input/dvb/FrontendDecryptInterface.h>
+#endif
 
 #include <vector>
 #include <string>
