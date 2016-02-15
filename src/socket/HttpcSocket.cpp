@@ -17,9 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "HttpcSocket.h"
-#include "SocketClient.h"
-#include "StringConverter.h"
+#include <socket/HttpcSocket.h>
+
+#include <Log.h>
+#include <socket/SocketClient.h>
+#include <StringConverter.h>
+#include <Utils.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,9 +30,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
-#include "Log.h"
-#include "Utils.h"
 
 const int HttpcSocket::HTTPC_TIMEOUT = 500;
 

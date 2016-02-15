@@ -118,7 +118,7 @@ bool Stream::updateInputDevice() {
 	base::MutexLock lock(_mutex);
 	if (_frontendData->hasPIDTableChanged()) {
 		if (_device->isTuned()) {
-			_device->update(_streamID, _frontendData);
+			_device->update();
 		} else {
 			SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
 						_streamID);

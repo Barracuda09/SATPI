@@ -26,6 +26,9 @@
 #include <input/Device.h>
 #include <input/dvb/delivery/System.h>
 
+#include <input/dvb/FrontendData.h>
+#include <input/dvb/FrontendDecryptInterface.h>
+
 #include <vector>
 #include <string>
 
@@ -45,13 +48,16 @@ namespace dvb {
 	/// The class @c Frontend carries all the data/information of an frontend
 	/// and to tune it
 	class Frontend :
+#ifdef LIBDVBCSA
+		public input::dvb::FrontendDecryptInterface,
+#endif
 		public input::Device {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			Frontend();
+			Frontend(int streamID);
 			virtual ~Frontend();
 
 			// =======================================================================
@@ -76,6 +82,71 @@ namespace dvb {
 			///
 			virtual void fromXML(const std::string &xml);
 
+#ifdef LIBDVBCSA
+			// =======================================================================
+			// -- FrontendDecryptInterface -------------------------------------------
+			// =======================================================================
+		public:
+
+			virtual int getStreamID() const;
+
+			virtual bool updateInputDevice();
+
+			virtual int getBatchCount() const;
+
+			virtual int getBatchParity() const;
+
+			virtual int getMaximumBatchSize() const;
+
+			virtual void decryptBatch(bool final);
+
+			virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
+
+			virtual const dvbcsa_bs_key_s *getKey(int parity) const;
+
+			virtual bool isTableCollected(int tableID) const;
+
+			virtual void setTableCollected(int tableID, bool collected);
+
+			virtual const unsigned char *getTableData(int tableID) const;
+
+			virtual void collectTableData(int streamID, int tableID, const unsigned char *data);
+
+			virtual int getTableDataSize(int tableID) const;
+
+			virtual void setPMT(int pid, bool set);
+
+			virtual bool isPMT(int pid) const;
+
+			virtual void setECMFilterData(int demux, int filter, int pid, bool set);
+
+			virtual void getECMFilterData(int &demux, int &filter, int pid) const;
+
+			virtual bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
+
+			virtual bool isECM(int pid) const;
+
+			virtual void setKey(const unsigned char *cw, int parity, int index);
+
+			virtual void freeKeys();
+
+			virtual void setKeyParity(int pid, int parity);
+
+			virtual int getKeyParity(int pid) const;
+
+			virtual void setECMInfo(
+				int pid,
+				int serviceID,
+				int caID,
+				int provID,
+				int emcTime,
+				const std::string &cardSystem,
+				const std::string &readerName,
+				const std::string &sourceName,
+				const std::string &protocolName,
+				int hops);
+#endif
+
 			// =======================================================================
 			//  -- input::Device------------------------------------------------------
 			// =======================================================================
@@ -97,15 +168,18 @@ namespace dvb {
 
 			virtual void monitorSignal(bool showStatus);
 
-			virtual bool update(int streamID, input::DeviceData *data);
+			virtual bool hasDeviceDataChanged() const;
 
-			virtual bool teardown(int streamID, input::DeviceData *data);
+			virtual void parseStreamString(const std::string &msg, const std::string &method);
+
+			virtual bool update();
+
+			virtual bool teardown();
 
 			virtual bool setFrontendInfo(const std::string &fe,
 				const std::string &dvr,	const std::string &dmx);
 
-			virtual std::string attributeDescribeString(int streamID,
-				const input::DeviceData *data) const;
+			virtual std::string attributeDescribeString() const;
 
 			virtual bool isTuned() const {
 				return (_fd_dvr != -1) && _tuned;
@@ -130,23 +204,27 @@ namespace dvb {
 			bool set_demux_filter(int fd, uint16_t pid);
 
 			///
-			bool tune(int streamID, const input::dvb::FrontendData &frontendData);
+			bool tune();
 
 			///
-			bool updatePIDFilters(int streamID, input::dvb::FrontendData &frontendData);
+			bool updatePIDFilters();
 
 			///
-			bool setupAndTune(int streamID, const input::dvb::FrontendData &frontendData);
+			bool setupAndTune();
 
 			///
-			void resetPid(int pid, input::dvb::FrontendData &frontendData);
+			void resetPid(int pid);
+
+			///
+			void processPID_L(const std::string &pids, bool add);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;          //
+			base::Mutex _mutex;
+			int _streamID;
 			bool _tuned;
 			int _fd_fe;
 			int _fd_dvr;
@@ -156,6 +234,7 @@ namespace dvb {
 			struct dvb_frontend_info _fe_info;
 
 			input::dvb::delivery::SystemVector _deliverySystem;
+			input::dvb::FrontendData _frontendData;///
 
 			std::size_t _dvbs2;
 			std::size_t _dvbt;

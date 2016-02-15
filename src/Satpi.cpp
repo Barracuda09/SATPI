@@ -19,14 +19,14 @@
 
  */
 #include <FwDecl.h>
-#include "RtspServer.h"
-#include "HttpServer.h"
+#include <RtspServer.h>
+#include <HttpServer.h>
 #include <upnp/ssdp/Server.h>
-#include "Streams.h"
-#include "InterfaceAttr.h"
-#include "Properties.h"
-#include "Log.h"
-#include "StringConverter.h"
+#include <StreamManager.h>
+#include <InterfaceAttr.h>
+#include <Properties.h>
+#include <Log.h>
+#include <StringConverter.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -282,12 +282,12 @@ int main(int argc, char *argv[]) {
 
 	try {
 		InterfaceAttr interface;
-		Streams streams(appdataPath);
-		streams.enumerateDevices();
+		StreamManager streamManager(appdataPath);
+		streamManager.enumerateDevices();
 		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-							  streams.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
-		HttpServer httpserver(streams, interface, properties);
-		RtspServer server(streams, properties, interface);
+							  streamManager.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+		HttpServer httpserver(streamManager, interface, properties);
+		RtspServer server(streamManager, properties, interface);
 		upnp::ssdp::Server ssdpserver(interface, properties);
 		if (ssdp) {
 			ssdpserver.startThread();

@@ -21,8 +21,8 @@
 #define TCP_SOCKET_H_INCLUDE TCP_SOCKET_H_INCLUDE
 
 #include <FwDecl.h>
-#include <HttpcSocket.h>
-#include <SocketAttr.h>
+#include <socket/HttpcSocket.h>
+#include <socket/SocketAttr.h>
 
 #include <poll.h>
 #include <netinet/in.h>
@@ -31,7 +31,7 @@ FW_DECL_NS0(SocketClient);
 
 /// TCP Socket
 class TcpSocket :
-		public HttpcSocket {
+	public HttpcSocket {
 	public:
 		// =======================================================================
 		// Constructors and destructor

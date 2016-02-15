@@ -43,7 +43,8 @@
 namespace input {
 namespace dvb {
 
-	Frontend::Frontend() :
+	Frontend::Frontend(int streamID) :
+		_streamID(streamID),
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dvr(-1),
@@ -79,7 +80,8 @@ namespace dvb {
 
 #define FE_PATH_LEN 255
 #if SIMU
-		UNUSED(path)
+		// unused var
+		(void)path;
 		count = 2;
 		char fe_path[FE_PATH_LEN];
 		char dvr_path[FE_PATH_LEN];
@@ -165,6 +167,16 @@ namespace dvb {
 		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _path_to_fe.c_str());
 		StringConverter::addFormattedString(xml, "<freq>%d Hz to %d Hz</freq>", _fe_info.frequency_min, _fe_info.frequency_max);
 		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+
+		// Channel
+		StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_frontendData.getDeliverySystem()));
+		StringConverter::addFormattedString(xml, "<tunefreq>%d</tunefreq>", _frontendData.getFrequency());
+		StringConverter::addFormattedString(xml, "<modulation>%s</modulation>", StringConverter::modtype_to_sting(_frontendData.getModulationType()));
+		StringConverter::addFormattedString(xml, "<fec>%s</fec>", StringConverter::fec_to_string(_frontendData.getFEC()));
+		StringConverter::addFormattedString(xml, "<tunesymbol>%d</tunesymbol>", _frontendData.getSymbolRate());
+		StringConverter::addFormattedString(xml, "<rolloff>%s</rolloff>", StringConverter::rolloff_to_sting(_frontendData.getRollOff()));
+		StringConverter::addFormattedString(xml, "<src>%d</src>", _frontendData.getDiSEqcSource());
+		StringConverter::addFormattedString(xml, "<pol>%c</pol>", (_frontendData.getPolarization() == POL_V) ? 'V' : 'H');
 
 		// Monitor
 		StringConverter::addFormattedString(xml, "<status>%d</status>", _status);
@@ -277,57 +289,240 @@ namespace dvb {
 		}
 	}
 
-	bool Frontend::update(const int streamID, input::DeviceData *data) {
-		SI_LOG_DEBUG("Stream: %d, Updating frontend...", streamID);
-		input::dvb::FrontendData *frontendData = dynamic_cast<input::dvb::FrontendData *>(data);
-		if (frontendData != nullptr) {
-#ifndef SIMU
-			// Setup, tune and set PID Filters
-			if (frontendData->hasFrontendDataChanged()) {
-				frontendData->resetFrontendDataChanged();
-				_tuned = false;
-				CLOSE_FD(_fd_dvr);
-			}
+	bool Frontend::hasDeviceDataChanged() const {
+		return _frontendData.hasFrontendDataChanged();
+	}
 
-			std::size_t timeout = 0;
-			while (!setupAndTune(streamID, *frontendData)) {
-				usleep(150000);
-				++timeout;
-				if (timeout > 3) {
-					return false;
-				}
-			}
+	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
+		double doubleVal = 0.0;
+		int intVal = 0;
+		std::string strVal;
+		fe_delivery_system_t msys;
 
-			updatePIDFilters(streamID, *frontendData);
-#endif
-			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", streamID);
-		} else {
-			SI_LOG_ERROR("Stream: %d, Updating frontend failed because of wrong data", streamID);
-			return false;
+		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _streamID);
+
+		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
+		if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
+			// new frequency so initialize FrontendData and 'remove' all used PIDS
+			_frontendData.initialize();
+			_frontendData.setFrequency(doubleVal * 1000.0);
+			SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
 		}
+		// !!!!
+		if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
+			_frontendData.setSymbolRate(intVal * 1000);
+		}
+		if ((msys = StringConverter::getMSYSParameter(msg, method)) != SYS_UNDEFINED) {
+			_frontendData.setDeliverySystem(msys);
+		}
+		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
+			if (strVal.compare("h") == 0) {
+				_frontendData.setPolarization(POL_H);
+			} else if (strVal.compare("v") == 0) {
+				_frontendData.setPolarization(POL_V);
+			}
+		}
+		if ((intVal = StringConverter::getIntParameter(msg, method, "src=")) != -1) {
+			_frontendData.setDiSEqcSource(intVal);
+		}
+		if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
+			// "on", "off"[, "auto"]
+			if (strVal.compare("on") == 0) {
+				_frontendData.setPilotTones(PILOT_ON);
+			} else if (strVal.compare("off") == 0) {
+				_frontendData.setPilotTones(PILOT_OFF);
+			} else if (strVal.compare("auto") == 0) {
+				_frontendData.setPilotTones(PILOT_AUTO);
+			} else {
+				SI_LOG_ERROR("Unknown Pilot Tone [%s]", strVal.c_str());
+				_frontendData.setPilotTones(PILOT_AUTO);
+			}
+		}
+		if (StringConverter::getStringParameter(msg, method, "ro=", strVal) == true) {
+			// "0.35", "0.25", "0.20"[, "auto"]
+			if (strVal.compare("0.35") == 0) {
+				_frontendData.setRollOff(ROLLOFF_35);
+			} else if (strVal.compare("0.25") == 0) {
+				_frontendData.setRollOff(ROLLOFF_25);
+			} else if (strVal.compare("0.20") == 0) {
+				_frontendData.setRollOff(ROLLOFF_20);
+			} else if (strVal.compare("auto") == 0) {
+				_frontendData.setRollOff(ROLLOFF_AUTO);
+			} else {
+				SI_LOG_ERROR("Unknown Rolloff [%s]", strVal.c_str());
+				_frontendData.setRollOff(ROLLOFF_AUTO);
+			}
+		}
+		if (StringConverter::getStringParameter(msg, method, "fec=", strVal) == true) {
+			const int fec = atoi(strVal.c_str());
+			// "12", "23", "34", "56", "78", "89", "35", "45", "910"
+			if (fec == 12) {
+				_frontendData.setFEC(FEC_1_2);
+			} else if (fec == 23) {
+				_frontendData.setFEC(FEC_2_3);
+			} else if (fec == 34) {
+				_frontendData.setFEC(FEC_3_4);
+			} else if (fec == 35) {
+				_frontendData.setFEC(FEC_3_5);
+			} else if (fec == 45) {
+				_frontendData.setFEC(FEC_4_5);
+			} else if (fec == 56) {
+				_frontendData.setFEC(FEC_5_6);
+			} else if (fec == 67) {
+				_frontendData.setFEC(FEC_6_7);
+			} else if (fec == 78) {
+				_frontendData.setFEC(FEC_7_8);
+			} else if (fec == 89) {
+				_frontendData.setFEC(FEC_8_9);
+			} else if (fec == 910) {
+				_frontendData.setFEC(FEC_9_10);
+			} else if (fec == 999) {
+				_frontendData.setFEC(FEC_AUTO);
+			} else {
+				_frontendData.setFEC(FEC_NONE);
+			}
+		}
+		if (StringConverter::getStringParameter(msg, method, "mtype=", strVal) == true) {
+			if (strVal.compare("8psk") == 0) {
+				_frontendData.setModulationType(PSK_8);
+			} else if (strVal.compare("qpsk") == 0) {
+				_frontendData.setModulationType(QPSK);
+			} else if (strVal.compare("16qam") == 0) {
+				_frontendData.setModulationType(QAM_16);
+			} else if (strVal.compare("64qam") == 0) {
+				_frontendData.setModulationType(QAM_64);
+			} else if (strVal.compare("256qam") == 0) {
+				_frontendData.setModulationType(QAM_256);
+			}
+		} else if (msys != SYS_UNDEFINED) {
+			// no 'mtype' set so guess one according to 'msys'
+			switch (msys) {
+			case SYS_DVBS:
+				_frontendData.setModulationType(QPSK);
+				break;
+			case SYS_DVBS2:
+				_frontendData.setModulationType(PSK_8);
+				break;
+			case SYS_DVBT:
+			case SYS_DVBT2:
+#if FULL_DVB_API_VERSION >= 0x0505
+			case SYS_DVBC_ANNEX_A:
+			case SYS_DVBC_ANNEX_B:
+			case SYS_DVBC_ANNEX_C:
+#else
+			case SYS_DVBC_ANNEX_AC:
+			case SYS_DVBC_ANNEX_B:
+#endif
+				_frontendData.setModulationType(QAM_AUTO);
+				break;
+			default:
+				SI_LOG_ERROR("Not supported delivery system");
+				break;
+			}
+		}
+		if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
+			_frontendData.setSpectralInversion(intVal);
+		}
+		if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=")) != -1) {
+			_frontendData.setBandwidthHz(doubleVal * 1000000.0);
+		}
+		if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
+			// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
+			if (strVal.compare("1k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_1K);
+			} else if (strVal.compare("2k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_2K);
+			} else if (strVal.compare("4k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_4K);
+			} else if (strVal.compare("8k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_8K);
+			} else if (strVal.compare("16k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_16K);
+			} else if (strVal.compare("32k") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_32K);
+			} else if (strVal.compare("auto") == 0) {
+				_frontendData.setTransmissionMode(TRANSMISSION_MODE_AUTO);
+			}
+		}
+		if (StringConverter::getStringParameter(msg, method, "gi=", strVal) == true) {
+			// "14", "18", "116", "132","1128", "19128", "19256"
+			const int gi = atoi(strVal.c_str());
+			if (gi == 14) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_1_4);
+			} else if (gi == 18) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_1_8);
+			} else if (gi == 116) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_1_16);
+			} else if (gi == 132) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_1_32);
+			} else if (gi == 1128) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_1_128);
+			} else if (gi == 19128) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_19_128);
+			} else if (gi == 19256) {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_19_256);
+			} else {
+				_frontendData.setGuardInverval(GUARD_INTERVAL_AUTO);
+			}
+		}
+		if ((intVal = StringConverter::getIntParameter(msg, method, "plp=")) != -1) {
+			_frontendData.setUniqueIDPlp(intVal);
+		}
+		if ((intVal = StringConverter::getIntParameter(msg, method, "t2id=")) != -1) {
+			_frontendData.setUniqueIDT2(intVal);
+		}
+		if ((intVal = StringConverter::getIntParameter(msg, method, "sm=")) != -1) {
+			_frontendData.setSISOMISO(intVal);
+		}
+		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
+			StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
+			processPID_L(strVal, true);
+		}
+		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
+			processPID_L(strVal, false);
+		}
+		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
+	}
+
+	bool Frontend::update() {
+		SI_LOG_DEBUG("Stream: %d, Updating frontend...", _streamID);
+#ifndef SIMU
+		// Setup, tune and set PID Filters
+		if (_frontendData.hasFrontendDataChanged()) {
+			_frontendData.resetFrontendDataChanged();
+			_tuned = false;
+			CLOSE_FD(_fd_dvr);
+		}
+
+		std::size_t timeout = 0;
+		while (!setupAndTune()) {
+			usleep(150000);
+			++timeout;
+			if (timeout > 3) {
+				return false;
+			}
+		}
+
+		updatePIDFilters();
+#endif
+		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		return true;
 	}
 
-	bool Frontend::teardown(const int streamID, input::DeviceData *data) {
-		input::dvb::FrontendData *frontendData = dynamic_cast<input::dvb::FrontendData *>(data);
-		if (frontendData != nullptr) {
-			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-				if (frontendData->isPIDUsed(i)) {
-					SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-							streamID, i, frontendData->getDMXFileDescriptor(i), frontendData->getPacketCounter(i));
-					resetPid(i, *frontendData);
-				} else if (frontendData->getDMXFileDescriptor(i) != -1) {
-					SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", streamID, i);
-					resetPid(i, *frontendData);
-				}
+	bool Frontend::teardown() {
+		for (std::size_t i = 0; i < MAX_PIDS; ++i) {
+			if (_frontendData.isPIDUsed(i)) {
+				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+						_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
+				resetPid(i);
+			} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
+				SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", _streamID, i);
+				resetPid(i);
 			}
-			_tuned = false;
-			CLOSE_FD(_fd_fe);
-			CLOSE_FD(_fd_dvr);
-		} else {
-			SI_LOG_ERROR("Stream: %d, Teardown frontend failed because of wrong data", streamID);
-			return false;
 		}
+		_tuned = false;
+		CLOSE_FD(_fd_fe);
+		CLOSE_FD(_fd_dvr);
 		return true;
 	}
 
@@ -495,97 +690,90 @@ namespace dvb {
 		return true;
 	}
 
-	std::string Frontend::attributeDescribeString(int streamID,
-			const input::DeviceData *data) const {
-		const input::dvb::FrontendData *frontendData = dynamic_cast<const input::dvb::FrontendData *>(data);
+	std::string Frontend::attributeDescribeString() const {
+		const double freq = _frontendData.getFrequency() / 1000.0;
+		const int srate = _frontendData.getSymbolRate() / 1000;
+		const int locked = (_status & FE_HAS_LOCK) ? 1 : 0;
+
 		std::string desc;
-		if (frontendData != nullptr) {
-			const double freq = frontendData->getFrequency() / 1000.0;
-			const int srate = frontendData->getSymbolRate() / 1000;
-
-			const int locked = (_status & FE_HAS_LOCK) ? 1 : 0;
-
-			std::string csv = frontendData->getPidCSV();
-			switch (frontendData->getDeliverySystem()) {
-				case SYS_DVBS:
-				case SYS_DVBS2:
-					// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
-					//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
-					StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
-							frontendData->getDiSEqcSource(),
-							streamID + 1,
-							_strength,
-							locked,
-							_snr,
-							freq,
-							(frontendData->getPolarization() == POL_V) ? 'v' : 'h',
-							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
-							StringConverter::modtype_to_sting(frontendData->getModulationType()),
-							StringConverter::pilot_tone_to_string(frontendData->getPilotTones()),
-							StringConverter::rolloff_to_sting(frontendData->getRollOff()),
-							srate,
-							StringConverter::fec_to_string(frontendData->getFEC()),
-							csv.c_str());
-					break;
-				case SYS_DVBT:
-				case SYS_DVBT2:
-					// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
-					//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
-					StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
-							streamID + 1,
-							_strength,
-							locked,
-							_snr,
-							freq,
-							frontendData->getBandwidthHz() / 1000000.0,
-							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
-							StringConverter::transmode_to_string(frontendData->getTransmissionMode()),
-							StringConverter::modtype_to_sting(frontendData->getModulationType()),
-							StringConverter::guardinter_to_string(frontendData->getGuardInverval()),
-							StringConverter::fec_to_string(frontendData->getFEC()),
-							frontendData->getUniqueIDPlp(),
-							frontendData->getUniqueIDT2(),
-							frontendData->getSISOMISO(),
-							csv.c_str());
-					break;
-				case SYS_DVBC_ANNEX_B:
+		std::string csv = _frontendData.getPidCSV();
+		switch (_frontendData.getDeliverySystem()) {
+			case SYS_DVBS:
+			case SYS_DVBS2:
+				// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
+				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
+				StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
+						_frontendData.getDiSEqcSource(),
+						_streamID + 1,
+						_strength,
+						locked,
+						_snr,
+						freq,
+						(_frontendData.getPolarization() == POL_V) ? 'v' : 'h',
+						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
+						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
+						StringConverter::pilot_tone_to_string(_frontendData.getPilotTones()),
+						StringConverter::rolloff_to_sting(_frontendData.getRollOff()),
+						srate,
+						StringConverter::fec_to_string(_frontendData.getFEC()),
+						csv.c_str());
+				break;
+			case SYS_DVBT:
+			case SYS_DVBT2:
+				// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
+				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
+				StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
+						_streamID + 1,
+						_strength,
+						locked,
+						_snr,
+						freq,
+						_frontendData.getBandwidthHz() / 1000000.0,
+						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
+						StringConverter::transmode_to_string(_frontendData.getTransmissionMode()),
+						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
+						StringConverter::guardinter_to_string(_frontendData.getGuardInverval()),
+						StringConverter::fec_to_string(_frontendData.getFEC()),
+						_frontendData.getUniqueIDPlp(),
+						_frontendData.getUniqueIDT2(),
+						_frontendData.getSISOMISO(),
+						csv.c_str());
+				break;
+			case SYS_DVBC_ANNEX_B:
 #if FULL_DVB_API_VERSION >= 0x0505
-				case SYS_DVBC_ANNEX_A:
-				case SYS_DVBC_ANNEX_C:
+			case SYS_DVBC_ANNEX_A:
+			case SYS_DVBC_ANNEX_C:
 #else
-				case SYS_DVBC_ANNEX_AC:
+			case SYS_DVBC_ANNEX_AC:
 #endif
-					// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
-					//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
-					StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
-							streamID + 1,
-							_strength,
-							locked,
-							_snr,
-							freq,
-							frontendData->getBandwidthHz() / 1000000.0,
-							StringConverter::delsys_to_string(frontendData->getDeliverySystem()),
-							StringConverter::modtype_to_sting(frontendData->getModulationType()),
-							srate,
-							frontendData->getC2TuningFrequencyType(),
-							frontendData->getDataSlice(),
-							frontendData->getUniqueIDPlp(),
-							frontendData->getSpectralInversion(),
-							csv.c_str());
-					break;
-				case SYS_UNDEFINED:
-					// Not setup yet
-					StringConverter::addFormattedString(desc, "NONE");
-					break;
-				default:
-					// Not supported/
-					StringConverter::addFormattedString(desc, "NONE");
-					break;
-			}
-		} else {
-			StringConverter::addFormattedString(desc, "NONE");
+				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
+				//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
+				StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
+						_streamID + 1,
+						_strength,
+						locked,
+						_snr,
+						freq,
+						_frontendData.getBandwidthHz() / 1000000.0,
+						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
+						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
+						srate,
+						_frontendData.getC2TuningFrequencyType(),
+						_frontendData.getDataSlice(),
+						_frontendData.getUniqueIDPlp(),
+						_frontendData.getSpectralInversion(),
+						csv.c_str());
+				break;
+			case SYS_UNDEFINED:
+				// Not setup yet
+				StringConverter::addFormattedString(desc, "NONE");
+				break;
+			default:
+				// Not supported/
+				StringConverter::addFormattedString(desc, "NONE");
+				break;
 		}
-//		SI_LOG_DEBUG("Stream: %d, %s", streamID, desc.c_str());
+//		SI_LOG_DEBUG("Stream: %d, %s", _streamID, desc.c_str());
 		return desc;
 	}
 
@@ -632,35 +820,35 @@ namespace dvb {
 		return true;
 	}
 
-	bool Frontend::tune(const int streamID, const input::dvb::FrontendData &frontendData) {
-		const fe_delivery_system_t delsys = frontendData.getDeliverySystem();
+	bool Frontend::tune() {
+		const fe_delivery_system_t delsys = _frontendData.getDeliverySystem();
 		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
 		     it != _deliverySystem.end();
 		     ++it) {
 			if ((*it)->isCapableOf(delsys)) {
-				return (*it)->tune(streamID, _fd_fe, frontendData);
+				return (*it)->tune(_streamID, _fd_fe, _frontendData);
 			}
 		}
 		return false;
 	}
 
-	bool Frontend::setupAndTune(const int streamID, const input::dvb::FrontendData &frontendData) {
+	bool Frontend::setupAndTune() {
 		if (!_tuned) {
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
 				_fd_fe = open_fe(_path_to_fe, false);
-				SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_fe.c_str(), _fd_fe);
+				SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
 			}
 			// try tuning
 			std::size_t timeout = 0;
-			while (!tune(streamID, frontendData)) {
+			while (!tune()) {
 				usleep(450000);
 				++timeout;
 				if (timeout > 3) {
 					return false;
 				}
 			}
-			SI_LOG_INFO("Stream: %d, Waiting on lock...", streamID);
+			SI_LOG_INFO("Stream: %d, Waiting on lock...", _streamID);
 
 			// check if frontend is locked, if not try a few times
 			timeout = 0;
@@ -671,10 +859,10 @@ namespace dvb {
 					if (status & FE_HAS_LOCK) {
 						// We are tuned now
 						_tuned = true;
-						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", streamID, status);
+						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, status);
 						break;
 					} else {
-						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", streamID, status);
+						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 					}
 				}
 				usleep(150000);
@@ -692,7 +880,7 @@ namespace dvb {
 					return false;
 				}
 			}
-			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", streamID, _path_to_dvr.c_str(), _fd_dvr);
+			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_dvr.c_str(), _fd_dvr);
 
 			{
 				base::MutexLock lock(_mutex);
@@ -704,28 +892,28 @@ namespace dvb {
 		return (_fd_dvr != -1) && _tuned;
 	}
 
-	void Frontend::resetPid(int pid, input::dvb::FrontendData &frontendData) {
-		if (frontendData.getDMXFileDescriptor(pid) != -1 &&
-			ioctl(frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+	void Frontend::resetPid(int pid) {
+		if (_frontendData.getDMXFileDescriptor(pid) != -1 &&
+			ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 			PERROR("DMX_STOP");
 		}
-		frontendData.closeDMXFileDescriptor(pid);
-		frontendData.resetPid(pid);
+		_frontendData.closeDMXFileDescriptor(pid);
+		_frontendData.resetPid(pid);
 	}
 
-	bool Frontend::updatePIDFilters(const int streamID, input::dvb::FrontendData &frontendData) {
-		if (frontendData.hasPIDTableChanged()) {
-			frontendData.resetPIDTableChanged();
-			SI_LOG_INFO("Stream: %d, Updating PID filters...", streamID);
+	bool Frontend::updatePIDFilters() {
+		if (_frontendData.hasPIDTableChanged()) {
+			_frontendData.resetPIDTableChanged();
+			SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
 			int i;
 			for (i = 0; i < MAX_PIDS; ++i) {
 				// check if PID is used or removed
-				if (frontendData.isPIDUsed(i)) {
+				if (_frontendData.isPIDUsed(i)) {
 					// check if we have no DMX for this PID, then open one
-					if (frontendData.getDMXFileDescriptor(i) == -1) {
-						frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
+					if (_frontendData.getDMXFileDescriptor(i) == -1) {
+						_frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
 						std::size_t timeout = 0;
-						while (set_demux_filter(frontendData.getDMXFileDescriptor(i), i) != 1) {
+						while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
 							usleep(350000);
 							++timeout;
 							if (timeout > 3) {
@@ -733,17 +921,44 @@ namespace dvb {
 							}
 						}
 						SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
-								streamID, i, frontendData.getDMXFileDescriptor(i), frontendData.isPMT(i) ? " - PMT" : "");
+								_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isPMT(i) ? " - PMT" : "");
 					}
-				} else if (frontendData.getDMXFileDescriptor(i) != -1) {
+				} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
 					// We have a DMX but no PID anymore, so reset it
 					SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-							streamID, i, frontendData.getDMXFileDescriptor(i), frontendData.getPacketCounter(i));
-					resetPid(i, frontendData);
+							_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
+					resetPid(i);
 				}
 			}
 		}
 		return true;
+	}
+
+	void Frontend::processPID_L(const std::string &pids, bool add) {
+		std::string::size_type begin = 0;
+		if (pids == "all" ) {
+			// All pids requested then 'remove' all used PIDS
+			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
+				_frontendData.setPID(i, false);
+			}
+			_frontendData.setAllPID(add);
+		} else {
+			for (;; ) {
+				std::string::size_type end = pids.find_first_of(",", begin);
+				if (end != std::string::npos) {
+					const int pid = atoi(pids.substr(begin, end - begin).c_str());
+					_frontendData.setPID(pid, add);
+					begin = end + 1;
+				} else {
+					// Get the last one
+					if (begin < pids.size()) {
+						const int pid = atoi(pids.substr(begin, end - begin).c_str());
+						_frontendData.setPID(pid, add);
+					}
+					break;
+				}
+			}
+		}
 	}
 
 } // namespace dvb

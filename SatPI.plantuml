@@ -4,7 +4,7 @@ hide footbox
 
 title SatPI
 
-SatPI *-- Streams
+SatPI *-- StreamManager
 SatPI *-- RtspServer
 SatPI *-- HttpServer
 SatPI *-- SsdpServer
@@ -21,53 +21,51 @@ class InterfaceAttr {
   Eth0 etc.
 }
 
-class HttpcSocket {
+class socket::HttpcSocket {
   recvHttpcMessage(..)
   recvfromHttpcMessage(..)
 }
 
-SocketClient --|> SocketAttr
-class SocketClient {
+socket::SocketClient --|> socket::SocketAttr
+class socket::SocketClient {
   std::string _msg
   std::string _protocolString
   std::string _sessionID
 }
 
-class SocketAttr {
+class socket::SocketAttr {
   _fd
   std::string _ip_addr
 }
 
-TcpSocket --|> HttpcSocket
-TcpSocket *-- SocketAttr : "_server"
-TcpSocket *-- SocketClient : "_client[..]"
-class TcpSocket {
+socket::TcpSocket --|> socket::HttpcSocket
+socket::TcpSocket *-- socket::SocketAttr : "_server"
+socket::TcpSocket *-- socket::SocketClient : "_client[..]"
+class socket::TcpSocket {
   poll(..)
   process(..)
   closeConnection(..)
   std::string _protocolString
 }
 
-UdpSocket --|> HttpcSocket
-class UdpSocket {
+socket::UdpSocket --|> socket::HttpcSocket
+class socket::UdpSocket {
   init_udp_socket(..)
   init_mutlicast_udp_socket(..)
 }
 
-SsdpServer --|> UdpSocket
+SsdpServer --|> socket::UdpSocket
 
 RtspServer --|> HttpcServer
 
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
 
-HttpcServer --|> TcpSocket
-HttpcServer *.. Streams : "_streams"
+HttpcServer --|> socket::TcpSocket
+HttpcServer *.. StreamManager : "_streamManager"
 HttpcServer *.. InterfaceAttr
 
-StreamInterface        <|-- Stream
-StreamInterfaceDecrypt <|-- Stream
-
+Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
 Stream *-- input::Device
 Stream *-- StreamThreadBase
@@ -76,20 +74,17 @@ class Stream {
   streamInUse
   enabled
   StreamingType
-  StreamProperties
-  decrypt::dvbapi::ClientProperties
-  ChannelData
 }
 
-Streams *-- Stream : " _stream[..] "
-Streams *-- decrypt::dvbapi::Client
-class Streams {
+StreamManager *-- Stream : " _stream[..] "
+StreamManager *-- decrypt::dvbapi::Client
+class StreamManager {
   Mutex
 }
 
-StreamClient *-- SocketAttr : " _rtp "
-StreamClient *-- SocketAttr : " _rtcp "
-StreamClient *.. SocketAttr : " httpcFD "
+StreamClient *-- socket::SocketAttr : " _rtp "
+StreamClient *-- socket::SocketAttr : " _rtcp "
+StreamClient *.. socket::SocketAttr : " httpcFD "
 class StreamClient {
   Mutex
   const int *httpcFD
@@ -119,32 +114,38 @@ class RtcpThread {
 
 HttpStreamThread --|> StreamThreadBase
 
+decrypt::dvbapi::Client  .  StreamManager
+class decrypt::dvbapi::Client {
+  Mutex
+  getFrontendDecryptInterface(..)
+}
+
+input::file::TSReader --|> input::Device
+
+input::Device <|-- input::dvb::Frontend
+
+input::dvb::Frontend --|> FrontendDecryptInterface
+input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
+input::dvb::Frontend *-- input::dvb::FrontendData
+
+
+input::dvb::delivery::System <|-- DVBS
+input::dvb::delivery::System <|-- DVBC
+input::dvb::delivery::System <|-- DVBT
+input::dvb::delivery::System <|-- ATSC
+
+
+DVBS *-- Lnb_t
+DVBS *-- DiSEqc_t
+
 decrypt::dvbapi::ClientProperties *-- dvbcsa_key_s
 decrypt::dvbapi::ClientProperties *-- TSTableData : " _pat "
 decrypt::dvbapi::ClientProperties *-- TSTableData : " _pmt "
 
+input::DeviceData <|-- input::dvb::FrontendData
 
-decrypt::dvbapi::Client  .  Streams
-class decrypt::dvbapi::Client {
-  Mutex
-  _getStreamInterfaceDecrypt(..)
-}
-
-input::Device <|-- input::dvb::Frontend
-input::Device <|-- input::file::TSReader
-
-input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
-
-input::dvb::delivery::System <|-- DVB_S
-input::dvb::delivery::System <|-- DVB_C
-input::dvb::delivery::System <|-- DVB_T
-input::dvb::delivery::System <|-- ATSC
-
-
-DVB_S *-- Lnb_t
-DVB_S *-- DiSEqc_t
-
-ChannelData *-- PidTable
+input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties
+input::dvb::FrontendData *-- input::dvb::PidTable
 
 @enduml
 

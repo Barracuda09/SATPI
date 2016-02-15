@@ -20,7 +20,7 @@
 #include <StreamClient.h>
 
 #include <Log.h>
-#include <SocketClient.h>
+#include <socket/SocketClient.h>
 #include <Stream.h>
 #include <Utils.h>
 

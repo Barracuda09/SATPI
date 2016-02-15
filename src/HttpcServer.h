@@ -21,11 +21,11 @@
 #define HTTPC_SERVER_H_INCLUDE HTTPC_SERVER_H_INCLUDE
 
 #include <FwDecl.h>
-#include <TcpSocket.h>
+#include <socket/TcpSocket.h>
 #include <Utils.h>
 
-FW_DECL_NS0(Streams);
 FW_DECL_NS0(Stream);
+FW_DECL_NS0(StreamManager);
 FW_DECL_NS0(InterfaceAttr);
 
 /// HTTP Client Server
@@ -58,7 +58,7 @@ class HttpcServer :
 		// Constructors and destructor
 		// =======================================================================
 		HttpcServer(int maxClients, const std::string &protocol, int port, bool nonblock,
-		            Streams &streams,
+		            StreamManager &streamManager,
 		            const InterfaceAttr &interface);
 
 		virtual ~HttpcServer();
@@ -127,7 +127,7 @@ class HttpcServer :
 		// Data members
 		// =======================================================================
 	protected:
-		Streams             &_streams;
+		StreamManager &_streamManager;
 		const InterfaceAttr &_interface;
 
 }; // class HttpcServer

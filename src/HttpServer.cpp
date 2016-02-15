@@ -19,14 +19,14 @@
  */
 #include <HttpServer.h>
 
-#include "InterfaceAttr.h"
-#include "Properties.h"
-#include "Streams.h"
-#include "Stream.h"
-#include "Log.h"
-#include "SocketClient.h"
-#include "StringConverter.h"
 #include <base/XMLSupport.h>
+#include <InterfaceAttr.h>
+#include <Log.h>
+#include <Properties.h>
+#include <Stream.h>
+#include <StreamManager.h>
+#include <socket/SocketClient.h>
+#include <StringConverter.h>
 
 #ifdef LIBDVBCSA
 	#include <decrypt/dvbapi/Client.h>
@@ -37,11 +37,11 @@
 #include <cstdlib>
 #include <fcntl.h>
 
-HttpServer::HttpServer(Streams &streams,
+HttpServer::HttpServer(StreamManager &streamManager,
                        const InterfaceAttr &interface,
                        Properties &properties) :
 	ThreadBase("HttpServer"),
-	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streams, interface),
+	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streamManager, interface),
 	_properties(properties) {
 	startThread();
 }
@@ -89,12 +89,12 @@ bool HttpServer::methodPost(const SocketClient &client) {
 			if (file.compare("/data.xml") == 0) {
 				// not used yet
 			} else if (file.compare("/streams.xml") == 0) {
-				_streams.fromXML(content);
+				_streamManager.fromXML(content);
 			} else if (file.compare("/config.xml") == 0) {
 				_properties.fromXML(content);
 #ifdef LIBDVBCSA
 			} else if (file.compare("/dvbapi.xml") == 0) {
-				_streams.getDecrypt()->fromXML(content);
+				_streamManager.getDecrypt()->fromXML(content);
 #endif
 			}
 		}
@@ -158,8 +158,8 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 #ifdef LIBDVBCSA
-			} else if (file.compare(_streams.getDecrypt()->getFileName()) == 0) {
-				_streams.getDecrypt()->addToXML(docType);
+			} else if (file.compare(_streamManager.getDecrypt()->getFileName()) == 0) {
+				_streamManager.getDecrypt()->addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
@@ -262,7 +262,7 @@ void HttpServer::makeStreamsXML(std::string &xml) {
 	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 	xml += "<data>\r\n";
 
-	_streams.addToXML(xml);
+	_streamManager.addToXML(xml);
 
 	xml += "</data>\r\n";
 }

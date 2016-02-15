@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "UdpSocket.h"
-#include "Log.h"
+#include <socket/UdpSocket.h>
+#include <Log.h>
 
 #include <stdio.h>
 #include <stdlib.h>

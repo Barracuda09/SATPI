@@ -26,7 +26,7 @@
 #include <base/ThreadBase.h>
 
 FW_DECL_NS0(Stream);
-FW_DECL_NS0(Streams);
+FW_DECL_NS0(StreamManager);
 FW_DECL_NS0(StreamClient);
 
 /// RTSP Server
@@ -37,7 +37,7 @@ class RtspServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtspServer(Streams &streams, const Properties &properties, const InterfaceAttr &interface);
+		RtspServer(StreamManager &streamManager, const Properties &properties, const InterfaceAttr &interface);
 
 		virtual ~RtspServer();
 

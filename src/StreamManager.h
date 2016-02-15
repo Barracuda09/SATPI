@@ -1,4 +1,4 @@
-/* Streams.h
+/* StreamManager.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef STREAMS_H_INCLUDE
-#define STREAMS_H_INCLUDE STREAMS_H_INCLUDE
+#ifndef STREAM_MANAGER_H_INCLUDE
+#define STREAM_MANAGER_H_INCLUDE STREAM_MANAGER_H_INCLUDE
 
 #include <FwDecl.h>
 #include <base/Mutex.h>
@@ -31,16 +31,17 @@ FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(Stream);
 FW_DECL_NS0(StreamInterfaceDecrypt);
 FW_DECL_NS2(decrypt, dvbapi, Client);
+FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 
-/// The class @c Streams carries all the available/open streams
-class Streams :
+/// The class @c StreamManager manages all the available/open streams
+class StreamManager :
 	public base::XMLSupport {
 	public:
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
-		Streams(const std::string &xmlFilePath);
-		virtual ~Streams();
+		StreamManager(const std::string &xmlFilePath);
+		virtual ~StreamManager();
 
 		/// enumerate all available devices
 		void enumerateDevices();
@@ -84,16 +85,17 @@ class Streams :
 		///
 		std::string attributeDescribeString(std::size_t stream, bool &active) const;
 
-		/// Add streams data to an XML for storing or web interface
+		/// Add stream data to an XML for storing or web interface
 		virtual void addToXML(std::string &xml) const;
 
-		/// Get streams data from an XML for restoring or web interface
+		/// Get stream data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml);
 
 #ifdef LIBDVBCSA
 		///
-		StreamInterfaceDecrypt *getStreamInterfaceDecrypt(int streamID);
+		input::dvb::FrontendDecryptInterface *getFrontendDecryptInterface(int streamID);
 
+		///
 		decrypt::dvbapi::Client *getDecrypt() const;
 #endif
 
@@ -104,17 +106,17 @@ class Streams :
 		// =======================================================================
 
 	private:
-		base::Mutex   _mutex;       //
+		base::Mutex _mutex;       //
 		decrypt::dvbapi::Client *_decrypt;
-		StreamVector  _stream;
-		Stream      *_dummyStream;
-		std::string  _del_sys_str;
-		std::size_t  _nr_dvb_s2;
-		std::size_t  _nr_dvb_t;
-		std::size_t  _nr_dvb_t2;
-		std::size_t  _nr_dvb_c;
-		std::size_t  _nr_dvb_c2;
+		StreamVector _stream;
+		Stream *_dummyStream;
+		std::string _del_sys_str;
+		std::size_t _nr_dvb_s2;
+		std::size_t _nr_dvb_t;
+		std::size_t _nr_dvb_t2;
+		std::size_t _nr_dvb_c;
+		std::size_t _nr_dvb_c2;
 
-}; // class Streams
+}; // class StreamManager
 
-#endif // STREAMS_H_INCLUDE
+#endif // STREAM_MANAGER_H_INCLUDE

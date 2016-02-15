@@ -21,21 +21,21 @@
 #define UPNP_SSDP_SSDP_SERVER_H_INCLUDE UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 
 #include <base/ThreadBase.h>
-#include "SocketAttr.h"
-#include "SocketClient.h"
-#include "UdpSocket.h"
+#include <FwDecl.h>
+#include <socket/SocketAttr.h>
+#include <socket/SocketClient.h>
+#include <socket/UdpSocket.h>
 
-// forward declaration
-class InterfaceAttr;
-class Properties;
+FW_DECL_NS0(InterfaceAttr);
+FW_DECL_NS0(Properties);
 
 namespace upnp {
 namespace ssdp {
 	
 /// SSDP Server
 class Server :
-		public base::ThreadBase,
-		public UdpSocket {
+	public base::ThreadBase,
+	public UdpSocket {
 	public:
 		// =======================================================================
 		// Constructors and destructor

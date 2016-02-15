@@ -28,22 +28,19 @@ endif
 
 # List of source to be compiled
 SOURCES = Version.cpp \
-	Satpi.cpp \
-	Properties.cpp \
-	HttpcSocket.cpp \
-	TcpSocket.cpp \
-	UdpSocket.cpp \
-	StreamClient.cpp \
-	Streams.cpp \
-	Stream.cpp \
 	HttpServer.cpp \
-	HttpcServer.cpp \
-	RtspServer.cpp \
-	RtcpThread.cpp \
-	StreamThreadBase.cpp \
-	RtpStreamThread.cpp \
 	HttpStreamThread.cpp \
+	HttpcServer.cpp \
 	Log.cpp \
+	Properties.cpp \
+	RtcpThread.cpp \
+	RtpStreamThread.cpp \
+	RtspServer.cpp \
+	Satpi.cpp \
+	Stream.cpp \
+	StreamClient.cpp \
+	StreamManager.cpp \
+	StreamThreadBase.cpp \
 	StringConverter.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
@@ -51,10 +48,13 @@ SOURCES = Version.cpp \
 	input/dvb/FrontendData.cpp \
 	input/dvb/FrontendData_set.cpp \
 	input/dvb/PidTable.cpp \
+	input/dvb/delivery/DVBC.cpp \
 	input/dvb/delivery/DVBS.cpp \
 	input/dvb/delivery/DVBT.cpp \
-	input/dvb/delivery/DVBC.cpp \
 	mpegts/PacketBuffer.cpp \
+	socket/HttpcSocket.cpp \
+	socket/TcpSocket.cpp \
+	socket/UdpSocket.cpp \
 	upnp/ssdp/Server.cpp
 
 # Add dvbcsa ?
@@ -62,7 +62,7 @@ ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
-  SOURCES += Stream_InterfaceDecrypt.cpp
+  SOURCES += input/dvb/Frontend_DecryptInterface.cpp
 endif
 
 ifeq ($(HAS_NP_FUNCTIONS),yes)
@@ -113,6 +113,7 @@ makeobj:
 	@mkdir -p $(OBJ_DIR)/input/dvb/delivery
 	@mkdir -p $(OBJ_DIR)/upnp/ssdp
 	@mkdir -p $(OBJ_DIR)/decrypt/dvbapi
+	@mkdir -p $(OBJ_DIR)/socket
 
 debug:
 	$(MAKE) "BUILD=debug"

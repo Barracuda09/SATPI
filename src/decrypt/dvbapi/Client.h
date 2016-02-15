@@ -21,17 +21,17 @@
 #define DECRYPT_DVBAPI_CLIENT_H_INCLUDE DECRYPT_DVBAPI_CLIENT_H_INCLUDE
 
 #include <FwDecl.h>
-#include <SocketClient.h>
 #include <base/Mutex.h>
 #include <base/Functor1Ret.h>
 #include <base/ThreadBase.h>
 #include <base/XMLSupport.h>
+#include <socket/SocketClient.h>
 
 #include <atomic>
 #include <string>
 
-FW_DECL_NS0(StreamInterfaceDecrypt);
 FW_DECL_NS1(mpegts, PacketBuffer);
+FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 
 namespace decrypt {
 namespace dvbapi {
@@ -45,7 +45,7 @@ class Client :
 		// Constructors and destructor
 		// =======================================================================
 		Client(const std::string &xmlFilePath,
-			const base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt);
+			const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface);
 		virtual ~Client();
 
 		///
@@ -73,16 +73,16 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void collectPAT(StreamInterfaceDecrypt *stream, const unsigned char *data);
+		void collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
 		///
-		void collectPMT(StreamInterfaceDecrypt *stream, const unsigned char *data);
+		void collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
 		///
-		void cleanPMT(StreamInterfaceDecrypt *stream, unsigned char *data);
+		void cleanPMT(input::dvb::FrontendDecryptInterface *frontend, unsigned char *data);
 
 		///
-		void collectECM(StreamInterfaceDecrypt *stream, const unsigned char *data);
+		void collectECM(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
 		// =======================================================================
 		// Data members
@@ -96,7 +96,7 @@ class Client :
 		std::string      _serverIpAddr;
 		std::string      _serverName;
 
-		base::Functor1Ret<StreamInterfaceDecrypt *, int> _getStreamInterfaceDecrypt;
+		base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> _getFrontendDecryptInterface;
 
 }; // class Client
 

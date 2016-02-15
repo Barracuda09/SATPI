@@ -20,9 +20,9 @@
 #ifndef SOCKET_CLIENT_H_INCLUDE
 #define SOCKET_CLIENT_H_INCLUDE SOCKET_CLIENT_H_INCLUDE
 
-#include "SocketAttr.h"
+#include <socket/SocketAttr.h>
 
-#include <stdio.h>
+#include <string>
 
 ///
 class SocketClient :

@@ -17,14 +17,15 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "HttpcServer.h"
-#include "InterfaceAttr.h"
-#include "Properties.h"
-#include "Streams.h"
-#include "Stream.h"
-#include "Log.h"
-#include "SocketClient.h"
-#include "StringConverter.h"
+#include <HttpcServer.h>
+
+#include <InterfaceAttr.h>
+#include <Log.h>
+#include <Properties.h>
+#include <Stream.h>
+#include <StreamManager.h>
+#include <StringConverter.h>
+#include <socket/SocketClient.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,10 +69,10 @@ const std::string HttpcServer::CONTENT_TYPE_ICO         = "image/x-icon";
 const std::string HttpcServer::CONTENT_TYPE_VIDEO       = "video/MP2T";
 
 HttpcServer::HttpcServer(int maxClients, const std::string &protocol, int port, bool nonblock,
-                         Streams &streams,
+                         StreamManager &streamManager,
                          const InterfaceAttr &interface) :
 		TcpSocket(maxClients, protocol, port, nonblock),
-		_streams(streams),
+		_streamManager(streamManager),
 		_interface(interface) {}
 
 HttpcServer::~HttpcServer() {}
@@ -125,7 +126,7 @@ bool HttpcServer::process(SocketClient &client) {
 
 bool HttpcServer::closeConnection(SocketClient &socketclient) {
 	int clientID;
-	Stream *stream = _streams.findStreamAndClientIDFor(socketclient, clientID);
+	Stream *stream = _streamManager.findStreamAndClientIDFor(socketclient, clientID);
 	if (stream != nullptr) {
 		stream->close(clientID);
 	}
@@ -138,7 +139,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 
 	std::string httpc;
 	int clientID;
-	Stream *stream = _streams.findStreamAndClientIDFor(client, clientID);
+	Stream *stream = _streamManager.findStreamAndClientIDFor(client, clientID);
 	if (stream != nullptr) {
 		std::string method;
 		if (StringConverter::getMethod(msg, method)) {

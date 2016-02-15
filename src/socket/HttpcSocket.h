@@ -21,7 +21,7 @@
 #define HTTPC_SOCKET_H_INCLUDE HTTPC_SOCKET_H_INCLUDE
 
 #include <FwDecl.h>
-#include <SocketAttr.h>
+#include <socket/SocketAttr.h>
 
 #include <poll.h>
 #include <netinet/in.h>

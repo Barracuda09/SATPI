@@ -21,9 +21,9 @@
 #define UDP_SOCKET_H_INCLUDE UDP_SOCKET_H_INCLUDE
 
 #include <FwDecl.h>
-#include <HttpcSocket.h>
-#include <SocketClient.h>
-#include <SocketAttr.h>
+#include <socket/HttpcSocket.h>
+#include <socket/SocketClient.h>
+#include <socket/SocketAttr.h>
 
 #include <netinet/in.h>
 #include <net/if.h>

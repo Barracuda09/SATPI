@@ -1,4 +1,4 @@
-/* Streams.cpp
+/* StreamManager.cpp
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,34 +17,39 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include <Streams.h>
+#include <StreamManager.h>
 
 #include <Stream.h>
 #include <Log.h>
 #include <Utils.h>
 #include <StreamClient.h>
-#include <SocketClient.h>
+#include <socket/SocketClient.h>
 #include <StringConverter.h>
 #include <input/dvb/Frontend.h>
 #ifdef LIBDVBCSA
 	#include <decrypt/dvbapi/Client.h>
 	#include <StreamInterfaceDecrypt.h>
+	#include <input/dvb/FrontendDecryptInterface.h>
 #endif
 
 #include <assert.h>
 
-Streams::Streams(const std::string &xmlFilePath) :
+StreamManager::StreamManager(const std::string &xmlFilePath) :
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
 #ifdef LIBDVBCSA
-	base::Functor1Ret<StreamInterfaceDecrypt *, int> getStreamInterfaceDecrypt =
-		makeFunctor((base::Functor1Ret<StreamInterfaceDecrypt *, int>*) 0,
-			*this, &Streams::getStreamInterfaceDecrypt);
-	_decrypt = new decrypt::dvbapi::Client(xmlFilePath + "/" + "dvbapi.xml", getStreamInterfaceDecrypt);
+	base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface =
+		makeFunctor((base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int>*) 0,
+			*this, &StreamManager::getFrontendDecryptInterface);
+
+	_decrypt = new decrypt::dvbapi::Client(xmlFilePath + "/" + "dvbapi.xml", getFrontendDecryptInterface);
+#else
+	// unused var
+	(void)xmlFilePath;
 #endif
 }
 
-Streams::~Streams() {
+StreamManager::~StreamManager() {
 	DELETE(_dummyStream);
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		DELETE(*it);
@@ -52,17 +57,16 @@ Streams::~Streams() {
 }
 
 #ifdef LIBDVBCSA
-	StreamInterfaceDecrypt *Streams::getStreamInterfaceDecrypt(int streamID) {
-		return _stream[streamID];
-	}
-
-	decrypt::dvbapi::Client *Streams::getDecrypt() const {
+	decrypt::dvbapi::Client *StreamManager::getDecrypt() const {
 		return _decrypt;
 	}
 
+	input::dvb::FrontendDecryptInterface *StreamManager::getFrontendDecryptInterface(int streamID) {
+		return _stream[streamID]->getFrontendDecryptInterface();
+	}
 #endif
 
-void Streams::enumerateDevices() {
+void StreamManager::enumerateDevices() {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -87,7 +91,7 @@ void Streams::enumerateDevices() {
 
 }
 
-Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
+Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	base::MutexLock lock(_mutex);
 
 	// Here we need to find the correct Stream and StreamClient
@@ -174,7 +178,7 @@ Stream *Streams::findStreamAndClientIDFor(SocketClient &socketClient, int &clien
 	return nullptr;
 }
 
-void Streams::checkStreamClientsWithTimeout() {
+void StreamManager::checkStreamClientsWithTimeout() {
 	base::MutexLock lock(_mutex);
 
 	assert(!_stream.empty());
@@ -186,14 +190,14 @@ void Streams::checkStreamClientsWithTimeout() {
 	}
 }
 
-std::string Streams::attributeDescribeString(std::size_t stream, bool &active) const {
+std::string StreamManager::attributeDescribeString(std::size_t stream, bool &active) const {
 	base::MutexLock lock(_mutex);
 
 	assert(!_stream.empty());
 	return _stream[stream]->attributeDescribeString(active);
 }
 
-void Streams::fromXML(const std::string &xml) {
+void StreamManager::fromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	std::size_t i = 0;
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
@@ -207,7 +211,7 @@ void Streams::fromXML(const std::string &xml) {
 	}
 }
 
-void Streams::addToXML(std::string &xml) const {
+void StreamManager::addToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
 	std::size_t i = 0;

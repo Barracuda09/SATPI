@@ -21,8 +21,8 @@
 #define STREAM_CLIENT_H_INCLUDE STREAM_CLIENT_H_INCLUDE
 
 #include <FwDecl.h>
-#include <SocketAttr.h>
-#include <SocketClient.h>
+#include <socket/SocketAttr.h>
+#include <socket/SocketClient.h>
 #include <base/Mutex.h>
 
 #include <string>

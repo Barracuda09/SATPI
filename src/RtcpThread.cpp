@@ -41,7 +41,7 @@ RtcpThread::RtcpThread(StreamInterface &stream) :
 RtcpThread::~RtcpThread() {
 	terminateThread();
 	CLOSE_FD(_socket_fd);
-	SI_LOG_INFO("Stream: %d, Stop RTCP stream", _stream.getStreamID());
+	SI_LOG_INFO("Stream: %d, Destroy RTCP stream", _stream.getStreamID());
 }
 
 bool RtcpThread::startStreaming() {

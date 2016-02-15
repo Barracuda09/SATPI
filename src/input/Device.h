@@ -68,19 +68,24 @@ namespace input {
 			/// Monitor signal of this device
 			virtual void monitorSignal(bool showStatus) = 0;
 
+			///
+			virtual bool hasDeviceDataChanged() const = 0;
+
+			///
+			virtual void parseStreamString(const std::string &msg, const std::string &method) = 0;
+
 			/// Update the Channel and PID. Will close DVR and reopen it if channel did change
-			virtual bool update(int streamID, input::DeviceData *data) = 0;
+			virtual bool update() = 0;
 
 			/// Teardown/Stop this device
-			virtual bool teardown(int streamID, input::DeviceData *data) = 0;
+			virtual bool teardown() = 0;
 
 			/// This will read the frontend information for this frontend
 			virtual bool setFrontendInfo(const std::string &fe,
 				const std::string &dvr,	const std::string &dmx) = 0;
 
 			///
-			virtual std::string attributeDescribeString(int streamID,
-				const input::DeviceData *data) const = 0;
+			virtual std::string attributeDescribeString() const = 0;
 
 			/// Check if this frontend is tuned
 			virtual bool isTuned() const = 0;

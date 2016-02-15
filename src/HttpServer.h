@@ -26,7 +26,7 @@
 
 FW_DECL_NS0(InterfaceAttr);
 FW_DECL_NS0(Properties);
-FW_DECL_NS0(Streams);
+FW_DECL_NS0(StreamManager);
 
 /// HTTP Server
 class HttpServer :
@@ -37,7 +37,7 @@ class HttpServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpServer(Streams &streams,
+		HttpServer(StreamManager &streamManager,
 			const InterfaceAttr &interface,
 			Properties &properties);
 

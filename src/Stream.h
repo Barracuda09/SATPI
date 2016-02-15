@@ -26,9 +26,6 @@
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/Device.h>
-#ifdef LIBDVBCSA
-#include <StreamInterfaceDecrypt.h>
-#endif
 
 #include <string>
 #include <vector>
@@ -38,8 +35,8 @@
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(StreamThreadBase);
 FW_DECL_NS1(input, DeviceData);
-FW_DECL_NS2(input, dvb, FrontendData);
 FW_DECL_NS2(decrypt, dvbapi, Client);
+FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 
 // @todo Forward decl
 FW_DECL_NS0(Stream);
@@ -48,9 +45,6 @@ typedef std::vector<Stream *> StreamVector;
 /// The class @c Stream carries all the data/information of an stream
 class Stream :
 	public StreamInterface,
-#ifdef LIBDVBCSA
-	public StreamInterfaceDecrypt,
-#endif
 	public base::XMLSupport {
 	public:
 		static const unsigned int MAX_CLIENTS;
@@ -61,69 +55,6 @@ class Stream :
 		Stream(int streamID, decrypt::dvbapi::Client *decrypt);
 
 		virtual ~Stream();
-
-#ifdef LIBDVBCSA
-		// =======================================================================
-		// -- StreamInterfaceDecrypt ---------------------------------------------
-		// =======================================================================
-	public:
-
-		virtual bool updateInputDevice();
-
-		virtual int getBatchCount() const;
-
-		virtual int getBatchParity() const;
-
-		virtual int getMaximumBatchSize() const;
-
-		virtual void decryptBatch(bool final);
-
-		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
-
-		virtual const dvbcsa_bs_key_s *getKey(int parity) const;
-
-		virtual bool isTableCollected(int tableID) const;
-
-		virtual void setTableCollected(int tableID, bool collected);
-
-		virtual const unsigned char *getTableData(int tableID) const;
-
-		virtual void collectTableData(int streamID, int tableID, const unsigned char *data);
-
-		virtual int getTableDataSize(int tableID) const;
-
-		virtual void setPMT(int pid, bool set);
-
-		virtual bool isPMT(int pid) const;
-
-		virtual void setECMFilterData(int demux, int filter, int pid, bool set);
-
-		virtual void getECMFilterData(int &demux, int &filter, int pid) const;
-
-		virtual bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
-
-		virtual bool isECM(int pid) const;
-
-		virtual void setKey(const unsigned char *cw, int parity, int index);
-
-		virtual void freeKeys();
-
-		virtual void setKeyParity(int pid, int parity);
-
-		virtual int getKeyParity(int pid) const;
-
-		virtual void setECMInfo(
-			int pid,
-			int serviceID,
-			int caID,
-			int provID,
-			int emcTime,
-			const std::string &cardSystem,
-			const std::string &readerName,
-			const std::string &sourceName,
-			const std::string &protocolName,
-			int hops);
-#endif
 
 		// =======================================================================
 		// -- StreamInterface ----------------------------------------------------
@@ -156,6 +87,9 @@ class Stream :
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
 	public:
+
+		///
+		input::dvb::FrontendDecryptInterface *getFrontendDecryptInterface();
 
 		/// This will read the frontend information for this stream
 		void setFrontendInfo(const std::string &fe,
@@ -262,12 +196,6 @@ class Stream :
 	private:
 
 		///
-		void parseStreamString_L(const std::string &msg, const std::string &method);
-
-		///
-		void processPID_L(const std::string &pids, bool add);
-
-		///
 		void processStopStream_L(int clientID, bool gracefull);
 
 
@@ -293,7 +221,6 @@ class Stream :
 		StreamThreadBase *_streaming;     ///
 		decrypt::dvbapi::Client *_decrypt;///
 		input::Device *_device;           ///
-		input::dvb::FrontendData *_frontendData;///
 		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender
 		std::atomic<uint32_t> _spc;       /// sender RTP packet count  (used in SR packet)
 		std::atomic<uint32_t> _soc;       /// sender RTP payload count (used in SR packet)

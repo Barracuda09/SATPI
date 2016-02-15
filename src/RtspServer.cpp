@@ -17,23 +17,24 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "RtspServer.h"
-#include "Log.h"
-#include "InterfaceAttr.h"
-#include "SocketClient.h"
-#include "StreamClient.h"
-#include "StringConverter.h"
-#include "Stream.h"
-#include "Streams.h"
+#include <RtspServer.h>
+
+#include <Log.h>
+#include <InterfaceAttr.h>
+#include <Stream.h>
+#include <StreamManager.h>
+#include <socket/SocketClient.h>
+#include <StreamClient.h>
+#include <StringConverter.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 static const char *RTSP_OPTIONS_SESSION = "Session: %s\r\n";
 
-RtspServer::RtspServer(Streams &streams, const Properties &properties, const InterfaceAttr &interface) :
+RtspServer::RtspServer(StreamManager &streamManager, const Properties &properties, const InterfaceAttr &interface) :
 		ThreadBase("RtspServer"),
-		HttpcServer(5, "RTSP", properties.getRtspPort(), true, streams, interface) {
+		HttpcServer(5, "RTSP", properties.getRtspPort(), true, streamManager, interface) {
 	startThread();
 }
 
@@ -49,7 +50,7 @@ void RtspServer::threadEntry() {
 		// call poll with a timeout of 500 ms
 		poll(500);
 
-		_streams.checkStreamClientsWithTimeout();
+		_streamManager.checkStreamClientsWithTimeout();
 	}
 }
 
@@ -143,11 +144,11 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	// Describe streams
 	std::string cont1;
 	StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT1, _interface.getIPAddress().c_str(),
-	         _streams.getMaxDvbSat(), _streams.getMaxDvbTer(), _streams.getMaxDvbCable());
+	         _streamManager.getMaxDvbSat(), _streamManager.getMaxDvbTer(), _streamManager.getMaxDvbCable());
 
-	for (auto i = 0u; i < _streams.getMaxStreams(); ++i) {
+	for (auto i = 0u; i < _streamManager.getMaxStreams(); ++i) {
 		bool active = false;
-		std::string desc_attr = _streams.attributeDescribeString(i, active);
+		std::string desc_attr = _streamManager.attributeDescribeString(i, active);
 		if (desc_attr.size() > 5) {
 			++streams_setup;
 			StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT2, i, desc_attr.c_str(), (active) ? "sendonly" : "inactive");
