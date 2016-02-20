@@ -33,7 +33,7 @@
 #include <atomic>
 
 FW_DECL_NS0(SocketClient);
-FW_DECL_NS0(StreamThreadBase);
+FW_DECL_NS1(output, StreamThreadBase);
 FW_DECL_NS1(input, DeviceData);
 FW_DECL_NS2(decrypt, dvbapi, Client);
 FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
@@ -52,7 +52,7 @@ class Stream :
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
-		Stream(int streamID, decrypt::dvbapi::Client *decrypt);
+		Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *decrypt);
 
 		virtual ~Stream();
 
@@ -204,7 +204,8 @@ class Stream :
 		enum StreamingType {
 			NONE,
 			HTTP,
-			RTSP
+			RTSP,
+			FILE
 		};
 
 		// =======================================================================
@@ -220,7 +221,7 @@ class Stream :
 
 		StreamClient     *_client;        /// defines the participants of this stream
 		                                  /// index 0 is the owner of this stream
-		StreamThreadBase *_streaming;     ///
+		output::StreamThreadBase *_streaming;     ///
 		decrypt::dvbapi::Client *_decrypt;///
 		input::Device *_device;           ///
 		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender

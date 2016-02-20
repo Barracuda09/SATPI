@@ -29,7 +29,6 @@
 
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(Stream);
-FW_DECL_NS0(StreamInterfaceDecrypt);
 FW_DECL_NS2(decrypt, dvbapi, Client);
 FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 
@@ -107,6 +106,7 @@ class StreamManager :
 
 	private:
 		base::Mutex _mutex;       //
+		std::string _xmlFilePath;
 		decrypt::dvbapi::Client *_decrypt;
 		StreamVector _stream;
 		Stream *_dummyStream;

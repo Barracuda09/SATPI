@@ -26,15 +26,16 @@
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
 #include <input/dvb/Frontend.h>
+#include <input/file/TSReader.h>
 #ifdef LIBDVBCSA
 	#include <decrypt/dvbapi/Client.h>
-	#include <StreamInterfaceDecrypt.h>
 	#include <input/dvb/FrontendDecryptInterface.h>
 #endif
 
 #include <assert.h>
 
 StreamManager::StreamManager(const std::string &xmlFilePath) :
+	_xmlFilePath(xmlFilePath),
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
 #ifdef LIBDVBCSA
@@ -43,9 +44,6 @@ StreamManager::StreamManager(const std::string &xmlFilePath) :
 			*this, &StreamManager::getFrontendDecryptInterface);
 
 	_decrypt = new decrypt::dvbapi::Client(xmlFilePath + "/" + "dvbapi.xml", getFrontendDecryptInterface);
-#else
-	// unused var
-	(void)xmlFilePath;
 #endif
 }
 
@@ -74,8 +72,10 @@ void StreamManager::enumerateDevices() {
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
-	_dummyStream = new Stream(0, _decrypt);
+	_dummyStream = new Stream(0, nullptr, _decrypt);
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
+	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
+
 
 	_nr_dvb_s2 = 0;
 	_nr_dvb_t = 0;

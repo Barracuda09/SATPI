@@ -44,8 +44,6 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-FW_DECL_NS0(StreamInterfaceDecrypt);
-
 bool exitApp;
 static int retval;
 static int otherSig;

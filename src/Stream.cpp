@@ -19,15 +19,16 @@
  */
 #include <Stream.h>
 
-#include <HttpStreamThread.h>
+#include <Log.h>
+#include <StringConverter.h>
+#include <Utils.h>
 #include <input/dvb/Frontend.h>
 #include <input/dvb/FrontendData.h>
 #include <input/dvb/delivery/DVBS.h>
-#include <Log.h>
-#include <RtpStreamThread.h>
+#include <output/StreamThreadHttp.h>
+#include <output/StreamThreadRtp.h>
+#include <output/StreamThreadTSWriter.h>
 #include <socket/SocketClient.h>
-#include <StringConverter.h>
-#include <Utils.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +36,7 @@
 static unsigned int seedp = 0xFEED;
 const unsigned int Stream::MAX_CLIENTS = 8;
 
-Stream::Stream(int streamID, decrypt::dvbapi::Client *decrypt) :
+Stream::Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *decrypt) :
 	_streamID(streamID),
 	_streamingType(NONE),
 	_enabled(true),
@@ -43,7 +44,7 @@ Stream::Stream(int streamID, decrypt::dvbapi::Client *decrypt) :
 	_client(new StreamClient[MAX_CLIENTS]),
 	_streaming(nullptr),
 	_decrypt(decrypt),
-	_device(new input::dvb::Frontend(streamID)),
+	_device(device),
 	_ssrc((uint32_t)(rand_r(&seedp) % 0xffff)),
 	_spc(0),
 	_soc(0),
@@ -235,16 +236,19 @@ bool Stream::update(int clientID) {
 	// first time streaming?
 	if (_streaming == nullptr) {
 		switch (_streamingType) {
-		case NONE:
-			_streaming = nullptr;
-			SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
-			break;
-		case HTTP:
-			_streaming = new HttpStreamThread(*this, _decrypt);
-			break;
-		case RTSP:
-			_streaming = new RtpStreamThread(*this, _decrypt);
-			break;
+			case NONE:
+				_streaming = nullptr;
+				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
+				break;
+			case HTTP:
+				_streaming = new output::StreamThreadHttp(*this, _decrypt);
+				break;
+			case RTSP:
+				_streaming = new output::StreamThreadRtp(*this, _decrypt);
+				break;
+			case FILE:
+				_streaming = new output::StreamThreadTSWriter(*this, _decrypt, "test.ts");
+				break;
 		};
 		if (_streaming == nullptr) {
 			return false;

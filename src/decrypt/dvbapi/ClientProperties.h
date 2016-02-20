@@ -193,8 +193,9 @@ class ClientProperties {
 
 		/// Collect Table data for tableID
 		void collectTableData(int streamID, int tableID, const unsigned char *data) {
+			const int initialTableSize = getTableDataSize(tableID);
 			const unsigned char options = (data[1] & 0xE0);
-			if (options == 0x40 && data[5] == tableID) {
+			if (options == 0x40 && data[5] == tableID && initialTableSize == 0) {
 				const int pid           = ((data[1] & 0x1f) << 8) | data[2];
 				const int cc            =   data[3] & 0x0f;
 				const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
@@ -209,7 +210,7 @@ class ClientProperties {
 					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
 					setTableCollected(tableID, false);
 				}
-			} else if (getTableDataSize(tableID) > 0) {
+			} else if (initialTableSize > 0) {
 				const unsigned char *cData = getTableData(tableID);
 				const int sectionLength    = ((cData[6] & 0x0F) << 8) | cData[7];
 
@@ -229,6 +230,9 @@ class ClientProperties {
 					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
 					setTableCollected(tableID, false);
 				}
+			} else {
+				SI_LOG_ERROR("Stream: %d, %s: Unable get table data! Retrying to collect data", streamID, getTableTXT(tableID));
+				setTableCollected(tableID, false);
 			}
 		}
 

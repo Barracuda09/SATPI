@@ -141,8 +141,11 @@ namespace dvbapi {
 		return crc;
 	}
 
-	#define CRC(data, sectionLength) (data[sectionLength - 4 + 8] << 24) | (data[sectionLength - 4 + 8 + 1] << 16) | \
-		(data[sectionLength - 4 + 8 + 2] <<  8) |  data[sectionLength - 4 + 8 + 3]
+	#define CRC(data, sectionLength) \
+		(data[sectionLength - 4 + 8] << 24) |     \
+		(data[sectionLength - 4 + 8 + 1] << 16) | \
+		(data[sectionLength - 4 + 8 + 2] <<  8) | \
+		 data[sectionLength - 4 + 8 + 3]
 
 	Client::Client(const std::string &xmlFilePath,
 				   const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface) :

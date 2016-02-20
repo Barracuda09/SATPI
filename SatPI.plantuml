@@ -68,7 +68,7 @@ HttpcServer *.. InterfaceAttr
 Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
 Stream *-- input::Device
-Stream *-- StreamThreadBase
+Stream *-- output::StreamThreadBase
 class Stream {
   Mutex
   streamInUse
@@ -93,16 +93,16 @@ class StreamClient {
   cseq
 }
 
-StreamThreadBase *.. decrypt::dvbapi::Client
-StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
-StreamThreadBase *.. StreamInterface
-class StreamThreadBase {
+output::StreamThreadBase *.. decrypt::dvbapi::Client
+output::StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
+output::StreamThreadBase *.. StreamInterface
+class output::StreamThreadBase {
 }
 
 
-RtpStreamThread --|> StreamThreadBase
-RtpStreamThread *-- RtcpThread
-class RtpStreamThread {
+output::StreamThreadRtp --|> output::StreamThreadBase
+output::StreamThreadRtp *-- RtcpThread
+class output::StreamThreadRtp {
   socket_fd
   cseq
 }
@@ -112,7 +112,7 @@ class RtcpThread {
   socket_fd
 }
 
-HttpStreamThread --|> StreamThreadBase
+StreamThreadHttp --|> output::StreamThreadBase
 
 decrypt::dvbapi::Client  .  StreamManager
 class decrypt::dvbapi::Client {

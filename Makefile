@@ -29,18 +29,15 @@ endif
 # List of source to be compiled
 SOURCES = Version.cpp \
 	HttpServer.cpp \
-	HttpStreamThread.cpp \
 	HttpcServer.cpp \
 	Log.cpp \
 	Properties.cpp \
 	RtcpThread.cpp \
-	RtpStreamThread.cpp \
 	RtspServer.cpp \
 	Satpi.cpp \
 	Stream.cpp \
 	StreamClient.cpp \
 	StreamManager.cpp \
-	StreamThreadBase.cpp \
 	StringConverter.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
@@ -51,7 +48,12 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DVBC.cpp \
 	input/dvb/delivery/DVBS.cpp \
 	input/dvb/delivery/DVBT.cpp \
+	input/file/TSReader.cpp \
 	mpegts/PacketBuffer.cpp \
+	output/StreamThreadBase.cpp \
+	output/StreamThreadHttp.cpp \
+	output/StreamThreadRtp.cpp \
+	output/StreamThreadTSWriter.cpp \
 	socket/HttpcSocket.cpp \
 	socket/TcpSocket.cpp \
 	socket/UdpSocket.cpp \
@@ -73,12 +75,11 @@ endif
 OBJ_DIR = obj
 SRC_DIR = src
 
-#SOURCES_UNC is identical to Sourcelist except that it adds SRC_DIR
-SOURCES_UNC = $(SOURCES:%.cpp=$(SRC_DIR)/%.cpp)
+# Find all source (*.cpp) across the directories and make a list
+SOURCES_UNC = $(shell find $(SRC_DIR)/ -type f -name '*.cpp')
 
-# use wildcard expansion when the variable is assigned.
-# (otherwise the variable will just contain the string '*.h' instead of the complete file list)
-HEADERS = $(wildcard $(SRC_DIR)/*.h)
+# Find all headers (*.h) across the directories and make a list
+HEADERS = $(shell find $(SRC_DIR)/ -type f -name '*.h')
 
 #Objectlist is identical to Sourcelist except that all .cpp extensions need to be replaced by .o extension.
 # and add OBJ_DIR to path
@@ -90,36 +91,39 @@ EXECUTABLE = satpi
 # First rule is also the default rule
 # generate the Executable from all the objects
 # $@ represents the targetname
-$(EXECUTABLE):  makeobj $(OBJECTS) $(HEADERS)
+$(EXECUTABLE): $(OBJECTS) $(HEADERS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 # A pattern rule is used to build objects from 'cpp' files
 # $< represents the first item in the dependencies list
 # $@ represents the targetname
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
+	@mkdir -p $(@D)
 	$(CXX) -c $(CFLAGS) $< -o $@
 
 # Create Version.cpp
 $(OBJ_DIR)/Version.o:
 	./version.sh $(SRC_DIR)/Version.cpp > /dev/null
+	@mkdir -p $(@D)
 	$(CXX) -c $(CFLAGS) $(SRC_DIR)/Version.cpp -o $@
 
-makeobj:
-	@mkdir -p $(OBJ_DIR)
-	@mkdir -p $(OBJ_DIR)/base
-	@mkdir -p $(OBJ_DIR)/mpegts
-	@mkdir -p $(OBJ_DIR)/input
-	@mkdir -p $(OBJ_DIR)/input/dvb
-	@mkdir -p $(OBJ_DIR)/input/dvb/delivery
-	@mkdir -p $(OBJ_DIR)/upnp/ssdp
-	@mkdir -p $(OBJ_DIR)/decrypt/dvbapi
-	@mkdir -p $(OBJ_DIR)/socket
-
+# Create a debug version
 debug:
 	$(MAKE) "BUILD=debug"
 
+# Create a 'simulation' version
 simu:
 	$(MAKE) "BUILD=simu"
+
+# Create a 'test suite' Compile
+testsuite:
+	$(MAKE) clean
+	$(MAKE) debug LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
+	$(MAKE) clean
+	$(MAKE) debug
+	$(MAKE) clean
+	$(MAKE)
+	$(MAKE) clean
 
 testcode:
 ifndef HAS_NP_FUNCTIONS
@@ -151,7 +155,7 @@ help:
 	@echo " - Make Doxygen docmumentation     :  make docu"
 	@echo " - Make Uncrustify Code Beautifier :  make uncrustify"
 
-# Download PlaneUML from http://plantuml.com/download.html
+# Download PlantUML from http://plantuml.com/download.html
 # and put it into the root of the project directory
 plantuml:
 	java -jar plantuml.jar -tsvg SatPI.plantuml

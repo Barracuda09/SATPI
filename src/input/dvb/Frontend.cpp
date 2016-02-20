@@ -72,8 +72,8 @@ namespace dvb {
 	//  -- Static functions --------------------------------------------------
 	// =======================================================================
 
-	int getAttachedFrontends(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
-			const std::string &path, int count) {
+	void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::Client *decrypt,
+			const std::string &path) {
 #define DMX      "/dev/dvb/adapter%d/demux%d"
 #define DVR      "/dev/dvb/adapter%d/dvr%d"
 #define FRONTEND "/dev/dvb/adapter%d/frontend%d"
@@ -82,20 +82,21 @@ namespace dvb {
 #if SIMU
 		// unused var
 		(void)path;
-		count = 2;
 		char fe_path[FE_PATH_LEN];
 		char dvr_path[FE_PATH_LEN];
 		char dmx_path[FE_PATH_LEN];
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-		stream.push_back(new Stream(0, decrypt));
-		stream[0]->setFrontendInfo(fe_path, dvr_path, dmx_path);
+		input::dvb::Frontend *frontend0 = new input::dvb::Frontend(0);
+		streamVector.push_back(new Stream(0, frontend0, decrypt));
+		streamVector[0]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
-		stream.push_back(new Stream(1, decrypt));
-		stream[1]->setFrontendInfo(fe_path, dvr_path, dmx_path);
+		input::dvb::Frontend *frontend1 = new input::dvb::Frontend(1);
+		streamVector.push_back(new Stream(1, frontend1, decrypt));
+		streamVector[1]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 #else
 		struct dirent **file_list;
 		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
@@ -122,15 +123,16 @@ namespace dvb {
 								snprintf(dvr_path, FE_PATH_LEN, DVR, adapt_nr, fe_nr);
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
 
-								stream.push_back(new Stream(count, decrypt));
-								stream[count]->setFrontendInfo(fe_path, dvr_path, dmx_path);
-								++count;
+								const StreamVector::size_type size = streamVector.size();
+								input::dvb::Frontend *frontend = new input::dvb::Frontend(size);
+								streamVector.push_back(new Stream(size, frontend, decrypt));
+								streamVector[size]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 							}
 							break;
 						case S_IFDIR:
 							// do not use dir '.' an '..'
 							if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-								count = getAttachedFrontends(stream, decrypt, full_path, count);
+								getAttachedFrontends(streamVector, decrypt, full_path);
 							}
 							break;
 					}
@@ -143,18 +145,19 @@ namespace dvb {
 #undef DVR
 #undef FRONTEND
 #undef FE_PATH_LEN
-		return count;
 	}
 
 	// =======================================================================
 	//  -- Static member functions -------------------------------------------
 	// =======================================================================
 
-	void Frontend::enumerate(StreamVector &stream, decrypt::dvbapi::Client *decrypt,
+	void Frontend::enumerate(StreamVector &streamVector, decrypt::dvbapi::Client *decrypt,
 		const std::string &path) {
+		const StreamVector::size_type beginSize = streamVector.size();
 		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
-		const int count = getAttachedFrontends(stream, decrypt, path, 0);
-		SI_LOG_INFO("Frontends found: %zu", count);
+		getAttachedFrontends(streamVector, decrypt, path);
+		const StreamVector::size_type endSize = streamVector.size();
+		SI_LOG_INFO("Frontends found: %zu", endSize - beginSize);
 	}
 
 	// =======================================================================

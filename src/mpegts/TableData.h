@@ -65,6 +65,7 @@ class TableData {
 			if (!collected) {
 				_cc  = -1;
 				_pid = -1;
+				_data.clear();
 			}
 		}
 
