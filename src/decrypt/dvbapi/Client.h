@@ -76,6 +76,9 @@ class Client :
 		void collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
 		///
+		void collectCAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+
+		///
 		void collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
 		///

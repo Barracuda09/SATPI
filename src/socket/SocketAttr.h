@@ -66,7 +66,7 @@ class SocketAttr {
 			tv.tv_sec = timeout;
 			tv.tv_usec = 0;
 
-			SI_LOG_DEBUG("Set Timeout to %d Sec (fd: %d)", timeout, _fd);
+//			SI_LOG_DEBUG("Set Timeout to %d Sec (fd: %d)", timeout, _fd);
 
 			if (setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval))) {
 				PERROR("setsockopt: SO_RCVTIMEO");

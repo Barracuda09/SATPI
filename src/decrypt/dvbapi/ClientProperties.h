@@ -184,6 +184,8 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					return "PAT";
+				case CAT_TABLE_ID:
+					return "CAT";
 				case PMT_TABLE_ID:
 					return "PMT";
 				default:
@@ -241,6 +243,8 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					return _pat.addData(tableID, data, length, pid, cc);
+				case CAT_TABLE_ID:
+					return _cat.addData(tableID, data, length, pid, cc);
 				case PMT_TABLE_ID:
 					return _pmt.addData(tableID, data, length, pid, cc);
 				default:
@@ -253,6 +257,8 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					return _pat.getData();
+				case CAT_TABLE_ID:
+					return _cat.getData();
 				case PMT_TABLE_ID:
 					return _pmt.getData();
 				default:
@@ -265,6 +271,8 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					return _pat.getDataSize();
+				case CAT_TABLE_ID:
+					return _cat.getDataSize();
 				case PMT_TABLE_ID:
 					return _pmt.getDataSize();
 				default:
@@ -277,6 +285,9 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					_pat.setCollected(collected);
+					break;
+				case CAT_TABLE_ID:
+					_cat.setCollected(collected);
 					break;
 				case PMT_TABLE_ID:
 					_pmt.setCollected(collected);
@@ -291,6 +302,8 @@ class ClientProperties {
 			switch (tableID) {
 				case PAT_TABLE_ID:
 					return _pat.isCollected();
+				case CAT_TABLE_ID:
+					return _cat.isCollected();
 				case PMT_TABLE_ID:
 					return _pmt.isCollected();
 				default:
@@ -308,6 +321,7 @@ class ClientProperties {
 		Keys        _keys;
 		mpegts::TableData _pat;
 		mpegts::TableData _pmt;
+		mpegts::TableData _cat;
 
 }; // class ClientProperties
 

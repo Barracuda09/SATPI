@@ -22,65 +22,66 @@
 
 namespace mpegts {
 
-class TableData {
-#define PAT_TABLE_ID           0x00
-#define PMT_TABLE_ID           0x02
+	class TableData {
+		public:
+			#define PAT_TABLE_ID           0x00
+			#define CAT_TABLE_ID           0x01
+			#define PMT_TABLE_ID           0x02
 
-	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		TableData() : _cc(-1), _pid(-1), _collected(false) {}
-		virtual ~TableData() {}
+			// =======================================================================
+			// Constructors and destructor
+			// =======================================================================
+			TableData() : _cc(-1), _pid(-1), _collected(false) {}
+			virtual ~TableData() {}
 
-		/// Add Table data that was collected
-		bool addData(int tableID, const unsigned char *data, int length, int pid, int cc) {
-			_tableID = tableID;
-			if ((_cc  == -1 ||  cc == _cc + 1) &&
-				(_pid == -1 || pid == _pid)) {
-				if (_cc == -1 && _pid == -1) {
+			/// Add Table data that was collected
+			bool addData(int tableID, const unsigned char *data, int length, int pid, int cc) {
+				_tableID = tableID;
+				if ((_cc  == -1 ||  cc == _cc + 1) &&
+					(_pid == -1 || pid == _pid)) {
+					if (_cc == -1 && _pid == -1) {
+						_data.clear();
+					}
+					_data.append(reinterpret_cast<const char *>(data), length);
+					_cc   = cc;
+					_pid  = pid;
+					return true;
+				}
+				return false;
+			}
+
+			/// Get the collected Table Data
+			const unsigned char *getData() const {
+				return reinterpret_cast<const unsigned char *>(_data.c_str());
+			}
+
+			/// Get the current size of the Table Packet
+			int getDataSize() const {
+				return _data.size();
+			}
+
+			/// Set if Table has been collected or not
+			void setCollected(bool collected) {
+				_collected = collected;
+				if (!collected) {
+					_cc  = -1;
+					_pid = -1;
 					_data.clear();
 				}
-				_data.append(reinterpret_cast<const char *>(data), length);
-				_cc   = cc;
-				_pid  = pid;
-				return true;
 			}
-			return false;
-		}
 
-		/// Get the collected Table Data
-		const unsigned char *getData() const {
-			return reinterpret_cast<const unsigned char *>(_data.c_str());
-		}
-
-		/// Get the current size of the Table Packet
-		int getDataSize() const {
-			return _data.size();
-		}
-
-		/// Set if Table has been collected or not
-		void setCollected(bool collected) {
-			_collected = collected;
-			if (!collected) {
-				_cc  = -1;
-				_pid = -1;
-				_data.clear();
+			/// Check if Table is collected
+			bool isCollected() const {
+				return _collected;
 			}
-		}
 
-		/// Check if Table is collected
-		bool isCollected() const {
-			return _collected;
-		}
-
-	private:
-		int _tableID;
-		std::string _data;
-		int _cc;
-		int _pid;
-		bool _collected;
-};
+		private:
+			int _tableID;
+			std::string _data;
+			int _cc;
+			int _pid;
+			bool _collected;
+	};
 
 } // namespace mpegts
 

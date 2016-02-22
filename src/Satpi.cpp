@@ -38,13 +38,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <atomic>
+
 #define DAEMON_NAME "SatPI"
 #define LOCK_FILE   "SatPI.lock"
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-bool exitApp;
+static std::atomic_bool exitApp;
+std::atomic_bool restartApp;
 static int retval;
 static int otherSig;
 
@@ -210,6 +213,7 @@ int main(int argc, char *argv[]) {
 	char *user = nullptr;
 	extern const char *satpi_version;
 	exitApp = false;
+	restartApp = false;
 
 	unsigned int httpPort = 8875;
 	unsigned int rtspPort = 554;
@@ -278,26 +282,31 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Number of processors online: %d", base::ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 
-	try {
-		InterfaceAttr interface;
-		StreamManager streamManager(appdataPath);
-		streamManager.enumerateDevices();
-		Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-							  streamManager.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
-		HttpServer httpserver(streamManager, interface, properties);
-		RtspServer server(streamManager, properties, interface);
-		upnp::ssdp::Server ssdpserver(interface, properties);
-		if (ssdp) {
-			ssdpserver.startThread();
-		}
+	do {
+		try {
+			InterfaceAttr interface;
+			StreamManager streamManager(appdataPath);
+			streamManager.enumerateDevices();
+			Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
+								  streamManager.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+			HttpServer httpserver(streamManager, interface, properties);
+			RtspServer server(streamManager, properties, interface);
+			upnp::ssdp::Server ssdpserver(interface, properties);
+			if (ssdp) {
+				ssdpserver.startThread();
+			}
 
-		// Loop
-		while (!exitApp && !properties.exitApplication()) {
-			usleep(12000);
+			// Loop
+			while (!exitApp && !properties.exitApplication() && !restartApp) {
+				usleep(12000);
+			}
+		} catch (...) {
+			SI_LOG_ERROR("Caught an Exception");
 		}
-	} catch (...) {
-		SI_LOG_ERROR("Caught an Exception");
-	}
+		if (restartApp) {
+			SI_LOG_INFO("--- Restarting SatPI version: %s ---", satpi_version);
+		}
+	} while (restartApp);
 	SI_LOG_INFO("--- stopped ---");
 
 	// close logging interface

@@ -24,11 +24,11 @@
 
 	function addTableLineEntry(streamid, labelstring, xmlDoc, tagName) {
 		var page = "";
-		if (xmlDoc.getElementsByTagName(tagName).length != 0) {
+		var id = "stream" + streamid;
+		var data = xmlDoc.getElementsByTagName(id)[0];
+		if (data.getElementsByTagName(tagName).length != 0) {
 			page += "<tr>";
 			page += addTableLabel(labelstring);
-			var id = "stream" + streamid;
-			var data = xmlDoc.getElementsByTagName(id)[0];
 			id += "." + tagName;
 			page += addTableEntry(data, tagName, id);
 			page += "<tr>";
