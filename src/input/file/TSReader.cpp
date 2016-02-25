@@ -92,7 +92,7 @@ namespace file {
 	}
 
 	bool TSReader::capableOf(fe_delivery_system_t UNUSED(msys)) {
-		return true;
+		return false;
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {}
