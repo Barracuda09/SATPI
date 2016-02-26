@@ -55,7 +55,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DVBC::tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-T(2)...", streamID);
+		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-C(2)...", streamID);
 
 		// Now tune by setting properties
 		if (!setProperties(feFD, frontendData)) {
