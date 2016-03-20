@@ -206,9 +206,9 @@ namespace dvb {
 		}
 	}
 
-	// =======================================================================
-	//  -- input::Device -----------------------------------------------------
-	// =======================================================================
+	// ========================================================================
+	//  -- input::Device ------------------------------------------------------
+	// ========================================================================
 
 	void Frontend::addDeliverySystemCount(
 		std::size_t &dvbs2,
@@ -819,6 +819,19 @@ namespace dvb {
 		if (ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
 			PERROR("DMX_SET_PES_FILTER");
 			return false;
+		}
+		return true;
+	}
+
+	bool Frontend::updateInputDevice() {
+		//	base::MutexLock lock(_mutex);
+		if (_frontendData.hasPIDTableChanged()) {
+			if (isTuned()) {
+				update();
+			} else {
+				SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
+							_streamID);
+			}
 		}
 		return true;
 	}

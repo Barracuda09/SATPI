@@ -54,13 +54,13 @@ void close_app_log();
 #define SI_LOG_COND_DEBUG(cond, fmt, ...)
 #define SI_LOG_BIN_DEBUG(p, length, fmt, ...)
 #else
-#define PERROR(str)                            applog(LOG_ERR,   "[%28s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
-#define GAI_PERROR(str, s)                     applog(LOG_ERR,   "[%28s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
-#define SI_LOG_INFO(fmt, ...)                  applog(LOG_INFO,  "[%28s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_ERROR(fmt, ...)                 applog(LOG_ERR,   "[%28s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(fmt, ...)                 applog(LOG_DEBUG, "[%28s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_COND_DEBUG(cond, fmt, ...)      if (cond) { applog(LOG_DEBUG, "[%28s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__); }
-#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  binlog(LOG_DEBUG, p, length, "[%28s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define PERROR(str)                            applog(LOG_ERR,   "[%50s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, strerror(errno), errno)
+#define GAI_PERROR(str, s)                     applog(LOG_ERR,   "[%50s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
+#define SI_LOG_INFO(fmt, ...)                  applog(LOG_INFO,  "[%50s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_ERROR(fmt, ...)                 applog(LOG_ERR,   "[%50s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(fmt, ...)                 applog(LOG_DEBUG, "[%50s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_COND_DEBUG(cond, fmt, ...)      if (cond) { applog(LOG_DEBUG, "[%50s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__); }
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  binlog(LOG_DEBUG, p, length, "[%50s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif // LOG_H_INCLUDE

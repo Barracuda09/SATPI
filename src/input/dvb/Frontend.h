@@ -91,8 +91,6 @@ namespace dvb {
 
 			virtual int getStreamID() const;
 
-			virtual bool updateInputDevice();
-
 			virtual int getBatchCount() const;
 
 			virtual int getBatchParity() const;
@@ -115,17 +113,19 @@ namespace dvb {
 
 			virtual int getTableDataSize(int tableID) const;
 
+			virtual void startOSCamFilterData(int pid, int demux, int filter,
+			           const unsigned char *filterData, const unsigned char *filterMask);
+
+			virtual void stopOSCamFilterData(int pid, int demux, int filter);
+
+			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+				int &filter, int &demux, std::string &filterData);
+
+			virtual void clearOSCamFilters();
+
 			virtual void setPMT(int pid, bool set);
 
 			virtual bool isPMT(int pid) const;
-
-			virtual void setECMFilterData(int demux, int filter, int pid, bool set);
-
-			virtual void getECMFilterData(int &demux, int &filter, int pid) const;
-
-			virtual bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
-
-			virtual bool isECM(int pid) const;
 
 			virtual void setKey(const unsigned char *cw, int parity, int index);
 
@@ -191,6 +191,9 @@ namespace dvb {
 			// =======================================================================
 
 		protected:
+
+			/// Update the input device
+			bool updateInputDevice();
 
 			///
 			int open_fe(const std::string &path, bool readonly) const;

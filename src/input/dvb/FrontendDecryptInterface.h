@@ -46,9 +46,6 @@ namespace dvb {
 			/// Get the streamID of this stream
 			virtual int getStreamID() const = 0;
 
-			/// Update the input device
-			virtual bool updateInputDevice() = 0;
-
 			///
 			virtual int getBatchCount() const = 0;
 
@@ -73,7 +70,6 @@ namespace dvb {
 			///
 			virtual void setTableCollected(int tableID, bool collected) = 0;
 
-
 			///
 			virtual const unsigned char *getTableData(int tableID) const = 0;
 
@@ -84,22 +80,24 @@ namespace dvb {
 			virtual int getTableDataSize(int tableID) const = 0;
 
 			///
+			virtual void startOSCamFilterData(int pid, int demux, int filter,
+			           const unsigned char *filterData, const unsigned char *filterMask) = 0;
+
+			///
+			virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
+
+			///
+			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+				int &filter, int &demux, std::string &filterData) = 0;
+
+			///
+			virtual void clearOSCamFilters() = 0;
+
+			///
 			virtual void setPMT(int pid, bool set) = 0;
 
 			///
 			virtual bool isPMT(int pid) const = 0;
-
-			///
-			virtual void setECMFilterData(int demux, int filter, int pid, bool set) = 0;
-
-			///
-			virtual void getECMFilterData(int &demux, int &filter, int pid) const = 0;
-
-			///
-			virtual bool getActiveECMFilterData(int &demux, int &filter, int &pid) const = 0;
-
-			///
-			virtual bool isECM(int pid) const = 0;
 
 			///
 			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;

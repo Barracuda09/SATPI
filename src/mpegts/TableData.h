@@ -20,6 +20,8 @@
 #ifndef MPEGTS_TABLE_DATA_H_INCLUDE
 #define MPEGTS_TABLE_DATA_H_INCLUDE MPEGTS_TABLE_DATA_H_INCLUDE
 
+#include <string>
+
 namespace mpegts {
 
 	class TableData {
@@ -27,32 +29,40 @@ namespace mpegts {
 			#define PAT_TABLE_ID           0x00
 			#define CAT_TABLE_ID           0x01
 			#define PMT_TABLE_ID           0x02
+			#define ECM0_TABLE_ID          0x80
+			#define ECM1_TABLE_ID          0x81
+			#define EMM1_TABLE_ID          0x82
+			#define EMM2_TABLE_ID          0x83
+			#define EMM3_TABLE_ID          0x84
 
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
-			TableData() : _cc(-1), _pid(-1), _collected(false) {}
-			virtual ~TableData() {}
+			// ================================================================
+			// -- Constructors and destructor ---------------------------------
+			// ================================================================
 
-			/// Add Table data that was collected
-			bool addData(int tableID, const unsigned char *data, int length, int pid, int cc) {
-				_tableID = tableID;
-				if ((_cc  == -1 ||  cc == _cc + 1) &&
-					(_pid == -1 || pid == _pid)) {
-					if (_cc == -1 && _pid == -1) {
-						_data.clear();
-					}
-					_data.append(reinterpret_cast<const char *>(data), length);
-					_cc   = cc;
-					_pid  = pid;
-					return true;
-				}
-				return false;
-			}
+			TableData();
+
+			virtual ~TableData();
+
+			// ================================================================
+			//  -- Other member functions -------------------------------------
+			// ================================================================
+
+		public:
+
+			///
+			const char* getTableTXT() const;
+
+			/// Collect Table data for tableID
+			void collectData(int streamID, int tableID, const unsigned char *data);
 
 			/// Get the collected Table Data
 			const unsigned char *getData() const {
 				return reinterpret_cast<const unsigned char *>(_data.c_str());
+			}
+
+			/// Get the collected Table Data
+			void getData(std::string &data) const {
+				data = _data;
 			}
 
 			/// Get the current size of the Table Packet
@@ -75,7 +85,17 @@ namespace mpegts {
 				return _collected;
 			}
 
+		protected:
+
+			/// Add Table data that was collected
+			bool addData(int tableID, const unsigned char *data, int length, int pid, int cc);
+
+			// ================================================================
+			//  -- Data members -----------------------------------------------
+			// ================================================================
+
 		private:
+
 			int _tableID;
 			std::string _data;
 			int _cc;

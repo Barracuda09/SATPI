@@ -34,23 +34,15 @@ namespace dvb {
 		_changed = false;
 	}
 
-	PidTable::~PidTable() {;}
+	PidTable::~PidTable() {}
 
 	void PidTable::resetPid(int pid) {
 		_data[pid].used     = false;
 		_data[pid].cc       = 0x80;
 		_data[pid].cc_error = 0;
 		_data[pid].count    = 0;
-
 		_data[pid].pmt      = false;
-
-		// @todo this is an ugly hack... have to find another way
-		if (!_data[pid].ecm) {
-			_data[pid].ecm      = false;
-			_data[pid].demux    = -1;
-			_data[pid].filter   = -1;
-			_data[pid].parity   = -1;
-		}
+		_data[pid].parity   = -1;
 	}
 
 	uint32_t PidTable::getPacketCounter(int pid) const {
@@ -134,41 +126,12 @@ namespace dvb {
 		return _data[pid].pmt;
 	}
 
-	bool PidTable::isECM(int pid) const {
-		return _data[pid].ecm;
-	}
-
 	void PidTable::setKeyParity(int pid, int parity) {
 		_data[pid].parity = parity;
 	}
 
 	int PidTable::getKeyParity(int pid) const {
 		return _data[pid].parity;
-	}
-
-	void PidTable::setECMFilterData(int demux, int filter, int pid, bool set) {
-		_data[pid].ecm    = set;
-		_data[pid].demux  = demux;
-		_data[pid].filter = filter;
-		setPID(pid, set);
-	}
-
-	void PidTable::getECMFilterData(int &demux, int &filter, int pid) const {
-		demux  = _data[pid].demux;
-		filter = _data[pid].filter;
-	}
-
-	bool PidTable::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
-		filter = -1;
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			if (_data[i].fd_dmx != -1 && isECM(i)) {
-				pid = i;
-				demux = _data[i].demux;
-				filter = _data[i].filter;
-				return true;
-			}
-		}
-		return false;
 	}
 
 } // namespace dvb

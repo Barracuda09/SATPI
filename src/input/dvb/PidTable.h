@@ -34,11 +34,18 @@ namespace dvb {
 	class PidTable {
 		public:
 
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
+			// ================================================================
+			//  -- Constructors and destructor --------------------------------
+			// ================================================================
 			PidTable();
+
 			virtual ~PidTable();
+
+			// ================================================================
+			//  -- Other member functions -------------------------------------
+			// ================================================================
+
+		public:
 
 			/// Reset the pid
 			void resetPid(int pid);
@@ -82,27 +89,15 @@ namespace dvb {
 			/// Check if pid is an PMT PID
 			bool isPMT(int pid) const;
 
-			/// Set if pid is an ECM PID
-			bool isECM(int pid) const;
-
 			///
 			void setKeyParity(int pid, int parity);
 
 			///
-			void setECMFilterData(int demux, int filter, int pid, bool set);
-
-			///
-			void getECMFilterData(int &demux, int &filter, int pid) const;
-
-			///
-			bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
-
-			///
 			int getKeyParity(int pid) const;
 
-			// =======================================================================
-			// Data members
-			// =======================================================================
+			// ================================================================
+			//  -- Data members -----------------------------------------------
+			// ================================================================
 
 		protected:
 
@@ -110,22 +105,17 @@ namespace dvb {
 
 			// PID and DMX file descriptor
 			typedef struct {
-				int fd_dmx;              // used DMX file descriptor for PID
-				bool used;               // used pid (0 = not used, 1 = in use)
-				uint8_t cc;              // continuity counter (0 - 15) of this PID
-				uint32_t cc_error;       // cc error count
-				uint32_t count;          // the number of times this pid occurred
-
-				bool pmt;                // show if this is an PMT pid
-				bool ecm;                // show if this is an ECM pid
-				int demux;               // dvbapi demux
-				int filter;              // dvbapi filter
-				int parity;              // key parity
-
+				int fd_dmx;        /// used DMX file descriptor for PID
+				bool used;         /// used pid (0 = not used, 1 = in use)
+				uint8_t cc;        /// continuity counter (0 - 15) of this PID
+				uint32_t cc_error; /// cc error count
+				uint32_t count;    /// the number of times this pid occurred
+				bool pmt;          /// show if this is an PMT pid
+				int parity;        /// key parity
 			} PidData_t;
 
-			bool _changed;               // if something changed to 'pid' array
-			PidData_t _data[MAX_PIDS];   // used pids
+			bool _changed;             /// if something changed to 'pid' array
+			PidData_t _data[MAX_PIDS]; /// used pids
 
 	};
 

@@ -20,13 +20,11 @@
 #ifndef DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 #define DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 
-#include <Log.h>
 #include <Utils.h>
 #include <mpegts/TableData.h>
 #include <base/TimeCounter.h>
-
-#include <utility>
-#include <queue>
+#include <decrypt/dvbapi/Filter.h>
+#include <decrypt/dvbapi/Keys.h>
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
@@ -35,295 +33,116 @@ extern "C" {
 namespace decrypt {
 namespace dvbapi {
 
-///
-class Keys {
-	public:
-		typedef std::pair<long, dvbcsa_bs_key_s *> KeyPair;
-		typedef std::queue<KeyPair> KeyQueue;
+	///
+	class ClientProperties {
+		public:
 
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		Keys() {}
+			// ================================================================
+			// -- Constructors and destructor ---------------------------------
+			// ================================================================
+			ClientProperties();
 
-		virtual ~Keys() {}
+			virtual ~ClientProperties();
 
-		void set(const unsigned char *cw, int parity, int /*index*/) {
-			dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
-			dvbcsa_bs_key_set(cw, k);
-			_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
-		}
+			// ================================================================
+			//  -- Other member functions -------------------------------------
+			// ================================================================
 
-		const dvbcsa_bs_key_s *get(int parity) const {
-			if (!_key[parity].empty()) {
-				const KeyPair pair = _key[parity].front();
-				return pair.second;
-			} else {
-				return nullptr;
+			/// Get the maximum decrypt batch size
+			int getMaximumBatchSize() const {
+				return _batchSize;
 			}
-		}
 
-		void remove(int parity) {
-			const KeyPair pair = _key[parity].front();
-			dvbcsa_bs_key_free(pair.second);
-			_key[parity].pop();
-		}
-
-		void freeKeys() {
-			while (!_key[0].empty()) {
-				remove(0);
+			/// Get how big this decrypt batch is
+			int getBatchCount() const {
+				return _batchCount;
 			}
-			while (!_key[1].empty()) {
-				remove(1);
+
+			/// Get the global parity of this decrypt batch
+			int getBatchParity() const {
+				return _parity;
 			}
-		}
 
-	private:
-		KeyQueue _key[2];
-};
+			/// Set the pointers into the decrypt batch
+			/// @param ptr specifies the pointer to de data that should be decrypted
+			/// @param len specifies the lenght of data
+			/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
+			void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
 
-///
-class ClientProperties {
-	public:
+			/// This function will decrypt the batch upon success it will clear scramble flag
+			/// on failure it will make a NULL TS Packet and clear scramble flag
+			void decryptBatch(bool final);
 
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		ClientProperties() {
-			_batchSize = dvbcsa_bs_batch_size();
-			_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
-			_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
-			_batchCount = 0;
-		}
-		virtual ~ClientProperties() {
-			DELETE_ARRAY(_batch);
-			DELETE_ARRAY(_ts);
-			freeKeys();
-		}
-
-		///
-		int getMaximumBatchSize() const {
-			return _batchSize;
-		}
-
-		///
-		int getBatchCount() const {
-			return _batchCount;
-		}
-
-		///
-		int getBatchParity() const {
-			return _parity;
-		}
-
-		/// Set the pointers into the batch
-		/// @param ptr specifies the pointer to de data that should be decrypted
-		/// @param len specifies the lenght of data
-		/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
-		void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
-			_batch[_batchCount].data = ptr;
-			_batch[_batchCount].len  = len;
-			_ts[_batchCount].data = originalPtr;
-			_parity = parity;
-			++_batchCount;
-		}
-
-		/// This function will decrypt the batch upon success it will clear scramble flag
-		/// on failure it will make a NULL TS Packet and clear scramble flag
-		void decryptBatch(bool final) {
-			if (_keys.get(_parity) != nullptr) {
-				// terminate batch buffer
-				setBatchData(nullptr, 0, _parity, nullptr);
-				// decrypt it
-				dvbcsa_bs_decrypt(_keys.get(_parity), _batch, 184);
-
-				// Final, then remove this key
-				if (final) {
-					_keys.remove(_parity);
-				}
-
-				// clear scramble flags, so we can send it.
-				unsigned int i = 0;
-				while (_ts[i].data != nullptr) {
-					_ts[i].data[3] &= 0x3F;
-					++i;
-				}
-			} else {
-				unsigned int i = 0;
-				while (_ts[i].data != nullptr) {
-					// set decrypt failed by setting NULL packet ID..
-					_ts[i].data[1] |= 0x1F;
-					_ts[i].data[2] |= 0xFF;
-
-					// clear scramble flag, so we can send it.
-					_ts[i].data[3] &= 0x3F;
-					++i;
-				}
+			/// Free all keys
+			void freeKeys() {
+				_keys.freeKeys();
+				_batchCount = 0;
 			}
-			// decrypted this batch reset counter
-			_batchCount = 0;
-		}
 
-		///
-		void freeKeys() {
-			_keys.freeKeys();
-			_batchCount = 0;
-		}
-
-		///
-		void setKey(const unsigned char *cw, int parity, int index) {
-			_keys.set(cw, parity, index);
-		}
-
-		///
-		const dvbcsa_bs_key_s *getKey(int parity) const {
-			return _keys.get(parity);
-		}
-
-		const char* getTableTXT(int tableID) {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					return "PAT";
-				case CAT_TABLE_ID:
-					return "CAT";
-				case PMT_TABLE_ID:
-					return "PMT";
-				default:
-					return "Unknown Table";
+			/// Set the 'next' key for the requested parity
+			void setKey(const unsigned char *cw, int parity, int index) {
+				_keys.set(cw, parity, index);
 			}
-		}
 
-		/// Collect Table data for tableID
-		void collectTableData(int streamID, int tableID, const unsigned char *data) {
-			const int initialTableSize = getTableDataSize(tableID);
-			const unsigned char options = (data[1] & 0xE0);
-			if (options == 0x40 && data[5] == tableID && initialTableSize == 0) {
-				const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-				const int cc            =   data[3] & 0x0f;
-				const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
-				// Add Table Data
-				if (addTableData(tableID, data, 188, pid, cc)) {
-					SI_LOG_DEBUG("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), pid, sectionLength, getTableDataSize(tableID));
-					// Check did we finish collecting Table Data
-					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
-						setTableCollected(tableID, true);
-					}
-				} else {
-					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
-					setTableCollected(tableID, false);
-				}
-			} else if (initialTableSize > 0) {
-				const unsigned char *cData = getTableData(tableID);
-				const int sectionLength    = ((cData[6] & 0x0F) << 8) | cData[7];
-
-				// get current PID and next CC
-				const int pid = ((data[1] & 0x1f) << 8) | data[2];
-				const int cc  =   data[3] & 0x0f;
-
-				// Add Table Data without TS Header
-				if (addTableData(tableID, &data[4], 188 - 4, pid, cc)) { // 4 = TS Header
-					const int tableDataSize = getTableDataSize(tableID);
-					SI_LOG_DEBUG("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(tableID), pid, sectionLength, tableDataSize);
-					// Check did we finish collecting Table Data
-					if (sectionLength <= (tableDataSize - 9)) { // 9 = Untill Table Section Length
-						setTableCollected(tableID, true);
-					}
-				} else {
-					SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(tableID), pid);
-					setTableCollected(tableID, false);
-				}
-			} else {
-				SI_LOG_ERROR("Stream: %d, %s: Unable get table data! Retrying to collect data", streamID, getTableTXT(tableID));
-				setTableCollected(tableID, false);
+			/// Get the active key for the requested parity
+			const dvbcsa_bs_key_s *getKey(int parity) const {
+				return _keys.get(parity);
 			}
-		}
 
-		/// Add Table data for tableID that was collected
-		bool addTableData(int tableID, const unsigned char *data, int length, int pid, int cc) {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					return _pat.addData(tableID, data, length, pid, cc);
-				case CAT_TABLE_ID:
-					return _cat.addData(tableID, data, length, pid, cc);
-				case PMT_TABLE_ID:
-					return _pmt.addData(tableID, data, length, pid, cc);
-				default:
-					return false;
+			/// Collect Table data for tableID
+			void collectTableData(int streamID, int tableID, const unsigned char *data);
+
+			/// Get the collected Table Data for tableID
+			const unsigned char *getTableData(int tableID) const;
+
+			/// Get the current size of the Table data for tableID
+			int getTableDataSize(int tableID) const;
+
+			/// Set if Table has been collected (or not) for tableID
+			void setTableCollected(int tableID, bool collected);
+
+			/// Check if Table is collected for tableID
+			bool isTableCollected(int tableID) const;
+
+			/// Start and add the requested filter
+			void startOSCamFilterData(int pid, int demux, int filter,
+				const unsigned char *filterData, const unsigned char *filterMask) {
+				_filter.start(pid, demux, filter, filterData, filterMask);
 			}
-		}
 
-		/// Get the collected Table Data for tableID
-		const unsigned char *getTableData(int tableID) const {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					return _pat.getData();
-				case CAT_TABLE_ID:
-					return _cat.getData();
-				case PMT_TABLE_ID:
-					return _pmt.getData();
-				default:
-					return reinterpret_cast<const unsigned char *>("");
+			/// Stop the requested filter
+			void stopOSCamFilterData(int pid, int demux, int filter) {
+				_filter.stop(pid, demux, filter);
 			}
-		}
 
-		/// Get the current size of the Table data for tableID !!Whitout the CRC (4Bytes)!!
-		int getTableDataSize(int tableID) const {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					return _pat.getDataSize();
-				case CAT_TABLE_ID:
-					return _cat.getDataSize();
-				case PMT_TABLE_ID:
-					return _pmt.getDataSize();
-				default:
-					return 0;
+			/// Find the correct filter for the 'collected' data or ts packet
+			bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+				int &filter, int &demux, std::string &filterData) {
+				return _filter.find(pid, tsPacket, tableID, filter, demux, filterData);
 			}
-		}
 
-		/// Set if Table has been collected (or not) for tableID
-		void setTableCollected(int tableID, bool collected) {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					_pat.setCollected(collected);
-					break;
-				case CAT_TABLE_ID:
-					_cat.setCollected(collected);
-					break;
-				case PMT_TABLE_ID:
-					_pmt.setCollected(collected);
-					break;
-				default:
-					break;
+			/// Clear all 'active' filters
+			void clearOSCamFilters() {
+				_filter.clear();
 			}
-		}
 
-		/// Check if Table is collected for tableID
-		bool isTableCollected(int tableID) const {
-			switch (tableID) {
-				case PAT_TABLE_ID:
-					return _pat.isCollected();
-				case CAT_TABLE_ID:
-					return _cat.isCollected();
-				case PMT_TABLE_ID:
-					return _pmt.isCollected();
-				default:
-					return false;
-			}
-		}
+			// ================================================================
+			//  -- Data members -----------------------------------------------
+			// ================================================================
 
-	private:
-		struct dvbcsa_bs_batch_s *_batch;
-		struct dvbcsa_bs_batch_s *_ts;
+		private:
 
-		int         _batchSize;
-		int         _batchCount;
-		int         _parity;
-		Keys        _keys;
-		mpegts::TableData _pat;
-		mpegts::TableData _pmt;
-		mpegts::TableData _cat;
+			struct dvbcsa_bs_batch_s *_batch;
+			struct dvbcsa_bs_batch_s *_ts;
+			int _batchSize;
+			int _batchCount;
+			int _parity;
+			Keys _keys;
+			Filter _filter;
+			mpegts::TableData _pmt;
+			mpegts::TableData _pat;
 
-}; // class ClientProperties
+	}; // class ClientProperties
 
 } // namespace dvbapi
 } // namespace decrypt

@@ -51,7 +51,6 @@ namespace dvbapi {
 	//constants used in socket communication:
 	#define DVBAPI_PROTOCOL_VERSION         2
 
-	#define DVBAPI_CA_SET_PID      0x40086f87
 	#define DVBAPI_CA_SET_DESCR    0x40106f86
 	#define DVBAPI_CA_SET_PID      0x40086f87
 	#define DVBAPI_DMX_SET_FILTER  0x403c6f2b
@@ -149,6 +148,7 @@ namespace dvbapi {
 		(data[sectionLength - 4 + 8 + 2] <<  8) | \
 		 data[sectionLength - 4 + 8 + 3]
 
+
 	Client::Client(const std::string &xmlFilePath,
 				   const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface) :
 		ThreadBase("DvbApiClient"),
@@ -157,6 +157,7 @@ namespace dvbapi {
 		_enabled(false),
 		_rewritePMT(false),
 		_serverPort(15011),
+		_adapterOffset(0),
 		_serverIpAddr("127.0.0.1"),
 		_serverName("Not connected"),
 		_getFrontendDecryptInterface(getFrontendDecryptInterface) {
@@ -169,7 +170,7 @@ namespace dvbapi {
 		joinThread();
 	}
 
-	void Client::decrypt(int streamID, mpegts::PacketBuffer &buffer) {
+	void Client::decrypt(const int streamID, mpegts::PacketBuffer &buffer) {
 		if (_connected && _enabled) {
 			input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(streamID);
 			const std::size_t size = buffer.getNumberOfTSPackets();
@@ -225,20 +226,44 @@ namespace dvbapi {
 							data[3] &= 0x3F;
 						}
 					} else {
+
+///////////////////////////////////////////////////////////////////
+						int demux = 0;
+						int filter = 0;
+						int tableID = data[5];
+						std::string filterData;
+						if (frontend->findOSCamFilterData(pid, data, tableID, filter, demux, filterData)) {
+							// Don't send PAT or PMT before we have an active
+							if (pid == 0 || frontend->isPMT(pid)) { 
+							} else {
+								const unsigned char *tableData = reinterpret_cast<const unsigned char *>(filterData.c_str());
+								const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
+
+								unsigned char clientData[2048];
+								const uint32_t request = htonl(DVBAPI_FILTER_DATA);
+								std::memcpy(&clientData[0], &request, 4);
+								clientData[4] =  demux;
+								clientData[5] =  filter;
+								memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
+								const int length = sectionLength + 6; // 6 = clientData header
+
+								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x", streamID, demux, filter, pid, tableID);
+
+								if (send(_client.getFD(), clientData, length, MSG_DONTWAIT) == -1) {
+									SI_LOG_ERROR("Stream: %d, Filter - send data to server failed", streamID);
+								}
+							}
+						}
+///////////////////////////////////////////////////////////////////
+
 						if (pid == 0) {
-							// Check PAT pid and start indicator and table ID
 							collectPAT(frontend, data);
-						} else if (pid == 1) {
-							// Check CAT pid and start indicator and table ID
-//							collectCAT(frontend, data);
 						} else if (frontend->isPMT(pid)) {
 							collectPMT(frontend, data);
 							// Do we need to clean PMT
 							if (_rewritePMT) {
 								cleanPMT(frontend, data);
 							}
-						} else if (frontend->isECM(pid)) {
-							collectECM(frontend, data);
 						}
 					}
 				}
@@ -248,15 +273,7 @@ namespace dvbapi {
 
 	bool Client::stopDecrypt(int streamID) {
 		if (_connected) {
-			int demux = streamID; // demux index
-			int filter = 0;
-			int pid = 0;
 			unsigned char buff[8];
-
-			input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(streamID);
-			if (!frontend->getActiveECMFilterData(demux, filter, pid)) {
-				SI_LOG_DEBUG("Stream: %d, Strange, did not find any active ECM filter!", streamID);
-			}
 			// Stop 9F 80 3f 04 83 02 00 <demux index>
 			const uint32_t request = htonl(DVBAPI_AOT_CA_STOP);
 			std::memcpy(&buff[0], &request, 4);
@@ -265,17 +282,19 @@ namespace dvbapi {
 			buff[6] = 0x00;
 			buff[7] = streamID;  // demux
 
-			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt DMX: %d  PID: %d", streamID, demux, pid);
+			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt", streamID);
 
 			// cleaning tables
-			SI_LOG_DEBUG("Stream: %d, Clearing PAT/CAT/PMT Tables and Keys...", streamID);
+			SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
+			input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(streamID);
 			frontend->setTableCollected(PAT_TABLE_ID, false);
-			frontend->setTableCollected(CAT_TABLE_ID, false);
 			frontend->setTableCollected(PMT_TABLE_ID, false);
 			frontend->freeKeys();
 
+			frontend->clearOSCamFilters();
+
 			if (send(_client.getFD(), buff, sizeof(buff), MSG_DONTWAIT) == -1) {
-				SI_LOG_ERROR("Stream: %d, PMT Stop DMX - send data to server failed", streamID);
+				SI_LOG_ERROR("Stream: %d, Stop CA Decrypt - send data to server failed", streamID);
 				return false;
 			}
 		}
@@ -351,7 +370,7 @@ namespace dvbapi {
 				const int lastSecNr     =   cData[12];
 				const uint32_t crc      =  CRC(cData, sectionLength);
 
-//				SI_LOG_BIN_DEBUG(cData, frontend->getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
+//              SI_LOG_BIN_DEBUG(cData, frontend->getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
 
 				const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 				if (calccrc == crc) {
@@ -382,84 +401,13 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::collectCAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data) {
-		if (!frontend->isTableCollected(CAT_TABLE_ID)) {
-			const int streamID = frontend->getStreamID();
-			// collect CAT data
-			frontend->collectTableData(streamID, CAT_TABLE_ID, data);
-
-			// Did we finish collecting CAT
-			if (frontend->isTableCollected(CAT_TABLE_ID)) {
-				const unsigned char *cData = frontend->getTableData(CAT_TABLE_ID);
-
-				// Parse CAT Data
-				const int sectionLength = ((cData[ 6] & 0x0F) << 8) | cData[ 7];
-				const int programNumber = ((cData[ 8]       ) << 8) | cData[ 9];
-//				const int tid           =  (cData[ 8] << 8) | cData[ 9];
-				const int version       =   cData[10];
-				const int secNr         =   cData[11];
-				const int lastSecNr     =   cData[12];
-				const uint32_t crc      =  CRC(cData, sectionLength);
-
-//				SI_LOG_BIN_DEBUG(cData, frontend->getTableDataSize(CAT_TABLE_ID), "Stream: %d, CSAT data", streamID);
-
-				const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
-				if (calccrc == crc) {
-					SI_LOG_INFO("Stream: %d, CAT: Section Length: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: %04X",
-								streamID, sectionLength, version, secNr, lastSecNr, crc);
-
-					// To save the CA Info
-					std::string caInfo;
-
-					// 4 = CRC   5 = CAT Header from section length
-					const std::size_t len = sectionLength - 4 - 5;
-
-					caInfo.append((const char *)&cData[13], len);
-
-					// Send it here !!
-					unsigned char caPMT[2048];
-					const int cpyLength = caInfo.size();
-					const int piLenght  = cpyLength + 1 + 4;
-					const int totLength = piLenght + 6;
-
-					// DVBAPI_AOT_CA_PMT 0x9F 80 32 82
-					const uint32_t request = htonl(DVBAPI_AOT_CA_PMT);
-					std::memcpy(&caPMT[0], &request, 4);
-					const uint16_t length = htons(totLength);        // Total Length of caPMT
-					std::memcpy(&caPMT[4], &length, 2);
-					caPMT[ 6] = LIST_ONLY_UPDATE;                    // send LIST_ONLY_UPDATE
-//					caPMT[ 6] = LIST_ONLY;                           // send LIST_ONLY
-					const uint16_t programNr = htons(programNumber); // Program ID
-					std::memcpy(&caPMT[7], &programNr, 2);
-					caPMT[ 9] = DVBAPI_PROTOCOL_VERSION;             // Version
-					const uint16_t pLenght = htons(piLenght);        // Prog Info Length
-					std::memcpy(&caPMT[10], &pLenght, 2);
-					caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
-					caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
-					caPMT[14] = 0x02;                                // Length
-					caPMT[15] = (char) streamID;                     // Demux ID
-					caPMT[16] = (char) streamID;                     // streamID
-					std::memcpy(&caPMT[17], caInfo.c_str(), cpyLength); // copy Prog Info data
-
-					SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, CAT data to OSCam", streamID);
-
-					if (send(_client.getFD(), caPMT, totLength + 6, MSG_DONTWAIT) == -1) {
-						SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
-					}
-
-				}
-			}
-		}
-	}
-
-
 	void Client::cleanPMT(input::dvb::FrontendDecryptInterface *UNUSED(frontend), unsigned char *data) {
 		const unsigned char options = (data[1] & 0xE0);
 		if (options == 0x40 && data[5] == PMT_TABLE_ID) {
-//			const int streamID = frontend->getStreamID();
+//          const int streamID = frontend->getStreamID();
 
-//			const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-//			const int cc            =   data[3] & 0x0f;
+//          const int pid           = ((data[1] & 0x1f) << 8) | data[2];
+//          const int cc            =   data[3] & 0x0f;
 			const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
 			const int prgLength     = ((data[15] & 0x0F) << 8) | data[16];
 
@@ -482,8 +430,8 @@ namespace dvbapi {
 			// skip to ES Table begin and iterate over entries
 			const unsigned char *ptr = &data[17 + prgLength];
 			for (std::size_t i = 0; i < len; ) {
-//				const int streamType    =   ptr[i + 0];
-//				const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
+//              const int streamType    =   ptr[i + 0];
+//              const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
 				const int esInfoLength  = ((ptr[i + 3] & 0x0F) << 8) | ptr[i + 4];
 				// Append
 				pmt.append((const char *)&ptr[i + 0], 5);
@@ -513,10 +461,10 @@ namespace dvbapi {
 			// copy new PMT to buffer
 			memcpy(data, pmt.c_str(), 188);
 
-//			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, NEW PMT data", streamID);
+//          SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, NEW PMT data", streamID);
 
 		} else {
-//			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, Not handled Cleaning PMT data!", streamID);
+//          SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, Not handled Cleaning PMT data!", streamID);
 			// Clear PID to NULL packet
 			data[1] = 0x1F;
 			data[2] = 0xFF;
@@ -608,7 +556,7 @@ namespace dvbapi {
 					const uint16_t length = htons(totLength);        // Total Length of caPMT
 					std::memcpy(&caPMT[4], &length, 2);
 					caPMT[ 6] = LIST_ONLY_UPDATE;                    // send LIST_ONLY_UPDATE
-//					caPMT[ 6] = LIST_ONLY;                           // send LIST_ONLY
+//                  caPMT[ 6] = LIST_ONLY;                           // send LIST_ONLY
 					const uint16_t programNr = htons(programNumber); // Program ID
 					std::memcpy(&caPMT[7], &programNr, 2);
 					caPMT[ 9] = DVBAPI_PROTOCOL_VERSION;             // Version
@@ -630,56 +578,6 @@ namespace dvbapi {
 					SI_LOG_ERROR("Stream: %d, PMT: CRC Error! Calc CRC32: %04X - Msg CRC32: %04X  Retrying to collect data...", streamID, calccrc, crc);
 					frontend->setTableCollected(PMT_TABLE_ID, false);
 				}
-			}
-		}
-	}
-
-	void Client::collectECM(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data) {
-		// Check Table ID of ECM/EMM
-		const int streamID = frontend->getStreamID();
-		const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-		const uint8_t tableID   = data[5];
-		const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
-		int demux;
-		int filter;
-		frontend->getECMFilterData(demux, filter, pid);
-		if (tableID == 0x81 || tableID == 0x80) {
-			// Do we have an filter and did the parity change?
-			if (filter != -1 && demux != -1 && frontend->getKeyParity(pid) != tableID) {
-
-				frontend->setKeyParity(pid, tableID);
-
-//				SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, ECM sectionlenght: %d  data", streamID, sectionLength);
-
-				unsigned char caECM[2048];
-				const uint32_t request = htonl(DVBAPI_FILTER_DATA);
-				std::memcpy(&caECM[0], &request, 4);
-				caECM[4] =  demux;
-				caECM[5] =  filter;
-				memcpy(&caECM[6], &data[5], sectionLength); // copy ECM data
-				const int length = sectionLength + 6;       // 6 = caECM header
-
-//				SI_LOG_BIN_DEBUG(caECM, length, "Stream: %d, ECM data", streamID);
-				SI_LOG_DEBUG("Stream: %d, Send ECM data with %02X  PID %04d", streamID, tableID, pid);
-
-				if (send(_client.getFD(), caECM, length, MSG_DONTWAIT) == -1) {
-					SI_LOG_ERROR("Stream: %d, ECM - send data to server failed", streamID);
-				}
-			}
-		} else if (tableID == 0x83) {
-			unsigned char caEMM[2048];
-			const uint32_t request = htonl(DVBAPI_FILTER_DATA);
-			std::memcpy(&caEMM[0], &request, 4);
-			caEMM[4] =  demux;
-			caEMM[5] =  filter;
-			memcpy(&caEMM[6], &data[5], sectionLength); // copy ECM data
-			const int length = sectionLength + 6;       // 6 = caEMM header
-
-//			SI_LOG_BIN_DEBUG(caEMM, length, "Stream: %d, EMM data", streamID);
-			SI_LOG_DEBUG("Stream: %d, Send EMM data with %02X  PID %04d", streamID, tableID, pid);
-
-			if (send(_client.getFD(), caEMM, length, MSG_DONTWAIT) == -1) {
-				SI_LOG_ERROR("Stream: %d, EMM - send data to server failed", streamID);
 			}
 		}
 	}
@@ -721,7 +619,7 @@ namespace dvbapi {
 						while (i < size) {
 							// get command
 							const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
-							SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: %X", buf[i + 4], size, cmd);
+							SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: 0x%X", buf[i + 4], size, cmd);
 
 							switch (cmd) {
 								case DVBAPI_SERVER_INFO: {
@@ -731,24 +629,25 @@ namespace dvbapi {
 
 										// Goto next cmd
 										i += 7 + _serverName.size();
+										break;
 									}
-									break;
 								case DVBAPI_DMX_SET_FILTER: {
 										const int adapter =  buf[i + 4];
 										const int demux   =  buf[i + 5];
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
+										const unsigned char *filterData = reinterpret_cast<const unsigned char *>(&buf[i + 9]);
+										const unsigned char *filterMask = reinterpret_cast<const unsigned char *>(&buf[i + 25]);
+
+//                                      SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(&buf[i]), 65, "Stream: %d, DVBAPI_DMX_SET_FILTER", adapter);
 
 										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
-										frontend->setECMFilterData(demux, filter, pid, true);
-
-										// now update frontend, PID list has changed
-										frontend->updateInputDevice();
+										frontend->startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 
 										// Goto next cmd
 										i += 65;
+										break;
 									}
-									break;
 								case DVBAPI_DMX_STOP: {
 										const int adapter =  buf[i + 4];
 										const int demux   =  buf[i + 5];
@@ -756,15 +655,12 @@ namespace dvbapi {
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
 										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
-										frontend->setECMFilterData(demux, filter, pid, false);
-
-										// now update frontend, PID list has changed
-										frontend->updateInputDevice();
+										frontend->stopOSCamFilterData(pid, demux, filter);
 
 										// Goto next cmd
 										i += 9;
+										break;
 									}
-									break;
 								case DVBAPI_CA_SET_DESCR: {
 										const int adapter =  buf[i + 4];
 										const int index   = (buf[i + 5] << 24) | (buf[i +  6] << 16) | (buf[i +  7] << 8) | buf[i +  8];
@@ -780,8 +676,8 @@ namespace dvbapi {
 
 										// Goto next cmd
 										i += 21;
+										break;
 									}
-									break;
 								case DVBAPI_CA_SET_PID:
 									// Goto next cmd
 									i += 13;
@@ -814,8 +710,8 @@ namespace dvbapi {
 														  cardSystem, readerName, sourceName, protocolName, hops);
 										SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s",
 													 adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str());
+										break;
 									}
-									break;
 								default:
 									SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
 
@@ -850,6 +746,9 @@ namespace dvbapi {
 		if (findXMLElement(xml, "OSCamPORT.value", element)) {
 			_serverPort = atoi(element.c_str());
 		}
+		if (findXMLElement(xml, "AdapterOffset.value", element)) {
+			_adapterOffset = atoi(element.c_str());
+		}
 		if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 			_enabled = (element == "true") ? true : false;
 		}
@@ -870,6 +769,7 @@ namespace dvbapi {
 		ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
 		ADD_CONFIG_IP_INPUT(xml, "OSCamIP", _serverIpAddr.c_str());
 		ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
+		ADD_CONFIG_NUMBER_INPUT(xml, "AdapterOffset", _adapterOffset.load(), 0, 128);
 		ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
 
 		xml += "</data>\r\n";

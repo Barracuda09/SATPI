@@ -36,72 +36,79 @@ FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 namespace decrypt {
 namespace dvbapi {
 
-/// The class @c Client is for decrypting streams
-class Client :
-	public base::ThreadBase,
-	public base::XMLSupport {
-	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		Client(const std::string &xmlFilePath,
-			const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface);
-		virtual ~Client();
+	/// The class @c Client is for decrypting streams
+	class Client :
+		public base::ThreadBase,
+		public base::XMLSupport {
+		public:
+			// ================================================================
+			// -- Constructors and destructor ---------------------------------
+			// ================================================================
 
-		///
-		void decrypt(int streamID, mpegts::PacketBuffer &buffer);
+			Client(const std::string &xmlFilePath,
+				const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface);
 
-		///
-		bool stopDecrypt(int streamID);
+			virtual ~Client();
 
-		/// Add data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const;
+			// ================================================================
+			//  -- Other member functions -------------------------------------
+			// ================================================================
 
-		/// Get data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml);
+		public:
 
-	protected:
-		/// Thread function
-		virtual void threadEntry();
+			///
+			void decrypt(int streamID, mpegts::PacketBuffer &buffer);
 
-	private:
+			///
+			bool stopDecrypt(int streamID);
 
-		///
-		bool initClientSocket(SocketClient &client, int port, in_addr_t s_addr);
+			/// Add data to an XML for storing or web interface
+			virtual void addToXML(std::string &xml) const;
 
-		///
-		void sendClientInfo();
+			/// Get data from an XML for restoring or web interface
+			virtual void fromXML(const std::string &xml);
 
-		///
-		void collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+		protected:
 
-		///
-		void collectCAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+			/// Thread function
+			virtual void threadEntry();
 
-		///
-		void collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+		private:
 
-		///
-		void cleanPMT(input::dvb::FrontendDecryptInterface *frontend, unsigned char *data);
+			///
+			bool initClientSocket(SocketClient &client, int port, in_addr_t s_addr);
 
-		///
-		void collectECM(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+			///
+			void sendClientInfo();
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
-		SocketClient     _client;
-		base::Mutex      _mutex;
-		std::atomic_bool _connected;
-		std::atomic_bool _enabled;
-		std::atomic_bool _rewritePMT;
-		std::atomic<int> _serverPort;
-		std::string      _serverIpAddr;
-		std::string      _serverName;
+			///
+			void collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
-		base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> _getFrontendDecryptInterface;
+			///
+			void collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
 
-}; // class Client
+			///
+			void cleanPMT(input::dvb::FrontendDecryptInterface *frontend, unsigned char *data);
+
+			// =================================================================
+			// -- Data members -------------------------------------------------
+			// =================================================================
+
+		private:
+
+			SocketClient     _client;
+			base::Mutex      _mutex;
+			std::atomic_bool _connected;
+			std::atomic_bool _enabled;
+			std::atomic_bool _rewritePMT;
+			std::atomic<int> _serverPort;
+			std::atomic<int> _adapterOffset;
+			std::string      _serverIpAddr;
+			std::string      _serverName;
+
+			base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> _getFrontendDecryptInterface;
+
+	}; // class Client
 
 } // namespace dvbapi
 } // namespace decrypt

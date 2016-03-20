@@ -92,18 +92,6 @@ namespace dvb {
 			void setPMT(int pid, bool set);
 
 			///
-			void setECMFilterData(int demux, int filter, int pid, bool set);
-
-			///
-			void getECMFilterData(int &demux, int &filter, int pid) const;
-
-			///
-			bool getActiveECMFilterData(int &demux, int &filter, int &pid) const;
-
-			///
-			bool isECM(int pid) const;
-
-			///
 			void setKeyParity(int pid, int parity);
 
 			///

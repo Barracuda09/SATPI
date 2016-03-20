@@ -50,6 +50,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DVBT.cpp \
 	input/file/TSReader.cpp \
 	mpegts/PacketBuffer.cpp \
+	mpegts/TableData.cpp \
 	output/StreamThreadBase.cpp \
 	output/StreamThreadHttp.cpp \
 	output/StreamThreadRtp.cpp \
@@ -64,6 +65,7 @@ ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
+  SOURCES += decrypt/dvbapi/ClientProperties.cpp
   SOURCES += input/dvb/Frontend_DecryptInterface.cpp
 endif
 

@@ -22,12 +22,12 @@
 
 namespace base {
 
-///
-class TimeCounter {
-	public:
-		/// returns the ticks
-		static long getTicks();
-};
+	///
+	class TimeCounter {
+		public:
+			/// returns the ticks
+			static long getTicks();
+	};
 
 } // namespace base
 

@@ -72,28 +72,39 @@ namespace dvb {
 		return _frontendData.getTableDataSize(tableID);
 	}
 
+	void Frontend::startOSCamFilterData(int pid, int demux, int filter,
+		const unsigned char *filterData, const unsigned char *filterMask) {
+		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %04x mask %04x)",
+			_streamID, pid, demux, filter, filterData[0], filterMask[0]);
+		_frontendData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
+		_frontendData.setPID(pid, true);
+		// now update frontend, PID list has changed
+		updateInputDevice();
+   }
+
+	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
+		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
+		_frontendData.stopOSCamFilterData(pid, demux, filter);
+		_frontendData.setPID(pid, false);
+		// now update frontend, PID list has changed
+		updateInputDevice();
+	}
+
+	bool Frontend::findOSCamFilterData(const int pid, const unsigned char *tsPacket,
+		int &tableID, int &filter, int &demux, std::string &filterData) {
+		return _frontendData.findOSCamFilterData(pid, tsPacket, tableID, filter, demux, filterData);
+	}
+
+	void Frontend::clearOSCamFilters() {
+		_frontendData.clearOSCamFilters();
+	}
+
 	void Frontend::setPMT(int pid, bool set) {
 		_frontendData.setPMT(pid, set);
 	}
 
 	bool Frontend::isPMT(int pid) const {
 		return _frontendData.isPMT(pid);
-	}
-
-	void Frontend::setECMFilterData(int demux, int filter, int pid, bool set) {
-		_frontendData.setECMFilterData(demux, filter, pid, set);
-	}
-
-	void Frontend::getECMFilterData(int &demux, int &filter, int pid) const {
-		_frontendData.getECMFilterData(demux, filter, pid);
-	}
-
-	bool Frontend::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
-		return _frontendData.getActiveECMFilterData(demux, filter, pid);
-	}
-
-	bool Frontend::isECM(int pid) const {
-		return _frontendData.isECM(pid);
 	}
 
 	void Frontend::setKey(const unsigned char *cw, int parity, int index) {
@@ -118,19 +129,6 @@ namespace dvb {
 		int hops) {
 		_frontendData.setECMInfo(pid, serviceID, caID, provID, emcTime,
 			cardSystem, readerName, sourceName, protocolName, hops);
-	}
-
-	bool Frontend::updateInputDevice() {
-		//	base::MutexLock lock(_mutex);
-		if (_frontendData.hasPIDTableChanged()) {
-			if (isTuned()) {
-				update();
-			} else {
-				SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
-							_streamID);
-			}
-		}
-		return true;
 	}
 
 } // namespace dvb

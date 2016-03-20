@@ -81,27 +81,6 @@ namespace dvb {
 		return _pidTable.isPMT(pid);
 	}
 
-	void FrontendData::setECMFilterData(int demux, int filter, int pid, bool set) {
-
-		const bool isSet = isPIDUsed(pid);
-		if (!isSet || !set) {
-//			SI_LOG_INFO("Stream: %d, %s ECM PID: %d  demux: %d  filter: %d", _streamID, set ? "Set" : "Clear", pid, demux, filter);
-			_pidTable.setECMFilterData(demux, filter, pid, set);
-		}
-	}
-
-	void FrontendData::getECMFilterData(int &demux, int &filter, int pid) const {
-		_pidTable.getECMFilterData(demux, filter, pid);
-	}
-
-	bool FrontendData::getActiveECMFilterData(int &demux, int &filter, int &pid) const {
-		return _pidTable.getActiveECMFilterData(demux, filter, pid);
-	}
-
-	bool FrontendData::isECM(int pid) const {
-		return _pidTable.isECM(pid);
-	}
-
 	void FrontendData::setKeyParity(int pid, int parity) {
 		_pidTable.setKeyParity(pid, parity);
 	}
