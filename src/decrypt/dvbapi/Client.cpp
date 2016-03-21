@@ -280,7 +280,7 @@ namespace dvbapi {
 			buff[4] = 0x83;
 			buff[5] = 0x02;
 			buff[6] = 0x00;
-			buff[7] = streamID;  // demux
+			buff[7] = streamID + _adapterOffset;  // demux
 
 			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt", streamID);
 
@@ -536,19 +536,10 @@ namespace dvbapi {
 					}
 
 					// Send it here !!
-					unsigned char caPMT[2048];
-					int cpyLength = progInfo.size();
+					const int cpyLength = progInfo.size();
 					const int piLenght  = cpyLength + 1 + 4;
-					int totLength = piLenght + 6;
-
-// HACK HACK (Add some STREAM PID of video)
-					{
-						const char tmp[5] = { 0x00, 0x00, 0x0B, 0x00, 0x06 };
-						progInfo.append(tmp, sizeof(tmp));
-						cpyLength += sizeof(tmp);
-						totLength += sizeof(tmp);
-					}
-// HACK HACK
+					const int totLength = piLenght + 6;
+					unsigned char caPMT[totLength + 50];
 
 					// DVBAPI_AOT_CA_PMT 0x9F 80 32 82
 					const uint32_t request = htonl(DVBAPI_AOT_CA_PMT);
@@ -565,8 +556,8 @@ namespace dvbapi {
 					caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
 					caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
 					caPMT[14] = 0x02;                                // Length
-					caPMT[15] = (char) streamID;                     // Demux ID
-					caPMT[16] = (char) streamID;                     // streamID
+					caPMT[15] = (char) streamID + _adapterOffset;    // Demux ID
+					caPMT[16] = (char) streamID + _adapterOffset;    // streamID
 					std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
 					SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam", streamID);
@@ -619,7 +610,7 @@ namespace dvbapi {
 						while (i < size) {
 							// get command
 							const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
-							SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: 0x%X", buf[i + 4], size, cmd);
+							SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: 0x%X", buf[i + 4] - _adapterOffset, size, cmd);
 
 							switch (cmd) {
 								case DVBAPI_SERVER_INFO: {
@@ -632,7 +623,7 @@ namespace dvbapi {
 										break;
 									}
 								case DVBAPI_DMX_SET_FILTER: {
-										const int adapter =  buf[i + 4];
+										const int adapter =  buf[i + 4] - _adapterOffset;
 										const int demux   =  buf[i + 5];
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
@@ -649,7 +640,7 @@ namespace dvbapi {
 										break;
 									}
 								case DVBAPI_DMX_STOP: {
-										const int adapter =  buf[i + 4];
+										const int adapter =  buf[i + 4] - _adapterOffset;
 										const int demux   =  buf[i + 5];
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
@@ -662,7 +653,7 @@ namespace dvbapi {
 										break;
 									}
 								case DVBAPI_CA_SET_DESCR: {
-										const int adapter =  buf[i + 4];
+										const int adapter =  buf[i + 4] - _adapterOffset;
 										const int index   = (buf[i + 5] << 24) | (buf[i +  6] << 16) | (buf[i +  7] << 8) | buf[i +  8];
 										const int parity  = (buf[i + 9] << 24) | (buf[i + 10] << 16) | (buf[i + 11] << 8) | buf[i + 12];
 										unsigned char cw[9];
@@ -683,7 +674,7 @@ namespace dvbapi {
 									i += 13;
 									break;
 								case DVBAPI_ECM_INFO: {
-										const int adapter   =  buf[i +  4];
+										const int adapter   =  buf[i +  4] - _adapterOffset;
 										const int serviceID = (buf[i +  5] <<  8) |  buf[i +  6];
 										const int caID      = (buf[i +  7] <<  8) |  buf[i +  8];
 										const int pid       = (buf[i +  9] <<  8) |  buf[i + 10];
@@ -708,8 +699,8 @@ namespace dvbapi {
 										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
 										frontend->setECMInfo(pid, serviceID, caID, provID, emcTime,
 														  cardSystem, readerName, sourceName, protocolName, hops);
-										SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s",
-													 adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str());
+										SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s  ECM Time: %d",
+													 adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str(), emcTime);
 										break;
 									}
 								default:
