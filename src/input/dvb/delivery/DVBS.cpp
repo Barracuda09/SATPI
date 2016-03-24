@@ -132,7 +132,7 @@ namespace delivery {
 		#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
 		FILL_PROP(DTV_CLEAR,           DTV_UNDEFINED);
-		FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.getDeliverySystem());
+		FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.convertDeliverySystem());
 		FILL_PROP(DTV_FREQUENCY,       ifreq);
 		FILL_PROP(DTV_MODULATION,      frontendData.getModulationType());
 		FILL_PROP(DTV_SYMBOL_RATE,     frontendData.getSymbolRate());

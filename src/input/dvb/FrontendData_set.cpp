@@ -63,7 +63,7 @@ namespace dvb {
 		_srate = srate;
 	}
 
-	void FrontendData::setDeliverySystem(fe_delivery_system_t delsys) {
+	void FrontendData::setDeliverySystem(input::InputSystem delsys) {
 		_delsys = delsys;
 	}
 

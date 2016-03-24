@@ -19,8 +19,8 @@
  */
 #include <StringConverter.h>
 
-#include <dvbfix.h>
 #include <Log.h>
+#include <input/dvb/dvbfix.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -229,26 +229,24 @@ int StringConverter::getIntParameter(const std::string &msg, const std::string &
 	return -1;
 }
 
-fe_delivery_system_t StringConverter::getMSYSParameter(const std::string &msg, const std::string &header_field) {
+input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, const std::string &header_field) {
 	std::string val;
 	if (StringConverter::getStringParameter(msg, header_field, "msys=", val) == 1) {
 		if (val.compare("dvbs2") == 0) {
-			return SYS_DVBS2;
+			return input::InputSystem::DVBS2;
 		} else if (val.compare("dvbs") == 0) {
-			return SYS_DVBS;
+			return input::InputSystem::DVBS;
 		} else if (val.compare("dvbt") == 0) {
-			return SYS_DVBT;
+			return input::InputSystem::DVBT;
 		} else if (val.compare("dvbt2") == 0) {
-			return SYS_DVBT2;
+			return input::InputSystem::DVBT2;
 		} else if (val.compare("dvbc") == 0) {
-#if FULL_DVB_API_VERSION >= 0x0505
-			return SYS_DVBC_ANNEX_A;
-#else
-			return SYS_DVBC_ANNEX_AC;
-#endif
+			return input::InputSystem::DVBC;
+		} else if (val.compare("file") == 0) {
+			return input::InputSystem::FILE;
 		}
 	}
-	return SYS_UNDEFINED;
+	return input::InputSystem::UNDEFINED;
 }
 
 std::string StringConverter::makeXMLString(const std::string &msg) {
@@ -302,28 +300,22 @@ const char *StringConverter::fec_to_string(int fec) {
 	}
 }
 
-const char *StringConverter::delsys_to_string(int delsys) {
-	switch (delsys) {
-	case SYS_DVBS2:
-		return "dvbs2";
-	case SYS_DVBS:
-		return "dvbs";
-	case SYS_DVBT:
-		return "dvbt";
-	case SYS_DVBT2:
-		return "dvbt2";
-#if FULL_DVB_API_VERSION >= 0x0505
-	case SYS_DVBC_ANNEX_A:
-	case SYS_DVBC_ANNEX_B:
-	case SYS_DVBC_ANNEX_C:
-		return "dvbc";
-#else
-	case SYS_DVBC_ANNEX_AC:
-	case SYS_DVBC_ANNEX_B:
-		return "dvbc";
-#endif
-	default:
-		return "UNKNOWN DELSYS";
+const char *StringConverter::delsys_to_string(input::InputSystem system) {
+	switch (system) {
+		case input::InputSystem::DVBS2:
+			return "dvbs2";
+		case input::InputSystem::DVBS:
+			return "dvbs";
+		case input::InputSystem::DVBT:
+			return "dvbt";
+		case input::InputSystem::DVBT2:
+			return "dvbt2";
+		case input::InputSystem::FILE:
+			return "file";
+		case input::InputSystem::DVBC:
+			return "dvbc";
+		default:
+			return "UNKNOWN DELSYS";
 	}
 }
 

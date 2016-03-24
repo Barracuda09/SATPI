@@ -21,10 +21,10 @@
 #define INPUT_DVB_FRONTEND_H_INCLUDE INPUT_DVB_FRONTEND_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
 #include <base/Mutex.h>
 #include <input/Device.h>
 #include <input/dvb/delivery/System.h>
+#include <input/dvb/dvbfix.h>
 #include <input/dvb/FrontendData.h>
 #ifdef LIBDVBCSA
 #include <input/dvb/FrontendDecryptInterface.h>
@@ -78,10 +78,10 @@ namespace dvb {
 
 		public:
 			///
-			virtual void addToXML(std::string &xml) const;
+			virtual void addToXML(std::string &xml) const override;
 
 			///
-			virtual void fromXML(const std::string &xml);
+			virtual void fromXML(const std::string &xml) override;
 
 #ifdef LIBDVBCSA
 			// =======================================================================
@@ -89,51 +89,51 @@ namespace dvb {
 			// =======================================================================
 		public:
 
-			virtual int getStreamID() const;
+			virtual int getStreamID() const override;
 
-			virtual int getBatchCount() const;
+			virtual int getBatchCount() const override;
 
-			virtual int getBatchParity() const;
+			virtual int getBatchParity() const override;
 
-			virtual int getMaximumBatchSize() const;
+			virtual int getMaximumBatchSize() const override;
 
-			virtual void decryptBatch(bool final);
+			virtual void decryptBatch(bool final) override;
 
-			virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
+			virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) override;
 
-			virtual const dvbcsa_bs_key_s *getKey(int parity) const;
+			virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
 
-			virtual bool isTableCollected(int tableID) const;
+			virtual bool isTableCollected(int tableID) const override;
 
-			virtual void setTableCollected(int tableID, bool collected);
+			virtual void setTableCollected(int tableID, bool collected) override;
 
-			virtual const unsigned char *getTableData(int tableID) const;
+			virtual const unsigned char *getTableData(int tableID) const override;
 
-			virtual void collectTableData(int streamID, int tableID, const unsigned char *data);
+			virtual void collectTableData(int streamID, int tableID, const unsigned char *data) override;
 
-			virtual int getTableDataSize(int tableID) const;
+			virtual int getTableDataSize(int tableID) const override;
 
 			virtual void startOSCamFilterData(int pid, int demux, int filter,
-			           const unsigned char *filterData, const unsigned char *filterMask);
+			           const unsigned char *filterData, const unsigned char *filterMask) override;
 
-			virtual void stopOSCamFilterData(int pid, int demux, int filter);
+			virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
 
 			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, std::string &filterData);
+				int &filter, int &demux, std::string &filterData) override;
 
-			virtual void clearOSCamFilters();
+			virtual void clearOSCamFilters() override;
 
-			virtual void setPMT(int pid, bool set);
+			virtual void setPMT(int pid, bool set) override;
 
-			virtual bool isPMT(int pid) const;
+			virtual bool isPMT(int pid) const override;
 
-			virtual void setKey(const unsigned char *cw, int parity, int index);
+			virtual void setKey(const unsigned char *cw, int parity, int index) override;
 
-			virtual void freeKeys();
+			virtual void freeKeys() override;
 
-			virtual void setKeyParity(int pid, int parity);
+			virtual void setKeyParity(int pid, int parity) override;
 
-			virtual int getKeyParity(int pid) const;
+			virtual int getKeyParity(int pid) const override;
 
 			virtual void setECMInfo(
 				int pid,
@@ -145,7 +145,7 @@ namespace dvb {
 				const std::string &readerName,
 				const std::string &sourceName,
 				const std::string &protocolName,
-				int hops);
+				int hops) override;
 #endif
 
 			// =======================================================================
@@ -159,30 +159,30 @@ namespace dvb {
 				std::size_t &dvbt,
 				std::size_t &dvbt2,
 				std::size_t &dvbc,
-				std::size_t &dvbc2);
+				std::size_t &dvbc2) override;
 
-			virtual bool isDataAvailable();
+			virtual bool isDataAvailable() override;
 
-			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer);
+			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
 
-			virtual bool capableOf(fe_delivery_system_t msys);
+			virtual bool capableOf(InputSystem system) const override;
 
-			virtual void monitorSignal(bool showStatus);
+			virtual void monitorSignal(bool showStatus) override;
 
-			virtual bool hasDeviceDataChanged() const;
+			virtual bool hasDeviceDataChanged() const override;
 
-			virtual void parseStreamString(const std::string &msg, const std::string &method);
+			virtual void parseStreamString(const std::string &msg, const std::string &method) override;
 
-			virtual bool update();
+			virtual bool update() override;
 
-			virtual bool teardown();
+			virtual bool teardown() override;
 
 			virtual bool setFrontendInfo(const std::string &fe,
-				const std::string &dvr,	const std::string &dmx);
+				const std::string &dvr,	const std::string &dmx) override;
 
-			virtual std::string attributeDescribeString() const;
+			virtual std::string attributeDescribeString() const override;
 
-			virtual bool isTuned() const {
+			virtual bool isTuned() const override {
 				return (_fd_dvr != -1) && _tuned;
 			}
 

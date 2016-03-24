@@ -21,7 +21,7 @@
 #define INPUT_DEVICE_H_INCLUDE INPUT_DEVICE_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
+#include <input/InputSystem.h>
 #include <base/XMLSupport.h>
 
 #include <string>
@@ -62,8 +62,8 @@ namespace input {
 			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) = 0;
 
 			/// Check the capability of this device
-			/// @param msys
-			virtual bool capableOf(fe_delivery_system_t msys) = 0;
+			/// @param system
+			virtual bool capableOf(input::InputSystem system) const = 0;
 
 			/// Monitor signal of this device
 			virtual void monitorSignal(bool showStatus) = 0;

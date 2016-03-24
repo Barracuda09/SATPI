@@ -51,10 +51,10 @@ namespace delivery {
 		public:
 
 			///
-			virtual void addToXML(std::string &xml) const;
+			virtual void addToXML(std::string &xml) const override;
 
 			///
-			virtual void fromXML(const std::string &xml);
+			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
 			// -- input::dvb::delivery::System ---------------------------------------
@@ -62,10 +62,12 @@ namespace delivery {
 
 		public:
 
-			virtual bool tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData);
+			virtual bool tune(int streamID, int feFD,
+				const input::dvb::FrontendData &frontendData) override;
 
-			virtual bool isCapableOf(fe_delivery_system_t msys) const {
-				return msys == SYS_DVBT2 || msys == SYS_DVBT;
+			virtual bool isCapableOf(input::InputSystem system) const override {
+				return system == input::InputSystem::DVBT2 ||
+				       system == input::InputSystem::DVBT;
 			}
 
 			// =======================================================================

@@ -174,7 +174,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		return false;
 	}
 
-	fe_delivery_system_t msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
+	input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
 	// Check if frontend is capable if handling 'msys' when we have a new session
 	if (newSession && !_device->capableOf(msys)) {
 		SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
@@ -186,7 +186,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		// If we have a new session we like to find an empty slot so '-1'
 		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
-			if (msys != SYS_UNDEFINED) {
+			if (msys != input::InputSystem::UNDEFINED) {
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s for %s",
 				            _streamID, i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 			} else {
@@ -200,7 +200,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			return true;
 		}
 	}
-	if (msys != SYS_UNDEFINED) {
+	if (msys != input::InputSystem::UNDEFINED) {
 		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s for %s",
 		            _streamID, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 	} else {

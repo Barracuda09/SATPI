@@ -91,19 +91,19 @@ namespace dvbapi {
 				_filterActive = true;
 			}
 
-			/// Check if the requested data matches an active filter
+			/// Check if the requested data matches this filter
 			bool match(const unsigned char *data) const {
 				std::size_t i, k;
 				bool match = true;
 				const uint32_t sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
 				for (i = 0, k = 5; i < 16 && match; i++, k++) {
-					const uint8_t mask = _mask[i];
 					// skip sectionLength bytes
 					if (k == 6) {
 						k += 2;
 					}
+					const unsigned char mask = _mask[i];
 					if (mask != 0x00) {
-						const uint8_t flt = (_data[i] & mask);
+						const unsigned char flt = (_data[i] & mask);
 						match = (k <= sectionLength) ? (flt == (data[k] & mask)) : false;
 					}
 				}

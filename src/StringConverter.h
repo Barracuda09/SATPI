@@ -20,10 +20,10 @@
 #ifndef STRING_CONVERTER_H_INCLUDE
 #define STRING_CONVERTER_H_INCLUDE STRING_CONVERTER_H_INCLUDE
 
+#include <input/InputSystem.h>
+
 #include <string>
 #include <cstdarg>
-
-#include <linux/dvb/frontend.h>
 
 /// The class @c StringConverter has some string manipulation functions
 class StringConverter  {
@@ -79,7 +79,7 @@ class StringConverter  {
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
 
 		///
-		static fe_delivery_system_t getMSYSParameter(const std::string &msg, const std::string &header_field);
+		static input::InputSystem getMSYSParameter(const std::string &msg, const std::string &header_field);
 
 		///
 		static const char *transmode_to_string(int transmission_mode);
@@ -94,7 +94,7 @@ class StringConverter  {
 		static const char *fec_to_string(int fec);
 
 		///
-		static const char *delsys_to_string(int delsys);
+		static const char *delsys_to_string(input::InputSystem delsys);
 
 		///
 		static const char *guardinter_to_string(int guard_interval);

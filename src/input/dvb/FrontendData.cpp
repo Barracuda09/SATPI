@@ -32,7 +32,7 @@ namespace dvb {
 	FrontendData::~FrontendData() {;}
 
 	void FrontendData::initialize() {
-		_delsys = SYS_UNDEFINED;
+		_delsys = input::InputSystem::UNDEFINED;
 		_freq = 0;
 		_modtype = QAM_64;
 		_srate = 0;
@@ -109,7 +109,7 @@ namespace dvb {
 		return _changed;
 	}
 
-	fe_delivery_system_t FrontendData::getDeliverySystem() const {
+	input::InputSystem FrontendData::getDeliverySystem() const {
 		return _delsys;
 	}
 
@@ -203,6 +203,27 @@ namespace dvb {
 
 	int FrontendData::getUniqueIDT2() const {
 		return _t2_system_id;
+	}
+
+	fe_delivery_system FrontendData::convertDeliverySystem() const {
+		switch (_delsys) {
+			case input::InputSystem::DVBT:
+				return SYS_DVBT;
+			case input::InputSystem::DVBT2:
+				return SYS_DVBT2;
+			case input::InputSystem::DVBS:
+				return SYS_DVBS;
+			case input::InputSystem::DVBS2:
+				return SYS_DVBS2;
+			case input::InputSystem::DVBC:
+#if FULL_DVB_API_VERSION >= 0x0505
+				return SYS_DVBC_ANNEX_A;
+#else
+				return SYS_DVBC_ANNEX_AC;
+#endif
+			default:
+				return SYS_UNDEFINED;
+		}
 	}
 
 } // namespace dvb

@@ -250,11 +250,11 @@ namespace dvb {
 		return false;
 	}
 
-	bool Frontend::capableOf(fe_delivery_system_t msys) {
-		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
+	bool Frontend::capableOf(input::InputSystem system) const {
+		for (input::dvb::delivery::SystemVector::const_iterator it = _deliverySystem.begin();
 		     it != _deliverySystem.end();
 		     ++it) {
-			if ((*it)->isCapableOf(msys)) {
+			if ((*it)->isCapableOf(system)) {
 				return true;
 			}
 		}
@@ -300,7 +300,7 @@ namespace dvb {
 		double doubleVal = 0.0;
 		int intVal = 0;
 		std::string strVal;
-		fe_delivery_system_t msys;
+		input::InputSystem msys;
 
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _streamID);
 
@@ -315,7 +315,7 @@ namespace dvb {
 		if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
 			_frontendData.setSymbolRate(intVal * 1000);
 		}
-		if ((msys = StringConverter::getMSYSParameter(msg, method)) != SYS_UNDEFINED) {
+		if ((msys = StringConverter::getMSYSParameter(msg, method)) != input::InputSystem::UNDEFINED) {
 			_frontendData.setDeliverySystem(msys);
 		}
 		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
@@ -397,25 +397,18 @@ namespace dvb {
 			} else if (strVal.compare("256qam") == 0) {
 				_frontendData.setModulationType(QAM_256);
 			}
-		} else if (msys != SYS_UNDEFINED) {
+		} else if (msys != input::InputSystem::UNDEFINED) {
 			// no 'mtype' set so guess one according to 'msys'
 			switch (msys) {
-			case SYS_DVBS:
+			case input::InputSystem::DVBS:
 				_frontendData.setModulationType(QPSK);
 				break;
-			case SYS_DVBS2:
+			case input::InputSystem::DVBS2:
 				_frontendData.setModulationType(PSK_8);
 				break;
-			case SYS_DVBT:
-			case SYS_DVBT2:
-#if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_B:
-			case SYS_DVBC_ANNEX_C:
-#else
-			case SYS_DVBC_ANNEX_AC:
-			case SYS_DVBC_ANNEX_B:
-#endif
+			case input::InputSystem::DVBT:
+			case input::InputSystem::DVBT2:
+			case input::InputSystem::DVBC:
 				_frontendData.setModulationType(QAM_AUTO);
 				break;
 			default:
@@ -701,8 +694,8 @@ namespace dvb {
 		std::string desc;
 		std::string csv = _frontendData.getPidCSV();
 		switch (_frontendData.getDeliverySystem()) {
-			case SYS_DVBS:
-			case SYS_DVBS2:
+			case input::InputSystem::DVBS:
+			case input::InputSystem::DVBS2:
 				// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
 				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
@@ -721,8 +714,8 @@ namespace dvb {
 						StringConverter::fec_to_string(_frontendData.getFEC()),
 						csv.c_str());
 				break;
-			case SYS_DVBT:
-			case SYS_DVBT2:
+			case input::InputSystem::DVBT:
+			case input::InputSystem::DVBT2:
 				// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
 				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
@@ -742,13 +735,7 @@ namespace dvb {
 						_frontendData.getSISOMISO(),
 						csv.c_str());
 				break;
-			case SYS_DVBC_ANNEX_B:
-#if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_C:
-#else
-			case SYS_DVBC_ANNEX_AC:
-#endif
+			case input::InputSystem::DVBC:
 				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
 				//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
@@ -767,7 +754,7 @@ namespace dvb {
 						_frontendData.getSpectralInversion(),
 						csv.c_str());
 				break;
-			case SYS_UNDEFINED:
+			case input::InputSystem::UNDEFINED:
 				// Not setup yet
 				StringConverter::addFormattedString(desc, "NONE");
 				break;
@@ -837,7 +824,7 @@ namespace dvb {
 	}
 
 	bool Frontend::tune() {
-		const fe_delivery_system_t delsys = _frontendData.getDeliverySystem();
+		const input::InputSystem delsys = _frontendData.getDeliverySystem();
 		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
 		     it != _deliverySystem.end();
 		     ++it) {

@@ -20,8 +20,9 @@
 #ifndef INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 #define INPUT_DVB_FRONTEND_DATA_H_INCLUDE INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 
-#include <dvbfix.h>
 #include <input/DeviceData.h>
+#include <input/InputSystem.h>
+#include <input/dvb/dvbfix.h>
 #include <input/dvb/PidTable.h>
 #ifdef LIBDVBCSA
 #include <decrypt/dvbapi/ClientProperties.h>
@@ -125,8 +126,10 @@ namespace dvb {
 			void setSymbolRate(int srate);
 
 			/// Get/Set the current Delivery System
-			fe_delivery_system_t getDeliverySystem() const;
-			void setDeliverySystem(fe_delivery_system_t delsys);
+			input::InputSystem getDeliverySystem() const;
+			void setDeliverySystem(input::InputSystem system);
+
+			fe_delivery_system convertDeliverySystem() const;
 
 			/// Get/Set modulation type
 			int  getModulationType() const;
@@ -175,14 +178,14 @@ namespace dvb {
 
 		private:
 
-			bool _changed;            //
-			fe_delivery_system_t _delsys; // modulation system i.e. (SYS_DVBS/SYS_DVBS2)
-			uint32_t _freq;           // frequency in MHZ
-			int _modtype;             // modulation type i.e. (QPSK/PSK_8)
-			int _srate;               // symbol rate in kSymb/s
-			int _fec;                // forward error control i.e. (FEC_1_2 / FEC_2_3)
-			int _rolloff;             // roll-off
-			int _inversion;           //
+			bool _changed;           ///
+			input::InputSystem _delsys;/// modulation system i.e. (DVBS/DVBS2)
+			uint32_t _freq;          /// frequency in MHZ
+			int _modtype;            /// modulation type i.e. (QPSK/PSK_8)
+			int _srate;              /// symbol rate in kSymb/s
+			int _fec;                /// forward error control i.e. (FEC_1_2 / FEC_2_3)
+			int _rolloff;            /// roll-off
+			int _inversion;          ///
 
 			input::dvb::PidTable _pidTable;  ///
 

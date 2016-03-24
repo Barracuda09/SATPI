@@ -64,20 +64,8 @@ namespace delivery {
 		return true;
 	}
 
-	bool DVBC::isCapableOf(fe_delivery_system_t msys) const {
-		switch (msys) {
-#if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_B:
-			case SYS_DVBC_ANNEX_C:
-#else
-			case SYS_DVBC_ANNEX_AC:
-			case SYS_DVBC_ANNEX_B:
-#endif
-				return true;
-			default:
-				return false;
-		}
+	bool DVBC::isCapableOf(input::InputSystem system) const {
+		return system == input::InputSystem::DVBC;
 	}
 
 	// =======================================================================
@@ -92,16 +80,9 @@ namespace delivery {
 
 		FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
 		switch (frontendData.getDeliverySystem()) {
-#if FULL_DVB_API_VERSION >= 0x0505
-			case SYS_DVBC_ANNEX_A:
-			case SYS_DVBC_ANNEX_B:
-			case SYS_DVBC_ANNEX_C:
-#else
-			case SYS_DVBC_ANNEX_AC:
-			case SYS_DVBC_ANNEX_B:
-#endif
+			case input::InputSystem::DVBC:
 				FILL_PROP(DTV_BANDWIDTH_HZ,    frontendData.getBandwidthHz());
-				FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.getDeliverySystem());
+				FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.convertDeliverySystem());
 				FILL_PROP(DTV_FREQUENCY,       frontendData.getFrequency() * 1000UL);
 				FILL_PROP(DTV_INVERSION,       frontendData.getSpectralInversion());
 				FILL_PROP(DTV_MODULATION,      frontendData.getModulationType());

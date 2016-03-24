@@ -21,8 +21,6 @@
 #define STREAMINTERFACE_H_INCLUDE STREAMINTERFACE_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
-
 
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS1(input, Device);

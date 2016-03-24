@@ -91,8 +91,8 @@ namespace file {
 		return false;
 	}
 
-	bool TSReader::capableOf(fe_delivery_system_t UNUSED(msys)) {
-		return false;
+	bool TSReader::capableOf(const input::InputSystem system) const {
+		return system == input::InputSystem::FILE;
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {}
@@ -103,7 +103,7 @@ namespace file {
 
 	void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
 		std::string file;
-		if (StringConverter::getStringParameter(msg, method, "file=", file) == true) {
+		if (StringConverter::getStringParameter(msg, method, "uri=", file) == true) {
 			if (!_file.is_open()) {
 				_filePath = file;
 				_file.open(_filePath, std::ifstream::binary);

@@ -21,7 +21,7 @@
 #define INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE
 
 #include <FwDecl.h>
-#include <dvbfix.h>
+#include <input/InputSystem.h>
 #include <base/XMLSupport.h>
 
 #include <vector>
@@ -44,6 +44,7 @@ namespace delivery {
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
 			System() {}
+
 			virtual ~System() {}
 
 			// =======================================================================
@@ -56,7 +57,7 @@ namespace delivery {
 			virtual bool tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) = 0;
 
 			///
-			virtual bool isCapableOf(fe_delivery_system_t msys) const = 0;
+			virtual bool isCapableOf(input::InputSystem system) const = 0;
 
 	};
 

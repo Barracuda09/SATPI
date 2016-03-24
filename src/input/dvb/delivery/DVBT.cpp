@@ -82,11 +82,11 @@ namespace delivery {
 
 		FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
 		switch (frontendData.getDeliverySystem()) {
-			case SYS_DVBT2:
+			case input::InputSystem::DVBT2:
 				FILL_PROP(DTV_STREAM_ID,         frontendData.getUniqueIDPlp());
 			// Fall-through
-			case SYS_DVBT:
-				FILL_PROP(DTV_DELIVERY_SYSTEM,   frontendData.getDeliverySystem());
+			case input::InputSystem::DVBT:
+				FILL_PROP(DTV_DELIVERY_SYSTEM,   frontendData.convertDeliverySystem());
 				FILL_PROP(DTV_FREQUENCY,         frontendData.getFrequency() * 1000UL);
 				FILL_PROP(DTV_MODULATION,        frontendData.getModulationType());
 				FILL_PROP(DTV_INVERSION,         frontendData.getSpectralInversion());

@@ -247,7 +247,8 @@ namespace dvbapi {
 								memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
 								const int length = sectionLength + 6; // 6 = clientData header
 
-								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x", streamID, demux, filter, pid, tableID);
+								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x %04x %04x",
+									streamID, demux, filter, pid, tableID, tableData[8], tableData[9]);
 
 								if (send(_client.getFD(), clientData, length, MSG_DONTWAIT) == -1) {
 									SI_LOG_ERROR("Stream: %d, Filter - send data to server failed", streamID);
