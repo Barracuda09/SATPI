@@ -101,7 +101,7 @@ void Stream::addRtpData(uint32_t byte, long timestamp) {
 	// inc RTP packet counter
 	++_spc;
 	_soc += byte;
-	_rtp_payload += byte;
+	_rtp_payload = _rtp_payload + byte;
 	_timestamp = timestamp;
 }
 
@@ -132,7 +132,7 @@ void Stream::addToXML(std::string &xml) const {
 		ADD_CONFIG_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 
 		StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc.load());
-		StringConverter::addFormattedString(xml, "<payload>%.3f</payload>", (_rtp_payload.load() / (1024.0 * 1024.0)));
+		StringConverter::addFormattedString(xml, "<payload>%.3f</payload>", _rtp_payload.load() / (1024.0 * 1024.0));
 	}
 	_device->addToXML(xml);
 }

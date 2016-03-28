@@ -228,7 +228,7 @@ class Stream :
 		std::atomic<uint32_t> _spc;       /// sender RTP packet count  (used in SR packet)
 		std::atomic<uint32_t> _soc;       /// sender RTP payload count (used in SR packet)
 		std::atomic<long> _timestamp;     ///
-		std::atomic<long> _rtp_payload;   ///
+		std::atomic<double> _rtp_payload;   ///
 		unsigned int _rtcpSignalUpdate;   ///
 
 }; // class Stream
