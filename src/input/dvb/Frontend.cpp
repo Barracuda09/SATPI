@@ -947,7 +947,7 @@ namespace dvb {
 			_frontendData.setAllPID(add);
 		} else {
 			for (;; ) {
-				std::string::size_type end = pids.find_first_of(",", begin);
+				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
 					const int pid = atoi(pids.substr(begin, end - begin).c_str());
 					_frontendData.setPID(pid, add);
@@ -960,6 +960,10 @@ namespace dvb {
 					}
 					break;
 				}
+			}
+			// always request PID 0 - Program Association Table (PAT)
+			if (add && !_frontendData.isPIDUsed(0)) {
+				_frontendData.setPID(0, true);
 			}
 		}
 	}
