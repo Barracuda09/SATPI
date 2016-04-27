@@ -79,7 +79,7 @@ class HttpcServer :
 		}
 
 		/// Method for getting the required files
-		virtual bool methodPost(const SocketClient &UNUSED(client)) {
+		virtual bool methodPost(SocketClient &UNUSED(client)) {
 			return false;
 		}
 
@@ -130,6 +130,6 @@ class HttpcServer :
 		StreamManager &_streamManager;
 		const InterfaceAttr &_interface;
 
-}; // class HttpcServer
+};
 
 #endif // HTTPC_SERVER_H_INCLUDE

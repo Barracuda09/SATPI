@@ -1,4 +1,4 @@
-/* TSReader.cpp
+/* Streamer.cpp
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,7 +17,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include <input/file/TSReader.h>
+#include <input/stream/Streamer.h>
 
 #include <Log.h>
 #include <Utils.h>
@@ -26,36 +26,36 @@
 #include <mpegts/PacketBuffer.h>
 
 namespace input {
-namespace file {
+namespace stream {
 
-	TSReader::TSReader(int streamID) :
+	Streamer::Streamer(int streamID) :
 		_streamID(streamID),
-		_filePath("None") {}
+		_uri("None") {}
 
-	TSReader::~TSReader() {}
+	Streamer::~Streamer() {}
 
 	// =======================================================================
 	//  -- Static member functions -------------------------------------------
 	// =======================================================================
 
-	void TSReader::enumerate(StreamVector &streamVector, const std::string &path) {
-		SI_LOG_INFO("Setting up TS Reader using path: %s", path.c_str());
+	void Streamer::enumerate(StreamVector &streamVector) {
+		SI_LOG_INFO("Setting up TS Streamer");
 		const StreamVector::size_type size = streamVector.size();
-		input::file::TSReader *tsreader = new input::file::TSReader(size);
-		streamVector.push_back(new Stream(size, tsreader, nullptr));
+		input::stream::Streamer *streamer = new input::stream::Streamer(size);
+		streamVector.push_back(new Stream(size, streamer, nullptr));
 	}
 
 	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void TSReader::addToXML(std::string &xml) const {
+	void Streamer::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", "TS Reader");
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _filePath.c_str());
+		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", "Streamer");
+		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _uri.c_str());
 	}
 
-	void TSReader::fromXML(const std::string &UNUSED(xml)) {
+	void Streamer::fromXML(const std::string &UNUSED(xml)) {
 		base::MutexLock lock(_mutex);
 	}
 
@@ -63,7 +63,7 @@ namespace file {
 	//  -- input::Device -----------------------------------------------------
 	// =======================================================================
 
-	void TSReader::addDeliverySystemCount(
+	void Streamer::addDeliverySystemCount(
 		std::size_t &dvbs2,
 		std::size_t &dvbt,
 		std::size_t &dvbt2,
@@ -76,61 +76,60 @@ namespace file {
 		dvbc2 += 0;
 	}
 
-	bool TSReader::isDataAvailable() {
+	bool Streamer::isDataAvailable() {
 		usleep(1000);
 		return true;
 	}
 
-	bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+	bool Streamer::readFullTSPacket(mpegts::PacketBuffer &UNUSED(buffer)) {
+/*
 		if (_file.is_open()) {
-			const auto size = buffer.getAmountOfBytesToWrite();
+			auto size = buffer.getAmountOfBytesToWrite();
 			_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), size);
 			buffer.addAmountOfBytesWritten(size);
 			return buffer.full();
 		}
+*/
+		// Read from stream
 		return false;
 	}
 
-	bool TSReader::capableOf(const input::InputSystem system) const {
-		return system == input::InputSystem::FILE;
+	bool Streamer::capableOf(const input::InputSystem system) const {
+		return system == input::InputSystem::STREAMER;
 	}
 
-	void TSReader::monitorSignal(bool UNUSED(showStatus)) {}
+	void Streamer::monitorSignal(bool UNUSED(showStatus)) {}
 
-	bool TSReader::hasDeviceDataChanged() const {
+	bool Streamer::hasDeviceDataChanged() const {
 		return false;
 	}
 
-	void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-		std::string file;
-		if (StringConverter::getStringParameter(msg, method, "uri=", file) == true) {
-			if (!_file.is_open()) {
-				_filePath = file;
-				_file.open(_filePath, std::ifstream::binary);
-				SI_LOG_INFO("TS Reader using path: %s", _filePath.c_str());
-			}		
+	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
+		std::string uri;
+		if (StringConverter::getStringParameter(msg, method, "uri=", uri) == true) {
+			// Open stream
 		}
 	}
 
-	bool TSReader::update() {
+	bool Streamer::update() {
 		return true;
 	}
 
-	bool TSReader::teardown() {
-		_file.close();
+	bool Streamer::teardown() {
+		// Close stream
 		return true;
 	}
 
-	bool TSReader::setFrontendInfo(const std::string &UNUSED(fe),
+	bool Streamer::setFrontendInfo(const std::string &UNUSED(fe),
 				const std::string &UNUSED(dvr),	const std::string &UNUSED(dmx)) {
 		return true;
 	}
 
-	std::string TSReader::attributeDescribeString() const {
+	std::string Streamer::attributeDescribeString() const {
 		std::string desc;
 		// ver=1.5;tuner=<feID>;file=<file>
 		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
-				_streamID + 1, _filePath.c_str());
+				_streamID + 1, _uri.c_str());
 
 		return desc;
 	}
@@ -139,5 +138,5 @@ namespace file {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-} // namespace file
+} // namespace stream
 } // namespace input

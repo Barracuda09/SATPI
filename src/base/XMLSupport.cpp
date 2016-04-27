@@ -17,9 +17,10 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include "XMLSupport.h"
-#include "StringConverter.h"
-#include "Log.h"
+#include <base/XMLSupport.h>
+
+#include <StringConverter.h>
+#include <Log.h>
 
 #include <stdio.h>
 
@@ -28,11 +29,9 @@
 
 namespace base {
 
-XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {
-}
+XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {}
 
-XMLSupport::~XMLSupport() {
-}
+XMLSupport::~XMLSupport() {}
 
 bool XMLSupport::findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element) {
 	std::string tag;
@@ -46,7 +45,7 @@ bool XMLSupport::findXMLElement(const std::string &xml, const std::string &eleme
 
 bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
                           std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement) {
-	enum StateXML {
+	enum class StateXML {
 		SEARCH_START_TAG,
 		COMMENT,
 		XML_DECL,
@@ -55,12 +54,12 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 		ELEMENT,
 		ESCAPE
 	};
-	StateXML state = SEARCH_START_TAG;
+	StateXML state = StateXML::SEARCH_START_TAG;
 	std::string::const_iterator itBegin;
 	std::string tag;
 	for (; it != xml.end(); ++it) {
 		switch (state) {
-		case SEARCH_START_TAG:
+		case StateXML::SEARCH_START_TAG:
 			// Check begin of 'tag'?
 			if (*it == '<') {
 				++it;
@@ -68,20 +67,20 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 					itBegin = it;
 					switch (*it) {
 					case '!':
-						state = COMMENT;
+						state = StateXML::COMMENT;
 						break;
 					case '?':
-						state = XML_DECL;
+						state = StateXML::XML_DECL;
 						break;
 					case '/':
 						itEndElement = it - 1;
-						state = TAG_END;
+						state = StateXML::TAG_END;
 						break;
 					case '&':
-						state = ESCAPE;
+						state = StateXML::ESCAPE;
 						break;
 					default:
-						state = TAG_START;
+						state = StateXML::TAG_START;
 						break;
 					}
 				} else {
@@ -89,20 +88,20 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 				}
 			} else {
 				itBegin = it;
-				state = ELEMENT;
+				state = StateXML::ELEMENT;
 			}
 			break;
-		case XML_DECL:
+		case StateXML::XML_DECL:
 			if (*it == '?') {
 				++it;
 				if (it != xml.end() && *it == '>') {
-					state = SEARCH_START_TAG;
+					state = StateXML::SEARCH_START_TAG;
 				} else {
 					return false;
 				}
 			}
 			break;
-		case TAG_START:
+		case StateXML::TAG_START:
 			if (*it == '>') {
 				tag = xml.substr(itBegin - xml.begin(), it - itBegin);
 				const std::string::size_type end = elementToFind.find_first_of('.', 0);
@@ -122,33 +121,33 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 						element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
 						found = true;
 					}
-					state = SEARCH_START_TAG;
+					state = StateXML::SEARCH_START_TAG;
 				} else {
 					return false;
 				}
 			}
 			break;
-		case TAG_END:
+		case StateXML::TAG_END:
 			if (*it == '>') {
 				++itBegin;
 				tagEnd = xml.substr(itBegin - xml.begin(), it - itBegin);
 				return true;
 			}
 			break;
-		case COMMENT:
+		case StateXML::COMMENT:
 			if (*it == '>') {
-				state = SEARCH_START_TAG;
+				state = StateXML::SEARCH_START_TAG;
 			}
 			break;
-		case ESCAPE:
+		case StateXML::ESCAPE:
 			if (*it == ';') {
-				state = SEARCH_START_TAG;
+				state = StateXML::SEARCH_START_TAG;
 			}
 			break;
-		case ELEMENT:
+		case StateXML::ELEMENT:
 			if (*it == '<') {
 				itEndElement = it - 1;
-				state = SEARCH_START_TAG;
+				state = StateXML::SEARCH_START_TAG;
 				--it;
 			}
 			break;
@@ -210,4 +209,5 @@ bool XMLSupport::restoreXML() {
 	}
 	return false;
 }
+
 } // namespace base

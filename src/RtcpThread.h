@@ -28,41 +28,50 @@
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
 
-/// RTSP Server
-class RtcpThread :
+	/// RTSP Server
+	class RtcpThread :
 		public base::ThreadBase {
-	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		RtcpThread(StreamInterface &stream);
-		virtual ~RtcpThread();
+		public:
+			// ===================================================================
+			//  -- Constructors and destructor -----------------------------------
+			// ===================================================================
+			RtcpThread(StreamInterface &stream);
+			virtual ~RtcpThread();
 
-		/// Start streaming
-		/// @return true if stream is started else false on error
-		bool startStreaming();
+			// ===================================================================
+			//  -- Other member functions ----------------------------------------
+			// ===================================================================
 
-	protected:
-		/// Thread function
-		virtual void threadEntry();
+		public:
 
-	private:
-		///
-		uint8_t *get_app_packet(std::size_t *len);
-		uint8_t *get_sdes_packet(std::size_t *len);
-		uint8_t *get_sr_packet(std::size_t *len);
+			/// Start streaming
+			/// @return true if stream is started else false on error
+			bool startStreaming();
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
-		int _socket_fd;
-		StreamInterface &_stream;
+		protected:
+			/// Thread function
+			virtual void threadEntry();
 
-		uint8_t _sr[28];              // Sender Report (SR Packet)
-		uint8_t _srb[24];             // Sender Report Block n (SR Packet)
-		uint8_t _sdes[24];            // Source Description (SDES Packet)
-		uint8_t _app[500];            // Application Defined packet (APP Packet)
+		private:
+			///
+			uint8_t *get_app_packet(std::size_t *len);
+			uint8_t *get_sdes_packet(std::size_t *len);
+			uint8_t *get_sr_packet(std::size_t *len);
 
-};
+			// ===================================================================
+			//  -- Data members --------------------------------------------------
+			// ===================================================================
+
+		private:
+
+			int _clientID;
+			StreamInterface &_stream;
+
+			uint8_t _sr[28];              // Sender Report (SR Packet)
+			uint8_t _srb[24];             // Sender Report Block n (SR Packet)
+			uint8_t _sdes[24];            // Source Description (SDES Packet)
+			uint8_t _app[500];            // Application Defined packet (APP Packet)
+
+	};
 
 #endif // RTCP_THREAD_H_INCLUDE

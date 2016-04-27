@@ -17,54 +17,44 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include "RtcpThread.h"
-#include "StreamClient.h"
-#include "Stream.h"
-#include "Log.h"
-#include "Utils.h"
+#include <RtcpThread.h>
+
+#include <StreamClient.h>
+#include <Stream.h>
+#include <Log.h>
+#include <Utils.h>
 
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <sys/socket.h>
-#include <sys/time.h>
 
 RtcpThread::RtcpThread(StreamInterface &stream) :
 		ThreadBase("RtcpThread"),
-		_socket_fd(-1),
+		_clientID(0),
 		_stream(stream) {
 }
 
 RtcpThread::~RtcpThread() {
 	terminateThread();
-	CLOSE_FD(_socket_fd);
+	StreamClient &client = _stream.getStreamClient(_clientID);
+	client.getRtcpSocketAttr().closeFD();
 	SI_LOG_INFO("Stream: %d, Destroy RTCP stream", _stream.getStreamID());
 }
 
 bool RtcpThread::startStreaming() {
-	const StreamClient &client = _stream.getStreamClient(0);
-	if (_socket_fd == -1) {
-		if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			PERROR("socket RTCP");
-			return false;
-		}
+	SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
 
-		const int val = 1;
-		if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-			PERROR("RTCP setsockopt SO_REUSEADDR");
-			return false;
-		}
+	if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
+		SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
 	}
+
 	if (!startThread()) {
 		SI_LOG_ERROR("Stream: %d, Start RTCP stream to %s:%d ERROR", _stream.getStreamID(),
-		             client.getIPAddress().c_str(), client.getRtcpSocketPort());
+		             rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 		return false;
 	}
 	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d", _stream.getStreamID(),
-	            client.getIPAddress().c_str(), client.getRtcpSocketPort());
+	            rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 	return true;
 }
 
@@ -234,7 +224,7 @@ uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 }
 
 void RtcpThread::threadEntry() {
-	const StreamClient &client = _stream.getStreamClient(0);
+	StreamClient &client = _stream.getStreamClient(_clientID);
 	int mon_update = 0;
 
 	while (running()) {
@@ -256,20 +246,21 @@ void RtcpThread::threadEntry() {
 
 		if (sr && sdes && app) {
 
-			const std::size_t rtcplen = srlen + sdeslen + applen;
+			const std::size_t len = srlen + sdeslen + applen;
 
-			uint8_t *rtcp = new uint8_t[rtcplen];
-			if (rtcp) {
-				memcpy(rtcp, sr, srlen);
-				memcpy(rtcp + srlen, sdes, sdeslen);
-				memcpy(rtcp + srlen + sdeslen, app, applen);
+			uint8_t *data = new uint8_t[len];
+			if (data != nullptr) {
+				memcpy(data, sr, srlen);
+				memcpy(data + srlen, sdes, sdeslen);
+				memcpy(data + srlen + sdeslen, app, applen);
 
-				if (sendto(_socket_fd, rtcp, rtcplen, 0,
-				           (struct sockaddr *)&client.getRtcpSockAddr(), sizeof(client.getRtcpSockAddr())) == -1) {
-					PERROR("send RTCP");
+				SocketAttr &rtcp = client.getRtcpSocketAttr();
+				if (!rtcp.sendDataTo(data, len, 0)) {
+					SI_LOG_ERROR("Stream: %d, Error sending RTCP data to %s:%d", _stream.getStreamID(),
+								 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 				}
 			}
-			DELETE_ARRAY(rtcp);
+			DELETE_ARRAY(data);
 		}
 		DELETE_ARRAY(sr);
 		DELETE_ARRAY(sdes);

@@ -24,7 +24,6 @@
 #include <base/ThreadBase.h>
 #include <mpegts/PacketBuffer.h>
 
-#include <poll.h>
 #include <atomic>
 
 #define MAX_BUF 150
@@ -74,11 +73,11 @@ namespace output {
 
 			/// This function will read data from the input device
 			/// @param client specifies were it should be sended to
-			virtual void readDataFromInputDevice(const StreamClient &client);
+			virtual void readDataFromInputDevice(StreamClient &client);
 
 			/// send the TS packets to an output device
 			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
-				const StreamClient &client) = 0;
+				StreamClient &client) = 0;
 
 			///
 			virtual int getStreamSocketPort(int clientID) const = 0;
@@ -89,7 +88,7 @@ namespace output {
 
 		protected:
 
-			enum State {
+			enum class State {
 				Running,
 				Pause,
 				Paused,

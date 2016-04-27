@@ -31,7 +31,7 @@ namespace base {
 		public:
 
 		// =======================================================================
-		// Constructors and destructor
+		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
 		XMLSupport(const std::string &filePath = "");
 		virtual ~XMLSupport();
@@ -48,7 +48,8 @@ namespace base {
 		protected:
 
 		///
-		bool findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element);
+		bool findXMLElement(const std::string &xml, const std::string &elementToFind,
+			std::string &element);
 
 		///
 		std::string makeXMLString(const std::string &msg);

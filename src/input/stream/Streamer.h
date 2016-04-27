@@ -1,4 +1,4 @@
-/* TSReader.h
+/* Streamer.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_INPUT_TSREADER_H_INCLUDE
-#define INPUT_INPUT_TSREADER_H_INCLUDE INPUT_INPUT_TSREADER_H_INCLUDE
+#ifndef INPUT_STREAM_STREAMER_H_INCLUDE
+#define INPUT_STREAM_STREAMER_H_INCLUDE INPUT_STREAM_STREAMER_H_INCLUDE
 
 #include <FwDecl.h>
 #include <base/Mutex.h>
@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <string>
-#include <fstream>
 
 FW_DECL_NS1(input, DeviceData);
 
@@ -35,20 +34,18 @@ FW_DECL_NS0(Stream);
 typedef std::vector<Stream *> StreamVector;
 
 namespace input {
-namespace file {
+namespace stream {
 
-	/// The class @c TSReader is for reading from an TS files as input device
-	/// Some example for opening a TS file:
-	/// http://ip.of.your.box:8875:/?msys=file&uri=test.ts
-	class TSReader :
+	/// The class @c Streamer is for reading from an TS stream as input device
+	class Streamer :
 		public input::Device {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			TSReader(int streamID);
-			virtual ~TSReader();
+			Streamer(int streamID);
+			virtual ~Streamer();
 
 			// =======================================================================
 			//  -- Static member functions -------------------------------------------
@@ -57,8 +54,7 @@ namespace file {
 		public:
 
 			static void enumerate(
-				StreamVector &streamVector,
-				const std::string &path);
+				StreamVector &streamVector);
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -123,11 +119,10 @@ namespace file {
 		private:
 			base::Mutex _mutex;
 			int _streamID;
-			std::ifstream _file;
-			std::string _filePath;
+			std::string _uri;
 	};
 
 } // namespace file
 } // namespace input
 
-#endif // INPUT_INPUT_TSREADER_H_INCLUDE
+#endif // INPUT_STREAM_STREAMER_H_INCLUDE

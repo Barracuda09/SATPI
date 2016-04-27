@@ -26,8 +26,6 @@
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
-#include <sys/socket.h>
-
 namespace output {
 
 	StreamThreadHttp::StreamThreadHttp(
@@ -41,21 +39,21 @@ namespace output {
 	}
 
 	int StreamThreadHttp::getStreamSocketPort(int clientID) const {
-		return _stream.getStreamClient(clientID).getRtpSocketPort();
+		return _stream.getStreamClient(clientID).getRtpSocketAttr().getSocketPort();
 	}
 
 	void StreamThreadHttp::threadEntry() {
-		const StreamClient &client = _stream.getStreamClient(0);
+		StreamClient &client = _stream.getStreamClient(0);
 		while (running()) {
 			switch (_state) {
-			case Pause:
-				_state = Paused;
+			case State::Pause:
+				_state = State::Paused;
 				break;
-			case Paused:
+			case State::Paused:
 				// Do nothing here, just wait
 				usleep(50000);
 				break;
-			case Running:
+			case State::Running:
 				readDataFromInputDevice(client);
 				break;
 			default:
@@ -66,7 +64,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client) {
+	void StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
 		unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 		const unsigned int size = buffer.getBufferSize();
@@ -77,8 +75,8 @@ namespace output {
 		_stream.addRtpData(size, timestamp);
 
 		// send the HTTP packet
-		if (send(client.getHttpcFD(), tsBuffer, size, MSG_NOSIGNAL) == -1) {
-			PERROR("error sending: stream not found");
+		if (!client.sendHttpData(tsBuffer, size, MSG_NOSIGNAL)) {
+			SI_LOG_ERROR("Send HTTP Stream Data failed");
 		}
 	}
 

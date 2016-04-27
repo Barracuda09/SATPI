@@ -26,44 +26,35 @@
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
-#include <sys/socket.h>
-
 namespace output {
 
 	StreamThreadRtp::StreamThreadRtp(StreamInterface &stream, decrypt::dvbapi::Client *decrypt) :
 		StreamThreadBase("RTP", stream, decrypt),
-		_socket_fd(-1),
+		_clientID(0),
 		_cseq(0),
 		_rtcp(stream) {
 	}
 
 	StreamThreadRtp::~StreamThreadRtp() {
 		terminateThread();
-		CLOSE_FD(_socket_fd);
+		StreamClient &client = _stream.getStreamClient(_clientID);
+		client.getRtpSocketAttr().closeFD();
 	}
 
 	bool StreamThreadRtp::startStreaming() {
 		const int streamID = _stream.getStreamID();
+		SocketAttr &rtp = _stream.getStreamClient(_clientID).getRtpSocketAttr();
 
 		// RTP
-		if (_socket_fd == -1) {
-			if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-				PERROR("socket RTP");
-				return false;
-			}
-
-			const int val = 1;
-			if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-				PERROR("RTP setsockopt SO_REUSEADDR");
-				return false;
-			}
-
-			// Get default buffer size and set it twice as big
-			int bufferSize = InterfaceAttr::getNetworkUDPBufferSize(_socket_fd);
-			bufferSize *= 2;
-			InterfaceAttr::setNetworkUDPBufferSize(_socket_fd, bufferSize);
-			SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
+		if (!rtp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
+			SI_LOG_ERROR("Stream: %d, Get RTP handle failed", streamID);
 		}
+
+		// Get default buffer size and set it twice as big
+		const int bufferSize = rtp.getNetworkBufferSize() * 2;
+		rtp.setNetworkBufferSize(bufferSize);
+		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
+
 		// RTCP
 		_rtcp.startStreaming();
 
@@ -73,21 +64,21 @@ namespace output {
 	}
 
 	int StreamThreadRtp::getStreamSocketPort(int clientID) const {
-		return  _stream.getStreamClient(clientID).getRtpSocketPort();
+		return  _stream.getStreamClient(clientID).getRtpSocketAttr().getSocketPort();
 	}
 
 	void StreamThreadRtp::threadEntry() {
-		const StreamClient &client = _stream.getStreamClient(0);
+		StreamClient &client = _stream.getStreamClient(0);
 		while (running()) {
 			switch (_state) {
-			case Pause:
-				_state = Paused;
+			case State::Pause:
+				_state = State::Paused;
 				break;
-			case Paused:
+			case State::Paused:
 				// Do nothing here, just wait
 				usleep(50000);
 				break;
-			case Running:
+			case State::Running:
 				readDataFromInputDevice(client);
 				break;
 			default:
@@ -98,7 +89,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadRtp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client) {
+	void StreamThreadRtp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
 		unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 
 		// update sequence number
@@ -118,11 +109,10 @@ namespace output {
 		// RTP packet octet count (Bytes)
 		_stream.addRtpData(size, timestamp);
 
-		// send the RTP packet
-		if (sendto(_socket_fd, rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT,
-				   (struct sockaddr *)&client.getRtpSockAddr(), sizeof(client.getRtpSockAddr())) == -1) {
-
-			PERROR("send RTP");
+		SocketAttr &rtp = client.getRtpSocketAttr();
+		if (!rtp.sendDataTo(rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT)) {
+			SI_LOG_ERROR("Stream: %d, Error sending RTP data to %s:%d", _stream.getStreamID(),
+				rtp.getIPAddress().c_str(), rtp.getSocketPort());
 		}
 	}
 

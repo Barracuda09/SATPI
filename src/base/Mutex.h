@@ -39,15 +39,15 @@ class Mutex {
 			pthread_mutexattr_t attr;
 			pthread_mutexattr_init(&attr);
 			pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-			pthread_mutex_init(&mutex, &attr);
+			pthread_mutex_init(&_mutex, &attr);
 		}
 		virtual ~Mutex() {
-			pthread_mutex_destroy(&mutex);
+			pthread_mutex_destroy(&_mutex);
 		}
 
 		/// Exclusively lock the @c Mutex per thread.
 		void lock() const {
-			pthread_mutex_lock(&mutex);
+			pthread_mutex_lock(&_mutex);
 		}
 
 		/// Exclusively try to lock the @c Mutex per thread for a maximum time of
@@ -55,7 +55,7 @@ class Mutex {
 		/// @param timeout specifies the time, in msec, to try locking this mutex.
 		bool tryLock(unsigned int timeout) const {
 			bool locked = true;
-			while (pthread_mutex_trylock(&mutex) != 0) {
+			while (pthread_mutex_trylock(&_mutex) != 0) {
 				usleep(1000);
 				--timeout;
 				if (timeout == 0) {
@@ -68,7 +68,7 @@ class Mutex {
 
 		/// Unlocking of the @c Mutex.
 		void unlock() const {
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&_mutex);
 		}
 
 	protected:
@@ -77,7 +77,7 @@ class Mutex {
 		// =======================================================================
 		// Data members
 		// =======================================================================
-		mutable pthread_mutex_t mutex;
+		mutable pthread_mutex_t _mutex;
 }; // class Mutex
 
 /// The class @c MutexLock can be used for @c Mutex to 'auto' lock and unlock

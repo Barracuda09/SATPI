@@ -17,72 +17,104 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef SOCKET_ATTR_H_INCLUDE
-#define SOCKET_ATTR_H_INCLUDE SOCKET_ATTR_H_INCLUDE
+#ifndef SOCKET_SOCKETATTR_H_INCLUDE
+#define SOCKET_SOCKETATTR_H_INCLUDE SOCKET_SOCKETATTR_H_INCLUDE
 
-#include "Utils.h"
+#include <FwDecl.h>
+#include <Utils.h>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 
 #include <string>
 
-/// Socket attributes
-class SocketAttr {
-	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		SocketAttr() {}
+FW_DECL_NS0(SocketClient);
 
-		virtual ~SocketAttr() {}
+	/// Socket attributes
+	class SocketAttr {
+		public:
+			// ===================================================================
+			//  -- Constructors and destructor -----------------------------------
+			// ===================================================================
+			SocketAttr();
 
-		/// Get the file descriptor of this Socket
-		int getFD() const {
-			return _fd;
-		}
+			virtual ~SocketAttr();
 
-		/// Get the pointer to file descriptor of this Socket
-		const int *getFDPtr() const {
-			return &_fd;
-		}
+			// ===================================================================
+			//  -- Other member functions ----------------------------------------
+			// ===================================================================
 
-		/// Set the file descriptor for this Socket
-		/// @param fd specifies the file descriptor to set
-		void setFD(int fd) {
-			_fd = fd;
-		}
+		public:
 
-		/// Close the file descriptor of this Socket
-		virtual void closeFD() {
-			CLOSE_FD(_fd);
-			_ip_addr = "0.0.0.0";
-		}
+			///
+			void setupSocketStructure(int port, const char *ip_addr);
 
-		/// Set the Receive and Send timeout in Sec for this socket
-		void setSocketTimeoutInSec(unsigned int timeout) {
-			struct timeval tv;
-			tv.tv_sec = timeout;
-			tv.tv_usec = 0;
+			///
+			void setupSocketStructureWithAnyAddress(int port);
 
-//			SI_LOG_DEBUG("Set Timeout to %d Sec (fd: %d)", timeout, _fd);
+			///
+			bool setupSocketHandle(int type, int protocol);
 
-			if (setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval))) {
-				PERROR("setsockopt: SO_RCVTIMEO");
+			///
+			std::string getIPAddress() const {
+				return _ip_addr;
 			}
-			if (setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval))) {
-				PERROR("setsockopt: SO_SNDTIMEO");
-			}
-		}
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
-		struct sockaddr_in _addr;
-	protected:
-		int _fd;
-		std::string _ip_addr;
-}; // class SocketAttr
+			/// bind the socket to the port number
+			bool bind();
 
-#endif // SOCKET_ATTR_H_INCLUDE
+			/// Set listen for maxClients on this Socket
+			bool listen(std::size_t maxClients);
+
+			/// Set connect on this Socket
+			bool connectTo();
+
+			/// Accept an connection on this Socket and save client IP address etc.
+			/// in client
+			bool acceptConnection(SocketClient &client, bool showLogInfo);
+
+			/// Get the port of this Socket
+			int getSocketPort() const;
+
+			/// Use this function when the socket is in connected state
+			bool sendData(const void *buf, std::size_t len, int flags);
+
+			/// Use this function when the socket is on a
+			/// connection-mode (SOCK_STREAM)
+			bool sendDataTo(const void *buf, std::size_t len, int flags);
+
+			///
+			ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
+
+			/// Get the file descriptor of this Socket
+			int getFD() const;
+
+			/// Set the file descriptor for this Socket
+			/// @param fd specifies the file descriptor to set
+			void setFD(int fd);
+
+			/// Close the file descriptor of this Socket
+			virtual void closeFD();
+
+			/// Set the Receive and Send timeout in Sec for this socket
+			void setSocketTimeoutInSec(unsigned int timeout);
+
+			/// Get the network buffer size for this Socket
+			int getNetworkBufferSize();
+
+			/// Set the network buffer size for this Socket
+			bool setNetworkBufferSize(int size);
+
+			// ===================================================================
+			//  -- Data members --------------------------------------------------
+			// ===================================================================
+
+		protected:
+
+			int _fd;
+			struct sockaddr_in _addr;
+			std::string _ip_addr;
+
+	};
+
+#endif // SOCKET_SOCKETATTR_H_INCLUDE

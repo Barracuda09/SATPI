@@ -84,10 +84,10 @@ class StreamManager {
 
 StreamClient *-- socket::SocketAttr : " _rtp "
 StreamClient *-- socket::SocketAttr : " _rtcp "
-StreamClient *.. socket::SocketAttr : " httpcFD "
+StreamClient *.. socket::SocketClient : " _httpc "
 class StreamClient {
   Mutex
-  const int *httpcFD
+  SocketClient *_httpc
   watchdog
   canClose
   cseq
@@ -103,13 +103,11 @@ class output::StreamThreadBase {
 output::StreamThreadRtp --|> output::StreamThreadBase
 output::StreamThreadRtp *-- RtcpThread
 class output::StreamThreadRtp {
-  socket_fd
   cseq
 }
 
 RtcpThread *.. StreamInterface
 class RtcpThread {
-  socket_fd
 }
 
 StreamThreadHttp --|> output::StreamThreadBase

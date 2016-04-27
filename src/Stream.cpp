@@ -38,7 +38,7 @@ const unsigned int Stream::MAX_CLIENTS = 8;
 
 Stream::Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *decrypt) :
 	_streamID(streamID),
-	_streamingType(NONE),
+	_streamingType(StreamingType::NONE),
 	_enabled(true),
 	_streamInUse(false),
 	_client(new StreamClient[MAX_CLIENTS]),
@@ -193,7 +193,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s",
 				            _streamID, i, sessionID.c_str());
 			}
-			_client[i].copySocketClientAttr(socketClient);
+			_client[i].setSocketClient(socketClient);
 			_client[i].setSessionID(sessionID);
 			_streamInUse = true;
 			clientID = i;
@@ -210,10 +210,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	return false;
 }
 
-void Stream::copySocketClientAttr(const SocketClient &socketClient) {
+void Stream::setSocketClient(SocketClient &socketClient) {
 	base::MutexLock lock(_mutex);
 
-	_client[0].copySocketClientAttr(socketClient);
+	_client[0].setSocketClient(socketClient);
 }
 
 void Stream::checkStreamClientsWithTimeout() {
@@ -236,17 +236,17 @@ bool Stream::update(int clientID) {
 	// first time streaming?
 	if (_streaming == nullptr) {
 		switch (_streamingType) {
-			case NONE:
+			case StreamingType::NONE:
 				_streaming = nullptr;
 				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
 				break;
-			case HTTP:
+			case StreamingType::HTTP:
 				_streaming = new output::StreamThreadHttp(*this, _decrypt);
 				break;
-			case RTSP:
+			case StreamingType::RTSP:
 				_streaming = new output::StreamThreadRtp(*this, _decrypt);
 				break;
-			case FILE:
+			case StreamingType::FILE:
 				_streaming = new output::StreamThreadTSWriter(*this, _decrypt, "test.ts");
 				break;
 		};
@@ -301,13 +301,14 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	     method.compare("PLAY") == 0 || method.compare("GET") == 0) &&
 	    StringConverter::hasTransportParameters(msg)) {
 
-		_streamingType = (method.compare("GET") == 0) ? HTTP : RTSP;
+		_streamingType = (method.compare("GET") == 0) ?
+			StreamingType::HTTP : StreamingType::RTSP;
 		_device->parseStreamString(msg, method);
 	}
 	int port = 0;
 	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
-		_client[clientID].setRtpSocketPort(port);
-		_client[clientID].setRtcpSocketPort(port+1);
+		_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
+		_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
 	}
 
 	std::string cseq("0");

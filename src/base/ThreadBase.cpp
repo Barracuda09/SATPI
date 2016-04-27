@@ -1,0 +1,148 @@
+/* ThreadBase.h
+
+   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2
+   of the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   Or, point your browser to http://www.gnu.org/copyleft/gpl.html
+*/
+#include <base/ThreadBase.h>
+
+#include <Log.h>
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE _GNU_SOURCE
+#endif
+
+#include <sys/prctl.h>
+#include <unistd.h>
+
+namespace base {
+
+	// =========================================================================
+	//  -- Constructors and destructor -----------------------------------------
+	// =========================================================================
+	ThreadBase::ThreadBase(std::string name) :
+		_run(false), _exit(false), _name(name) {}
+	
+	ThreadBase::~ThreadBase() {}
+
+	// =========================================================================
+	// -- Static member functions ----------------------------------------------
+	// =========================================================================
+	
+	int ThreadBase::getNumberOfProcessorsOnline() {
+		return sysconf(_SC_NPROCESSORS_ONLN);
+	}
+
+	int ThreadBase::getNumberOfProcessorsOnHost() {
+		return sysconf(_SC_NPROCESSORS_CONF);
+	}
+
+	// =========================================================================
+	// -- Other member functions -----------------------------------------------
+	// =========================================================================
+	
+	bool ThreadBase::startThread() {
+		_run = true;
+		_exit = false;
+		const bool ok = (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
+		if (ok) {
+#ifdef HAS_NP_FUNCTIONS
+			pthread_setname_np(_thread, _name.c_str());
+#else
+			prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
+#endif
+		}
+		return ok;
+	}
+
+	void ThreadBase::stopThread() {
+		_run = false;
+		size_t timeout = 0;
+		while (!_exit) {
+			usleep(100000);
+			++timeout;
+			if (timeout > 50) {
+				cancelThread();
+				SI_LOG_DEBUG("%s: Thread did not stop within timeout?  !!TIMEOUT!!", _name.c_str());
+				break;
+			}
+		}
+	}
+
+	void ThreadBase::cancelThread() {
+		pthread_cancel(_thread);
+		_exit = true;
+	}
+
+	void ThreadBase::joinThread() {
+		(void) pthread_join(_thread, nullptr);
+	}
+
+	void ThreadBase::setAffinity(int cpu) {
+		if (cpu > 0 && cpu < getNumberOfProcessorsOnline()) {
+			cpu_set_t cpus;
+			CPU_ZERO(&cpus);
+			CPU_SET(cpu, &cpus);
+//			pthread_setaffinity_np(_thread, sizeof(cpu_set_t), &cpus);
+			sched_setaffinity(_thread, sizeof(cpu_set_t), &cpus);
+		}
+	}
+
+	int ThreadBase::getScheduledAffinity() const {
+		return sched_getcpu();
+	}
+
+	bool ThreadBase::setPriority(const Priority priority) {
+		double factor = 0.5;
+		switch (priority) {
+			case Priority::High:
+				factor = 1.0;
+				break;
+			case Priority::AboveNormal:
+				factor = 0.75;
+				break;
+			case Priority::Normal:
+				factor = 0.5;
+				break;
+			case Priority::BelowNormal:
+				factor = 0.25;
+				break;
+			case Priority::Idle:
+				factor = 0.0;
+				break;
+			default:
+				SI_LOG_ERROR("%s: setPriority: Unknown case", _name.c_str());
+				return false;
+		}
+		int policy = 0;
+		pthread_attr_t threadAttributes;
+		pthread_attr_init(&threadAttributes);
+		pthread_attr_getschedpolicy(&threadAttributes, &policy);
+		pthread_attr_destroy(&threadAttributes);
+		const int minPriority = sched_get_priority_min(policy);
+		const int maxPriority = sched_get_priority_max(policy);
+		const int linuxPriority = minPriority + ((maxPriority - minPriority) * factor);
+		return (pthread_setschedprio(_thread, linuxPriority) == 0);
+	}
+
+	void ThreadBase::threadEntryBase() {
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+		threadEntry();
+		_exit = true;
+	}
+
+} // namespace base

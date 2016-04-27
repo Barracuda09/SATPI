@@ -26,8 +26,6 @@
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
-#include <sys/socket.h>
-
 namespace output {
 
 	StreamThreadTSWriter::StreamThreadTSWriter(
@@ -41,23 +39,23 @@ namespace output {
 		terminateThread();
 	}
 
-	int StreamThreadTSWriter::getStreamSocketPort(int clientID) const {
-		return _stream.getStreamClient(clientID).getRtpSocketPort();
+	int StreamThreadTSWriter::getStreamSocketPort(int UNUSED(clientID)) const {
+		return 0;
 	}
 
 	void StreamThreadTSWriter::threadEntry() {
-		const StreamClient &client = _stream.getStreamClient(0);
+		StreamClient &client = _stream.getStreamClient(0);
 		_file.open(_filePath, std::ofstream::binary);
 		while (running()) {
 			switch (_state) {
-			case Pause:
-				_state = Paused;
+			case State::Pause:
+				_state = State::Paused;
 				break;
-			case Paused:
+			case State::Paused:
 				// Do nothing here, just wait
 				usleep(50000);
 				break;
-			case Running:
+			case State::Running:
 				readDataFromInputDevice(client);
 				break;
 			default:
@@ -68,7 +66,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &UNUSED(client)) {
+	void StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
 		const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 		const unsigned int size = buffer.getBufferSize();

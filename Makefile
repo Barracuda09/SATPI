@@ -28,6 +28,7 @@ endif
 
 # List of source to be compiled
 SOURCES = Version.cpp \
+	InterfaceAttr.cpp \
 	HttpServer.cpp \
 	HttpcServer.cpp \
 	Log.cpp \
@@ -39,6 +40,7 @@ SOURCES = Version.cpp \
 	StreamClient.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
+	base/ThreadBase.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
 	input/dvb/Frontend.cpp \
@@ -49,6 +51,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DVBS.cpp \
 	input/dvb/delivery/DVBT.cpp \
 	input/file/TSReader.cpp \
+	input/stream/Streamer.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/TableData.cpp \
 	output/StreamThreadBase.cpp \
@@ -57,6 +60,7 @@ SOURCES = Version.cpp \
 	output/StreamThreadTSWriter.cpp \
 	socket/HttpcSocket.cpp \
 	socket/TcpSocket.cpp \
+	socket/SocketAttr.cpp \
 	socket/UdpSocket.cpp \
 	upnp/ssdp/Server.cpp
 

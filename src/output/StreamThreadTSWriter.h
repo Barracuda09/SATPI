@@ -45,23 +45,24 @@ namespace output {
 
 			virtual ~StreamThreadTSWriter();
 
+			// =======================================================================
+			//  -- output::StreamThreadBase ------------------------------------------
+			// =======================================================================
+
 		protected:
 
-			/// Thread function
-			virtual void threadEntry();
+			virtual void threadEntry() override;
 
-			/// @see StreamThreadBase
 			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
-				const StreamClient &client);
+				StreamClient &client) override;
 
-			/// @see StreamThreadBase
-			virtual int getStreamSocketPort(int clientID) const;
-
-		private:
+			virtual int getStreamSocketPort(int clientID) const override;
 
 			// =======================================================================
 			//  -- Data members ------------------------------------------------------
 			// =======================================================================
+
+		private:
 
 			std::ofstream _file;
 			std::string _filePath;

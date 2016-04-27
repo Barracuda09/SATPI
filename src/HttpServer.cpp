@@ -81,7 +81,7 @@ int HttpServer::readFile(const char *file, std::string &data) {
 	return file_size;
 }
 
-bool HttpServer::methodPost(const SocketClient &client) {
+bool HttpServer::methodPost(SocketClient &client) {
 	std::string content;
 	if (StringConverter::getContentFrom(client.getMessage(), content)) {
 		std::string file;
@@ -104,8 +104,8 @@ bool HttpServer::methodPost(const SocketClient &client) {
 	getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 
 	// send 'htmlBody' to client
-	if (send(client.getFD(), htmlBody.c_str(), htmlBody.size(), 0) == -1) {
-		PERROR("send htmlBody");
+	if (!client.sendData(htmlBody.c_str(), htmlBody.size(), 0)) {
+		SI_LOG_ERROR("Send htmlBody failed");
 		return false;
 	}
 	return true;
@@ -222,13 +222,13 @@ bool HttpServer::methodGet(SocketClient &client) {
 	if (docType.size() > 0) {
 //		SI_LOG_INFO("%s", htmlBody);
 		// send 'htmlBody' to client
-		if (send(client.getFD(), htmlBody.c_str(), htmlBody.size(), 0) == -1) {
-			PERROR("send htmlBody");
+		if (!client.sendData(htmlBody.c_str(), htmlBody.size(), 0)) {
+			SI_LOG_ERROR("Send htmlBody failed");
 			return false;
 		}
 		// send 'docType' to client
-		if (send(client.getFD(), docType.c_str(), docTypeSize, 0) == -1) {
-			PERROR("send docType");
+		if (!client.sendData(docType.c_str(), docTypeSize, 0)) {
+			SI_LOG_ERROR("Send docType failed");
 			return false;
 		}
 		return true;

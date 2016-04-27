@@ -234,12 +234,12 @@ namespace dvbapi {
 						std::string filterData;
 						if (frontend->findOSCamFilterData(pid, data, tableID, filter, demux, filterData)) {
 							// Don't send PAT or PMT before we have an active
-							if (pid == 0 || frontend->isPMT(pid)) { 
+							if (pid == 0 || frontend->isPMT(pid)) {
 							} else {
 								const unsigned char *tableData = reinterpret_cast<const unsigned char *>(filterData.c_str());
 								const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
 
-								unsigned char clientData[2048];
+								unsigned char clientData[sectionLength + 25];
 								const uint32_t request = htonl(DVBAPI_FILTER_DATA);
 								std::memcpy(&clientData[0], &request, 4);
 								clientData[4] =  demux;
@@ -250,7 +250,7 @@ namespace dvbapi {
 								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x %04x %04x",
 									streamID, demux, filter, pid, tableID, tableData[8], tableData[9]);
 
-								if (send(_client.getFD(), clientData, length, MSG_DONTWAIT) == -1) {
+								if (!_client.sendData(clientData, length, MSG_DONTWAIT)) {
 									SI_LOG_ERROR("Stream: %d, Filter - send data to server failed", streamID);
 								}
 							}
@@ -281,7 +281,7 @@ namespace dvbapi {
 			buff[4] = 0x83;
 			buff[5] = 0x02;
 			buff[6] = 0x00;
-			buff[7] = streamID + _adapterOffset;  // demux
+			buff[7] = static_cast<char>(streamID + _adapterOffset);  // demux
 
 			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt", streamID);
 
@@ -294,7 +294,7 @@ namespace dvbapi {
 
 			frontend->clearOSCamFilters();
 
-			if (send(_client.getFD(), buff, sizeof(buff), MSG_DONTWAIT) == -1) {
+			if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
 				SI_LOG_ERROR("Stream: %d, Stop CA Decrypt - send data to server failed", streamID);
 				return false;
 			}
@@ -302,32 +302,19 @@ namespace dvbapi {
 		return true;
 	}
 
-	bool Client::initClientSocket(SocketClient &client, int port, in_addr_t s_addr) {
-		// fill in the socket structure with host information
-		memset(&client._addr, 0, sizeof(client._addr));
-		client._addr.sin_family      = AF_INET;
-		client._addr.sin_addr.s_addr = s_addr;
-		client._addr.sin_port        = htons(port);
+	bool Client::initClientSocket(SocketClient &client, int port, const char *ip_addr) {
 
-		int fd;
-		if ((fd = socket(AF_INET, SOCK_STREAM /*| SOCK_NONBLOCK*/, 0)) == -1) {
-			PERROR("socket send");
+		client.setupSocketStructure(port, ip_addr);
+
+		if (!client.setupSocketHandle(SOCK_STREAM /*| SOCK_NONBLOCK*/, 0)) {
+			SI_LOG_ERROR("OSCam Server handle failed");
 			return false;
 		}
-		client.setFD(fd);
+
 		client.setSocketTimeoutInSec(2);
 
-		int val = 1;
-		if (setsockopt(client.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-			PERROR("setsockopt SO_REUSEADDR");
-			client.closeFD();
-			return false;
-		}
-		if (connect(client.getFD(), (struct sockaddr *)&client._addr, sizeof(client._addr)) == -1) {
-			if (errno != ECONNREFUSED && errno != EINPROGRESS) {
-				PERROR("connect");
-			}
-			client.closeFD();
+		if (!client.connectTo()) {
+			SI_LOG_ERROR("Connecting to OSCam Server failed");
 			return false;
 		}
 		return true;
@@ -349,7 +336,7 @@ namespace dvbapi {
 		buff[6] = len;
 		std::memcpy(&buff[7], name.c_str(), len);
 
-		if (write(_client.getFD(), buff, sizeof(buff)) == -1) {
+		if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
 			SI_LOG_ERROR("write failed");
 		}
 	}
@@ -557,13 +544,13 @@ namespace dvbapi {
 					caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
 					caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
 					caPMT[14] = 0x02;                                // Length
-					caPMT[15] = (char) streamID + _adapterOffset;    // Demux ID
-					caPMT[16] = (char) streamID + _adapterOffset;    // streamID
+					caPMT[15] = static_cast<char>(streamID + _adapterOffset); // Demux ID
+					caPMT[16] = static_cast<char>(streamID + _adapterOffset); // streamID
 					std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
 					SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam", streamID);
 
-					if (send(_client.getFD(), caPMT, totLength + 6, MSG_DONTWAIT) == -1) {
+					if (!_client.sendData(caPMT, totLength + 6, MSG_DONTWAIT)) {
 						SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
 					}
 				} else {
@@ -578,23 +565,26 @@ namespace dvbapi {
 		SI_LOG_INFO("Setting up DVBAPI client");
 
 		struct pollfd pfd[1];
-		pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-		pfd[0].revents = 0;
-		pfd[0].fd      = -1;
 
 		// set time to try to connect
 		time_t retryTime = time(nullptr) + 2;
 
 		for (;; ) {
 			// try to connect to server
-			if (!_connected && _enabled) {
-				const time_t currTime = time(nullptr);
-				if (retryTime < currTime) {
-					if (initClientSocket(_client, _serverPort, inet_addr(_serverIpAddr.c_str()))) {
-						sendClientInfo();
-						pfd[0].fd = _client.getFD();
-					} else {
-						retryTime = currTime + 5;
+			if (!_connected) {
+				pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+				pfd[0].revents = 0;
+				pfd[0].fd      = -1;
+				if (_enabled) {
+					const time_t currTime = time(nullptr);
+					if (retryTime < currTime) {
+						if (initClientSocket(_client, _serverPort, _serverIpAddr.c_str())) {
+							sendClientInfo();
+							pfd[0].fd = _client.getFD();
+						} else {
+							_client.closeFD();
+							retryTime = currTime + 5;
+						}
 					}
 				}
 			}
@@ -604,9 +594,7 @@ namespace dvbapi {
 				if (pfd[0].revents != 0) {
 					char buf[1024];
 					auto i = 0;
-					struct sockaddr_in si_other;
-					socklen_t addrlen = sizeof(si_other);
-					const ssize_t size = recvfrom(_client.getFD(), buf, sizeof(buf)-1, MSG_DONTWAIT, (struct sockaddr *)&si_other, &addrlen);
+					const ssize_t size = _client.recvDatafrom(buf, sizeof(buf)-1, MSG_DONTWAIT);
 					if (size > 0) {
 						while (i < size) {
 							// get command
@@ -743,6 +731,12 @@ namespace dvbapi {
 		}
 		if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 			_enabled = (element == "true") ? true : false;
+			if (!_enabled) {
+				SI_LOG_INFO("Connection closed with %s", _serverName.c_str());
+				_serverName = "Not connected";
+				_client.closeFD();
+				_connected = false;
+			}
 		}
 		if (findXMLElement(xml, "RewritePMT.value", element)) {
 			_rewritePMT = (element == "true") ? true : false;

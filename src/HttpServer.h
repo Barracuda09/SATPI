@@ -52,7 +52,7 @@ class HttpServer :
 		virtual bool methodGet(SocketClient &client);
 
 		/// Method for getting the required files
-		virtual bool methodPost(const SocketClient &client);
+		virtual bool methodPost(SocketClient &client);
 
 		///
 		int readFile(const char *file, std::string &data);
@@ -71,6 +71,6 @@ class HttpServer :
 
 		Properties &_properties;
 
-}; // class HttpServer
+};
 
 #endif // HTTP_SERVER_H_INCLUDE

@@ -51,6 +51,24 @@ namespace dvbapi {
 			virtual ~Client();
 
 			// ================================================================
+			//  -- base::ThreadBase -------------------------------------------
+			// ================================================================
+
+		protected:
+
+			virtual void threadEntry() override;
+
+			// ================================================================
+			//  -- base::XMLSupport -------------------------------------------
+			// ================================================================
+
+		public:
+
+			virtual void addToXML(std::string &xml) const override;
+
+			virtual void fromXML(const std::string &xml) override;
+
+			// ================================================================
 			//  -- Other member functions -------------------------------------
 			// ================================================================
 
@@ -62,33 +80,26 @@ namespace dvbapi {
 			///
 			bool stopDecrypt(int streamID);
 
-			/// Add data to an XML for storing or web interface
-			virtual void addToXML(std::string &xml) const;
-
-			/// Get data from an XML for restoring or web interface
-			virtual void fromXML(const std::string &xml);
-
-		protected:
-
-			/// Thread function
-			virtual void threadEntry();
-
 		private:
 
 			///
-			bool initClientSocket(SocketClient &client, int port, in_addr_t s_addr);
+			bool initClientSocket(SocketClient &client, int port,
+				const char *ip_addr);
 
 			///
 			void sendClientInfo();
 
 			///
-			void collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+			void collectPAT(input::dvb::FrontendDecryptInterface *frontend,
+				const unsigned char *data);
 
 			///
-			void collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data);
+			void collectPMT(input::dvb::FrontendDecryptInterface *frontend,
+				const unsigned char *data);
 
 			///
-			void cleanPMT(input::dvb::FrontendDecryptInterface *frontend, unsigned char *data);
+			void cleanPMT(input::dvb::FrontendDecryptInterface *frontend,
+				unsigned char *data);
 
 			// =================================================================
 			// -- Data members -------------------------------------------------
@@ -108,7 +119,7 @@ namespace dvbapi {
 
 			base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> _getFrontendDecryptInterface;
 
-	}; // class Client
+	};
 
 } // namespace dvbapi
 } // namespace decrypt

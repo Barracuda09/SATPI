@@ -18,17 +18,19 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #include <socket/TcpSocket.h>
+
 #include <socket/SocketClient.h>
+#include <Log.h>
+#include <Utils.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "Log.h"
-#include "Utils.h"
 
 TcpSocket::TcpSocket(int maxClients, const std::string &protocol, int port, bool nonblock) :
 		_MAX_CLIENTS(maxClients),
@@ -66,7 +68,7 @@ int TcpSocket::poll(int timeout) {
 					// Try to find a free poll entry
 					for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
 						if (_pfd[j+1].fd == -1) {
-							if (acceptConnection(_client[j], 1) == 1) {
+							if (acceptConnection(_client[j], true)) {
 								// setup polling
 								_pfd[j+1].fd = _client[j].getFD();
 								_pfd[j+1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
@@ -82,8 +84,7 @@ int TcpSocket::poll(int timeout) {
 						process(_client[i-1]);
 					} else {
 						// Try to find the client that requested to close
-						std::size_t j;
-						for (j = 0; j < _MAX_CLIENTS; ++j) {
+						for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
 							if (_client[j].getFD() == _pfd[i].fd) {
 								SI_LOG_DEBUG("%s Client %s: Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
 								             _client[j].getIPAddress().c_str(), _client[j].getFD());
@@ -103,33 +104,21 @@ int TcpSocket::poll(int timeout) {
 
 bool TcpSocket::initServerSocket(int maxClients, int port, bool nonblock) {
 	// fill in the socket structure with host information
-	_server._addr.sin_family      = AF_INET;
-	_server._addr.sin_addr.s_addr = INADDR_ANY;
-	_server._addr.sin_port        = htons(port);
+	_server.setupSocketStructureWithAnyAddress(port);
 
-	int fd;
-	if ((fd = socket(AF_INET, SOCK_STREAM | ((nonblock) ? SOCK_NONBLOCK : 0), 0)) == -1) {
-		PERROR("Server socket");
+	if (!_server.setupSocketHandle(SOCK_STREAM | ((nonblock) ? SOCK_NONBLOCK : 0), 0)) {
+		SI_LOG_ERROR("TCP Server handle failed");
 		return false;
 	}
-	_server.setFD(fd);
+
 	_server.setSocketTimeoutInSec(2);
 
-	int val = 1;
-	if (setsockopt(_server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-		PERROR("Server setsockopt SO_REUSEADDR");
+	if (!_server.bind()) {
+		SI_LOG_ERROR("TCP Bind failed");
 		return false;
 	}
-
-	// bind the socket to the port number
-	if (bind(_server.getFD(), (struct sockaddr *) &_server._addr, sizeof(_server._addr)) == -1) {
-		PERROR("Server bind");
-		return false;
-	}
-
-	// start to listen
-	if (listen(_server.getFD(), maxClients) == -1) {
-		PERROR("Server listen");
+	if (!_server.listen(maxClients)) {
+		SI_LOG_ERROR("TCP Listen failed");
 		return false;
 	}
 	return true;
@@ -137,23 +126,5 @@ bool TcpSocket::initServerSocket(int maxClients, int port, bool nonblock) {
 
 bool TcpSocket::acceptConnection(SocketClient &client, bool showLogInfo) {
 	// check if we have a client?
-	socklen_t addrlen = sizeof(client._addr);
-	const int fd_conn = accept(_server.getFD(), (struct sockaddr *) &client._addr, &addrlen);
-	if (fd_conn > 0) {
-		// save connected file descriptor
-		client.setFD(fd_conn);
-
-		client.setSocketTimeoutInSec(2);
-
-		// save client ip address
-		client.setIPAddress(inet_ntoa(client._addr.sin_addr));
-
-		// Show who is connected
-		if (showLogInfo) {
-			SI_LOG_INFO("%s Connection from %s Port %d (fd: %d)", client.getProtocolString().c_str(),
-			            client.getIPAddress().c_str(), ntohs(client._addr.sin_port), fd_conn);
-		}
-		return true;
-	}
-	return false;
+	return _server.acceptConnection(client, showLogInfo);
 }

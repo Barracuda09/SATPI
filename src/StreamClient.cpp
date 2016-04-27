@@ -28,95 +28,65 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-StreamClient::StreamClient() :
-		_httpcFD(nullptr),
-		_httpcMsg(""),
-		_ip_addr("0.0.0.0"),
-		_sessionID("-1"),
-		_watchdog(0),
-		_sessionTimeout(60),
-		_cseq(0),
-		_canClose(false) {;}
+	StreamClient::StreamClient() :
+			_httpc(nullptr),
+			_sessionID("-1"),
+			_watchdog(0),
+			_sessionTimeout(60),
+			_cseq(0),
+			_canClose(false) {}
 
-StreamClient::~StreamClient() {;}
+	StreamClient::~StreamClient() {}
 
-void StreamClient::setCanClose(bool close) {
-	base::MutexLock lock(_mutex);
+	void StreamClient::setCanClose(bool close) {
+		base::MutexLock lock(_mutex);
 
-	SI_LOG_DEBUG("Connection can close: %d", close);
-	_canClose = close;
-}
-
-void StreamClient::teardown(bool gracefull) {
-	base::MutexLock lock(_mutex);
-
-	_watchdog = 0;
-	_canClose = true;
-	if (!gracefull) {
-		_sessionID = "-1";
-		_ip_addr = "0.0.0.0";
+		SI_LOG_DEBUG("Connection can close: %d", close);
+		_canClose = close;
 	}
-}
 
-void StreamClient::restartWatchDog() {
-	base::MutexLock lock(_mutex);
+	void StreamClient::teardown(bool gracefull) {
+		base::MutexLock lock(_mutex);
 
-	// reset watchdog and give some extra timeout
-	_watchdog = time(nullptr) + _sessionTimeout + 15;
-}
+		_watchdog = 0;
+		_canClose = true;
+		if (!gracefull) {
+			_sessionID = "-1";
+		}
+	}
 
-bool StreamClient::checkWatchDogTimeout() {
-	base::MutexLock lock(_mutex);
+	void StreamClient::restartWatchDog() {
+		base::MutexLock lock(_mutex);
 
-	return (getHttpcFD() == -1) &&
-	       (_watchdog != 0) &&
-	       (_watchdog < time(nullptr));
-}
+		// reset watchdog and give some extra timeout
+		_watchdog = time(nullptr) + _sessionTimeout + 15;
+	}
 
-void StreamClient::copySocketClientAttr(const SocketClient &socket) {
-	base::MutexLock lock(_mutex);
+	bool StreamClient::checkWatchDogTimeout() {
+		base::MutexLock lock(_mutex);
 
-	_httpcFD = socket.getFDPtr();
-	_ip_addr = socket.getIPAddress();
-	_httpcMsg = socket.getMessage();
-}
+		return (((_httpc == nullptr) ? -1 : _httpc->getFD()) == -1) &&
+			   (_watchdog != 0) &&
+			   (_watchdog < time(nullptr));
+	}
 
-void StreamClient::setRtpSocketPort(int port) {
-	base::MutexLock lock(_mutex);
+	void StreamClient::setSocketClient(SocketClient &socket) {
+		base::MutexLock lock(_mutex);
+		_httpc = &socket;
+	}
 
-	_rtp._addr.sin_family = AF_INET;
-	_rtp._addr.sin_addr.s_addr = inet_addr(getIPAddress().c_str());
-	_rtp._addr.sin_port = htons(port);
-}
+	SocketAttr &StreamClient::getRtpSocketAttr() {
+		return _rtp;
+	}
 
-int StreamClient::getRtpSocketPort() const {
-	base::MutexLock lock(_mutex);
+	SocketAttr &StreamClient::getRtcpSocketAttr() {
+		return _rtcp;
+	}
 
-	return ntohs(_rtp._addr.sin_port);
-}
+	// =======================================================================
+	//  -- HTTP member functions ---------------------------------------------
+	// =======================================================================
 
-void StreamClient::setRtcpSocketPort(int port) {
-	base::MutexLock lock(_mutex);
-
-	_rtcp._addr.sin_family = AF_INET;
-	_rtcp._addr.sin_addr.s_addr = inet_addr(getIPAddress().c_str());
-	_rtcp._addr.sin_port = htons(port);
-}
-
-int StreamClient::getRtcpSocketPort() const {
-	base::MutexLock lock(_mutex);
-
-	return ntohs(_rtcp._addr.sin_port);
-}
-
-const struct sockaddr_in &StreamClient::getRtpSockAddr() const {
-	base::MutexLock lock(_mutex);
-
-	return _rtp._addr;
-}
-
-const struct sockaddr_in &StreamClient::getRtcpSockAddr() const {
-	base::MutexLock lock(_mutex);
-
-	return _rtcp._addr;
-}
+	bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
+		return (_httpc == nullptr) ? false : _httpc->sendData(buf, len, flags);
+	}

@@ -30,36 +30,44 @@
 
 FW_DECL_NS0(SocketClient);
 
-/// HTTPC Socket related functions
-class HttpcSocket  {
-	public:
-		static const int HTTPC_TIMEOUT;
+	/// HTTPC Socket related functions
+	class HttpcSocket  {
+		public:
+			static const int HTTPC_TIMEOUT;
 
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		HttpcSocket();
-		virtual ~HttpcSocket();
+			// ===================================================================
+			//  -- Constructors and destructor -----------------------------------
+			// ===================================================================
+			HttpcSocket();
+			
+			virtual ~HttpcSocket();
 
-	protected:
-		/// Receive an HTTP message from client
-		/// @param client
-		/// @param recv_flags
-		/// @return the amount of bytes red
-		ssize_t recvHttpcMessage(SocketClient &client, int recv_flags);
+			// ===================================================================
+			//  -- Other member functions ----------------------------------------
+			// ===================================================================
+			
+		protected:
+		
+			/// Receive an HTTP message from client
+			/// @param client
+			/// @param recv_flags
+			/// @return the amount of bytes red
+			ssize_t recvHttpcMessage(SocketClient &client, int recv_flags);
 
-		/// Receive an HTTP message from client
-		/// @param client
-		/// @param recv_flags
-		/// @param si_other
-		/// @param addrlen
-		/// @return the amount of bytes red
-		ssize_t recvfromHttpcMessage(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen);
+			/// Receive an HTTP message from client
+			/// @param client
+			/// @param recv_flags
+			/// @param si_other
+			/// @param addrlen
+			/// @return the amount of bytes red
+			ssize_t recvfromHttpcMessage(SocketClient &client, int recv_flags,
+				struct sockaddr_in *si_other, socklen_t *addrlen);
 
-	private:
-		/// Main receive HTTP message from client
-		ssize_t recv_recvfrom_httpc_message(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen);
+		private:
+			/// Main receive HTTP message from client
+			ssize_t recv_recvfrom_httpc_message(SocketClient &client, int recv_flags,
+				struct sockaddr_in *si_other, socklen_t *addrlen);
 
-}; // class HttpcSocket
+	};
 
 #endif // HTTPC_SOCKET_H_INCLUDE

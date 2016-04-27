@@ -31,38 +31,49 @@ FW_DECL_NS0(Properties);
 
 namespace upnp {
 namespace ssdp {
-	
-/// SSDP Server
-class Server :
-	public base::ThreadBase,
-	public UdpSocket {
-	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		Server(const InterfaceAttr &interface,
-		           Properties &properties);
-		virtual ~Server();
 
-	protected:
-		/// Thread function
-		virtual void threadEntry();
+	/// SSDP Server
+	class Server :
+		public base::ThreadBase,
+		public UdpSocket {
+		public:
 
-	private:
-		///
-		unsigned int readBootIDFromFile(const char *file);
+			// =======================================================================
+			// -- Constructors and destructor ----------------------------------------
+			// =======================================================================
 
-		///
-		bool sendByeBye(unsigned int bootId, const char *uuid);
+			Server(const InterfaceAttr &interface,
+				Properties &properties);
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
-		const InterfaceAttr &_interface;
-		Properties          &_properties;
-		SocketClient        _udpMultiListen;
-		SocketClient        _udpMultiSend;
-}; // class Server
+			virtual ~Server();
+
+			// =======================================================================
+			//  -- Other member functions --------------------------------------------
+			// =======================================================================
+
+		protected:
+
+			/// Thread function
+			virtual void threadEntry();
+
+		private:
+			///
+			unsigned int readBootIDFromFile(const char *file);
+
+			///
+			bool sendByeBye(unsigned int bootId, const char *uuid);
+
+			// =======================================================================
+			// -- Data members -------------------------------------------------------
+			// =======================================================================
+
+		private:
+
+			const InterfaceAttr &_interface;
+			Properties &_properties;
+			SocketClient _udpMultiListen;
+			SocketClient _udpMultiSend;
+	};
 
 } // namespace ssdp
 } // namespace upnp

@@ -18,7 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
 #include <Log.h>
+
 #include <StringConverter.h>
+#include <base/Mutex.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,19 +30,12 @@
 #define LOG_SIZE 350
 
 static LogBuffer_t appLog;
-static pthread_mutex_t mutex;
+static base::Mutex mutex;
 int syslog_on = 1;
 
-void open_app_log() {
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&mutex, &attr);
-}
+void open_app_log() {}
 
-void close_app_log() {
-	// @TODO destroy mutex??
-}
+void close_app_log() {}
 
 void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...) {
 	std::string strData;
@@ -60,7 +55,7 @@ void binlog(int priority, const unsigned char *p, int length, const char *fmt, .
 }
 
 void applog(int priority, const char *fmt, ...) {
-	pthread_mutex_lock(&mutex);
+	base::MutexLock lock(mutex);
 
 	char txt[2048];
 	va_list arglist;
@@ -110,25 +105,22 @@ void applog(int priority, const char *fmt, ...) {
 		std::flush(std::cout);
 #endif
 	}
-	pthread_mutex_unlock(&mutex);
 }
 
 std::string make_log_xml() {
-	std::string log;
-
-	// make data xml
-	log  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n";
-
-	pthread_mutex_lock(&mutex);
-	if (!appLog.empty()) {
-		for (LogBuffer_t::iterator it = appLog.begin(); it != appLog.end(); ++it) {
-			LogElem_t elem = *it;
-			StringConverter::addFormattedString(log, "<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
-			                                    elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(), elem.priority);
+	std::string log("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n");
+	{
+		base::MutexLock lock(mutex);
+		if (!appLog.empty()) {
+			for (LogBuffer_t::iterator it = appLog.begin(); it != appLog.end(); ++it) {
+				LogElem_t elem = *it;
+				StringConverter::addFormattedString(log,
+					"<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
+					elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(),
+					elem.priority);
+			}
 		}
 	}
-	pthread_mutex_unlock(&mutex);
-
 	log += "</loglist>";
 	return log;
 }

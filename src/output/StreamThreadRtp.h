@@ -42,26 +42,30 @@ namespace output {
 
 			virtual ~StreamThreadRtp();
 
-			/// @see StreamThreadBase
-			virtual bool startStreaming();
+			// =======================================================================
+			//  -- output::StreamThreadBase ------------------------------------------
+			// =======================================================================
+
+		public:
+
+			virtual bool startStreaming() override;
 
 		protected:
 
-			/// Thread function
-			virtual void threadEntry();
+			virtual void threadEntry() override;
+			
+			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
+				StreamClient &client) override;
 
-			/// @see StreamThreadBase
-			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer, const StreamClient &client);
-
-			/// @see StreamThreadBase
-			virtual int getStreamSocketPort(int clientID) const;
-
-		private:
+			virtual int getStreamSocketPort(int clientID) const override;
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
-			int _socket_fd;     ///
+
+		private:
+
+			int _clientID;
 			uint16_t _cseq;     /// RTP sequence number
 			RtcpThread _rtcp;   ///
 

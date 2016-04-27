@@ -24,30 +24,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <net/if.h>
 
-UdpSocket::UdpSocket() {;}
+UdpSocket::UdpSocket() {}
 
-UdpSocket::~UdpSocket() {;}
+UdpSocket::~UdpSocket() {}
 
-bool UdpSocket::init_udp_socket(SocketClient &server, int port, in_addr_t s_addr) {
+bool UdpSocket::init_udp_socket(SocketClient &server, int port, const char *ip_addr) {
 	// fill in the socket structure with host information
-	memset(&server._addr, 0, sizeof(server._addr));
-	server._addr.sin_family      = AF_INET;
-	server._addr.sin_addr.s_addr = s_addr;
-	server._addr.sin_port        = htons(port);
+	server.setupSocketStructure(port, ip_addr);
 
-	int fd;
-	if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-		PERROR("socket send");
-		return false;
-	}
-	server.setFD(fd);
-
-	int val = 1;
-	if (setsockopt(server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-		PERROR("Server setsockopt SO_REUSEADDR");
+	if (!server.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
+		SI_LOG_ERROR("UDP Server handle failed");
 		return false;
 	}
 	return true;
@@ -55,21 +47,10 @@ bool UdpSocket::init_udp_socket(SocketClient &server, int port, in_addr_t s_addr
 
 bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const char *ip_addr) {
 	// fill in the socket structure with host information
-	memset(&server._addr, 0, sizeof(server._addr));
-	server._addr.sin_family      = AF_INET;
-	server._addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server._addr.sin_port        = htons(port);
+	server.setupSocketStructureWithAnyAddress(port);
 
-	int fd;
-	if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-		PERROR("socket listen");
-		return false;
-	}
-	server.setFD(fd);
-
-	int val = 1;
-	if (setsockopt(server.getFD(), SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-		PERROR("Server setsockopt SO_REUSEADDR");
+	if (!server.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
+		SI_LOG_ERROR("UDP Multicast Server handle failed");
 		return false;
 	}
 
@@ -81,9 +62,9 @@ bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const 
 		return false;
 	}
 
-	// bind the socket to the port number 
-	if (bind(server.getFD(), (struct sockaddr *) &server._addr, sizeof(server._addr)) == -1) {
-		PERROR("udp multi bind");
+	// bind the socket to the port number
+	if (!server.bind()) {
+		SI_LOG_ERROR("UDP Multicast Bind failed");
 		return false;
 	}
 	return true;

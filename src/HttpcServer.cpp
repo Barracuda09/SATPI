@@ -172,7 +172,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	SI_LOG_DEBUG("%s", httpc.c_str());
 
 	// send reply to client
-	if (send(client.getFD(), httpc.c_str(), httpc.size(), MSG_NOSIGNAL) == -1) {
-		PERROR("error sending: streaming reply");
+	if (!client.sendData(httpc.c_str(), httpc.size(), MSG_NOSIGNAL)) {
+		SI_LOG_ERROR("Send Streaming reply failed");
 	}
 }

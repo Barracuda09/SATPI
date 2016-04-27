@@ -27,6 +27,7 @@
 #include <StringConverter.h>
 #include <input/dvb/Frontend.h>
 #include <input/file/TSReader.h>
+#include <input/stream/Streamer.h>
 #ifdef LIBDVBCSA
 	#include <decrypt/dvbapi/Client.h>
 	#include <input/dvb/FrontendDecryptInterface.h>
@@ -75,7 +76,7 @@ void StreamManager::enumerateDevices() {
 	_dummyStream = new Stream(0, nullptr, _decrypt);
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
 	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
-
+	input::stream::Streamer::enumerate(_stream);
 
 	_nr_dvb_s2 = 0;
 	_nr_dvb_t = 0;
@@ -87,7 +88,7 @@ void StreamManager::enumerateDevices() {
 			_nr_dvb_c, _nr_dvb_c2);
 	}
 	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
-			   _nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
+		_nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
 
 }
 
@@ -127,7 +128,7 @@ Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int 
 		} else {
 			SI_LOG_INFO("Found message outside session");
 			socketClient.setSessionID("-1");
-			_dummyStream->copySocketClientAttr(socketClient);
+			_dummyStream->setSocketClient(socketClient);
 			return _dummyStream;
 		}
 	}

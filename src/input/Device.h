@@ -32,8 +32,8 @@ FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
 
-	/// The class @c Device is an interface to some input device
-	/// like for example an frontend with DVB-S2 or File input
+	/// The class @c Device is an interface to some input device.
+	/// For example an frontend with DVB-S2 or File input etc.
 	class Device :
 		public base::XMLSupport {
 		public:
@@ -44,6 +44,12 @@ namespace input {
 			Device() {}
 
 			virtual ~Device() {}
+
+			// =======================================================================
+			//  -- Other member functions --------------------------------------------
+			// =======================================================================
+
+		public:
 
 			/// Add the amount of delivery systems of this device to the
 			/// specified parameters
@@ -71,7 +77,9 @@ namespace input {
 			///
 			virtual bool hasDeviceDataChanged() const = 0;
 
-			///
+			/// Parse the input/request string from client.
+			/// For example:
+			/// rtp://ip.of.your.box/?fe=3&freq=170&sr=6900&msys=dvbc&mtype=256qam&fec=35&addpids=0,1,16,17
 			virtual void parseStreamString(const std::string &msg, const std::string &method) = 0;
 
 			/// Update the Channel and PID. Will close DVR and reopen it if channel did change

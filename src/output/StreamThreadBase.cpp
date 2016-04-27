@@ -26,7 +26,7 @@
 #include <Utils.h>
 #include <input/Device.h>
 #ifdef LIBDVBCSA
-	#  include <decrypt/dvbapi/Client.h>
+	#include <decrypt/dvbapi/Client.h>
 #endif
 
 namespace output {
@@ -36,7 +36,7 @@ namespace output {
 		ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
 		_stream(stream),
 		_protocol(protocol),
-		_state(Paused),
+		_state(State::Paused),
 		_decrypt(decrypt) {
 		// Initialize all TS packets
 		uint32_t ssrc = _stream.getSSRC();
@@ -72,14 +72,14 @@ namespace output {
 			return false;
 		}
 		// Set priority above normal for this Thread
-		setPriority(AboveNormal);
+		setPriority(Priority::AboveNormal);
 
 		// Set affinity with CPU
 //		setAffinity(3);
 
-		_state = Running;
-		SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d (Client fd: %d)", streamID, _protocol.c_str(),
-				client.getIPAddress().c_str(), getStreamSocketPort(clientID), client.getHttpcFD());
+		_state = State::Running;
+		SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
+				client.getIPAddress().c_str(), getStreamSocketPort(clientID));
 
 		return true;
 	}
@@ -90,7 +90,7 @@ namespace output {
 			_writeIndex = 0;
 			_readIndex  = 0;
 			_tsBuffer[_writeIndex].reset();
-			_state = Running;
+			_state = State::Running;
 			SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
 					_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddress().c_str(),
 					getStreamSocketPort(clientID));
@@ -102,12 +102,12 @@ namespace output {
 		bool paused = true;
 		// Check if thread is running
 		if (running()) {
-			_state = Pause;
+			_state = State::Pause;
 			const StreamClient &client = _stream.getStreamClient(clientID);
 			const double payload = _stream.getRtpPayload() / (1024.0 * 1024.0);
 			// try waiting on pause
 			auto timeout = 0;
-			while (_state != Paused) {
+			while (_state != State::Paused) {
 				usleep(50000);
 				++timeout;
 				if (timeout > 50) {
@@ -132,7 +132,7 @@ namespace output {
 		return paused;
 	}
 
-	void StreamThreadBase::readDataFromInputDevice(const StreamClient &client) {
+	void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 
 		input::Device *inputDevice = _stream.getInputDevice();
 

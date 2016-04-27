@@ -33,68 +33,77 @@
 
 const int HttpcSocket::HTTPC_TIMEOUT = 500;
 
-HttpcSocket::HttpcSocket() {;}
+	// =========================================================================
+	//  -- Constructors and destructor -----------------------------------------
+	// =========================================================================
+	HttpcSocket::HttpcSocket() {}
 
-HttpcSocket::~HttpcSocket() {;}
+	HttpcSocket::~HttpcSocket() {}
 
-ssize_t HttpcSocket::recvHttpcMessage(SocketClient &client, int recv_flags) {
-	return recv_recvfrom_httpc_message(client, recv_flags, nullptr, nullptr);
-}
+	// =========================================================================
+	//  -- Other member functions ----------------------------------------------
+	// =========================================================================
+	
+	ssize_t HttpcSocket::recvHttpcMessage(SocketClient &client, int recv_flags) {
+		return recv_recvfrom_httpc_message(client, recv_flags, nullptr, nullptr);
+	}
 
-ssize_t HttpcSocket::recvfromHttpcMessage(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
-	return recv_recvfrom_httpc_message(client, recv_flags, si_other, addrlen);
-}
+	ssize_t HttpcSocket::recvfromHttpcMessage(SocketClient &client, int recv_flags,
+		struct sockaddr_in *si_other, socklen_t *addrlen) {
+		return recv_recvfrom_httpc_message(client, recv_flags, si_other, addrlen);
+	}
 
-ssize_t HttpcSocket::recv_recvfrom_httpc_message(SocketClient &client, int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
-	std::size_t read_len = 0;
-	std::size_t timeout = HTTPC_TIMEOUT;
-	bool done = false;
-	bool end = false;
-	std::size_t actualSize = 0;
+	ssize_t HttpcSocket::recv_recvfrom_httpc_message(SocketClient &client,
+		int recv_flags, struct sockaddr_in *si_other, socklen_t *addrlen) {
+		std::size_t read_len = 0;
+		std::size_t timeout = HTTPC_TIMEOUT;
+		bool done = false;
+		bool end = false;
+		std::size_t actualSize = 0;
 
-	client.clearMessage();
+		client.clearMessage();
 
-	// read until we have '\r\n\r\n' (end of HTTP/RTSP message) then check
-	// if the header field 'Content-Length' is present
-	do {
-		char buf[1024];
-		const ssize_t size = recvfrom(client.getFD(), buf, sizeof(buf)-1, recv_flags, (struct sockaddr *)si_other, addrlen);
-		if (size > 0) {
-			read_len += size;
-			// terminate
-			buf[size] = 0;
-			client.addMessage(buf);
-			// reset timeout again
-			timeout = HTTPC_TIMEOUT;
-			// end of message "\r\n\r\n" ?
-			if (!end) {
-				const std::string::size_type headerSize = client.getMessage().find("\r\n\r\n");
-				end = headerSize != std::string::npos;
+		// read until we have '\r\n\r\n' (end of HTTP/RTSP message) then check
+		// if the header field 'Content-Length' is present
+		do {
+			char buf[1024];
+			const ssize_t size = ::recvfrom(client.getFD(), buf, sizeof(buf)-1, recv_flags, (struct sockaddr *)si_other, addrlen);
+			if (size > 0) {
+				read_len += size;
+				// terminate
+				buf[size] = 0;
+				client.addMessage(buf);
+				// reset timeout again
+				timeout = HTTPC_TIMEOUT;
+				// end of message "\r\n\r\n" ?
+				if (!end) {
+					const std::string::size_type headerSize = client.getMessage().find("\r\n\r\n");
+					end = headerSize != std::string::npos;
 
-				// check do we need to read more?
-				std::string parameter;
-				const std::size_t contentLength = StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length", parameter) ?
-					atoi(parameter.c_str()) : 0;
-				if (contentLength > 0) {
-					// now check did we read it all
-					actualSize = headerSize + contentLength + 4; // 4 = "\r\n\r\n"
+					// check do we need to read more?
+					std::string parameter;
+					const std::size_t contentLength = StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length", parameter) ?
+						atoi(parameter.c_str()) : 0;
+					if (contentLength > 0) {
+						// now check did we read it all
+						actualSize = headerSize + contentLength + 4; // 4 = "\r\n\r\n"
+						done = actualSize == client.getMessage().size();
+					} else if (end) {
+						done = true;
+					}
+				} else {
+					// now check did we read it all this time around?
 					done = actualSize == client.getMessage().size();
-				} else if (end) {
-					done = true;
 				}
 			} else {
-				// now check did we read it all this time around?
-				done = actualSize == client.getMessage().size();
+				if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+					usleep(1000);
+					--timeout;
+				} else {
+					return size;
+				}
 			}
-		} else {
-			if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-				usleep(1000);
-				--timeout;
-			} else {
-				return size;
-			}
-		}
-	} while (!done);
+		} while (!done);
 
-	return read_len;
-}
+		return read_len;
+	}

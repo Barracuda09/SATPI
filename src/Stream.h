@@ -57,31 +57,40 @@ class Stream :
 		virtual ~Stream();
 
 		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+		
+	public:
+		virtual void addToXML(std::string &xml) const override;
+
+		virtual void fromXML(const std::string &xml) override;
+		
+		// =======================================================================
 		// -- StreamInterface ----------------------------------------------------
 		// =======================================================================
 	public:
 
-		virtual int  getStreamID() const;
+		virtual int  getStreamID() const override;
 
-		virtual StreamClient &getStreamClient(std::size_t clientNr) const;
+		virtual StreamClient &getStreamClient(std::size_t clientNr) const override;
 
-		virtual input::Device *getInputDevice() const;
+		virtual input::Device *getInputDevice() const override;
 
-		virtual uint32_t getSSRC() const;
+		virtual uint32_t getSSRC() const override;
 
-		virtual long getTimestamp() const;
+		virtual long getTimestamp() const override;
 
-		virtual uint32_t getSPC() const;
+		virtual uint32_t getSPC() const override;
 
-		virtual unsigned int getRtcpSignalUpdateFrequency() const;
+		virtual unsigned int getRtcpSignalUpdateFrequency() const override;
 
-		virtual uint32_t getSOC() const;
+		virtual uint32_t getSOC() const override;
 
-		virtual void addRtpData(uint32_t byte, long timestamp);
+		virtual void addRtpData(uint32_t byte, long timestamp) override;
 
-		virtual double getRtpPayload() const;
+		virtual double getRtpPayload() const override;
 
-		virtual std::string attributeDescribeString(bool &active) const;
+		virtual std::string attributeDescribeString(bool &active) const override;
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
@@ -120,7 +129,7 @@ class Stream :
 		                     int &clientID);
 
 		/// Copy the connected  client data to this stream
-		void copySocketClientAttr(const SocketClient &socketClient);
+		void setSocketClient(SocketClient &socketClient);
 
 		/// Check is this stream used already
 		bool streamInUse() const {
@@ -145,12 +154,6 @@ class Stream :
 		/// Check if there are any stream clients with a time-out that should be
 		/// closed
 		void checkStreamClientsWithTimeout();
-
-		/// Add stream data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const;
-
-		/// Get stream data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml);
 
 		// =======================================================================
 		// -- Functions used for RTSP Server -------------------------------------
@@ -184,13 +187,13 @@ class Stream :
 		///
 		int getRtpSocketPort(int clientID) const {
 			base::MutexLock lock(_mutex);
-			return _client[clientID].getRtpSocketPort();
+			return _client[clientID].getRtpSocketAttr().getSocketPort();
 		}
 
 		///
 		int getRtcpSocketPort(int clientID) const {
 			base::MutexLock lock(_mutex);
-			return _client[clientID].getRtcpSocketPort();
+			return _client[clientID].getRtcpSocketAttr().getSocketPort();
 		}
 
 	protected:
@@ -201,7 +204,7 @@ class Stream :
 		void processStopStream_L(int clientID, bool gracefull);
 
 
-		enum StreamingType {
+		enum class StreamingType {
 			NONE,
 			HTTP,
 			RTSP,
@@ -221,7 +224,7 @@ class Stream :
 
 		StreamClient     *_client;        /// defines the participants of this stream
 		                                  /// index 0 is the owner of this stream
-		output::StreamThreadBase *_streaming;     ///
+		output::StreamThreadBase *_streaming; ///
 		decrypt::dvbapi::Client *_decrypt;///
 		input::Device *_device;           ///
 		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender

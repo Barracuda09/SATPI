@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef SOCKET_CLIENT_H_INCLUDE
-#define SOCKET_CLIENT_H_INCLUDE SOCKET_CLIENT_H_INCLUDE
+#ifndef SOCKET_SOCKETCLIENT_H_INCLUDE
+#define SOCKET_SOCKETCLIENT_H_INCLUDE SOCKET_SOCKETCLIENT_H_INCLUDE
 
 #include <socket/SocketAttr.h>
 
@@ -26,14 +26,23 @@
 
 ///
 class SocketClient :
-		public SocketAttr {
+	public SocketAttr {
 	public:
+
 		// =======================================================================
-		// Constructors and destructor
+		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
 		SocketClient() {}
 
-		virtual ~SocketClient() {}
+		virtual ~SocketClient() {
+			closeFD();
+		}
+
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+
+	public:
 
 		/// Clear the HTTP message from this client
 		void clearMessage() {
@@ -85,21 +94,22 @@ class SocketClient :
 		}
 
 		/// Close the file descriptor of this Socket
-		virtual void closeFD() {
+		virtual void closeFD() override {
 			SocketAttr::closeFD();
 			_sessionID = "-1";
 			_msg.clear();
 		}
 
-	protected:
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+
 		std::string _msg;
 		std::string _protocolString;
 		std::string _sessionID;
 
-}; // class SocketClient
+};
 
-#endif // SOCKET_CLIENT_H_INCLUDE
+#endif // SOCKET_SOCKETCLIENT_H_INCLUDE

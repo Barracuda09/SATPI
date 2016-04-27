@@ -30,6 +30,7 @@ namespace input {
 		DVBT2,
 		DVBC,
 		FILE,
+		STREAMER,
 		IPTV
 	};
 

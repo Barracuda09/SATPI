@@ -17,16 +17,13 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef UDP_SOCKET_H_INCLUDE
-#define UDP_SOCKET_H_INCLUDE UDP_SOCKET_H_INCLUDE
+#ifndef SOCKET_UDPSOCKET_H_INCLUDE
+#define SOCKET_UDPSOCKET_H_INCLUDE SOCKET_UDPSOCKET_H_INCLUDE
 
 #include <FwDecl.h>
 #include <socket/HttpcSocket.h>
 #include <socket/SocketClient.h>
 #include <socket/SocketAttr.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
 
 FW_DECL_NS0(SocketAttr);
 
@@ -34,32 +31,39 @@ FW_DECL_NS0(SocketAttr);
 class UdpSocket :
 	public HttpcSocket {
 	public:
+
 		// =======================================================================
-		// Constructors and destructor
+		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
 		UdpSocket();
+
 		virtual ~UdpSocket();
+
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+
+	public:
 
 		/// Initialize an UDP socket
 		/// @param server
 		/// @param port
 		/// @param s_addr
-		bool init_udp_socket(SocketClient &server, int port, in_addr_t s_addr);
+		bool init_udp_socket(SocketClient &server, int port, const char *ip_addr);
 
 		/// Initialize an Multicast UDP socket
 		/// @param server
 		/// @param port
 		/// @param ip_addr
-		bool init_mutlicast_udp_socket(SocketClient &server, int port, const char *ip_addr);
+		bool init_mutlicast_udp_socket(SocketClient &server, int port,
+			const char *ip_addr);
 
-	protected:
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
 
 	private:
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
+};
 
-}; // class UdpSocket
-
-#endif // UDP_SOCKET_H_INCLUDE
+#endif // SOCKET_UDPSOCKET_H_INCLUDE

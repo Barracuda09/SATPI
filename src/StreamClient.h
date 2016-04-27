@@ -33,10 +33,16 @@ FW_DECL_NS0(Stream);
 class StreamClient {
 	public:
 		// =======================================================================
-		// Constructors and destructor
+		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
+
 		StreamClient();
+
 		virtual ~StreamClient();
+
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
 
 		///
 		void setClientID(int id) {
@@ -53,18 +59,24 @@ class StreamClient {
 		bool checkWatchDogTimeout();
 
 		///
-		void copySocketClientAttr(const SocketClient &socket);
+		void setSocketClient(SocketClient &socket);
 
 		///
-		const std::string getMessage() const {
+		SocketAttr &getRtpSocketAttr();
+
+		///
+		SocketAttr &getRtcpSocketAttr();
+
+		///
+		std::string getMessage() const {
 			base::MutexLock lock(_mutex);
-			return _httpcMsg;
+			return (_httpc == nullptr) ? "" : _httpc->getMessage();
 		}
 
 		///
 		std::string getIPAddress() const {
 			base::MutexLock lock(_mutex);
-			return _ip_addr;
+			return (_httpc == nullptr) ? "0.0.0.0" : _httpc->getIPAddress();
 		}
 
 		///
@@ -83,12 +95,6 @@ class StreamClient {
 		unsigned int getSessionTimeout() const {
 			base::MutexLock lock(_mutex);
 			return _sessionTimeout;
-		}
-
-		///
-		int getHttpcFD() const {
-			base::MutexLock lock(_mutex);
-			return _httpcFD == nullptr ? -1 : *_httpcFD;
 		}
 
 		///
@@ -112,34 +118,23 @@ class StreamClient {
 			return _cseq;
 		}
 
-		///
-		void setRtpSocketPort(int port);
+		// =======================================================================
+		//  -- HTTP member functions ---------------------------------------------
+		// =======================================================================
 
 		///
-		int getRtpSocketPort() const;
-
-		///
-		void setRtcpSocketPort(int port);
-
-		///
-		int getRtcpSocketPort() const;
-
-		///
-		const struct sockaddr_in &getRtpSockAddr() const;
-
-		///
-		const struct sockaddr_in &getRtcpSockAddr() const;
+		bool sendHttpData(const void *buf, std::size_t len, int flags);
 
 		// =======================================================================
-		// Data members
+		// -- Data members -------------------------------------------------------
 		// =======================================================================
+
 	private:
+
 		base::Mutex  _mutex;           ///
+		SocketClient *_httpc;          /// Client of this stream. Used for sending
+		                               /// reply to and checking connections
 		int          _clientID;
-		const int   *_httpcFD;         /// For sending reply to and checking
-		                               /// connection
-		std::string  _httpcMsg;        /// message from client
-		std::string  _ip_addr;         /// IP address of client
 		std::string  _sessionID;       ///
 		time_t       _watchdog;        /// watchdog
 		unsigned int _sessionTimeout;
@@ -147,6 +142,6 @@ class StreamClient {
 		bool         _canClose;
 		SocketAttr   _rtp;
 		SocketAttr   _rtcp;
-}; // class StreamClient
+};
 
 #endif // STREAM_CLIENT_H_INCLUDE
