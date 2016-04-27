@@ -244,6 +244,8 @@ input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, con
 			return input::InputSystem::DVBC;
 		} else if (val.compare("file") == 0) {
 			return input::InputSystem::FILE;
+		} else if (val.compare("streamer") == 0) {
+			return input::InputSystem::STREAMER;
 		}
 	}
 	return input::InputSystem::UNDEFINED;
@@ -312,6 +314,8 @@ const char *StringConverter::delsys_to_string(input::InputSystem system) {
 			return "dvbt2";
 		case input::InputSystem::FILE:
 			return "file";
+		case input::InputSystem::STREAMER:
+			return "streamer";
 		case input::InputSystem::DVBC:
 			return "dvbc";
 		default:

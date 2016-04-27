@@ -122,7 +122,7 @@ namespace stream {
 			std::string _uri;
 	};
 
-} // namespace file
+} // namespace stream
 } // namespace input
 
 #endif // INPUT_STREAM_STREAMER_H_INCLUDE
