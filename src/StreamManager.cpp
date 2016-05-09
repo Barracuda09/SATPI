@@ -119,13 +119,13 @@ Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int 
 			foundSessionID = true;
 			sessionID = socketClient.getSessionID();
 			SI_LOG_INFO("Found SessionID %s by SocketClient", sessionID.c_str());
-			// Do we need to make a new sessionID (only if there are transport parameters
 		} else if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
+			// Do we need to make a new sessionID (only if there are transport parameters
 			static unsigned int seedp = 0xBEEF;
 			StringConverter::addFormattedString(sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
 			newSession = true;
-			// None of the above.. so it is just an outside session give an temporary StreamClient
 		} else {
+			// None of the above.. so it is just an outside session give an temporary StreamClient
 			SI_LOG_INFO("Found message outside session");
 			socketClient.setSessionID("-1");
 			_dummyStream->setSocketClient(socketClient);

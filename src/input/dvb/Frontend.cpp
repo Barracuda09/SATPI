@@ -235,17 +235,22 @@ namespace dvb {
 		// try read maximum amount of bytes from DVR
 		const int bytes = read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
-/*
-			// sync byte then check cc
-			if (_bufferPtrWrite[0] == 0x47 && bytes_read > 3) {
-				// get PID and CC from TS
-				const uint16_t pid = ((_bufferPtrWrite[1] & 0x1f) << 8) | _bufferPtrWrite[2];
-				const uint8_t  cc  =   _bufferPtrWrite[3] & 0x0f;
-				_stream.addPIDData(pid, cc);
-			}
-*/
 			buffer.addAmountOfBytesWritten(bytes);
-			return buffer.full();
+			const bool full = buffer.full();
+			if (full) {
+				const std::size_t size = buffer.getNumberOfTSPackets();
+				for (std::size_t i = 0; i < size; ++i) {
+					const unsigned char *ptr = buffer.getTSPacketPtr(i);
+					// sync byte then check cc
+					if (ptr[0] == 0x47) {
+						// get PID and CC from TS
+						const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
+						const uint8_t  cc  =   ptr[3] & 0x0f;
+						_frontendData.addPIDData(pid, cc);
+					}
+				}
+			}
+			return full;
 		}
 		return false;
 	}

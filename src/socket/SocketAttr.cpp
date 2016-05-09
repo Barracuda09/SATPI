@@ -59,7 +59,7 @@
 		// fill in the socket structure with host information
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family      = AF_INET;
-		_addr.sin_addr.s_addr = htonl(INADDR_ANY);;
+		_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		_addr.sin_port        = htons(port);
 	}
 

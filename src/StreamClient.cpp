@@ -53,6 +53,7 @@
 		if (!gracefull) {
 			_sessionID = "-1";
 		}
+		_httpc = nullptr;
 	}
 
 	void StreamClient::restartWatchDog() {
