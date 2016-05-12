@@ -106,8 +106,12 @@ namespace file {
 		if (StringConverter::getStringParameter(msg, method, "uri=", file) == true) {
 			if (!_file.is_open()) {
 				_filePath = file;
-				_file.open(_filePath, std::ifstream::binary);
-				SI_LOG_INFO("TS Reader using path: %s", _filePath.c_str());
+				_file.open(_filePath, std::ifstream::binary | std::ifstream::in);
+				if (_file.is_open()) {
+					SI_LOG_INFO("TS Reader using path: %s", _filePath.c_str());
+				} else {
+					SI_LOG_ERROR("TS Reader unable to open path: %s", _filePath.c_str());
+				}
 			}		
 		}
 	}
@@ -128,10 +132,13 @@ namespace file {
 
 	std::string TSReader::attributeDescribeString() const {
 		std::string desc;
-		// ver=1.5;tuner=<feID>;file=<file>
-		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
-				_streamID + 1, _filePath.c_str());
-
+		if (_file.is_open()) {
+			// ver=1.5;tuner=<feID>;file=<file>
+			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
+					_streamID + 1, _filePath.c_str());
+		} else {
+			desc = "";
+		}
 		return desc;
 	}
 

@@ -62,21 +62,21 @@ void HttpServer::threadEntry() {
 
 int HttpServer::readFile(const char *file, std::string &data) {
 	int file_size = 0;
-	int fd_file;
-	if ((fd_file = open(file, O_RDONLY | O_NONBLOCK)) < 0) {
+	int fd = open(file, O_RDONLY | O_NONBLOCK);
+	if (fd < 0) {
 		SI_LOG_ERROR("readFile %s", file);
 		PERROR("File not found");
 		return 0;
 	}
-	const off_t size = lseek(fd_file, 0, SEEK_END);
-	lseek(fd_file, 0, SEEK_SET);
+	const off_t size = lseek(fd, 0, SEEK_END);
+	lseek(fd, 0, SEEK_SET);
 	char *buf = new char[size];
 	if (buf != nullptr) {
-		file_size = read(fd_file, buf, size);
+		file_size = read(fd, buf, size);
 		data.assign(buf, file_size);
 		DELETE_ARRAY(buf);
 	}
-	CLOSE_FD(fd_file);
+	CLOSE_FD(fd);
 //	SI_LOG_DEBUG("GET %s (size %d)", file, file_size);
 	return file_size;
 }

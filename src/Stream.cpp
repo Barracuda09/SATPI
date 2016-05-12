@@ -174,7 +174,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		return false;
 	}
 
-	input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
+	const input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
 	// Check if frontend is capable if handling 'msys' when we have a new session
 	if (newSession && !_device->capableOf(msys)) {
 		SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
@@ -305,8 +305,8 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 			StreamingType::HTTP : StreamingType::RTSP;
 		_device->parseStreamString(msg, method);
 	}
-	int port = 0;
-	if ((port = StringConverter::getIntParameter(msg, "Transport:", "client_port=")) != -1) {
+	const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
+	if (port != -1) {
 		_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
 		_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
 	}
@@ -342,7 +342,9 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 	// Stop streaming by deleting object
 	DELETE(_streaming);
 
-	_device->teardown();
+	if (_device != nullptr) {
+		_device->teardown();
+	}
 
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);

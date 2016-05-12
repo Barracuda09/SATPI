@@ -345,23 +345,23 @@ unsigned int Server::readBootIDFromFile(const char *file) {
 	// Get BOOTID from file, increment and save it again
 	const char *BOOTID_STR = "bootID=%d";
 	unsigned int bootId = 0;
-	int fd_bootId = -1;
 	char content[50];
-	if ((fd_bootId = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH)) > 0) {
-		if (read(fd_bootId, content, sizeof(content)) >= 0) {
+	int fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
+	if (fd > 0) {
+		if (read(fd, content, sizeof(content)) >= 0) {
 			if (strlen(content) != 0) {
 				sscanf(content, BOOTID_STR, &bootId);
-				lseek(fd_bootId, 0, SEEK_SET);
+				lseek(fd, 0, SEEK_SET);
 			}
 		} else {
 			PERROR("Unable to read file: bootID");
 		}
 		++bootId;
 		sprintf(content, BOOTID_STR, bootId);
-		if (write(fd_bootId, content, strlen(content)) == -1) {
+		if (write(fd, content, strlen(content)) == -1) {
 			PERROR("Unable to write file: bootID");
 		}
-		CLOSE_FD(fd_bootId);
+		CLOSE_FD(fd);
 	} else {
 		PERROR("Unable to open file: bootID");
 	}

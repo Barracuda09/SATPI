@@ -39,7 +39,7 @@
 	// =========================================================================
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
-	
+
 	InterfaceAttr::InterfaceAttr() {
 		get_interface_properties();
 	}
@@ -49,10 +49,10 @@
 	// =========================================================================
 	//  -- Static member functions ---------------------------------------------
 	// =========================================================================
-	
+
 	int InterfaceAttr::getNetworkUDPBufferSize() {
-		int fd = -1;
-		if ((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (fd == -1) {
 			PERROR("socket");
 			return 0;
 		}
@@ -87,14 +87,16 @@
 			// we are not looking for 'lo' interface, but any other AF_INET* interface is good
 			if ((strcmp(ifa->ifa_name, "lo")) != 0 && (family == AF_INET /*|| family == AF_INET6*/)) {
 				char host[NI_MAXHOST];
-				int s, fd;
-				if ((s = getnameinfo(ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
-									 host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST)) != 0) {
+				const int s = getnameinfo(ifa->ifa_addr,
+					(family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
+					 host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
+				if (s != 0) {
 					GAI_PERROR("getnameinfo()", s);
 					continue;
 				}
 				// Get hardware address
-				if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+				int fd = socket(AF_INET, SOCK_STREAM, 0);
+				if (fd == -1) {
 					PERROR("Server socket");
 					continue;
 				}

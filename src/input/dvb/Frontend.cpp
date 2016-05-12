@@ -305,22 +305,24 @@ namespace dvb {
 		double doubleVal = 0.0;
 		int intVal = 0;
 		std::string strVal;
-		input::InputSystem msys;
 
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _streamID);
 
 		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
-		if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=")) != -1) {
+		doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=");
+		if (doubleVal != -1) {
 			// new frequency so initialize FrontendData and 'remove' all used PIDS
 			_frontendData.initialize();
 			_frontendData.setFrequency(doubleVal * 1000.0);
 			SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
 		}
 		// !!!!
-		if ((intVal = StringConverter::getIntParameter(msg, method, "sr=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "sr=");
+		if (intVal != -1) {
 			_frontendData.setSymbolRate(intVal * 1000);
 		}
-		if ((msys = StringConverter::getMSYSParameter(msg, method)) != input::InputSystem::UNDEFINED) {
+		const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
+		if (msys != input::InputSystem::UNDEFINED) {
 			_frontendData.setDeliverySystem(msys);
 		}
 		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
@@ -330,7 +332,8 @@ namespace dvb {
 				_frontendData.setPolarization(POL_V);
 			}
 		}
-		if ((intVal = StringConverter::getIntParameter(msg, method, "src=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "src=");
+		if (intVal != -1) {
 			_frontendData.setDiSEqcSource(intVal);
 		}
 		if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
@@ -421,10 +424,12 @@ namespace dvb {
 				break;
 			}
 		}
-		if ((intVal = StringConverter::getIntParameter(msg, method, "specinv=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "specinv=");
+		if (intVal != -1) {
 			_frontendData.setSpectralInversion(intVal);
 		}
-		if ((doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=")) != -1) {
+		doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=");
+		if (doubleVal != -1) {
 			_frontendData.setBandwidthHz(doubleVal * 1000000.0);
 		}
 		if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
@@ -466,13 +471,16 @@ namespace dvb {
 				_frontendData.setGuardInverval(GUARD_INTERVAL_AUTO);
 			}
 		}
-		if ((intVal = StringConverter::getIntParameter(msg, method, "plp=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "plp=");
+		if (intVal != -1) {
 			_frontendData.setUniqueIDPlp(intVal);
 		}
-		if ((intVal = StringConverter::getIntParameter(msg, method, "t2id=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "t2id=");
+		if (intVal != -1) {
 			_frontendData.setUniqueIDT2(intVal);
 		}
-		if ((intVal = StringConverter::getIntParameter(msg, method, "sm=")) != -1) {
+		intVal = StringConverter::getIntParameter(msg, method, "sm=");
+		if (intVal != -1) {
 			_frontendData.setSISOMISO(intVal);
 		}
 		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
@@ -540,9 +548,9 @@ namespace dvb {
 		_fe_info.symbol_rate_min = 20000UL;
 		_fe_info.symbol_rate_max = 250000UL;
 #else
-		int fd_fe;
+		int fd_fe = open_fe(_path_to_fe, true);
 		// open frontend in readonly mode
-		if ((fd_fe = open_fe(_path_to_fe, true)) < 0) {
+		if (fd_fe < 0) {
 			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
 			PERROR("open_fe");
 			return false;
@@ -776,24 +784,24 @@ namespace dvb {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 	int Frontend::open_fe(const std::string &path, bool readonly) const {
-		int fd;
-		if ((fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK)) < 0) {
+		const int fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
+		if (fd  < 0) {
 			PERROR("FRONTEND DEVICE");
 		}
 		return fd;
 	}
 
 	int Frontend::open_dmx(const std::string &path) {
-		int fd;
-		if ((fd = open(path.c_str(), O_RDWR | O_NONBLOCK)) < 0) {
+		const int fd = open(path.c_str(), O_RDWR | O_NONBLOCK);
+		if (fd < 0) {
 			PERROR("DMX DEVICE");
 		}
 		return fd;
 	}
 
 	int Frontend::open_dvr(const std::string &path) {
-		int fd;
-		if ((fd = open(path.c_str(), O_RDONLY | O_NONBLOCK)) < 0) {
+		const int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+		if (fd < 0) {
 			PERROR("DVR DEVICE");
 		}
 		return fd;

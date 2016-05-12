@@ -65,7 +65,8 @@
 
 	bool SocketAttr::setupSocketHandle(int type, int protocol) {
 		if (_fd == -1) {
-			if ((_fd = ::socket(AF_INET, type, protocol)) == -1) {
+			_fd = ::socket(AF_INET, type, protocol);
+			if (_fd == -1) {
 				PERROR("socket");
 				return false;
 			}
