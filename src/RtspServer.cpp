@@ -128,7 +128,7 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	static const char *RTSP_DESCRIBE_CONT1 =
 		"v=0\r\n" \
 		"o=- 2 3 IN IP4 %s\r\n" \
-		"s=SatIPServer:1 %zu,%zu,%zu\r\n" \
+		"s=SatIPServer:1 %s\r\n" \
 		"t=0 0\r\n";
 
 	static const char *RTSP_DESCRIBE_CONT2 =
@@ -143,8 +143,9 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	// Describe streams
 	std::string cont1;
-	StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT1, _interface.getIPAddress().c_str(),
-	         _streamManager.getMaxDvbSat(), _streamManager.getMaxDvbTer(), _streamManager.getMaxDvbCable());
+	StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT1,
+		_interface.getIPAddress().c_str(),
+		_streamManager.getRTSPDescribeString().c_str());
 
 	for (auto i = 0u; i < _streamManager.getMaxStreams(); ++i) {
 		bool active = false;

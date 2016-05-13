@@ -35,7 +35,6 @@ class Properties :
 	Properties(
 			const std::string &xmlFilePath,
 			const std::string &uuid,
-			const std::string &delsysString,
 			const std::string &appdataPath,
 			const std::string &webPath,
 			unsigned int httpPort,
@@ -54,9 +53,6 @@ class Properties :
 
 	///
 	std::string getUUID() const;
-
-	///
-	std::string getDeliverySystemString() const;
 
 	///
 	std::string getAppDataPath() const;
@@ -116,7 +112,6 @@ class Properties :
 	// Data members
 	// =======================================================================
 	base::Mutex _mutex;
-	std::string _delsysString;
 	std::string _uuid;
 	std::string _versionString;
 	std::string _appdataPath;

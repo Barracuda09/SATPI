@@ -35,12 +35,30 @@ FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 /// The class @c StreamManager manages all the available/open streams
 class StreamManager :
 	public base::XMLSupport {
-	public:
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
+
+	public:
+
 		StreamManager(const std::string &xmlFilePath);
+
 		virtual ~StreamManager();
+
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+
+	public:
+		virtual void addToXML(std::string &xml) const override;
+
+		virtual void fromXML(const std::string &xml) override;
+
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+
+	public:
 
 		/// enumerate all available devices
 		void enumerateDevices();
@@ -52,10 +70,10 @@ class StreamManager :
 		void checkStreamClientsWithTimeout();
 
 		///
-		const std::string &getXMLDeliveryString() const {
-			base::MutexLock lock(_mutex);
-			return _del_sys_str;
-		}
+		std::string getXMLDeliveryString() const;
+
+		///
+		std::string getRTSPDescribeString() const;
 
 		///
 		std::size_t getMaxStreams() const {
@@ -64,31 +82,7 @@ class StreamManager :
 		}
 
 		///
-		std::size_t getMaxDvbSat() const {
-			base::MutexLock lock(_mutex);
-			return _nr_dvb_s2;
-		}
-
-		///
-		std::size_t getMaxDvbTer() const {
-			base::MutexLock lock(_mutex);
-			return _nr_dvb_t;
-		}
-
-		///
-		std::size_t getMaxDvbCable() const {
-			base::MutexLock lock(_mutex);
-			return _nr_dvb_c;
-		}
-
-		///
 		std::string attributeDescribeString(std::size_t stream, bool &active) const;
-
-		/// Add stream data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const;
-
-		/// Get stream data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml);
 
 #ifdef LIBDVBCSA
 		///
@@ -99,24 +93,18 @@ class StreamManager :
 #endif
 
 
-		typedef std::vector<Stream *> StreamVector;
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
+		typedef std::vector<Stream *> StreamVector;
 
 	private:
-		base::Mutex _mutex;       //
+
+		base::Mutex _mutex;
 		std::string _xmlFilePath;
 		decrypt::dvbapi::Client *_decrypt;
 		StreamVector _stream;
 		Stream *_dummyStream;
-		std::string _del_sys_str;
-		std::size_t _nr_dvb_s2;
-		std::size_t _nr_dvb_t;
-		std::size_t _nr_dvb_t2;
-		std::size_t _nr_dvb_c;
-		std::size_t _nr_dvb_c2;
-
-}; // class StreamManager
+};
 
 #endif // STREAM_MANAGER_H_INCLUDE

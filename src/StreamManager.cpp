@@ -77,20 +77,40 @@ void StreamManager::enumerateDevices() {
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
 	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
 	input::stream::Streamer::enumerate(_stream);
-
-	_nr_dvb_s2 = 0;
-	_nr_dvb_t = 0;
-	_nr_dvb_t2 = 0;
-	_nr_dvb_c = 0;
-	_nr_dvb_c2 = 0;
-	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		(*it)->addDeliverySystemCount(_nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2,
-			_nr_dvb_c, _nr_dvb_c2);
-	}
-	StringConverter::addFormattedString(_del_sys_str, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
-		_nr_dvb_s2, _nr_dvb_t, _nr_dvb_t2, _nr_dvb_c, _nr_dvb_c2);
-
 }
+
+std::string StreamManager::getXMLDeliveryString() const {
+	base::MutexLock lock(_mutex);
+	std::string delSysStr;
+	std::size_t dvb_s2 = 0;
+	std::size_t dvb_t = 0;
+	std::size_t dvb_t2 = 0;
+	std::size_t dvb_c = 0;
+	std::size_t dvb_c2 = 0;
+	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
+		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	}
+	StringConverter::addFormattedString(delSysStr, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
+		dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	return delSysStr;
+}
+
+std::string StreamManager::getRTSPDescribeString() const {
+	base::MutexLock lock(_mutex);
+	std::string describeStr;
+	std::size_t dvb_s2 = 0;
+	std::size_t dvb_t = 0;
+	std::size_t dvb_t2 = 0;
+	std::size_t dvb_c = 0;
+	std::size_t dvb_c2 = 0;
+	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
+		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	}
+	StringConverter::addFormattedString(describeStr, "%zu,%zu,%zu",
+		dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	return describeStr;
+}
+
 
 Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	base::MutexLock lock(_mutex);

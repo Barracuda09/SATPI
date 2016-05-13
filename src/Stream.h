@@ -59,12 +59,12 @@ class Stream :
 		// =======================================================================
 		// -- base::XMLSupport ---------------------------------------------------
 		// =======================================================================
-		
+
 	public:
 		virtual void addToXML(std::string &xml) const override;
 
 		virtual void fromXML(const std::string &xml) override;
-		
+
 		// =======================================================================
 		// -- StreamInterface ----------------------------------------------------
 		// =======================================================================
@@ -118,7 +118,9 @@ class Stream :
 				std::size_t &dvbc,
 				std::size_t &dvbc2) {
 			base::MutexLock lock(_mutex);
-			_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
+			if (_enabled) {
+				_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
+			}
 		}
 
 		/// Find the clientID for the requested parameters
@@ -212,7 +214,7 @@ class Stream :
 		};
 
 		// =======================================================================
-		// Data members
+		// -- Data members -------------------------------------------------------
 		// =======================================================================
 		base::Mutex _mutex;               ///
 		int _streamID;                    ///

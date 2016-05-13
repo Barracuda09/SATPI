@@ -28,10 +28,10 @@
 
 extern const char *satpi_version;
 
-Properties::Properties(const std::string &xmlFilePath, const std::string &uuid, const std::string &delsysString,
-                       const std::string &appdataPath, const std::string &webPath, unsigned int httpPort, unsigned int rtspPort) :
+Properties::Properties(const std::string &xmlFilePath, const std::string &uuid,
+                       const std::string &appdataPath, const std::string &webPath,
+					   unsigned int httpPort, unsigned int rtspPort) :
 	XMLSupport(xmlFilePath),
-	_delsysString(delsysString),
 	_uuid(uuid),
 	_versionString(satpi_version),
 	_appdataPath(appdataPath),
@@ -101,11 +101,6 @@ std::string Properties::getSoftwareVersion() const {
 std::string Properties::getUUID() const {
 	base::MutexLock lock(_mutex);
 	return _uuid;
-}
-
-std::string Properties::getDeliverySystemString() const {
-	base::MutexLock lock(_mutex);
-	return _delsysString;
 }
 
 std::string Properties::getAppDataPath() const {

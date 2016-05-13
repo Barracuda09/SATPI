@@ -181,14 +181,14 @@ bool HttpServer::methodGet(SocketClient &client) {
 						// check did we get our desc.xml (we assume there are some %s in there)
 						if (docType.find("%s") != std::string::npos) {
 							docTypeSize -= 4 * 2; // minus 4x %s
-							docTypeSize += _properties.getDeliverySystemString().size();
+							docTypeSize += _streamManager.getXMLDeliveryString().size();
 							docTypeSize += _properties.getUUID().size();
 							docTypeSize += _properties.getSoftwareVersion().size();
 							docTypeSize += _properties.getXSatipM3U().size();
 							char *doc_desc_xml = new char[docTypeSize + 1];
 							if (doc_desc_xml != nullptr) {
 								snprintf(doc_desc_xml, docTypeSize + 1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-								         _properties.getUUID().c_str(), _properties.getDeliverySystemString().c_str(),
+								         _properties.getUUID().c_str(), _streamManager.getXMLDeliveryString().c_str(),
 								         _properties.getXSatipM3U().c_str());
 								docType = doc_desc_xml;
 								DELETE_ARRAY(doc_desc_xml);

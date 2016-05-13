@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 			StreamManager streamManager(appdataPath);
 			streamManager.enumerateDevices();
 			Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-								  streamManager.getXMLDeliveryString(), appdataPath, webPath, httpPort, rtspPort);
+								  appdataPath, webPath, httpPort, rtspPort);
 			HttpServer httpserver(streamManager, interface, properties);
 			RtspServer server(streamManager, properties, interface);
 			upnp::ssdp::Server ssdpserver(interface, properties);
