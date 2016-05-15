@@ -101,8 +101,7 @@ namespace dvb {
 		struct dirent **file_list;
 		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
 		if (n > 0) {
-			int i;
-			for (i = 0; i < n; ++i) {
+			for (int i = 0; i < n; ++i) {
 				char full_path[FE_PATH_LEN];
 				snprintf(full_path, FE_PATH_LEN, "%s/%s", path.c_str(), file_list[i]->d_name);
 				struct stat stat_buf;
@@ -251,6 +250,8 @@ namespace dvb {
 				}
 			}
 			return full;
+		} else if (bytes < 0) {
+			PERROR("Frontend::readFullTSPacket");
 		}
 		return false;
 	}
