@@ -31,7 +31,9 @@
 #include <string>
 
 FW_DECL_NS1(mpegts, PacketBuffer);
-FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
+
+FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 namespace decrypt {
 namespace dvbapi {
@@ -46,7 +48,7 @@ namespace dvbapi {
 			// ================================================================
 
 			Client(const std::string &xmlFilePath,
-				const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface);
+				const base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> getFrontendDecryptInterface);
 
 			virtual ~Client();
 
@@ -90,15 +92,15 @@ namespace dvbapi {
 			void sendClientInfo();
 
 			///
-			void collectPAT(input::dvb::FrontendDecryptInterface *frontend,
+			void collectPAT(input::dvb::SpFrontendDecryptInterface frontend,
 				const unsigned char *data);
 
 			///
-			void collectPMT(input::dvb::FrontendDecryptInterface *frontend,
+			void collectPMT(input::dvb::SpFrontendDecryptInterface frontend,
 				const unsigned char *data);
 
 			///
-			void cleanPMT(input::dvb::FrontendDecryptInterface *frontend,
+			void cleanPMT(input::dvb::SpFrontendDecryptInterface frontend,
 				unsigned char *data);
 
 			// =================================================================
@@ -117,7 +119,7 @@ namespace dvbapi {
 			std::string      _serverIpAddr;
 			std::string      _serverName;
 
-			base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> _getFrontendDecryptInterface;
+			base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> _getFrontendDecryptInterface;
 
 	};
 

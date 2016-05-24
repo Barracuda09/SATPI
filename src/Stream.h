@@ -27,20 +27,21 @@
 #include <base/XMLSupport.h>
 #include <input/Device.h>
 
+#include <atomic>
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
-#include <cstddef>
-#include <atomic>
 
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS1(output, StreamThreadBase);
 FW_DECL_NS1(input, DeviceData);
-FW_DECL_NS2(decrypt, dvbapi, Client);
-FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
 
-// @todo Forward decl
-FW_DECL_NS0(Stream);
-typedef std::vector<Stream *> StreamVector;
+FW_DECL_UP_NS1(output, StreamThreadBase);
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
+FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
+
+FW_DECL_VECTOR_NS0(Stream);
 
 /// The class @c Stream carries all the data/information of an stream
 class Stream :
@@ -52,7 +53,7 @@ class Stream :
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
-		Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *decrypt);
+		Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt);
 
 		virtual ~Stream();
 
@@ -74,7 +75,7 @@ class Stream :
 
 		virtual StreamClient &getStreamClient(std::size_t clientNr) const override;
 
-		virtual input::Device *getInputDevice() const override;
+		virtual input::SpDevice getInputDevice() const override;
 
 		virtual uint32_t getSSRC() const override;
 
@@ -99,7 +100,7 @@ class Stream :
 
 #ifdef LIBDVBCSA
 		///
-		input::dvb::FrontendDecryptInterface *getFrontendDecryptInterface();
+		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface();
 #endif
 
 		/// This will read the frontend information for this stream
@@ -226,16 +227,16 @@ class Stream :
 
 		StreamClient     *_client;        /// defines the participants of this stream
 		                                  /// index 0 is the owner of this stream
-		output::StreamThreadBase *_streaming; ///
-		decrypt::dvbapi::Client *_decrypt;///
-		input::Device *_device;           ///
+		output::UpStreamThreadBase _streaming; ///
+		decrypt::dvbapi::SpClient _decrypt;///
+		input::SpDevice _device;          ///
 		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender
 		std::atomic<uint32_t> _spc;       /// sender RTP packet count  (used in SR packet)
 		std::atomic<uint32_t> _soc;       /// sender RTP payload count (used in SR packet)
 		std::atomic<long> _timestamp;     ///
-		std::atomic<double> _rtp_payload;   ///
+		std::atomic<double> _rtp_payload; ///
 		unsigned int _rtcpSignalUpdate;   ///
 
-}; // class Stream
+};
 
 #endif // STREAM_H_INCLUDE

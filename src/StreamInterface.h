@@ -23,7 +23,7 @@
 #include <FwDecl.h>
 
 FW_DECL_NS0(StreamClient);
-FW_DECL_NS1(input, Device);
+FW_DECL_SP_NS1(input, Device);
 
 /// The class @c StreamInterface is an interface to an @c Stream
 class StreamInterface {
@@ -46,7 +46,7 @@ class StreamInterface {
 		virtual StreamClient &getStreamClient(std::size_t clientNr) const = 0;
 
 		///
-		virtual input::Device *getInputDevice() const = 0;
+		virtual input::SpDevice getInputDevice() const = 0;
 
 		virtual uint32_t getSSRC() const = 0;
 

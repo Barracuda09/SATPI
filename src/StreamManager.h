@@ -28,9 +28,12 @@
 #include <vector>
 
 FW_DECL_NS0(SocketClient);
-FW_DECL_NS0(Stream);
-FW_DECL_NS2(decrypt, dvbapi, Client);
-FW_DECL_NS2(input, dvb, FrontendDecryptInterface);
+
+
+FW_DECL_VECTOR_NS0(Stream);
+
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
+FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
 /// The class @c StreamManager manages all the available/open streams
 class StreamManager :
@@ -64,7 +67,7 @@ class StreamManager :
 		void enumerateDevices();
 
 		///
-		Stream *findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
+		SpStream findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
 
 		///
 		void checkStreamClientsWithTimeout();
@@ -86,25 +89,23 @@ class StreamManager :
 
 #ifdef LIBDVBCSA
 		///
-		input::dvb::FrontendDecryptInterface *getFrontendDecryptInterface(int streamID);
+		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(int streamID);
 
 		///
-		decrypt::dvbapi::Client *getDecrypt() const;
+		decrypt::dvbapi::SpClient getDecrypt() const;
 #endif
 
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
-		typedef std::vector<Stream *> StreamVector;
-
 	private:
 
 		base::Mutex _mutex;
 		std::string _xmlFilePath;
-		decrypt::dvbapi::Client *_decrypt;
+		decrypt::dvbapi::SpClient _decrypt;
 		StreamVector _stream;
-		Stream *_dummyStream;
+		SpStream _dummyStream;
 };
 
 #endif // STREAM_MANAGER_H_INCLUDE

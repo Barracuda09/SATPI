@@ -72,7 +72,7 @@ namespace dvb {
 	//  -- Static functions --------------------------------------------------
 	// =======================================================================
 
-	void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::Client *decrypt,
+	static void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
 			const std::string &path) {
 #define DMX      "/dev/dvb/adapter%d/demux%d"
 #define DVR      "/dev/dvb/adapter%d/dvr%d"
@@ -88,14 +88,14 @@ namespace dvb {
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-		input::dvb::Frontend *frontend0 = new input::dvb::Frontend(0);
-		streamVector.push_back(new Stream(0, frontend0, decrypt));
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0);
+		streamVector.push_back(std::make_shared<Stream>(0, frontend0, decrypt));
 		streamVector[0]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
-		input::dvb::Frontend *frontend1 = new input::dvb::Frontend(1);
-		streamVector.push_back(new Stream(1, frontend1, decrypt));
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1);
+		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
 		streamVector[1]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 #else
 		struct dirent **file_list;
@@ -123,8 +123,8 @@ namespace dvb {
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
 
 								const StreamVector::size_type size = streamVector.size();
-								input::dvb::Frontend *frontend = new input::dvb::Frontend(size);
-								streamVector.push_back(new Stream(size, frontend, decrypt));
+								input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size);
+								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
 								streamVector[size]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 							}
 							break;
@@ -150,7 +150,7 @@ namespace dvb {
 	//  -- Static member functions -------------------------------------------
 	// =======================================================================
 
-	void Frontend::enumerate(StreamVector &streamVector, decrypt::dvbapi::Client *decrypt,
+	void Frontend::enumerate(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
 		const std::string &path) {
 		const StreamVector::size_type beginSize = streamVector.size();
 		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
@@ -711,7 +711,7 @@ namespace dvb {
 			case input::InputSystem::DVBS:
 			case input::InputSystem::DVBS2:
 				// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
-				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,…,<pidn>
+				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,..,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
 						_frontendData.getDiSEqcSource(),
 						_streamID + 1,
@@ -731,7 +731,7 @@ namespace dvb {
 			case input::InputSystem::DVBT:
 			case input::InputSystem::DVBT2:
 				// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
-				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,…,<pidn>
+				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,..,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
 						_streamID + 1,
 						_strength,
@@ -751,7 +751,7 @@ namespace dvb {
 				break;
 			case input::InputSystem::DVBC:
 				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
-				//               <plp>,<specinv>;pids=<pid0>,…,<pidn>
+				//               <plp>,<specinv>;pids=<pid0>,..,<pidn>
 				StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
 						_streamID + 1,
 						_strength,

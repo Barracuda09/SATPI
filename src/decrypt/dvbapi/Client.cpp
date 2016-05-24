@@ -150,7 +150,7 @@ namespace dvbapi {
 
 
 	Client::Client(const std::string &xmlFilePath,
-				   const base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface) :
+				   const base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> getFrontendDecryptInterface) :
 		ThreadBase("DvbApiClient"),
 		XMLSupport(xmlFilePath),
 		_connected(false),
@@ -172,7 +172,7 @@ namespace dvbapi {
 
 	void Client::decrypt(const int streamID, mpegts::PacketBuffer &buffer) {
 		if (_connected && _enabled) {
-			input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(streamID);
+			input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(streamID);
 			const std::size_t size = buffer.getNumberOfTSPackets();
 			for (std::size_t i = 0; i < size; ++i) {
 				// Get TS packet from the buffer
@@ -287,7 +287,7 @@ namespace dvbapi {
 
 			// cleaning tables
 			SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
-			input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(streamID);
+			input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(streamID);
 			frontend->setTableCollected(PAT_TABLE_ID, false);
 			frontend->setTableCollected(PMT_TABLE_ID, false);
 			frontend->freeKeys();
@@ -341,7 +341,7 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::collectPAT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data) {
+	void Client::collectPAT(input::dvb::SpFrontendDecryptInterface frontend, const unsigned char *data) {
 		if (!frontend->isTableCollected(PAT_TABLE_ID)) {
 			const int streamID = frontend->getStreamID();
 			// collect PAT data
@@ -389,7 +389,7 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::cleanPMT(input::dvb::FrontendDecryptInterface *UNUSED(frontend), unsigned char *data) {
+	void Client::cleanPMT(input::dvb::SpFrontendDecryptInterface UNUSED(frontend), unsigned char *data) {
 		const unsigned char options = (data[1] & 0xE0);
 		if (options == 0x40 && data[5] == PMT_TABLE_ID) {
 //          const int streamID = frontend->getStreamID();
@@ -459,7 +459,7 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::collectPMT(input::dvb::FrontendDecryptInterface *frontend, const unsigned char *data) {
+	void Client::collectPMT(input::dvb::SpFrontendDecryptInterface frontend, const unsigned char *data) {
 		if (!frontend->isTableCollected(PMT_TABLE_ID)) {
 			const int streamID = frontend->getStreamID();
 			// collect PMT data
@@ -621,7 +621,7 @@ namespace dvbapi {
 
 //                                      SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(&buf[i]), 65, "Stream: %d, DVBAPI_DMX_SET_FILTER", adapter);
 
-										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
+										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 
 										// Goto next cmd
@@ -634,7 +634,7 @@ namespace dvbapi {
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
-										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
+										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->stopOSCamFilterData(pid, demux, filter);
 
 										// Goto next cmd
@@ -649,7 +649,7 @@ namespace dvbapi {
 										memcpy(cw, &buf[i + 13], 8);
 										cw[8] = 0;
 
-										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
+										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->setKey(cw, parity, index);
 										SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
 													 adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
@@ -685,7 +685,7 @@ namespace dvbapi {
 										const int hops = buf[i];
 										++i;
 
-										input::dvb::FrontendDecryptInterface *frontend = _getFrontendDecryptInterface(adapter);
+										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->setECMInfo(pid, serviceID, caID, provID, emcTime,
 														  cardSystem, readerName, sourceName, protocolName, hops);
 										SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s  ECM Time: %d",

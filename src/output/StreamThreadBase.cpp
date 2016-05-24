@@ -32,7 +32,7 @@
 namespace output {
 
 	StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream,
-			decrypt::dvbapi::Client *decrypt) :
+			decrypt::dvbapi::SpClient decrypt) :
 		ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
 		_stream(stream),
 		_protocol(protocol),
@@ -134,7 +134,7 @@ namespace output {
 
 	void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 
-		input::Device *inputDevice = _stream.getInputDevice();
+		input::SpDevice inputDevice = _stream.getInputDevice();
 
 		if (inputDevice->isDataAvailable()) {
 			if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {

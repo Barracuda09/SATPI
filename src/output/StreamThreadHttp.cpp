@@ -30,7 +30,7 @@ namespace output {
 
 	StreamThreadHttp::StreamThreadHttp(
 		StreamInterface &stream,
-		decrypt::dvbapi::Client *decrypt) :
+		decrypt::dvbapi::SpClient decrypt) :
 		StreamThreadBase("HTTP", stream, decrypt) {
 	}
 

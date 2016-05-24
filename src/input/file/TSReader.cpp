@@ -41,8 +41,8 @@ namespace file {
 	void TSReader::enumerate(StreamVector &streamVector, const std::string &path) {
 		SI_LOG_INFO("Setting up TS Reader using path: %s", path.c_str());
 		const StreamVector::size_type size = streamVector.size();
-		input::file::TSReader *tsreader = new input::file::TSReader(size);
-		streamVector.push_back(new Stream(size, tsreader, nullptr));
+		input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size);
+		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
 	}
 
 	// =======================================================================

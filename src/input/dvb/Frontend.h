@@ -34,12 +34,12 @@
 #include <string>
 
 FW_DECL_NS1(input, DeviceData);
-FW_DECL_NS2(decrypt, dvbapi, Client);
 FW_DECL_NS3(input, dvb, delivery, System);
 
-// @todo Forward decl
-FW_DECL_NS0(Stream);
-typedef std::vector<Stream *> StreamVector;
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
+FW_DECL_SP_NS2(input, dvb, Frontend);
+
+FW_DECL_VECTOR_NS0(Stream);
 
 namespace input {
 namespace dvb {
@@ -69,7 +69,7 @@ namespace dvb {
 
 			static void enumerate(
 				StreamVector &streamVector,
-				decrypt::dvbapi::Client *decrypt,
+				decrypt::dvbapi::SpClient decrypt,
 				const std::string &path);
 
 			// =======================================================================

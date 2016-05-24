@@ -30,6 +30,8 @@
 FW_DECL_NS1(input, DeviceData);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
+FW_DECL_SP_NS1(input, Device);
+
 namespace input {
 
 	/// The class @c Device is an interface to some input device.

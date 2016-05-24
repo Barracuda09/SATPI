@@ -29,9 +29,9 @@
 
 FW_DECL_NS1(input, DeviceData);
 
-// @todo Forward decl
-FW_DECL_NS0(Stream);
-typedef std::vector<Stream *> StreamVector;
+FW_DECL_SP_NS2(input, stream, Streamer);
+
+FW_DECL_VECTOR_NS0(Stream);
 
 namespace input {
 namespace stream {

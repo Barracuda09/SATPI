@@ -40,27 +40,22 @@ StreamManager::StreamManager(const std::string &xmlFilePath) :
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
 #ifdef LIBDVBCSA
-	base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int> getFrontendDecryptInterface =
-		makeFunctor((base::Functor1Ret<input::dvb::FrontendDecryptInterface *, int>*) 0,
+	base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> getFrontendDecryptInterface =
+		makeFunctor((base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int>*) 0,
 			*this, &StreamManager::getFrontendDecryptInterface);
 
-	_decrypt = new decrypt::dvbapi::Client(xmlFilePath + "/" + "dvbapi.xml", getFrontendDecryptInterface);
+	_decrypt = std::make_shared<decrypt::dvbapi::Client>(xmlFilePath + "/" + "dvbapi.xml", getFrontendDecryptInterface);
 #endif
 }
 
-StreamManager::~StreamManager() {
-	DELETE(_dummyStream);
-	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		DELETE(*it);
-	}
-}
+StreamManager::~StreamManager() {}
 
 #ifdef LIBDVBCSA
-	decrypt::dvbapi::Client *StreamManager::getDecrypt() const {
+	decrypt::dvbapi::SpClient StreamManager::getDecrypt() const {
 		return _decrypt;
 	}
 
-	input::dvb::FrontendDecryptInterface *StreamManager::getFrontendDecryptInterface(int streamID) {
+	input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(int streamID) {
 		return _stream[streamID]->getFrontendDecryptInterface();
 	}
 #endif
@@ -73,7 +68,8 @@ void StreamManager::enumerateDevices() {
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
-	_dummyStream = new Stream(0, nullptr, _decrypt);
+	input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(0);
+	_dummyStream = std::make_shared<Stream>(0, tsreader, _decrypt);
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
 	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
 	input::stream::Streamer::enumerate(_stream);
@@ -112,7 +108,7 @@ std::string StreamManager::getRTSPDescribeString() const {
 }
 
 
-Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
+SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	base::MutexLock lock(_mutex);
 
 	// Here we need to find the correct Stream and StreamClient
@@ -158,7 +154,7 @@ Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int 
 		if (foundSessionID) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
 			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				Stream *stream = *it;
+				SpStream stream = *it;
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
 					return stream;
@@ -167,7 +163,7 @@ Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int 
 		} else {
 			SI_LOG_INFO("Found StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
 			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				Stream *stream = *it;
+				SpStream stream = *it;
 				if (!stream->streamInUse()) {
 					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 						socketClient.setSessionID(sessionID);
@@ -183,7 +179,7 @@ Stream *StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int 
 		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			SI_LOG_ERROR("SessionID %s not found int StreamID %d", sessionID.c_str(), streamID);
 			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				Stream *stream = *it;
+				SpStream stream = *it;
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
 					return stream;
@@ -204,7 +200,7 @@ void StreamManager::checkStreamClientsWithTimeout() {
 
 	assert(!_stream.empty());
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		Stream *stream = *it;
+		SpStream stream = *it;
 		if (stream->streamInUse()) {
 			stream->checkStreamClientsWithTimeout();
 		}
@@ -222,7 +218,7 @@ void StreamManager::fromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	std::size_t i = 0;
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
-		Stream *stream = *it;
+		SpStream stream = *it;
 		std::string find;
 		std::string element;
 		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
@@ -239,7 +235,7 @@ void StreamManager::addToXML(std::string &xml) const {
 	// application data
 	xml += "<streams>";
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
-		const Stream *stream = *it;
+		ScpStream stream = *it;
 		StringConverter::addFormattedString(xml, "<stream%zu>", i);
 		stream->addToXML(xml);
 		StringConverter::addFormattedString(xml, "</stream%zu>", i);

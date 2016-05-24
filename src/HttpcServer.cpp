@@ -126,7 +126,7 @@ bool HttpcServer::process(SocketClient &client) {
 
 bool HttpcServer::closeConnection(SocketClient &socketclient) {
 	int clientID;
-	Stream *stream = _streamManager.findStreamAndClientIDFor(socketclient, clientID);
+	SpStream stream = _streamManager.findStreamAndClientIDFor(socketclient, clientID);
 	if (stream != nullptr) {
 		stream->close(clientID);
 	}
@@ -139,7 +139,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 
 	std::string httpc;
 	int clientID;
-	Stream *stream = _streamManager.findStreamAndClientIDFor(client, clientID);
+	SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
 	if (stream != nullptr) {
 		std::string method;
 		if (StringConverter::getMethod(msg, method)) {

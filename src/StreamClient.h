@@ -27,8 +27,6 @@
 
 #include <string>
 
-FW_DECL_NS0(Stream);
-
 /// StreamClient defines the owner/participants of an stream
 class StreamClient {
 	public:

@@ -26,6 +26,8 @@ extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
 
+FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
+
 namespace input {
 namespace dvb {
 

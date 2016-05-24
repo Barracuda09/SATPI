@@ -36,7 +36,7 @@
 static unsigned int seedp = 0xFEED;
 const unsigned int Stream::MAX_CLIENTS = 8;
 
-Stream::Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *decrypt) :
+Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	_streamID(streamID),
 	_streamingType(StreamingType::NONE),
 	_enabled(true),
@@ -51,6 +51,7 @@ Stream::Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *dec
 	_timestamp(0),
 	_rtp_payload(0.0),
 	_rtcpSignalUpdate(1) {
+	ASSERT(device);
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		_client[i].setClientID(i);
 	}
@@ -58,7 +59,6 @@ Stream::Stream(int streamID, input::Device *device, decrypt::dvbapi::Client *dec
 
 Stream::~Stream() {
 	DELETE_ARRAY(_client);
-	DELETE(_device);
 }
 
 // ===========================================================================
@@ -73,7 +73,7 @@ StreamClient &Stream::getStreamClient(std::size_t clientNr) const {
 	return _client[clientNr];
 }
 
-input::Device *Stream::getInputDevice() const {
+input::SpDevice Stream::getInputDevice() const {
 	return _device;
 }
 
@@ -156,8 +156,8 @@ void Stream::fromXML(const std::string &xml) {
 // -- Other member functions -------------------------------------------------
 // ===========================================================================
 #ifdef LIBDVBCSA
-input::dvb::FrontendDecryptInterface *Stream::getFrontendDecryptInterface() {
-	return dynamic_cast<input::dvb::FrontendDecryptInterface *>(_device);
+input::dvb::SpFrontendDecryptInterface Stream::getFrontendDecryptInterface() {
+	return std::dynamic_pointer_cast<input::dvb::FrontendDecryptInterface>(_device);
 }
 #endif
 
@@ -167,6 +167,12 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              const std::string &method,
                              int &clientID) {
 	base::MutexLock lock(_mutex);
+
+	// Check if the input device is set, else this stream is not usable
+	if (!_device) {
+		SI_LOG_ERROR("Stream: %d, Input Device not set?...", _streamID);
+		return false;
+	}
 
 	// Check if frontend is enabled when we have a new session
 	if (newSession && !_enabled) {
@@ -234,23 +240,23 @@ bool Stream::update(int clientID) {
 	const bool changed = _device->hasDeviceDataChanged();
 
 	// first time streaming?
-	if (_streaming == nullptr) {
+	if (!_streaming) {
 		switch (_streamingType) {
 			case StreamingType::NONE:
-				_streaming = nullptr;
+				_streaming.reset(nullptr);
 				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
 				break;
 			case StreamingType::HTTP:
-				_streaming = new output::StreamThreadHttp(*this, _decrypt);
+				_streaming.reset(new output::StreamThreadHttp(*this, _decrypt));
 				break;
 			case StreamingType::RTSP:
-				_streaming = new output::StreamThreadRtp(*this, _decrypt);
+				_streaming.reset(new output::StreamThreadRtp(*this, _decrypt));
 				break;
 			case StreamingType::FILE:
-				_streaming = new output::StreamThreadTSWriter(*this, _decrypt, "test.ts");
+				_streaming.reset(new output::StreamThreadTSWriter(*this, _decrypt, "test.ts"));
 				break;
 		};
-		if (_streaming == nullptr) {
+		if (!_streaming) {
 			return false;
 		}
 	}
@@ -340,11 +346,9 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 void Stream::processStopStream_L(int clientID, bool gracefull) {
 
 	// Stop streaming by deleting object
-	DELETE(_streaming);
+	_streaming.reset(nullptr);
 
-	if (_device != nullptr) {
-		_device->teardown();
-	}
+	_device->teardown();
 
 	// as last, else sessionID and IP is reset
 	_client[clientID].teardown(gracefull);

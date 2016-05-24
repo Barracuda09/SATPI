@@ -28,7 +28,7 @@
 
 namespace output {
 
-	StreamThreadRtp::StreamThreadRtp(StreamInterface &stream, decrypt::dvbapi::Client *decrypt) :
+	StreamThreadRtp::StreamThreadRtp(StreamInterface &stream, decrypt::dvbapi::SpClient decrypt) :
 		StreamThreadBase("RTP", stream, decrypt),
 		_clientID(0),
 		_cseq(0),
