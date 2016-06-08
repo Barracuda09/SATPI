@@ -53,10 +53,14 @@ class UdpSocket :
 
 		/// Initialize an Multicast UDP socket
 		/// @param server
+		/// @param multicastIPAddr
 		/// @param port
-		/// @param ip_addr
-		bool init_mutlicast_udp_socket(SocketClient &server, int port,
-			const char *ip_addr);
+		/// @param interfaceIPaddr
+		bool init_mutlicast_udp_socket(
+			SocketClient &server,
+			const char *multicastIPAddr,
+			int port,
+			const char *interfaceIPaddr);
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

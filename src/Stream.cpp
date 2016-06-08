@@ -168,24 +168,27 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              int &clientID) {
 	base::MutexLock lock(_mutex);
 
+	const input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
+
 	// Check if the input device is set, else this stream is not usable
 	if (!_device) {
 		SI_LOG_ERROR("Stream: %d, Input Device not set?...", _streamID);
 		return false;
 	}
 
-	// Check if frontend is enabled when we have a new session
-	if (newSession && !_enabled) {
-		SI_LOG_INFO("Stream: %d, Not enabled...", _streamID);
-		return false;
-	}
-
-	const input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
-	// Check if frontend is capable if handling 'msys' when we have a new session
-	if (newSession && !_device->capableOf(msys)) {
-		SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
-		            _streamID, StringConverter::delsys_to_string(msys));
-		return false;
+	// Do we have a new session then check some things
+	if (newSession) {
+		if (!_enabled) {
+			SI_LOG_INFO("Stream: %d, New session but this stream is not enabled, skipping...", _streamID);
+			return false;
+		} else if (_streamInUse) {
+			SI_LOG_INFO("Stream: %d, New session but this stream is in use, skipping...", _streamID);
+			return false;
+		} else if (!_device->capableOf(msys)) {
+			SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
+						_streamID, StringConverter::delsys_to_string(msys));
+			return false;
+		}
 	}
 
 	// if we have a session ID try to find it among our StreamClients

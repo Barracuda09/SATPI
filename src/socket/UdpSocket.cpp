@@ -45,7 +45,10 @@ bool UdpSocket::init_udp_socket(SocketClient &server, int port, const char *ip_a
 	return true;
 }
 
-bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const char *ip_addr) {
+bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server,
+		const char *multicastIPAddr,
+		int port,
+		const char *interfaceIPaddr) {
 	// fill in the socket structure with host information
 	server.setupSocketStructureWithAnyAddress(port);
 
@@ -54,17 +57,17 @@ bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server, int port, const 
 		return false;
 	}
 
-	struct ip_mreq mreq;
-	mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");
-	mreq.imr_interface.s_addr = inet_addr(ip_addr);
-	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
-		PERROR("IP_ADD_MEMBERSHIP");
-		return false;
-	}
-
 	// bind the socket to the port number
 	if (!server.bind()) {
 		SI_LOG_ERROR("UDP Multicast Bind failed");
+		return false;
+	}
+
+	struct ip_mreq mreq;
+	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr);
+	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr);
+	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
+		PERROR("IP_ADD_MEMBERSHIP");
 		return false;
 	}
 	return true;

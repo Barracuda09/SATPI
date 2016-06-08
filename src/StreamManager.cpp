@@ -78,11 +78,11 @@ void StreamManager::enumerateDevices() {
 std::string StreamManager::getXMLDeliveryString() const {
 	base::MutexLock lock(_mutex);
 	std::string delSysStr;
-	std::size_t dvb_s2 = 0;
-	std::size_t dvb_t = 0;
-	std::size_t dvb_t2 = 0;
-	std::size_t dvb_c = 0;
-	std::size_t dvb_c2 = 0;
+	std::size_t dvb_s2 = 0u;
+	std::size_t dvb_t = 0u;
+	std::size_t dvb_t2 = 0u;
+	std::size_t dvb_c = 0u;
+	std::size_t dvb_c2 = 0u;
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
@@ -94,11 +94,11 @@ std::string StreamManager::getXMLDeliveryString() const {
 std::string StreamManager::getRTSPDescribeString() const {
 	base::MutexLock lock(_mutex);
 	std::string describeStr;
-	std::size_t dvb_s2 = 0;
-	std::size_t dvb_t = 0;
-	std::size_t dvb_t2 = 0;
-	std::size_t dvb_c = 0;
-	std::size_t dvb_c2 = 0;
+	std::size_t dvb_s2 = 0u;
+	std::size_t dvb_t = 0u;
+	std::size_t dvb_t2 = 0u;
+	std::size_t dvb_c = 0u;
+	std::size_t dvb_c2 = 0u;
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
@@ -128,7 +128,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	bool newSession = false;
 	clientID = 0;
 
-	// if no sessionID then..
+	// if no sessionID, then try to find it.
 	if (!foundSessionID) {
 		// Does the SocketClient have an sessionID
 		if (socketClient.getSessionID().size() > 2) {
@@ -142,14 +142,14 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			newSession = true;
 		} else {
 			// None of the above.. so it is just an outside session give an temporary StreamClient
-			SI_LOG_INFO("Found message outside session");
+			SI_LOG_DEBUG("Found message outside session");
 			socketClient.setSessionID("-1");
 			_dummyStream->setSocketClient(socketClient);
 			return _dummyStream;
 		}
 	}
 
-	// if no streamID we need to find the streamID
+	// if no streamID, then we need to find the streamID
 	if (streamID == -1) {
 		if (foundSessionID) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
@@ -173,11 +173,9 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			}
 		}
 	} else {
-// @TODO Check is this the owner of this stream??
 		SI_LOG_INFO("Found StreamID %d - SessionID %s", streamID, sessionID.c_str());
 		// Did we find the StreamClient? else try to search in other Streams
 		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-			SI_LOG_ERROR("SessionID %s not found int StreamID %d", sessionID.c_str(), streamID);
 			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
 				SpStream stream = *it;
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {

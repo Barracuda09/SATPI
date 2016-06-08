@@ -533,6 +533,14 @@ namespace dvb {
 		_tuned = false;
 		CLOSE_FD(_fd_fe);
 		CLOSE_FD(_fd_dvr);
+		{
+			base::MutexLock lock(_mutex);
+			_status = static_cast<fe_status_t>(0);
+			_strength = 0;
+			_snr = 0;
+			_ber = 0;
+			_ublocks = 0;
+		}
 		return true;
 	}
 
@@ -870,16 +878,16 @@ namespace dvb {
 			// check if frontend is locked, if not try a few times
 			timeout = 0;
 			while (timeout < 4) {
-				fe_status_t status = FE_TIMEDOUT;
+				_status = FE_TIMEDOUT;
 				// first read status
-				if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-					if (status & FE_HAS_LOCK) {
+				if (ioctl(_fd_fe, FE_READ_STATUS, &_status) == 0) {
+					if (_status & FE_HAS_LOCK) {
 						// We are tuned now
 						_tuned = true;
-						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, status);
+						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, _status);
 						break;
 					} else {
-						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
+						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, _status);
 					}
 				}
 				usleep(150000);

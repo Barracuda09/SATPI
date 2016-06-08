@@ -65,7 +65,7 @@ void Server::threadEntry() {
 		_properties.getHttpPort(), xmlDeviceDescriptionFile.c_str());
 
 	init_udp_socket(_udpMultiSend, SSDP_PORT, "239.255.255.250");
-	init_mutlicast_udp_socket(_udpMultiListen, SSDP_PORT, _interface.getIPAddress().c_str());
+	init_mutlicast_udp_socket(_udpMultiListen, "239.255.255.250", SSDP_PORT, _interface.getIPAddress().c_str());
 
 	time_t repeat_time = 0;
 	struct pollfd pfd[1];
