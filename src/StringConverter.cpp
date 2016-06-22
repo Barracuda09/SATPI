@@ -145,11 +145,11 @@ bool StringConverter::hasTransportParameters(const std::string &msg) {
 	std::string line;
 
 	if (StringConverter::getline(msg, nextline, line, "\r\n")) {
+		const std::string::size_type size = line.size() - 1;
 		const std::string::size_type found = line.find_first_of("?");
-		if (found != std::string::npos) {
+		if (found != std::string::npos && found < size && line[found + 1] != ' ') {
 			return true;
 		}
-
 	}
 	return false;
 }

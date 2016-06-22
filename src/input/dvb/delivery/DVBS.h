@@ -126,7 +126,6 @@ namespace delivery {
 
 		private:
 			base::Mutex _mutex;   ///
-			Lnb_t _lnb[MAX_LNB];  /// lnb that can be connected to this frontend
 			DiSEqc_t _diseqc;     ///
 			bool _diseqcRepeat;   /// Check if DiSEqC command has to be repeated
 

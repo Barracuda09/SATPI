@@ -141,6 +141,12 @@ bool HttpServer::methodGet(SocketClient &client) {
 			// remove first '/'
 			file.erase(0, 1);
 
+			// Check if there is an '.eot?' in the URI as part of an IE fix?
+			const std::string::size_type found = file.find(".eot?");
+			if (found != std::string::npos) {
+				file.erase(found + 4, 1);
+			}
+
 			const std::string filePath = _properties.getWebPath() + "/" + file;
 			if (file.compare("data.xml") == 0) {
 				makeDataXML(docType);

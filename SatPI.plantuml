@@ -133,8 +133,9 @@ input::dvb::delivery::System <|-- DVBT
 input::dvb::delivery::System <|-- ATSC
 
 
-DVBS *-- Lnb_t
 DVBS *-- DiSEqc_t
+
+DiSEqc_t *-- Lnb_t
 
 decrypt::dvbapi::ClientProperties *-- dvbcsa_key_s
 decrypt::dvbapi::ClientProperties *-- TSTableData : " _pat "
