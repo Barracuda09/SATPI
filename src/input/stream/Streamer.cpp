@@ -120,11 +120,6 @@ namespace stream {
 		return true;
 	}
 
-	bool Streamer::setFrontendInfo(const std::string &UNUSED(fe),
-				const std::string &UNUSED(dvr),	const std::string &UNUSED(dmx)) {
-		return true;
-	}
-
 	std::string Streamer::attributeDescribeString() const {
 		std::string desc;
 		// ver=1.5;tuner=<feID>;file=<file>

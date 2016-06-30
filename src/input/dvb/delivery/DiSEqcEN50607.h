@@ -1,4 +1,4 @@
-/* DVBC.h
+/* DiSEqcEN50607.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,32 +17,31 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_DVB_DELIVERY_DVBC_H_INCLUDE
-#define INPUT_DVB_DELIVERY_DVBC_H_INCLUDE INPUT_DVB_DELIVERY_DVBC_H_INCLUDE
+#ifndef INPUT_DVB_DELIVERY_DISEQCEN50607_H_INCLUDE
+#define INPUT_DVB_DELIVERY_DISEQCEN50607_H_INCLUDE INPUT_DVB_DELIVERY_DISEQCEN50607_H_INCLUDE
 
 #include <FwDecl.h>
 #include <base/Mutex.h>
-#include <input/dvb/delivery/System.h>
+#include <input/dvb/dvbfix.h>
+#include <input/dvb/delivery/Lnb.h>
+#include <input/dvb/delivery/DiSEqc.h>
 
-#include <stdlib.h>
 #include <stdint.h>
-
-FW_DECL_NS2(input, dvb, FrontendData);
 
 namespace input {
 namespace dvb {
 namespace delivery {
 
-	/// The class @c DVBC specifies DVB-C/C2 delivery system
-	class DVBC :
-		public input::dvb::delivery::System {
+	/// The class @c DiSEqcEN50607 specifies which type of DiSEqc switch is connected
+	class DiSEqcEN50607 :
+		public DiSEqc {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			DVBC(int streamID);
-			virtual ~DVBC();
+			DiSEqcEN50607();
+			virtual ~DiSEqcEN50607();
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -50,43 +49,45 @@ namespace delivery {
 
 		public:
 
-			///
 			virtual void addToXML(std::string &xml) const override;
 
-			///
 			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
-			// -- input::dvb::delivery::System ---------------------------------------
+			// -- input::dvb::delivery::DiSEqc ---------------------------------------
 			// =======================================================================
 
 		public:
 
-			virtual bool tune(
-				int feFD,
-				const input::dvb::FrontendData &frontendData) override;
-
-			virtual bool isCapableOf(input::InputSystem system) const override;
+			///
+			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
+				int src, int pol_v) override;
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
 			// =======================================================================
 
 		private:
-			///
-			bool setProperties(int feFD, const input::dvb::FrontendData &frontendData);
+
+			bool sendDiseqcJess(int feFD, int streamID, uint32_t &freq,
+				int src, int pol_v);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;   ///
 
+			base::Mutex _mutex;
+			bool _diseqcRepeat;
+			int _pin;
+			int _chSlot;
+			uint32_t _chFreq;
+			Lnb _LNB[MAX_LNB];    // LNB properties
 	};
 
 } // namespace delivery
 } // namespace dvb
 } // namespace input
 
-#endif // INPUT_DVB_DELIVERY_DVBC_H_INCLUDE
+#endif // INPUT_DVB_DELIVERY_DISEQCEN50607_H_INCLUDE

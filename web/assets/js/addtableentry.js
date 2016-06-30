@@ -52,7 +52,6 @@ function addCheckboxInput(tagName, id, input) {
 function addNumberInput(tagName, id, input) {
 	var entry = "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
 	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-//	entry += "\" min=\"5\"";
 	entry += "min=\"" + input.getElementsByTagName("minvalue")[0].childNodes[0].nodeValue + "\"";
 	entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].childNodes[0].nodeValue + "\"";
 
@@ -91,6 +90,32 @@ function addIPInput(tagName, id, input) {
 	return entry;
 }
 
+function addSelectionListInput(tagName, id, input) {
+	var list = input.getElementsByTagName("list")[0];
+	var optlen = list.getElementsByTagName("*").length;
+	var optsel = input.getElementsByTagName("value")[0].childNodes[0].nodeValue;
+
+	var entry = "<select ";
+	entry += "name=\"" + tagName + "\"";
+	entry += "id=\"" + id + "\"";
+	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
+	entry += "onmousedown=\"document.getElementById(id).focus()\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
+	entry += ">";
+	for (en = 0; en < optlen; en++) {
+		entry += "<option";
+		if (en == optsel) {
+			entry += " selected=\"selected\"";
+		}
+		entry += ">";
+		entry += list.getElementsByTagName("*")[en].childNodes[0].nodeValue;
+		entry += "</option>";
+	}
+	entry += "</select>";
+	return entry;
+}
+
 function addTableLabel(labelstring) {
 	return "<td align=\"left\" class=\"col-md-1\">" + labelstring + "</td>";
 }
@@ -111,6 +136,8 @@ function addInput(xmlDoc, tagName, id) {
 				entry += addIPInput(tagName, id, input);
 			} else if (inputtype[0].childNodes[0].nodeValue == "text") {
 				entry += addTextInput(tagName, id, input);
+			} else if (inputtype[0].childNodes[0].nodeValue == "selectionlist") {
+				entry += addSelectionListInput(tagName, id, input);
 			} else {
 				entry += addNumberInput(tagName, id, input);
 			}

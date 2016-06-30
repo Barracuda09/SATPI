@@ -60,6 +60,25 @@ namespace NS1 { \
 	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
 }
 
+#define FW_DECL_UP_NS2(NS1, NS2, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+	class CLASS; \
+	typedef std::unique_ptr<CLASS> Up ## CLASS; \
+	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
+} \
+}
+
+#define FW_DECL_UP_NS3(NS1, NS2, NS3, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+namespace NS3 { \
+	class CLASS; \
+	typedef std::unique_ptr<CLASS> Up ## CLASS; \
+	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
+} \
+} \
+}
 ///////////////////////////////////////////////////////////////////////////////
 
 #define FW_DECL_SP_NS0(CLASS) \

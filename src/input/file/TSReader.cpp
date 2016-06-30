@@ -125,11 +125,6 @@ namespace file {
 		return true;
 	}
 
-	bool TSReader::setFrontendInfo(const std::string &UNUSED(fe),
-				const std::string &UNUSED(dvr),	const std::string &UNUSED(dmx)) {
-		return true;
-	}
-
 	std::string TSReader::attributeDescribeString() const {
 		std::string desc;
 		if (_file.is_open()) {

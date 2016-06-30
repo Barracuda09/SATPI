@@ -41,7 +41,7 @@ namespace delivery {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			DVBT();
+			DVBT(int streamID);
 			virtual ~DVBT();
 
 			// =======================================================================
@@ -62,7 +62,8 @@ namespace delivery {
 
 		public:
 
-			virtual bool tune(int streamID, int feFD,
+			virtual bool tune(
+				int feFD,
 				const input::dvb::FrontendData &frontendData) override;
 
 			virtual bool isCapableOf(input::InputSystem system) const override {

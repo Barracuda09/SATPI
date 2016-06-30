@@ -60,9 +60,15 @@
 			page += addTableLineEntry(id, "RTP streamed (MB)", xmlDoc, "payload");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
-			page += addTableLineEntry(id, "Repeat DiSEqC", xmlDoc, "diseqc_repeat");
 			page += addTableLineEntry(id, "DVR Buffer (Bytes)", xmlDoc, "dvrbuffer");
 			page += addTableLineEntry(id, "RTCP Signal Update Freq", xmlDoc, "rtcpSignalUpdate");
+
+			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
+			page += addTableLineEntry(id, "Repeat DiSEqC", xmlDoc, "diseqc_repeat");
+			page += addTableLineEntry(id, "DiSEqC", xmlDoc, "diseqcType");
+			page += addTableLineEntry(id, "Channel Freq (MHz)", xmlDoc, "chFreq");
+			page += addTableLineEntry(id, "Channel Slot", xmlDoc, "chSlot");
+			page += addTableLineEntry(id, "PIN (256 disabled)", xmlDoc, "pin");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
 			delsys = addTableLineEntry(id, "Delivery System", xmlDoc, "delsys");

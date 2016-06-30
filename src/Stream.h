@@ -103,14 +103,6 @@ class Stream :
 		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface();
 #endif
 
-		/// This will read the frontend information for this stream
-		void setFrontendInfo(const std::string &fe,
-		                     const std::string &dvr,
-		                     const std::string &dmx) {
-			base::MutexLock lock(_mutex);
-			_device->setFrontendInfo(fe, dvr, dmx);
-		}
-
 		///
 		void addDeliverySystemCount(
 				std::size_t &dvbs2,

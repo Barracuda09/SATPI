@@ -43,7 +43,7 @@ namespace delivery {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			System() {}
+			System(int streamID) : _streamID(streamID) {}
 
 			virtual ~System() {}
 
@@ -54,10 +54,20 @@ namespace delivery {
 		public:
 
 			///
-			virtual bool tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) = 0;
+			virtual bool tune(
+				int feFD,
+				const input::dvb::FrontendData &frontendData) = 0;
 
 			///
 			virtual bool isCapableOf(input::InputSystem system) const = 0;
+
+			// =======================================================================
+			// -- Data members -------------------------------------------------------
+			// =======================================================================
+
+		protected:
+
+			int _streamID;
 
 	};
 

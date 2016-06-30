@@ -97,14 +97,7 @@ namespace stream {
 
 			virtual bool teardown() override;
 
-			virtual bool setFrontendInfo(const std::string &fe,
-				const std::string &dvr,	const std::string &dmx) override;
-
 			virtual std::string attributeDescribeString() const override;
-
-			virtual bool isTuned() const  override {
-				return true;
-			}
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------

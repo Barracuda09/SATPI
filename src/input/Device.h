@@ -90,15 +90,9 @@ namespace input {
 			/// Teardown/Stop this device
 			virtual bool teardown() = 0;
 
-			/// This will read the frontend information for this frontend
-			virtual bool setFrontendInfo(const std::string &fe,
-				const std::string &dvr,	const std::string &dmx) = 0;
-
 			///
 			virtual std::string attributeDescribeString() const = 0;
 
-			/// Check if this frontend is tuned
-			virtual bool isTuned() const = 0;
 	};
 
 } // namespace input

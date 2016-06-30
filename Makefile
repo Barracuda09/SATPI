@@ -47,9 +47,13 @@ SOURCES = Version.cpp \
 	input/dvb/FrontendData.cpp \
 	input/dvb/FrontendData_set.cpp \
 	input/dvb/PidTable.cpp \
+	input/dvb/delivery/DiSEqcEN50494.cpp \
+	input/dvb/delivery/DiSEqcEN50607.cpp \
+	input/dvb/delivery/DiSEqcSwitch.cpp \
 	input/dvb/delivery/DVBC.cpp \
 	input/dvb/delivery/DVBS.cpp \
 	input/dvb/delivery/DVBT.cpp \
+	input/dvb/delivery/Lnb.cpp \
 	input/file/TSReader.cpp \
 	input/stream/Streamer.cpp \
 	mpegts/PacketBuffer.cpp \

@@ -58,7 +58,9 @@ namespace dvb {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			Frontend(int streamID);
+			Frontend(int streamID, const std::string &fe,
+				const std::string &dvr,	const std::string &dmx);
+
 			virtual ~Frontend();
 
 			// =======================================================================
@@ -177,20 +179,15 @@ namespace dvb {
 
 			virtual bool teardown() override;
 
-			virtual bool setFrontendInfo(const std::string &fe,
-				const std::string &dvr,	const std::string &dmx) override;
-
 			virtual std::string attributeDescribeString() const override;
-
-			virtual bool isTuned() const override {
-				return (_fd_dvr != -1) && _tuned;
-			}
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
 
 		protected:
+
+			void setupFrontend();
 
 			/// Update the input device
 			bool updateInputDevice();
@@ -211,6 +208,10 @@ namespace dvb {
 			bool tune();
 
 			///
+			bool isTuned() const {
+				return (_fd_dvr != -1) && _tuned;
+			}
+
 			bool updatePIDFilters();
 
 			///

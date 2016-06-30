@@ -34,7 +34,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBC::DVBC() {}
+	DVBC::DVBC(int streamID) :
+		input::dvb::delivery::System(streamID) {}
 
 	DVBC::~DVBC() {}
 
@@ -54,8 +55,8 @@ namespace delivery {
 	// -- input::dvb::delivery::System ---------------------------------------
 	// =======================================================================
 
-	bool DVBC::tune(int streamID, int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-C(2)...", streamID);
+	bool DVBC::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
+		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-C(2)...", _streamID);
 
 		// Now tune by setting properties
 		if (!setProperties(feFD, frontendData)) {

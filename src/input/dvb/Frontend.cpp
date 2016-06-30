@@ -28,6 +28,7 @@
 #include <input/dvb/delivery/DVBC.h>
 #include <input/dvb/delivery/DVBS.h>
 #include <input/dvb/delivery/DVBT.h>
+#include <input/dvb/delivery/DiSEqc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,11 +44,17 @@
 namespace input {
 namespace dvb {
 
-	Frontend::Frontend(int streamID) :
+	Frontend::Frontend(int streamID,
+		const std::string &fe,
+		const std::string &dvr,
+		const std::string &dmx) :
 		_streamID(streamID),
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dvr(-1),
+		_path_to_fe(fe),
+		_path_to_dvr(dvr),
+		_path_to_dmx(dmx),
 		_dvbs2(0),
 		_dvbt(0),
 		_dvbt2(0),
@@ -55,9 +62,7 @@ namespace dvb {
 		_dvbc2(0),
 		_dvrBufferSize(40 * 188 * 1024) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
-		_path_to_fe  = "Not Set";
-		_path_to_dvr = "Not Set";
-		_path_to_dmx = "Not Set";
+		setupFrontend();
 	}
 
 	Frontend::~Frontend() {
@@ -88,15 +93,13 @@ namespace dvb {
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 0, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 0, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 0, 0);
-		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0);
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, fe_path, dvr_path, dmx_path);
 		streamVector.push_back(std::make_shared<Stream>(0, frontend0, decrypt));
-		streamVector[0]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 		snprintf(fe_path,  FE_PATH_LEN, FRONTEND, 1, 0);
 		snprintf(dvr_path, FE_PATH_LEN, DVR, 1, 0);
 		snprintf(dmx_path, FE_PATH_LEN, DMX, 1, 0);
-		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1);
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, fe_path, dvr_path, dmx_path);
 		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
-		streamVector[1]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 #else
 		struct dirent **file_list;
 		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
@@ -123,9 +126,8 @@ namespace dvb {
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
 
 								const StreamVector::size_type size = streamVector.size();
-								input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size);
+								input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe_path, dvr_path, dmx_path);
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
-								streamVector[size]->setFrontendInfo(fe_path, dvr_path, dmx_path);
 							}
 							break;
 						case S_IFDIR:
@@ -544,170 +546,6 @@ namespace dvb {
 		return true;
 	}
 
-	bool Frontend::setFrontendInfo(const std::string &fe,
-				const std::string &dvr,	const std::string &dmx) {
-		_path_to_fe = fe;
-		_path_to_dvr = dvr;
-		_path_to_dmx = dmx;
-
-#if SIMU
-		sprintf(_fe_info.name, "Simulation DVB-S2/C/T Card");
-		_fe_info.frequency_min = 1000000UL;
-		_fe_info.frequency_max = 21000000UL;
-		_fe_info.symbol_rate_min = 20000UL;
-		_fe_info.symbol_rate_max = 250000UL;
-#else
-		int fd_fe = open_fe(_path_to_fe, true);
-		// open frontend in readonly mode
-		if (fd_fe < 0) {
-			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
-			PERROR("open_fe");
-			return false;
-		}
-
-		if (ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0) {
-			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
-			PERROR("FE_GET_INFO");
-			CLOSE_FD(fd_fe);
-			return false;
-		}
-#endif
-		SI_LOG_INFO("Frontend Name: %s", _fe_info.name);
-
-		struct dtv_property dtvProperty;
-#if SIMU
-		dtvProperty.u.buffer.len = 4;
-		dtvProperty.u.buffer.data[0] = SYS_DVBS;
-		dtvProperty.u.buffer.data[1] = SYS_DVBS2;
-		dtvProperty.u.buffer.data[2] = SYS_DVBT;
-#  if FULL_DVB_API_VERSION >= 0x0505
-		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_A;
-#  else
-		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_AC;
-#  endif
-#else
-		dtvProperty.cmd = DTV_ENUM_DELSYS;
-		dtvProperty.u.data = DTV_UNDEFINED;
-
-		struct dtv_properties dtvProperties;
-		dtvProperties.num = 1;       // size
-		dtvProperties.props = &dtvProperty;
-		if (ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
-			// If we are here it can mean we have an DVB-API <= 5.4
-			SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
-			auto index = 0;
-			switch (_fe_info.type) {
-				case FE_QPSK:
-					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBS2;
-						++index;
-					}
-					dtvProperty.u.buffer.data[index] = SYS_DVBS;
-					++index;
-					break;
-				case FE_OFDM:
-					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBT2;
-						++index;
-					}
-					dtvProperty.u.buffer.data[index] = SYS_DVBT;
-					++index;
-					break;
-				case FE_QAM:
-#  if FULL_DVB_API_VERSION >= 0x0505
-					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_A;
-#  else
-					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_AC;
-#  endif
-					++index;
-					break;
-				case FE_ATSC:
-					if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_B;
-						++index;
-						break;
-					}
-				// Fall-through
-				default:
-					SI_LOG_ERROR("Frontend does not have any known delivery systems");
-					CLOSE_FD(fd_fe);
-					return false;
-			}
-			dtvProperty.u.buffer.len = index;
-		}
-		CLOSE_FD(fd_fe);
-#endif
-		// get capability of this frontend and count the delivery systems
-		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
-			switch (dtvProperty.u.buffer.data[i]) {
-				case SYS_DSS:
-					SI_LOG_INFO("Frontend Type: DSS");
-					break;
-				case SYS_DVBS:
-					SI_LOG_INFO("Frontend Type: Satellite (DVB-S)");
-					break;
-				case SYS_DVBS2:
-					// we only count DVB-S2
-					++_dvbs2;
-					SI_LOG_INFO("Frontend Type: Satellite (DVB-S2)");
-					break;
-				case SYS_DVBT:
-					++_dvbt;
-					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T)");
-					break;
-				case SYS_DVBT2:
-					++_dvbt2;
-					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T2)");
-					break;
-#if FULL_DVB_API_VERSION >= 0x0505
-				case SYS_DVBC_ANNEX_A:
-					if (_dvbc == 0) {
-						++_dvbc;
-					}
-					SI_LOG_INFO("Frontend Type: Cable (Annex A)");
-					break;
-				case SYS_DVBC_ANNEX_C:
-					if (_dvbc == 0) {
-						++_dvbc;
-					}
-					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
-					break;
-#else
-				case SYS_DVBC_ANNEX_AC:
-					if (_dvbc == 0) {
-						++_dvbc;
-					}
-					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
-					break;
-#endif
-				case SYS_DVBC_ANNEX_B:
-					if (_dvbc == 0) {
-						++_dvbc;
-					}
-					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
-					break;
-				default:
-					SI_LOG_INFO("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
-					break;
-			}
-		}
-		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
-		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
-
-		// Set delivery systems
-		if (_dvbs2 > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBS);
-		}
-		if (_dvbt > 0 || _dvbt2 > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBT);
-		}
-		if (_dvbc > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBC);
-		}
-
-		return true;
-	}
-
 	std::string Frontend::attributeDescribeString() const {
 		const double freq = _frontendData.getFrequency() / 1000.0;
 		const int srate = _frontendData.getSymbolRate() / 1000;
@@ -792,6 +630,164 @@ namespace dvb {
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
+
+	void Frontend::setupFrontend() {
+#if SIMU
+		sprintf(_fe_info.name, "Simulation DVB-S2/C/T Card");
+		_fe_info.frequency_min = 1000000UL;
+		_fe_info.frequency_max = 21000000UL;
+		_fe_info.symbol_rate_min = 20000UL;
+		_fe_info.symbol_rate_max = 250000UL;
+#else
+		// open frontend in readonly mode
+		int fd_fe = open_fe(_path_to_fe, true);
+		if (fd_fe < 0) {
+			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
+			PERROR("open_fe");
+			return;
+		}
+
+		if (ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0) {
+			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
+			PERROR("FE_GET_INFO");
+			CLOSE_FD(fd_fe);
+			return;
+		}
+#endif
+		SI_LOG_INFO("Frontend Name: %s", _fe_info.name);
+
+		struct dtv_property dtvProperty;
+#if SIMU
+		dtvProperty.u.buffer.len = 4;
+		dtvProperty.u.buffer.data[0] = SYS_DVBS;
+		dtvProperty.u.buffer.data[1] = SYS_DVBS2;
+		dtvProperty.u.buffer.data[2] = SYS_DVBT;
+#  if FULL_DVB_API_VERSION >= 0x0505
+		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_A;
+#  else
+		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_AC;
+#  endif
+#else
+		dtvProperty.cmd = DTV_ENUM_DELSYS;
+		dtvProperty.u.data = DTV_UNDEFINED;
+
+		struct dtv_properties dtvProperties;
+		dtvProperties.num = 1;       // size
+		dtvProperties.props = &dtvProperty;
+		if (ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
+			// If we are here it can mean we have an DVB-API <= 5.4
+			SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
+			auto index = 0;
+			switch (_fe_info.type) {
+				case FE_QPSK:
+					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
+						dtvProperty.u.buffer.data[index] = SYS_DVBS2;
+						++index;
+					}
+					dtvProperty.u.buffer.data[index] = SYS_DVBS;
+					++index;
+					break;
+				case FE_OFDM:
+					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
+						dtvProperty.u.buffer.data[index] = SYS_DVBT2;
+						++index;
+					}
+					dtvProperty.u.buffer.data[index] = SYS_DVBT;
+					++index;
+					break;
+				case FE_QAM:
+#  if FULL_DVB_API_VERSION >= 0x0505
+					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_A;
+#  else
+					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_AC;
+#  endif
+					++index;
+					break;
+				case FE_ATSC:
+					if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
+						dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_B;
+						++index;
+						break;
+					}
+				// Fall-through
+				default:
+					SI_LOG_ERROR("Frontend does not have any known delivery systems");
+					CLOSE_FD(fd_fe);
+					return;
+			}
+			dtvProperty.u.buffer.len = index;
+		}
+		CLOSE_FD(fd_fe);
+#endif
+		// get capability of this frontend and count the delivery systems
+		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
+			switch (dtvProperty.u.buffer.data[i]) {
+				case SYS_DSS:
+					SI_LOG_INFO("Frontend Type: DSS");
+					break;
+				case SYS_DVBS:
+					SI_LOG_INFO("Frontend Type: Satellite (DVB-S)");
+					break;
+				case SYS_DVBS2:
+					// we only count DVB-S2
+					++_dvbs2;
+					SI_LOG_INFO("Frontend Type: Satellite (DVB-S2)");
+					break;
+				case SYS_DVBT:
+					++_dvbt;
+					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T)");
+					break;
+				case SYS_DVBT2:
+					++_dvbt2;
+					SI_LOG_INFO("Frontend Type: Terrestrial (DVB-T2)");
+					break;
+#if FULL_DVB_API_VERSION >= 0x0505
+				case SYS_DVBC_ANNEX_A:
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex A)");
+					break;
+				case SYS_DVBC_ANNEX_C:
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
+					break;
+#else
+				case SYS_DVBC_ANNEX_AC:
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
+					break;
+#endif
+				case SYS_DVBC_ANNEX_B:
+					if (_dvbc == 0) {
+						++_dvbc;
+					}
+					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
+					break;
+				default:
+					SI_LOG_INFO("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
+					break;
+			}
+		}
+		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
+		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+
+		// Set delivery systems
+		if (_dvbs2 > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBS(_streamID));
+		}
+		if (_dvbt > 0 || _dvbt2 > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBT(_streamID));
+		}
+		if (_dvbc > 0) {
+			_deliverySystem.push_back(new input::dvb::delivery::DVBC(_streamID));
+		}
+	}
+
 	int Frontend::open_fe(const std::string &path, bool readonly) const {
 		const int fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
@@ -851,7 +847,7 @@ namespace dvb {
 		     it != _deliverySystem.end();
 		     ++it) {
 			if ((*it)->isCapableOf(delsys)) {
-				return (*it)->tune(_streamID, _fd_fe, _frontendData);
+				return (*it)->tune(_fd_fe, _frontendData);
 			}
 		}
 		return false;
