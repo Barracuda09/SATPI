@@ -29,6 +29,9 @@
 namespace decrypt {
 namespace dvbapi {
 
+	#define DEMUX_SIZE 5
+	#define FILTER_SIZE 50
+
 	/// The class @c Filter are all available filters for OSCam
 	class Filter {
 		public:
@@ -55,7 +58,7 @@ namespace dvbapi {
 			           const unsigned char *filterData, const unsigned char *filterMask) {
 				base::MutexLock lock(_mutex);
 				_collecting = false;
-				if (demux < 5 && filter < 20) {
+				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].set(pid, filterData, filterMask);
 				}
 			}
@@ -76,8 +79,8 @@ namespace dvbapi {
 					}
 				} else {
 					_collecting = false;
-					for (demux = 0; demux < 5; ++demux) {
-						for (filter = 0; filter < 20; ++filter) {
+					for (demux = 0; demux < DEMUX_SIZE; ++demux) {
+						for (filter = 0; filter < FILTER_SIZE; ++filter) {
 							if (_filterData[demux][filter].active(pid)) {
 								if (_filterData[demux][filter].match(data)) {
 									_filterData[demux][filter].collectTableData(-1, tableID, data);
@@ -104,7 +107,7 @@ namespace dvbapi {
 
 			void stop(int UNUSED(pid), int demux, int filter) {
 				base::MutexLock lock(_mutex);
-				if (demux < 5 && filter < 20) {
+				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].clear();
 				}
 				_collecting = false;
@@ -113,8 +116,8 @@ namespace dvbapi {
 			void clear() {
 				base::MutexLock lock(_mutex);
 				_collecting = false;
-				for (std::size_t demux = 0; demux < 5; ++demux) {
-					for (std::size_t filter = 0; filter < 20; ++filter) {
+				for (std::size_t demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (std::size_t filter = 0; filter < FILTER_SIZE; ++filter) {
 						_filterData[demux][filter].clear();
 					}
 				}
@@ -126,7 +129,7 @@ namespace dvbapi {
 
 		protected:
 			base::Mutex _mutex;
-			FilterData _filterData[5][20];
+			FilterData _filterData[DEMUX_SIZE][FILTER_SIZE];
 			bool _collecting;
 			int _filter;
 			int _demux;

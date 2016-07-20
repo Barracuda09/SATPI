@@ -358,7 +358,7 @@ namespace dvbapi {
 				const int lastSecNr     =   cData[12];
 				const uint32_t crc      =  CRC(cData, sectionLength);
 
-//              SI_LOG_BIN_DEBUG(cData, frontend->getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
+//				SI_LOG_BIN_DEBUG(cData, frontend->getTableDataSize(PAT_TABLE_ID), "Stream: %d, PAT data", streamID);
 
 				const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 				if (calccrc == crc) {
@@ -392,10 +392,10 @@ namespace dvbapi {
 	void Client::cleanPMT(input::dvb::SpFrontendDecryptInterface UNUSED(frontend), unsigned char *data) {
 		const unsigned char options = (data[1] & 0xE0);
 		if (options == 0x40 && data[5] == PMT_TABLE_ID) {
-//          const int streamID = frontend->getStreamID();
+//			const int streamID = frontend->getStreamID();
 
-//          const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-//          const int cc            =   data[3] & 0x0f;
+//			const int pid           = ((data[1] & 0x1f) << 8) | data[2];
+//			const int cc            =   data[3] & 0x0f;
 			const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
 			const int prgLength     = ((data[15] & 0x0F) << 8) | data[16];
 
@@ -418,8 +418,8 @@ namespace dvbapi {
 			// skip to ES Table begin and iterate over entries
 			const unsigned char *ptr = &data[17 + prgLength];
 			for (std::size_t i = 0; i < len; ) {
-//              const int streamType    =   ptr[i + 0];
-//              const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
+//				const int streamType    =   ptr[i + 0];
+//				const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
 				const int esInfoLength  = ((ptr[i + 3] & 0x0F) << 8) | ptr[i + 4];
 				// Append
 				pmt.append((const char *)&ptr[i + 0], 5);
@@ -449,10 +449,10 @@ namespace dvbapi {
 			// copy new PMT to buffer
 			memcpy(data, pmt.c_str(), 188);
 
-//          SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, NEW PMT data", streamID);
+//			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, NEW PMT data", streamID);
 
 		} else {
-//          SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, Not handled Cleaning PMT data!", streamID);
+//			SI_LOG_BIN_DEBUG(data, 188, "Stream: %d, Not handled Cleaning PMT data!", streamID);
 			// Clear PID to NULL packet
 			data[1] = 0x1F;
 			data[2] = 0xFF;
@@ -488,7 +488,7 @@ namespace dvbapi {
 					// To save the Program Info
 					std::string progInfo;
 					if (prgLength > 0) {
-						progInfo.append((const char *)&cData[17], prgLength);
+						progInfo.append(reinterpret_cast<const char *>(&cData[17]), prgLength);
 					}
 
 					// 4 = CRC   9 = PMT Header from section length
@@ -535,7 +535,7 @@ namespace dvbapi {
 					const uint16_t length = htons(totLength);        // Total Length of caPMT
 					std::memcpy(&caPMT[4], &length, 2);
 					caPMT[ 6] = LIST_ONLY_UPDATE;                    // send LIST_ONLY_UPDATE
-//                  caPMT[ 6] = LIST_ONLY;                           // send LIST_ONLY
+//					caPMT[ 6] = LIST_ONLY;                           // send LIST_ONLY
 					const uint16_t programNr = htons(programNumber); // Program ID
 					std::memcpy(&caPMT[7], &programNr, 2);
 					caPMT[ 9] = DVBAPI_PROTOCOL_VERSION;             // Version
@@ -592,9 +592,10 @@ namespace dvbapi {
 			const int pollRet = poll(pfd, 1, 500);
 			if (pollRet > 0) {
 				if (pfd[0].revents != 0) {
-					char buf[1024];
+					char tmpData[2048];
 					auto i = 0;
-					const ssize_t size = _client.recvDatafrom(buf, sizeof(buf)-1, MSG_DONTWAIT);
+					const ssize_t size = _client.recvDatafrom(tmpData, sizeof(tmpData) - 1, MSG_DONTWAIT);
+					const unsigned char *buf = reinterpret_cast<unsigned char *>(&tmpData);
 					if (size > 0) {
 						while (i < size) {
 							// get command
@@ -603,7 +604,7 @@ namespace dvbapi {
 
 							switch (cmd) {
 								case DVBAPI_SERVER_INFO: {
-										_serverName.assign(&buf[i + 7], buf[i + 6]);
+										_serverName.assign(reinterpret_cast<const char *>(&buf[i + 7]), buf[i + 6]);
 										SI_LOG_INFO("Connected to %s", _serverName.c_str());
 										_connected = true;
 
@@ -616,10 +617,10 @@ namespace dvbapi {
 										const int demux   =  buf[i + 5];
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
-										const unsigned char *filterData = reinterpret_cast<const unsigned char *>(&buf[i + 9]);
-										const unsigned char *filterMask = reinterpret_cast<const unsigned char *>(&buf[i + 25]);
+										const unsigned char *filterData = &buf[i + 9];
+										const unsigned char *filterMask = &buf[i + 25];
 
-//                                      SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(&buf[i]), 65, "Stream: %d, DVBAPI_DMX_SET_FILTER", adapter);
+//										SI_LOG_BIN_DEBUG(&buf[i], 65, "Stream: %d, DVBAPI_DMX_SET_FILTER", adapter);
 
 										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->startOSCamFilterData(pid, demux, filter, filterData, filterMask);
@@ -671,16 +672,16 @@ namespace dvbapi {
 										const int emcTime   = (buf[i + 15] << 24) | (buf[i + 16] << 16) | (buf[i + 17] << 8) | buf[i + 18];
 										i += 19;
 										std::string cardSystem;
-										cardSystem.assign(&buf[i + 1], buf[i + 0]);
+										cardSystem.assign(reinterpret_cast<const char *>(&buf[i + 1]), buf[i + 0]);
 										i += buf[i + 0] + 1;
 										std::string readerName;
-										readerName.assign(&buf[i + 1], buf[i + 0]);
+										readerName.assign(reinterpret_cast<const char *>(&buf[i + 1]), buf[i + 0]);
 										i += buf[i + 0] + 1;
 										std::string sourceName;
-										sourceName.assign(&buf[i + 1], buf[i + 0]);
+										sourceName.assign(reinterpret_cast<const char *>(&buf[i + 1]), buf[i + 0]);
 										i += buf[i + 0] + 1;
 										std::string protocolName;
-										protocolName.assign(&buf[i + 1], buf[i + 0]);
+										protocolName.assign(reinterpret_cast<const char *>(&buf[i + 1]), buf[i + 0]);
 										i += buf[i + 0] + 1;
 										const int hops = buf[i];
 										++i;
@@ -693,7 +694,7 @@ namespace dvbapi {
 										break;
 									}
 								default:
-									SI_LOG_BIN_DEBUG(reinterpret_cast<unsigned char *>(buf), size, "Stream: %d, Receive unexpected data", 0);
+									SI_LOG_BIN_DEBUG(buf, size, "Stream: %d, Receive unexpected data", 0);
 
 									i = size;
 									break;
