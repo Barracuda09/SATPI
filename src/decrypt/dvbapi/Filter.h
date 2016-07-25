@@ -29,8 +29,8 @@
 namespace decrypt {
 namespace dvbapi {
 
-	#define DEMUX_SIZE 5
-	#define FILTER_SIZE 50
+	#define DEMUX_SIZE 25
+	#define FILTER_SIZE 25
 
 	/// The class @c Filter are all available filters for OSCam
 	class Filter {
@@ -67,15 +67,18 @@ namespace dvbapi {
 				int &demux, std::string &filterData) {
 				base::MutexLock lock(_mutex);
 				if (_collecting) {
-					_filterData[_demux][_filter].collectTableData(-1, _tableID, data);
-					if (_filterData[_demux][_filter].isTableCollected()) {
-						filter = _filter;
-						demux = _demux;
-						tableID = _tableID;
-						_collecting = false;
-						_filterData[demux][filter].getTableData(filterData);
-						_filterData[demux][filter].resetTableData();
-						return true;
+					// We are collecting, but is this the correct PID for this filter
+					if (_filterData[_demux][_filter].active(pid)) {
+						_filterData[_demux][_filter].collectTableData(-1, _tableID, data);
+						if (_filterData[_demux][_filter].isTableCollected()) {
+							filter = _filter;
+							demux = _demux;
+							tableID = _tableID;
+							_collecting = false;
+							_filterData[demux][filter].getTableData(filterData);
+							_filterData[demux][filter].resetTableData();
+							return true;
+						}
 					}
 				} else {
 					_collecting = false;
@@ -100,6 +103,7 @@ namespace dvbapi {
 						}
 					}
 				}
+				// Did not find it yet, reset and try again later
 				filter = -1;
 				demux = -1;
 				return false;
