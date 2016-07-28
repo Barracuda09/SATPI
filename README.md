@@ -24,6 +24,16 @@ contribute to the project, like:
 - test reports
 - spread the word!
 
+Donate
+------
+
+If you like and use SatPI then please make a donation, to support my effort in
+developing SatPI.<br>
+Thank You.
+
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&lc=NL&item_name=SaPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
+
+
 Contact
 -------
 If you like to contact me, you can do so by sending an email to:
