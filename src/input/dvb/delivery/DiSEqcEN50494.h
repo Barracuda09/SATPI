@@ -21,9 +21,7 @@
 #define INPUT_DVB_DELIVERY_DISEQCEN50494_H_INCLUDE INPUT_DVB_DELIVERY_DISEQCEN50494_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/dvb/dvbfix.h>
-#include <input/dvb/delivery/Lnb.h>
 #include <input/dvb/delivery/DiSEqc.h>
 
 #include <stdint.h>
@@ -78,12 +76,9 @@ namespace delivery {
 
 		private:
 
-			base::Mutex _mutex;
-			bool _diseqcRepeat;
 			int _pin;
 			int _chSlot;
 			uint32_t _chFreq;
-			Lnb _LNB[MAX_LNB];    // LNB properties
 	};
 
 } // namespace delivery

@@ -35,8 +35,7 @@ namespace delivery {
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
 	DiSEqcSwitch::DiSEqcSwitch() :
-		DiSEqc(),
-		_diseqcRepeat(true) {}
+		DiSEqc() {}
 
 	DiSEqcSwitch::~DiSEqcSwitch() {}
 
@@ -46,20 +45,12 @@ namespace delivery {
 
 	void DiSEqcSwitch::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			StringConverter::addFormattedString(xml, "<lnb%zu>", i);
-			_LNB[i].addToXML(xml);
-			StringConverter::addFormattedString(xml, "</lnb%zu>", i);
-		}
-		ADD_CONFIG_CHECKBOX(xml, "diseqc_repeat", (_diseqcRepeat ? "true" : "false"));
+		DiSEqc::addToXML(xml);
 	}
 
 	void DiSEqcSwitch::fromXML(const std::string &xml) {
 		base::MutexLock lock(_mutex);
-		std::string element;
-		if (findXMLElement(xml, "diseqc_repeat.value", element)) {
-			_diseqcRepeat = (element == "true") ? true : false;
-		}
+		DiSEqc::fromXML(xml);
 	}
 
 	// =======================================================================
@@ -82,7 +73,7 @@ namespace delivery {
 		// size    0x04: send x bytes
 
 		bool hiband = false;
-		_LNB[src].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_LNB[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
 
 		// param: high nibble: reset bits
 		//        low nibble: set bits
@@ -119,7 +110,7 @@ namespace delivery {
 		usleep(20 * 1000);
 		{
 			base::MutexLock lock(_mutex);
-			if (_diseqcRepeat) {
+			for (size_t i = 0; i < _diseqcRepeat; ++i) {
 				usleep(100 * 1000);
 				// Framing 0xe1: Command from Master, No reply required, Repeated transmission
 				cmd.msg[0] = 0xe1;

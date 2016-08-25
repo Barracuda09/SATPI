@@ -37,7 +37,6 @@ namespace delivery {
 	// =======================================================================
 	DiSEqcEN50494::DiSEqcEN50494() :
 		DiSEqc(),
-		_diseqcRepeat(true),
 		_pin(256),
 		_chSlot(0),
 		_chFreq(1210) {}
@@ -50,13 +49,7 @@ namespace delivery {
 
 	void DiSEqcEN50494::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			StringConverter::addFormattedString(xml, "<lnb%zu>", i);
-			_LNB[i].addToXML(xml);
-			StringConverter::addFormattedString(xml, "</lnb%zu>", i);
-		}
-
-		ADD_CONFIG_CHECKBOX(xml, "diseqc_repeat", (_diseqcRepeat ? "true" : "false"));
+		DiSEqc::addToXML(xml);
 		ADD_CONFIG_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
 		ADD_CONFIG_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 7);
 		ADD_CONFIG_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
@@ -64,10 +57,8 @@ namespace delivery {
 
 	void DiSEqcEN50494::fromXML(const std::string &xml) {
 		base::MutexLock lock(_mutex);
+		DiSEqc::fromXML(xml);
 		std::string element;
-		if (findXMLElement(xml, "diseqc_repeat.value", element)) {
-			_diseqcRepeat = (element == "true") ? true : false;
-		}
 		if (findXMLElement(xml, "chFreq.value", element)) {
 			_chFreq = std::stoi(element);
 		}
@@ -102,7 +93,7 @@ namespace delivery {
 		};
 
 		bool hiband = false;
-		_LNB[src].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_LNB[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
 		freq /= 1000;
 		const uint32_t t = round(((freq + _chFreq + 2) / 4) - 350);
 		freq = _chFreq * 1000;
@@ -118,7 +109,7 @@ namespace delivery {
 			PERROR("FE_SET_TONE failed");
 		}
 		usleep(50 * 1000);
-		for (size_t i = 0; i < (_diseqcRepeat ? 2 : 1); ++i) {
+		for (size_t i = 0; i < _diseqcRepeat; ++i) {
 			SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x] [%02x]", streamID, cmd.msg[0],
 					cmd.msg[1], cmd.msg[2], cmd.msg[3], cmd.msg[4]);
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {

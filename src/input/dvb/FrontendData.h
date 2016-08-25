@@ -20,6 +20,8 @@
 #ifndef INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 #define INPUT_DVB_FRONTEND_DATA_H_INCLUDE INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 
+#include <base/Mutex.h>
+#include <base/XMLSupport.h>
 #include <input/DeviceData.h>
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
@@ -36,6 +38,7 @@ namespace dvb {
 
 	/// The class @c FrontendData carries all the data/information for tuning a frontend
 	class FrontendData :
+		public base::XMLSupport,
 #ifdef LIBDVBCSA
 		public decrypt::dvbapi::ClientProperties,
 #endif
@@ -47,6 +50,22 @@ namespace dvb {
 			FrontendData();
 			virtual ~FrontendData();
 
+			// =======================================================================
+			// -- base::XMLSupport ---------------------------------------------------
+			// =======================================================================
+
+		public:
+			///
+			virtual void addToXML(std::string &xml) const override;
+
+			///
+			virtual void fromXML(const std::string &xml) override;
+
+			// =======================================================================
+			//  -- Other member functions --------------------------------------------
+			// =======================================================================
+
+		public:
 			/// Check the 'Channel Data changed' flag. If set we should update
 			bool hasFrontendDataChanged() const;
 
@@ -177,6 +196,7 @@ namespace dvb {
 			// =======================================================================
 
 		private:
+			base::Mutex _mutex;
 
 			bool _changed;           ///
 			input::InputSystem _delsys;/// modulation system i.e. (DVBS/DVBS2)

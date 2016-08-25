@@ -173,14 +173,7 @@ namespace dvb {
 		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
 		// Channel
-		StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_frontendData.getDeliverySystem()));
-		StringConverter::addFormattedString(xml, "<tunefreq>%d</tunefreq>", _frontendData.getFrequency());
-		StringConverter::addFormattedString(xml, "<modulation>%s</modulation>", StringConverter::modtype_to_sting(_frontendData.getModulationType()));
-		StringConverter::addFormattedString(xml, "<fec>%s</fec>", StringConverter::fec_to_string(_frontendData.getFEC()));
-		StringConverter::addFormattedString(xml, "<tunesymbol>%d</tunesymbol>", _frontendData.getSymbolRate());
-		StringConverter::addFormattedString(xml, "<rolloff>%s</rolloff>", StringConverter::rolloff_to_sting(_frontendData.getRollOff()));
-		StringConverter::addFormattedString(xml, "<src>%d</src>", _frontendData.getDiSEqcSource());
-		StringConverter::addFormattedString(xml, "<pol>%c</pol>", (_frontendData.getPolarization() == POL_V) ? 'V' : 'H');
+                _frontendData.addToXML(xml);
 
 		// Monitor
 		StringConverter::addFormattedString(xml, "<status>%d</status>", _status);
@@ -309,7 +302,7 @@ namespace dvb {
 		int intVal = 0;
 		std::string strVal;
 
-		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters...", _streamID);
+		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
 		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 		doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=");
@@ -497,7 +490,7 @@ namespace dvb {
 	}
 
 	bool Frontend::update() {
-		SI_LOG_DEBUG("Stream: %d, Updating frontend...", _streamID);
+		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
 #ifndef SIMU
 		// Setup, tune and set PID Filters
 		if (_frontendData.hasFrontendDataChanged()) {

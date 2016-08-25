@@ -9,99 +9,93 @@ function validateIPaddress(value) {
 	}
 }
 
-function myOnkeyPressPost(id, tagName, value, event) {
+function myOnkeyPressPost(tagPath, value, event) {
 	var key = event.which;
 	if (key == 13) {
-		changeXMLAndPost(id, tagName, value);
+		changeXMLAndPost(tagPath, value);
 	}
 }
 
-function myOnkeyPressPostIp(id, tagName, value, event) {
+function myOnkeyPressPostIp(tagPath, value, event) {
 	var key = event.which;
 	if (key == 13) {
 		if (validateIPaddress(value) == true) {
-			changeXMLAndPost(id, tagName, value);
+			changeXMLAndPost(tagPath, value);
 		}
 	}
 }
 
-function changeXMLAndPost(id, tagName, value) {
-	var n = id.lastIndexOf(".");
-	var sub = xmlLoaded;
-	if (n != -1) {
-		sub = xmlLoaded.getElementsByTagName(id.substring(0, n))[0];
-	}
-	var input = sub.getElementsByTagName(tagName)[0];
-	input.getElementsByTagName("value")[0].childNodes[0].nodeValue = value;
-//	var xmlString = (new XMLSerializer()).serializeToString(sub);
+function changeXMLAndPost(tagPath, value) {
+	var valuePath = tagPath + " value";
+	xmlLoaded.querySelector(valuePath).childNodes[0].nodeValue = value
 	postData(filename, xmlLoaded);
 }
 
-function addCheckboxInput(tagName, id, input) {
+function addCheckboxInput(tagPath, input) {
 	var entry = "<input type='checkbox'";
 	if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
 		entry += "checked=\"true\"";
 	}
-	entry += "name=\"" + tagName + "\"";
-	entry += "id=\"" + id + "\"";
-	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).checked)\"";
+	entry += "name=\"" + tagPath + "\"";
+	entry += "id=\"" + tagPath + "\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).checked)\"";
 	entry += "/>";
 	return entry;
 }
 
-function addNumberInput(tagName, id, input) {
+function addNumberInput(tagPath, input) {
 	var entry = "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
 	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
 	entry += "min=\"" + input.getElementsByTagName("minvalue")[0].childNodes[0].nodeValue + "\"";
 	entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].childNodes[0].nodeValue + "\"";
 
-	entry += "name=\"" + tagName + "\"";
-	entry += "id=\"" + id + "\"";
+	entry += "name=\"" + tagPath + "\"";
+	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
-	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
 }
 
-function addTextInput(tagName, id, input) {
+function addTextInput(tagPath, input) {
 	var entry = "<input type='text'";
 	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-	entry += "name=\"" + tagName + "\"";
-	entry += "id=\"" + id + "\"";
+	entry += "name=\"" + tagPath + "\"";
+	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
-	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
 }
 
-function addIPInput(tagName, id, input) {
+function addIPInput(tagPath, input) {
 	var entry = "<input type='text'";
 	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-	entry += "name=\"" + tagName + "\"";
-	entry += "id=\"" + id + "\"";
+	entry += "name=\"" + tagPath + "\"";
+	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
-	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-	entry += "onkeypress=\"myOnkeyPressPostIp(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onkeypress=\"myOnkeyPressPostIp(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
 }
 
-function addSelectionListInput(tagName, id, input) {
+function addSelectionListInput(tagPath, input) {
 	var list = input.getElementsByTagName("list")[0];
 	var optlen = list.getElementsByTagName("*").length;
 	var optsel = input.getElementsByTagName("value")[0].childNodes[0].nodeValue;
 
 	var entry = "<select ";
-	entry += "name=\"" + tagName + "\"";
-	entry += "id=\"" + id + "\"";
+	entry += "name=\"" + tagPath + "\"";
+	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
-	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value)\"";
-	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).id, document.getElementById(id).name, document.getElementById(id).value, event)\"";
+	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += ">";
 	for (en = 0; en < optlen; en++) {
 		entry += "<option";
@@ -116,30 +110,41 @@ function addSelectionListInput(tagName, id, input) {
 	return entry;
 }
 
+function addTableLineEntry(labelstring, xmlDoc, tagPath) {
+	var page = "";
+	var data = xmlDoc.querySelector(tagPath);
+	if (data) {
+		page += "<tr>";
+		page += addTableLabel(labelstring);
+		page += addTableEntry(xmlDoc, tagPath);
+		page += "<tr>";
+	}
+	return page;
+}
+
 function addTableLabel(labelstring) {
 	return "<td align=\"left\" class=\"col-md-1\">" + labelstring + "</td>";
 }
 
-function addTableEntry(xmlDoc, tagName, id) {
-	return addInput(xmlDoc, tagName, id);
-}
-
-function addInput(xmlDoc, tagName, id) {
+function addTableEntry(xmlDoc, tagPath) {
 	var entry = "<td align=\"left\" class=\"col-md-4\">";
-	if (xmlDoc.getElementsByTagName(tagName).length != 0) {
-		var input = xmlDoc.getElementsByTagName(tagName)[0];
-		var inputtype = input.getElementsByTagName("inputtype");
-		if (inputtype.length != 0) {
-			if (inputtype[0].childNodes[0].nodeValue == "checkbox") {
-				entry += addCheckboxInput(tagName, id, input);
-			} else if (inputtype[0].childNodes[0].nodeValue == "ip") {
-				entry += addIPInput(tagName, id, input);
-			} else if (inputtype[0].childNodes[0].nodeValue == "text") {
-				entry += addTextInput(tagName, id, input);
-			} else if (inputtype[0].childNodes[0].nodeValue == "selectionlist") {
-				entry += addSelectionListInput(tagName, id, input);
+	var input = xmlDoc.querySelector(tagPath);
+	if (input) {
+		var inputtype = xmlDoc.querySelector(tagPath + " inputtype");
+		if (inputtype) {
+			var inputTypeName = inputtype.childNodes[0].nodeValue;
+			if (inputTypeName == "checkbox") {
+				entry += addCheckboxInput(tagPath, input);
+			} else if (inputTypeName == "ip") {
+				entry += addIPInput(tagPath, input);
+			} else if (inputTypeName == "text") {
+				entry += addTextInput(tagPath, input);
+			} else if (inputTypeName == "selectionlist") {
+				entry += addSelectionListInput(tagPath, input);
+			} else if (inputTypeName == "number") {
+				entry += addNumberInput(tagPath, input);
 			} else {
-				entry += addNumberInput(tagName, id, input);
+				alert("Not supported input type! (" + inputtype.childNodes[0].nodeValue + ")");
 			}
 		} else {
 			entry += input.childNodes[0].nodeValue;

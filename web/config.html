@@ -20,17 +20,6 @@
 	var xmlLoaded;
 	var content;
 
-	function addTableLineEntry(labelstring, xmlDoc, tagName) {
-		var page = "";
-		if (xmlDoc.getElementsByTagName(tagName).length != 0) {
-			page += "<tr>";
-			page += addTableLabel(labelstring);
-			page += addTableEntry(xmlDoc, tagName, tagName);
-			page += "<tr>";
-		}
-		return page;
-	}
-
 	function buildcontent(xmlDoc) {
 		var length = 1;
 		var page = "<table class=\"table table-bordered table-striped\">";

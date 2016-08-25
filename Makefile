@@ -47,6 +47,7 @@ SOURCES = Version.cpp \
 	input/dvb/FrontendData.cpp \
 	input/dvb/FrontendData_set.cpp \
 	input/dvb/PidTable.cpp \
+	input/dvb/delivery/DiSEqc.cpp \
 	input/dvb/delivery/DiSEqcEN50494.cpp \
 	input/dvb/delivery/DiSEqcEN50607.cpp \
 	input/dvb/delivery/DiSEqcSwitch.cpp \

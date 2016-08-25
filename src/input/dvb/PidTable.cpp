@@ -80,7 +80,9 @@ namespace dvb {
 				}
 			}
 			if (csv.size() > 1) {
-				*(csv.end()-1) = 0;
+				*(csv.end() - 1) = 0;
+			} else {
+				csv = " ";
 			}
 		}
 		return csv;

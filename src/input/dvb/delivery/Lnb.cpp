@@ -48,7 +48,6 @@ namespace delivery {
 	// =======================================================================
 	Lnb::Lnb() {
 		_type        = LNBType::Universal;
-		_lofStandard = DEFAULT_LOF_STANDARD;
 		_switchlof   = DEFAULT_SWITCH_LOF;
 		_lofLow      = DEFAULT_LOF_LOW_UNIVERSAL;
 		_lofHigh     = DEFAULT_LOF_HIGH_UNIVERSAL;
@@ -63,10 +62,9 @@ namespace delivery {
 	void Lnb::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
 		ADD_CONFIG_NUMBER(xml, "lnbtype", _type);
-		ADD_CONFIG_NUMBER(xml, "lofStandard", _lofStandard);
-		ADD_CONFIG_NUMBER(xml, "switchlof", _switchlof);
-		ADD_CONFIG_NUMBER(xml, "lofLow", _lofLow);
-		ADD_CONFIG_NUMBER(xml, "lofHigh", _lofHigh);
+		ADD_CONFIG_NUMBER_INPUT(xml, "lofSwitch", _switchlof / 1000UL, 0, 20000);
+		ADD_CONFIG_NUMBER_INPUT(xml, "lofLow", _lofLow / 1000UL, 0, 20000);
+		ADD_CONFIG_NUMBER_INPUT(xml, "lofHigh", _lofHigh / 1000UL, 0, 20000);
 	}
 
 	void Lnb::fromXML(const std::string &xml) {
@@ -74,6 +72,15 @@ namespace delivery {
 		std::string element;
 		if (findXMLElement(xml, "lnbtype", element)) {
 			;
+		}
+		if (findXMLElement(xml, "lofSwitch.value", element)) {
+			_switchlof = std::stoi(element) * 1000UL;
+		}
+		if (findXMLElement(xml, "lofLow.value", element)) {
+			_lofLow = std::stoi(element) * 1000UL;
+		}
+		if (findXMLElement(xml, "lofHigh.value", element)) {
+			_lofHigh = std::stoi(element) * 1000UL;
 		}
 	}
 

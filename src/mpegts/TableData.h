@@ -29,6 +29,9 @@ namespace mpegts {
 			#define PAT_TABLE_ID           0x00
 			#define CAT_TABLE_ID           0x01
 			#define PMT_TABLE_ID           0x02
+			#define SDT_TABLE_ID           0x42
+			#define EIT1_TABLE_ID          0x4E
+			#define EIT2_TABLE_ID          0x4F
 			#define ECM0_TABLE_ID          0x80
 			#define ECM1_TABLE_ID          0x81
 			#define EMM1_TABLE_ID          0x82

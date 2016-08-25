@@ -24,6 +24,7 @@
 #include <input/InputSystem.h>
 #include <base/XMLSupport.h>
 
+#include <string>
 #include <vector>
 
 FW_DECL_NS2(input, dvb, FrontendData);

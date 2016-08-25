@@ -44,6 +44,12 @@ namespace mpegts {
 				return "CAT";
 			case PMT_TABLE_ID:
 				return "PMT";
+			case SDT_TABLE_ID:
+				return "SDT";
+			case EIT1_TABLE_ID:
+				// Fall Through
+			case EIT2_TABLE_ID:
+				return "EIT";
 			case ECM0_TABLE_ID:
 			case ECM1_TABLE_ID:
 				return "ECM";

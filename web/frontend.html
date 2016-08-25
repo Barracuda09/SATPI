@@ -22,72 +22,80 @@
 	var content;
 	var once = 0;
 
-	function addTableLineEntry(streamid, labelstring, xmlDoc, tagName) {
-		var page = "";
-		var id = "stream" + streamid;
-		var data = xmlDoc.getElementsByTagName(id)[0];
-		if (data.getElementsByTagName(tagName).length != 0) {
-			page += "<tr>";
-			page += addTableLabel(labelstring);
-			id += "." + tagName;
-			page += addTableEntry(data, tagName, id);
-			page += "<tr>";
-		}
-		return page;
-	}
-
 	function buildcontent(xmlDoc, id) {
 		var page = "";
+		var streamID = "stream" + id + " ";
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
+			var visibleStreamid = "stream" + id;
+			var visibleStream = xmlDoc.getElementsByTagName(visibleStreamid)[0];
+
 			page += "<table class=\"table table-bordered table-striped \">";
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length + 1) + "\">Frontend Info</th></tr>";
 
-			page += addTableLineEntry(id, "Stream Index", xmlDoc, "streamindex");
+			page += addTableLineEntry("Stream Index", xmlDoc, streamID + "streamindex");
 
-			page += addTableLineEntry(id, "Enable", xmlDoc, "enable");
-			page += addTableLineEntry(id, "Attached", xmlDoc, "attached");
-			page += addTableLineEntry(id, "Name", xmlDoc, "frontendname");
+			page += addTableLineEntry("Enable", xmlDoc, streamID + "enable");
+			page += addTableLineEntry("Attached", xmlDoc, streamID + "attached");
+			page += addTableLineEntry("Name", xmlDoc, streamID + "frontendname");
 
-			page += addTableLineEntry(id, "Path", xmlDoc, "pathname");
-			page += addTableLineEntry(id, "Freq Range", xmlDoc, "freq");
-			page += addTableLineEntry(id, "Symbol Rate Range", xmlDoc, "symbol");
+			page += addTableLineEntry("Path", xmlDoc, streamID + "pathname");
+			page += addTableLineEntry("Freq Range", xmlDoc, streamID + "freq");
+			page += addTableLineEntry("Symbol Rate Range", xmlDoc, streamID + "symbol");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
-			page += addTableLineEntry(id, "Owner", xmlDoc, "owner");
-			page += addTableLineEntry(id, "Session ID", xmlDoc, "ownerSessionID");
-			page += addTableLineEntry(id, "RTP packet count", xmlDoc, "spc");
-			page += addTableLineEntry(id, "RTP streamed (MB)", xmlDoc, "payload");
+			page += addTableLineEntry("Owner", xmlDoc, streamID + "owner");
+			page += addTableLineEntry("Session ID", xmlDoc, streamID + "ownerSessionID");
+			page += addTableLineEntry("RTP packet count", xmlDoc, streamID + "spc");
+			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, streamID + "payload");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
-			page += addTableLineEntry(id, "DVR Buffer (Bytes)", xmlDoc, "dvrbuffer");
-			page += addTableLineEntry(id, "RTCP Signal Update Freq", xmlDoc, "rtcpSignalUpdate");
+			page += addTableLineEntry("DVR Buffer (Bytes)", xmlDoc, streamID + "dvrbuffer");
+			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
-			page += addTableLineEntry(id, "Repeat DiSEqC", xmlDoc, "diseqc_repeat");
-			page += addTableLineEntry(id, "DiSEqC", xmlDoc, "diseqcType");
-			page += addTableLineEntry(id, "Channel Freq (MHz)", xmlDoc, "chFreq");
-			page += addTableLineEntry(id, "Channel Slot", xmlDoc, "chSlot");
-			page += addTableLineEntry(id, "PIN (256 disabled)", xmlDoc, "pin");
+			var diseqc = visibleStream.getElementsByTagName("diseqc");
+			if (diseqc.length > 0) {
 
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
-			delsys = addTableLineEntry(id, "Delivery System", xmlDoc, "delsys");
-			page += delsys;
-			page += addTableLineEntry(id, "Tune Freq", xmlDoc, "tunefreq");
-			page += addTableLineEntry(id, "Modulation", xmlDoc, "modulation");
-			page += addTableLineEntry(id, "Fec", xmlDoc, "fec");
+//				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">LNB Configuration</th></tr>";
+				var lnb = visibleStream.getElementsByTagName("lnbtype");
+				for (var i = 0; i < lnb.length; i++) {
+					page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">LNB " + i + " Configuration</th></tr>";
+					var lnbt = streamID + "lnb" + i + " ";
+					page += addTableLineEntry("Lof High (MHz)", xmlDoc, lnbt + "lofHigh");
+					page += addTableLineEntry("Lof Low (MHz)", xmlDoc, lnbt + "lofLow");
+					page += addTableLineEntry("Lof Switch (MHz)", xmlDoc, lnbt + "lofSwitch");
+				}
 
-			page += addTableLineEntry(id, "Symbol Rate", xmlDoc, "tunesymbol");
-			page += addTableLineEntry(id, "Rolloff", xmlDoc, "rolloff");
-			page += addTableLineEntry(id, "Source", xmlDoc, "src");
-			page += addTableLineEntry(id, "Polarization", xmlDoc, "pol");
+				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
+				page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
+				page += addTableLineEntry("DiSEqC", xmlDoc, streamID + "diseqcType");
+				page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
+				page += addTableLineEntry("Channel Slot", xmlDoc, streamID + "chSlot");
+				page += addTableLineEntry("PIN (256 disabled)", xmlDoc, streamID + "pin");
+			}
 
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
-			page += addTableLineEntry(id, "Status", xmlDoc, "status");
-			page += addTableLineEntry(id, "Signal Strength", xmlDoc, "signal");
-			page += addTableLineEntry(id, "snr", xmlDoc, "snr");
-			page += addTableLineEntry(id, "ber", xmlDoc, "ber");
-			page += addTableLineEntry(id, "unc", xmlDoc, "unc");
+			var freq = visibleStream.getElementsByTagName("tunefreq");
+			if (freq.length > 0) {
+				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
+
+				page += addTableLineEntry("Delivery System", xmlDoc, streamID + "delsys");
+
+				page += addTableLineEntry("Tune Freq", xmlDoc, streamID + "tunefreq");
+				page += addTableLineEntry("Modulation", xmlDoc, streamID + "modulation");
+				page += addTableLineEntry("Fec", xmlDoc, streamID + "fec");
+				page += addTableLineEntry("PID", xmlDoc, streamID + "pidcsv");
+				page += addTableLineEntry("Symbol Rate", xmlDoc, streamID + "tunesymbol");
+				page += addTableLineEntry("Rolloff", xmlDoc, streamID + "rolloff");
+				page += addTableLineEntry("Source", xmlDoc, streamID + "src");
+				page += addTableLineEntry("Polarization", xmlDoc, streamID + "pol");
+
+				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
+				page += addTableLineEntry("Status", xmlDoc, streamID + "status");
+				page += addTableLineEntry("Signal Strength", xmlDoc, streamID + "signal");
+				page += addTableLineEntry("snr", xmlDoc, streamID + "snr");
+				page += addTableLineEntry("ber", xmlDoc, streamID + "ber");
+				page += addTableLineEntry("unc", xmlDoc, streamID + "unc");
+			}
 
 			page +=	 "</table><br>";
 		}

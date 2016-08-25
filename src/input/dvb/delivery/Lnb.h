@@ -68,12 +68,12 @@ namespace delivery {
 
 			enum class LNBType {
 				Universal,
-				Standard
+				Standard,
+				UserDefined
 			};
 
 			base::Mutex _mutex;
 			LNBType _type;
-			uint32_t _lofStandard;
 			uint32_t _switchlof;
 			uint32_t _lofLow;
 			uint32_t _lofHigh;

@@ -21,7 +21,7 @@
 #define INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE
 
 #include <base/XMLSupport.h>
-#include <Utils.h>
+#include <input/dvb/delivery/Lnb.h>
 
 namespace input {
 namespace dvb {
@@ -40,9 +40,9 @@ namespace delivery {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			DiSEqc() {}
+			DiSEqc();
 
-			virtual ~DiSEqc() {}
+			virtual ~DiSEqc();
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -50,9 +50,9 @@ namespace delivery {
 
 		public:
 
-			virtual void addToXML(std::string &UNUSED(xml)) const override {}
+			virtual void addToXML(std::string &xml) const override;
 
-			virtual void fromXML(const std::string &UNUSED(xml)) override {}
+			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
@@ -63,6 +63,18 @@ namespace delivery {
 			///
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
 				int src, int pol_v) = 0;
+
+
+			// =======================================================================
+			// -- Data members -------------------------------------------------------
+			// =======================================================================
+
+		protected:
+
+			base::Mutex _mutex;
+			unsigned int _diseqcRepeat;
+			Lnb _LNB[MAX_LNB];    // LNB properties
+
 	};
 
 } // namespace delivery
