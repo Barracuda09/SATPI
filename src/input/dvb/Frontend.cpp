@@ -173,7 +173,7 @@ namespace dvb {
 		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
 		// Channel
-                _frontendData.addToXML(xml);
+		_frontendData.addToXML(xml);
 
 		// Monitor
 		StringConverter::addFormattedString(xml, "<status>%d</status>", _status);

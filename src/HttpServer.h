@@ -60,9 +60,6 @@ class HttpServer :
 		///
 		void makeDataXML(std::string &xml);
 
-		///
-		void makeStreamsXML(std::string &xml);
-
 		// =======================================================================
 		// Data members
 		// =======================================================================

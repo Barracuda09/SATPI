@@ -98,7 +98,7 @@ function addSelectionListInput(tagPath, input) {
 	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += ">";
 	for (en = 0; en < optlen; en++) {
-		entry += "<option";
+		entry += "<option value=\"" + en + "\"";
 		if (en == optsel) {
 			entry += " selected=\"selected\"";
 		}

@@ -75,15 +75,22 @@ namespace delivery {
 			_diseqc->fromXML(element);
 		}
 		if (findXMLElement(xml, "diseqcType.value", element)) {
-			if (element.compare("DiSEqc Switch") == 0) {
-				_diseqcType = DiseqcType::Switch;
-				_diseqc.reset(new DiSEqcSwitch);
-			} else if (element.compare("Unicable (EN50494)") == 0) {
-				_diseqcType = DiseqcType::EN50494;
-				_diseqc.reset(new DiSEqcEN50494);
-			} else if (element.compare("Jess/Unicable 2 (EN50607)") == 0) {
-				_diseqcType = DiseqcType::EN50607;
-				_diseqc.reset(new DiSEqcEN50607);
+			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
+			switch (type) {
+				case DiseqcType::Switch:
+					_diseqcType = DiseqcType::Switch;
+					_diseqc.reset(new DiSEqcSwitch);
+					break;
+				case DiseqcType::EN50494:
+					_diseqcType = DiseqcType::EN50494;
+					_diseqc.reset(new DiSEqcEN50494);
+					break;
+				case DiseqcType::EN50607:
+					_diseqcType = DiseqcType::EN50607;
+					_diseqc.reset(new DiSEqcEN50607);
+					break;
+				default:
+					SI_LOG_ERROR("Stream: %d, Wrong DiSEqc type requested, not changing", _streamID);
 			}
 		}
 	}

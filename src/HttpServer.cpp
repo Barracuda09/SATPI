@@ -153,8 +153,8 @@ bool HttpServer::methodGet(SocketClient &client) {
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("streams.xml") == 0) {
-				makeStreamsXML(docType);
+			} else if (file.compare(_streamManager.getFileName()) == 0) {
+				_streamManager.addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
@@ -259,16 +259,6 @@ void HttpServer::makeDataXML(std::string &xml) {
 	StringConverter::addFormattedString(xml, "<bootID>%d</bootID>", _properties.getBootID());
 	StringConverter::addFormattedString(xml, "<deviceID>%d</deviceID>", _properties.getDeviceID());
 	xml += "</appdata>";
-
-	xml += "</data>\r\n";
-}
-
-void HttpServer::makeStreamsXML(std::string &xml) {
-	// make data xml
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-
-	_streamManager.addToXML(xml);
 
 	xml += "</data>\r\n";
 }

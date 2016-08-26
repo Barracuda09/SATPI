@@ -36,6 +36,7 @@
 #include <assert.h>
 
 StreamManager::StreamManager(const std::string &xmlFilePath) :
+	XMLSupport(xmlFilePath + "/" + "streams.xml"),
 	_xmlFilePath(xmlFilePath),
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
@@ -73,6 +74,8 @@ void StreamManager::enumerateDevices() {
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
 	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
 	input::stream::Streamer::enumerate(_stream);
+
+	restoreXML();
 }
 
 std::string StreamManager::getXMLDeliveryString() const {
@@ -212,6 +215,10 @@ std::string StreamManager::attributeDescribeString(std::size_t stream, bool &act
 	return _stream[stream]->attributeDescribeString(active);
 }
 
+// =======================================================================
+//  -- base::XMLSupport --------------------------------------------------
+// =======================================================================
+
 void StreamManager::fromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	std::size_t i = 0;
@@ -229,8 +236,11 @@ void StreamManager::fromXML(const std::string &xml) {
 void StreamManager::addToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
+
+	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+	xml += "<data>\r\n";
+
 	std::size_t i = 0;
-	// application data
 	xml += "<streams>";
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
 		ScpStream stream = *it;
@@ -239,4 +249,8 @@ void StreamManager::addToXML(std::string &xml) const {
 		StringConverter::addFormattedString(xml, "</stream%zu>", i);
 	}
 	xml += "</streams>";
+
+	xml += "</data>\r\n";
+
+	saveXML(xml);
 }
