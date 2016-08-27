@@ -71,9 +71,6 @@ namespace delivery {
 	void DVBS::fromXML(const std::string &xml) {
 		base::MutexLock lock(_mutex);
 		std::string element;
-		if (findXMLElement(xml, "diseqc", element)) {
-			_diseqc->fromXML(element);
-		}
 		if (findXMLElement(xml, "diseqcType.value", element)) {
 			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
 			switch (type) {
@@ -92,6 +89,10 @@ namespace delivery {
 				default:
 					SI_LOG_ERROR("Stream: %d, Wrong DiSEqc type requested, not changing", _streamID);
 			}
+		}
+		// This after creating _diseqc!
+		if (findXMLElement(xml, "diseqc", element)) {
+			_diseqc->fromXML(element);
 		}
 	}
 
