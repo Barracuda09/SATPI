@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <ctime>
+
 	StreamClient::StreamClient() :
 			_httpc(nullptr),
 			_sessionID("-1"),
@@ -60,15 +62,25 @@
 		base::MutexLock lock(_mutex);
 
 		// reset watchdog and give some extra timeout
-		_watchdog = time(nullptr) + _sessionTimeout + 15;
+		_watchdog = std::time(nullptr) + _sessionTimeout + 15;
 	}
 
-	bool StreamClient::checkWatchDogTimeout() {
+	void StreamClient::selfDestruct() {
+		base::MutexLock lock(_mutex);
+		_watchdog = 1;
+	}
+
+	bool StreamClient::isSelfDestructing() const {
+		base::MutexLock lock(_mutex);
+		return _watchdog == 1;
+	}
+
+	bool StreamClient::checkWatchDogTimeout() const {
 		base::MutexLock lock(_mutex);
 
 		return (((_httpc == nullptr) ? -1 : _httpc->getFD()) == -1) &&
 			   (_watchdog != 0) &&
-			   (_watchdog < time(nullptr));
+			   (_watchdog < std::time(nullptr));
 	}
 
 	void StreamClient::setSocketClient(SocketClient &socket) {
@@ -89,5 +101,26 @@
 	// =======================================================================
 
 	bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
+		base::MutexLock lock(_mutex);
 		return (_httpc == nullptr) ? false : _httpc->sendData(buf, len, flags);
+	}
+
+	bool StreamClient::writeHttpData(const struct iovec *iov, int iovcnt) {
+		base::MutexLock lock(_mutex);
+		return (_httpc == nullptr) ? false : _httpc->writeData(iov, iovcnt);
+	}
+
+	int StreamClient::getHttpSocketPort() const {
+		base::MutexLock lock(_mutex);
+		return (_httpc == nullptr) ? 0 : _httpc->getSocketPort();
+	}
+
+	int StreamClient::getHttpNetworkBufferSize() const {
+		base::MutexLock lock(_mutex);
+		return (_httpc == nullptr) ? 0 : _httpc->getNetworkBufferSize();
+	}
+
+	bool StreamClient::setHttpNetworkBufferSize(int size) {
+		base::MutexLock lock(_mutex);
+		return (_httpc == nullptr) ? false : _httpc->setNetworkBufferSize(size);
 	}

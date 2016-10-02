@@ -62,6 +62,7 @@ SOURCES = Version.cpp \
 	output/StreamThreadBase.cpp \
 	output/StreamThreadHttp.cpp \
 	output/StreamThreadRtp.cpp \
+	output/StreamThreadRtpTcp.cpp \
 	output/StreamThreadTSWriter.cpp \
 	socket/HttpcSocket.cpp \
 	socket/TcpSocket.cpp \

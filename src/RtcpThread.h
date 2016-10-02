@@ -35,7 +35,7 @@ FW_DECL_NS0(StreamInterface);
 			// ===================================================================
 			//  -- Constructors and destructor -----------------------------------
 			// ===================================================================
-			RtcpThread(StreamInterface &stream);
+			RtcpThread(StreamInterface &stream, bool tcp);
 			virtual ~RtcpThread();
 
 			// ===================================================================
@@ -66,7 +66,7 @@ FW_DECL_NS0(StreamInterface);
 
 			int _clientID;
 			StreamInterface &_stream;
-
+			bool _tcpMode;
 			uint8_t _sr[28];              // Sender Report (SR Packet)
 			uint8_t _srb[24];             // Sender Report Block n (SR Packet)
 			uint8_t _sdes[24];            // Source Description (SDES Packet)

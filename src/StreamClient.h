@@ -26,6 +26,7 @@
 #include <base/Mutex.h>
 
 #include <string>
+#include <ctime>
 
 /// StreamClient defines the owner/participants of an stream
 class StreamClient {
@@ -50,11 +51,17 @@ class StreamClient {
 		///
 		void teardown(bool gracefull);
 
+		/// Call this if the stream should stop because of some error
+		void selfDestruct();
+
+		/// Check if this client is self destructing
+		bool isSelfDestructing() const;
+
 		///
 		void restartWatchDog();
 
 		///
-		bool checkWatchDogTimeout();
+		bool checkWatchDogTimeout() const;
 
 		///
 		void setSocketClient(SocketClient &socket);
@@ -120,8 +127,20 @@ class StreamClient {
 		//  -- HTTP member functions ---------------------------------------------
 		// =======================================================================
 
-		///
+		/// Send HTTP/RTSP data to connected client
 		bool sendHttpData(const void *buf, std::size_t len, int flags);
+
+		/// Send HTTP/RTSP data to connected client
+		bool writeHttpData(const struct iovec *iov, int iovcnt);
+
+		/// Get the HTTP/RTSP port of the connected client
+		int getHttpSocketPort() const;
+
+		/// Get the HTTP/RTSP network buffer size for this Socket
+		int getHttpNetworkBufferSize() const;
+
+		/// Set the HTTP/RTSP network buffer size for this Socket
+		bool setHttpNetworkBufferSize(int size);
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
@@ -134,7 +153,7 @@ class StreamClient {
 		                               /// reply to and checking connections
 		int          _clientID;
 		std::string  _sessionID;       ///
-		time_t       _watchdog;        /// watchdog
+		std::time_t  _watchdog;        /// watchdog
 		unsigned int _sessionTimeout;
 		int          _cseq;            /// RTSP sequence number
 		bool         _canClose;

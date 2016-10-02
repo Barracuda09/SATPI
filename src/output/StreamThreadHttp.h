@@ -48,6 +48,10 @@ namespace output {
 			//  -- output::StreamThreadBase ------------------------------------------
 			// =======================================================================
 
+		public:
+
+			virtual bool startStreaming() override;
+
 		protected:
 
 			virtual void threadEntry() override;
@@ -58,11 +62,12 @@ namespace output {
 			virtual int getStreamSocketPort(int clientID) const override;
 
 			// =======================================================================
-			//  -- Data members ------------------------------------------------------
+			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
 
+			int _clientID;
 
 	};
 

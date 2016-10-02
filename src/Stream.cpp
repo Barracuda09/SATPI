@@ -27,6 +27,7 @@
 #include <input/dvb/delivery/DVBS.h>
 #include <output/StreamThreadHttp.h>
 #include <output/StreamThreadRtp.h>
+#include <output/StreamThreadRtpTcp.h>
 #include <output/StreamThreadTSWriter.h>
 #include <socket/SocketClient.h>
 
@@ -237,27 +238,37 @@ void Stream::checkStreamClientsWithTimeout() {
 	}
 }
 
-bool Stream::update(int clientID) {
+bool Stream::update(int clientID, bool start) {
 	base::MutexLock lock(_mutex);
 
 	const bool changed = _device->hasDeviceDataChanged();
 
 	// first time streaming?
-	if (!_streaming) {
+	if (!_streaming && start) {
 		switch (_streamingType) {
 			case StreamingType::NONE:
 				_streaming.reset(nullptr);
 				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
 				break;
 			case StreamingType::HTTP:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: HTTP", _streamID);
 				_streaming.reset(new output::StreamThreadHttp(*this, _decrypt));
 				break;
 			case StreamingType::RTSP:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP", _streamID);
 				_streaming.reset(new output::StreamThreadRtp(*this, _decrypt));
 				break;
+			case StreamingType::RTP_TCP:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTP/TCP", _streamID);
+				_streaming.reset(new output::StreamThreadRtpTcp(*this, _decrypt));
+				break;
 			case StreamingType::FILE:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: FILE", _streamID);
 				_streaming.reset(new output::StreamThreadTSWriter(*this, _decrypt, "test.ts"));
 				break;
+			default:
+				_streaming.reset(nullptr);
+				SI_LOG_ERROR("Stream: %d, Unknown streaming type!", _streamID);
 		};
 		if (!_streaming) {
 			return false;
@@ -265,7 +276,7 @@ bool Stream::update(int clientID) {
 	}
 
 	// Channel changed?.. stop/pause Stream
-	if (changed) {
+	if (_streaming && changed) {
 		_streaming->pauseStreaming(clientID);
 	}
 
@@ -274,10 +285,12 @@ bool Stream::update(int clientID) {
 	}
 
 	// start or restart streaming again
-	if (!_streamActive) {
-		_streamActive = _streaming->startStreaming();
-	} else if (changed) {
-		_streaming->restartStreaming(clientID);
+	if (_streaming) {
+		if (!_streamActive) {
+			_streamActive = _streaming->startStreaming();
+		} else if (changed) {
+			_streaming->restartStreaming(clientID);
+		}
 	}
 	return true;
 }
@@ -303,21 +316,35 @@ bool Stream::teardown(int clientID, bool gracefull) {
 	return true;
 }
 
-bool Stream::processStream(const std::string &msg, int clientID, const std::string &method) {
+bool Stream::processStreamingRequest(const std::string &msg, int clientID, const std::string &method) {
 	base::MutexLock lock(_mutex);
 
-	if ((method.compare("OPTIONS") == 0 || method.compare("SETUP") == 0 ||
-	     method.compare("PLAY") == 0 || method.compare("GET") == 0) &&
+	if ((method == "OPTIONS" || method == "SETUP" ||
+	     method == "PLAY"    || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
 
-		_streamingType = (method.compare("GET") == 0) ?
-			StreamingType::HTTP : StreamingType::RTSP;
 		_device->parseStreamString(msg, method);
 	}
-	const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
-	if (port != -1) {
-		_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
-		_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
+
+	// Get transport type from request, and maybe ports
+	if (_streamingType == StreamingType::NONE) {
+		if (method == "GET") {
+			_streamingType = StreamingType::HTTP;
+		} else {
+			std::string transport;
+			StringConverter::getHeaderFieldParameter(msg, "Transport", transport);
+			// First check 'RTP/AVP/TCP' then 'RTP/AVP'
+			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
+				_streamingType = StreamingType::RTP_TCP;
+			} else if (transport.find("RTP/AVP") != std::string::npos) {
+				_streamingType = StreamingType::RTSP;
+				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
+				if (port != -1) {
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
+				}
+			}
+		}
 	}
 
 	std::string cseq("0");
@@ -326,10 +353,10 @@ bool Stream::processStream(const std::string &msg, int clientID, const std::stri
 	}
 
 	bool canClose = false;
-	if (method.compare("SETUP") != 0) {
+	if (method != "SETUP") {
 		std::string sessionID;
 		const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
-		const bool teardown = method.compare("TEARDOWN") == 0;
+		const bool teardown = (method == "TEARDOWN");
 		canClose = teardown || !foundSessionID;
 	}
 	_client[clientID].setCanClose(canClose);
@@ -364,5 +391,6 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 		}
 		_streamActive = false;
 		_streamInUse = false;
+		_streamingType = StreamingType::NONE;
 	}
 }

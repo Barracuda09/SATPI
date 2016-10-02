@@ -25,6 +25,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 
 #include <string>
 
@@ -79,6 +80,9 @@ FW_DECL_NS0(SocketClient);
 			/// Use this function when the socket is in connected state
 			bool sendData(const void *buf, std::size_t len, int flags);
 
+			///
+			bool writeData(const struct iovec *iov, int iovcnt);
+
 			/// Use this function when the socket is on a
 			/// connection-mode (SOCK_STREAM)
 			bool sendDataTo(const void *buf, std::size_t len, int flags);
@@ -100,7 +104,7 @@ FW_DECL_NS0(SocketClient);
 			void setSocketTimeoutInSec(unsigned int timeout);
 
 			/// Get the network buffer size for this Socket
-			int getNetworkBufferSize();
+			int getNetworkBufferSize() const;
 
 			/// Set the network buffer size for this Socket
 			bool setNetworkBufferSize(int size);

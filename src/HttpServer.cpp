@@ -253,7 +253,7 @@ void HttpServer::makeDataXML(std::string &xml) {
 
 	// application data
 	xml += "<appdata>";
-	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", time(nullptr) - _properties.getApplicationStartTime());
+	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", std::time(nullptr) - _properties.getApplicationStartTime());
 	StringConverter::addFormattedString(xml, "<appversion>%s</appversion>", _properties.getSoftwareVersion().c_str());
 	StringConverter::addFormattedString(xml, "<uuid>%s</uuid>", _properties.getUUID().c_str());
 	StringConverter::addFormattedString(xml, "<bootID>%d</bootID>", _properties.getBootID());

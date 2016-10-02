@@ -67,7 +67,7 @@ void Server::threadEntry() {
 	init_udp_socket(_udpMultiSend, SSDP_PORT, "239.255.255.250");
 	init_mutlicast_udp_socket(_udpMultiListen, "239.255.255.250", SSDP_PORT, _interface.getIPAddress().c_str());
 
-	time_t repeat_time = 0;
+	std::time_t repeat_time = 0;
 	struct pollfd pfd[1];
 	pfd[0].fd = _udpMultiListen.getFD();
 	pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
@@ -162,7 +162,7 @@ void Server::threadEntry() {
 									SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 									// reset repeat time to annouce new DEVICEID
-									repeat_time =  time(nullptr) + 5;
+									repeat_time =  std::time(nullptr) + 5;
 								}
 								std::string st_param;
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST", st_param)) {
@@ -203,11 +203,11 @@ void Server::threadEntry() {
 			SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
 
 			// reset repeat time to annouce new 'Device Description File'
-			repeat_time =  time(nullptr) + 5;
+			repeat_time =  std::time(nullptr) + 5;
 		}
 
 		// Notify/announce ourself
-		const time_t curr_time = time(nullptr);
+		const std::time_t curr_time = std::time(nullptr);
 		if (repeat_time < curr_time) {
 			char msg[1024];
 			// set next announce time

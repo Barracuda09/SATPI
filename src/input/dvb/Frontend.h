@@ -44,8 +44,6 @@ FW_DECL_VECTOR_NS0(Stream);
 namespace input {
 namespace dvb {
 
-	#define MAX_DELSYS 5
-
 	/// The class @c Frontend carries all the data/information of an frontend
 	/// and to tune it
 	class Frontend :
@@ -54,6 +52,11 @@ namespace dvb {
 #endif
 		public input::Device {
 		public:
+			// =======================================================================
+			// -- Static Data members ------------------------------------------------
+			// =======================================================================
+			static const unsigned long DEFAULT_DVR_BUFFER_SIZE;
+
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
@@ -252,7 +255,7 @@ namespace dvb {
 			uint16_t _snr;          ///
 			uint32_t _ber;          ///
 			uint32_t _ublocks;      ///
-			unsigned long _dvrBufferSize; ///
+			unsigned long _dvrBufferSizeMB; ///
 
 	};
 

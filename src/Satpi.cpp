@@ -56,28 +56,28 @@ static int otherSig;
  */
 static void child_handler(int signum) {
 	switch(signum) {
-	case SIGCHLD:
-	// fall-through
-	case SIGINT:
-	// fall-through
-	case SIGALRM:
-		retval = EXIT_FAILURE;
-		exitApp = true;
-		break;
-	case SIGKILL:
-		SI_LOG_INFO("stopping (KILL)" );
-	// fall-through
-	case SIGUSR1:
-	// fall-through
-	case SIGHUP:
-	// fall-through
-	case SIGTERM:
-		retval = EXIT_SUCCESS;
-		exitApp = true;
-		break;
-	default:
-		otherSig = 1;
-		break;
+		case SIGCHLD:
+		// fall-through
+		case SIGINT:
+		// fall-through
+		case SIGALRM:
+			retval = EXIT_FAILURE;
+			exitApp = true;
+			break;
+		case SIGKILL:
+			SI_LOG_INFO("stopping (KILL)" );
+		// fall-through
+		case SIGUSR1:
+		// fall-through
+		case SIGHUP:
+		// fall-through
+		case SIGTERM:
+			retval = EXIT_SUCCESS;
+			exitApp = true;
+			break;
+		default:
+			otherSig = 1;
+			break;
 	}
 }
 
@@ -277,11 +277,12 @@ int main(int argc, char *argv[]) {
 		daemonize("/var/lock/" LOCK_FILE, user);
 	}
 
+	signal(SIGPIPE, SIG_IGN);
+
 	// notify we are alive
 	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
 	SI_LOG_INFO("Number of processors online: %d", base::ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
-
 	do {
 		try {
 			InterfaceAttr interface;

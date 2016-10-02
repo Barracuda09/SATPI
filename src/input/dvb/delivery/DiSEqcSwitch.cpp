@@ -109,11 +109,12 @@ namespace delivery {
 		}
 		usleep(20 * 1000);
 		{
+			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
+			cmd.msg[0] = 0xe1;
+
 			base::MutexLock lock(_mutex);
 			for (size_t i = 0; i < _diseqcRepeat; ++i) {
-				usleep(100 * 1000);
-				// Framing 0xe1: Command from Master, No reply required, Repeated transmission
-				cmd.msg[0] = 0xe1;
+				usleep(20 * 1000);
 				if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 					PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
 					return false;

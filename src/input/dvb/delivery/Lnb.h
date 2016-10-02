@@ -30,6 +30,10 @@ namespace input {
 namespace dvb {
 namespace delivery {
 
+	#define MAX_LNB 4
+	#define POL_H   0
+	#define POL_V   1
+
 	/// The class @c Lnb specifies which type of LNB is connected
 	class Lnb :
 		public base::XMLSupport {

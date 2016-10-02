@@ -86,8 +86,8 @@ int TcpSocket::poll(int timeout) {
 						// Try to find the client that requested to close
 						for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
 							if (_client[j].getFD() == _pfd[i].fd) {
-								SI_LOG_DEBUG("%s Client %s: Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
-								             _client[j].getIPAddress().c_str(), _client[j].getFD());
+								SI_LOG_DEBUG("%s Client %s:%d Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
+								             _client[j].getIPAddress().c_str(), _client[j].getSocketPort(), _client[j].getFD());
 								closeConnection(_client[j]);
 								_client[j].closeFD();
 								break;

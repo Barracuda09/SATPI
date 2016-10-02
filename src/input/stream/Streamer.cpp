@@ -121,10 +121,10 @@ namespace stream {
 	}
 
 	std::string Streamer::attributeDescribeString() const {
-		std::string desc;
+		std::string desc("");
 		// ver=1.5;tuner=<feID>;file=<file>
-		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
-				_streamID + 1, _uri.c_str());
+//		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
+//				_streamID + 1, _uri.c_str());
 
 		return desc;
 	}

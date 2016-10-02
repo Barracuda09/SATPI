@@ -142,6 +142,16 @@
 		return true;
 	}
 
+	bool SocketAttr::writeData(const struct iovec *iov, const int iovcnt) {
+		if (::writev(_fd, iov, iovcnt) == -1) {
+			if (errno != EBADF) {
+				PERROR("writev");
+			}
+			return false;
+		}
+		return true;
+	}
+
 	bool SocketAttr::sendDataTo(const void *buf, std::size_t len, int flags) {
 		if (::sendto(_fd, buf, len, flags, reinterpret_cast<struct sockaddr *>(&_addr),
 				   sizeof(_addr)) == -1) {
@@ -186,7 +196,7 @@
 		}
 	}
 
-	int SocketAttr::getNetworkBufferSize() {
+	int SocketAttr::getNetworkBufferSize() const {
 		int bufferSize;
 		socklen_t optlen = sizeof(bufferSize);
 		if (::getsockopt(_fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {

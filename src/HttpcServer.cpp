@@ -107,12 +107,12 @@ bool HttpcServer::process(SocketClient &client) {
 	std::string protocol;
 	if (StringConverter::getMethod(msg.c_str(), method) &&
 	    StringConverter::getProtocol(msg.c_str(), protocol)) {
-		if (protocol.compare("RTSP") == 0) {
+		if (protocol == "RTSP") {
 			processStreamingRequest(client);
-		} else if (protocol.compare("HTTP") == 0) {
-			if (method.compare("GET") == 0) {
+		} else if (protocol == "HTTP") {
+			if (method == "GET") {
 				methodGet(client);
-			} else if (method.compare("POST") == 0) {
+			} else if (method == "POST") {
 				methodPost(client);
 			} else {
 				SI_LOG_ERROR("Unknown HTML message: %s", msg.c_str());
@@ -120,6 +120,8 @@ bool HttpcServer::process(SocketClient &client) {
 		} else {
 			SI_LOG_ERROR("%s: Unknown HTML protocol: %s", protocol.c_str(), msg.c_str());
 		}
+	} else {
+		SI_LOG_ERROR("Unknown Data: %s", msg.c_str());
 	}
 	return true;
 }
@@ -135,7 +137,8 @@ bool HttpcServer::closeConnection(SocketClient &socketclient) {
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
 	std::string msg = client.getMessage();
-	SI_LOG_DEBUG("%s Stream data from client %s: %s", client.getProtocolString().c_str(), client.getIPAddress().c_str(), msg.c_str());
+	SI_LOG_DEBUG("%s Stream data from client %s Port %d: %s", client.getProtocolString().c_str(),
+		client.getIPAddress().c_str(), client.getSocketPort(), msg.c_str());
 
 	std::string httpc;
 	int clientID;
@@ -143,11 +146,11 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	if (stream != nullptr) {
 		std::string method;
 		if (StringConverter::getMethod(msg, method)) {
-			stream->processStream(msg, clientID, method);
+			stream->processStreamingRequest(msg, clientID, method);
 
 			// Check the Method
 			if (method == "GET") {
-				stream->update(clientID);
+				stream->update(clientID, true);
 				getHtmlBodyNoContent(httpc, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpc);

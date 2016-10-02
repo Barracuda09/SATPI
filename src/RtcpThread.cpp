@@ -28,33 +28,56 @@
 #include <time.h>
 #include <stdlib.h>
 
-RtcpThread::RtcpThread(StreamInterface &stream) :
+#include <cstring>
+
+RtcpThread::RtcpThread(StreamInterface &stream, bool tcp) :
 		ThreadBase("RtcpThread"),
 		_clientID(0),
-		_stream(stream) {
+		_stream(stream),
+		_tcpMode(tcp) {
 }
 
 RtcpThread::~RtcpThread() {
 	terminateThread();
-	StreamClient &client = _stream.getStreamClient(_clientID);
-	client.getRtcpSocketAttr().closeFD();
-	SI_LOG_INFO("Stream: %d, Destroy RTCP stream", _stream.getStreamID());
+	if (_tcpMode) {
+		SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream", _stream.getStreamID());
+	} else {
+		StreamClient &client = _stream.getStreamClient(_clientID);
+		client.getRtcpSocketAttr().closeFD();
+		SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream", _stream.getStreamID());
+	}
 }
 
 bool RtcpThread::startStreaming() {
-	SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
+	if (_tcpMode) {
+		const StreamClient &client = _stream.getStreamClient(_clientID);
+		if (!startThread()) {
+			SI_LOG_ERROR("Stream: %d, Start RTCP/TCP stream  to %s:%d ERROR", _stream.getStreamID(),
+				client.getIPAddress().c_str(), client.getHttpSocketPort());
+			return false;
+		}
+		SI_LOG_INFO("Stream: %d, Start RTCP/TCP stream to %s:%d", _stream.getStreamID(),
+			client.getIPAddress().c_str(), client.getHttpSocketPort());
+	} else {
+		SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
 
-	if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
-		SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
-	}
+		if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
+			SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
+		}
 
-	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, Start RTCP stream to %s:%d ERROR", _stream.getStreamID(),
-		             rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
-		return false;
+		// connect the UDP socket, so we can use writev(..)
+		if (!rtcp.connectTo()) {
+			SI_LOG_ERROR("Stream: %d, RTCP connect failed", _stream.getStreamID());
+		}
+
+		if (!startThread()) {
+			SI_LOG_ERROR("Stream: %d, Start RTCP/UDP stream to %s:%d ERROR", _stream.getStreamID(),
+						 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+			return false;
+		}
+		SI_LOG_INFO("Stream: %d, Start RTCP/UDP stream to %s:%d", _stream.getStreamID(),
+					rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP stream to %s:%d", _stream.getStreamID(),
-	            rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 	return true;
 }
 
@@ -85,18 +108,7 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	bool active = false;
 	std::string desc = _stream.attributeDescribeString(active);
 	const char *attr_desc_str = desc.c_str();
-	memcpy(app + 16, attr_desc_str, desc.size());
-#if 0
-#ifdef DEBUG
-	static unsigned int t = 0;
-	if (t > 7) {
-		t = 0;
-		SI_LOG_INFO("%s", attr_desc_str);
-	} else {
-		++t;
-	}
-#endif
-#endif
+	std::memcpy(app + 16, attr_desc_str, desc.size());
 
 	// total length and align on 32 bits
 	*len = 16 + desc.size();
@@ -107,7 +119,7 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	// Alloc and copy data and adjust length
 	uint8_t *appPtr = new uint8_t[*len];
 	if (appPtr != nullptr) {
-		memcpy(appPtr, app, *len);
+		std::memcpy(appPtr, app, *len);
 		int ws = (*len / 4) - 1;
 		appPtr[2] = (ws >> 8) & 0xff;
 		appPtr[3] = (ws >> 0) & 0xff;
@@ -139,7 +151,7 @@ uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	sr[6]  = (ssrc >>  8) & 0xff;          // synchronization source
 	sr[7]  = (ssrc >>  0) & 0xff;          // synchronization source
 
-	const time_t ntp = time(nullptr);
+	const std::time_t ntp = std::time(nullptr);
 	                                       // NTP integer part
 	sr[8]  = (ntp >> 24) & 0xff;           // NTP most sign word
 	sr[9]  = (ntp >> 16) & 0xff;           // NTP most sign word
@@ -169,7 +181,7 @@ uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	// Alloc and copy data and adjust length
 	uint8_t *srPtr = new uint8_t[*len];
 	if (srPtr != nullptr) {
-		memcpy(srPtr, sr, sizeof(sr));
+		std::memcpy(srPtr, sr, sizeof(sr));
 		int ws = (*len / 4) - 1;
 		srPtr[2] = (ws >> 8) & 0xff;
 		srPtr[3] = (ws >> 0) & 0xff;
@@ -215,7 +227,7 @@ uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 	// Alloc and copy data and adjust length
 	uint8_t *sdesPtr = new uint8_t[*len];
 	if (sdesPtr != nullptr) {
-		memcpy(sdesPtr, sdes, sizeof(sdes));
+		std::memcpy(sdesPtr, sdes, sizeof(sdes));
 		int ws = (*len / 4) - 1;
 		sdesPtr[2] = (ws >> 8) & 0xff;
 		sdesPtr[3] = (ws >> 0) & 0xff;
@@ -240,27 +252,50 @@ void RtcpThread::threadEntry() {
 		std::size_t srlen   = 0;
 		std::size_t sdeslen = 0;
 		std::size_t applen  = 0;
-		uint8_t *sdes  = get_sdes_packet(&sdeslen);
-		uint8_t *sr    = get_sr_packet(&srlen);
-		uint8_t *app   = get_app_packet(&applen);
+		uint8_t *sdes = get_sdes_packet(&sdeslen);
+		uint8_t *sr   = get_sr_packet(&srlen);
+		uint8_t *app  = get_app_packet(&applen);
 
 		if (sr && sdes && app) {
+			if (_tcpMode) {
+				const std::size_t len = srlen + sdeslen + applen;
+				unsigned char header[4];
+				header[0] = 0x24;
+				header[1] = 0x01;
+				header[2] = (len >> 8) & 0xFF;
+				header[3] = (len >> 0) & 0xFF;
 
-			const std::size_t len = srlen + sdeslen + applen;
+				iovec iov[4];
+				iov[0].iov_base = header;
+				iov[0].iov_len = 4;
+				iov[1].iov_base = sr;
+				iov[1].iov_len = srlen;
+				iov[2].iov_base = sdes;
+				iov[2].iov_len = sdeslen;
+				iov[3].iov_base = app;
+				iov[3].iov_len = applen;
 
-			uint8_t *data = new uint8_t[len];
-			if (data != nullptr) {
-				memcpy(data, sr, srlen);
-				memcpy(data + srlen, sdes, sdeslen);
-				memcpy(data + srlen + sdeslen, app, applen);
+				// send the RTCP/TCP packet
+				if (!client.writeHttpData(iov, 4)) {
+					SI_LOG_ERROR("Stream: %d, Error sending RTCP/TCP Stream Data to %s", _stream.getStreamID(),
+						client.getIPAddress().c_str());
+				}
+			} else {
+				iovec iov[3];
+				iov[0].iov_base = sr;
+				iov[0].iov_len = srlen;
+				iov[1].iov_base = sdes;
+				iov[1].iov_len = sdeslen;
+				iov[2].iov_base = app;
+				iov[2].iov_len = applen;
 
+				// send the RTCP/UDP packet
 				SocketAttr &rtcp = client.getRtcpSocketAttr();
-				if (!rtcp.sendDataTo(data, len, 0)) {
-					SI_LOG_ERROR("Stream: %d, Error sending RTCP data to %s:%d", _stream.getStreamID(),
+				if (!rtcp.writeData(iov, 3)) {
+					SI_LOG_ERROR("Stream: %d, Error sending RTCP/UDP data to %s:%d", _stream.getStreamID(),
 								 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 				}
 			}
-			DELETE_ARRAY(data);
 		}
 		DELETE_ARRAY(sr);
 		DELETE_ARRAY(sdes);

@@ -29,10 +29,10 @@
 namespace output {
 
 	StreamThreadRtp::StreamThreadRtp(StreamInterface &stream, decrypt::dvbapi::SpClient decrypt) :
-		StreamThreadBase("RTP", stream, decrypt),
+		StreamThreadBase("RTP/UDP", stream, decrypt),
 		_clientID(0),
 		_cseq(0),
-		_rtcp(stream) {
+		_rtcp(stream, false) {
 	}
 
 	StreamThreadRtp::~StreamThreadRtp() {
@@ -50,8 +50,8 @@ namespace output {
 			SI_LOG_ERROR("Stream: %d, Get RTP handle failed", streamID);
 		}
 
-		// Get default buffer size and set it twice as big
-		const int bufferSize = rtp.getNetworkBufferSize() * 2;
+		// Get default buffer size and set it x times as big
+		const int bufferSize = rtp.getNetworkBufferSize() * 20;
 		rtp.setNetworkBufferSize(bufferSize);
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 
@@ -109,10 +109,14 @@ namespace output {
 		// RTP packet octet count (Bytes)
 		_stream.addRtpData(size, timestamp);
 
+		// send the RTP/UDP packet
 		SocketAttr &rtp = client.getRtpSocketAttr();
 		if (!rtp.sendDataTo(rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT)) {
-			SI_LOG_ERROR("Stream: %d, Error sending RTP data to %s:%d", _stream.getStreamID(),
-				rtp.getIPAddress().c_str(), rtp.getSocketPort());
+			if (!client.isSelfDestructing()) {
+				SI_LOG_ERROR("Stream: %d, Error sending RTP/UDP data to %s:%d", _stream.getStreamID(),
+					rtp.getIPAddress().c_str(), rtp.getSocketPort());
+				client.selfDestruct();
+			}
 		}
 	}
 

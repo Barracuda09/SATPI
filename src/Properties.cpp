@@ -41,7 +41,7 @@ Properties::Properties(const std::string &xmlFilePath, const std::string &uuid,
 	_bootID(1),
 	_deviceID(1),
 	_ssdpAnnounceTimeSec(60),
-	_appStartTime(time(nullptr)),
+	_appStartTime(std::time(nullptr)),
 	_exitApplication(false) {
 	restoreXML();
 	_httpPort = httpPort;
@@ -173,7 +173,7 @@ unsigned int Properties::getSsdpAnnounceTimeSec() const {
 	return _ssdpAnnounceTimeSec;
 }
 
-time_t Properties::getApplicationStartTime() const {
+std::time_t Properties::getApplicationStartTime() const {
 	base::MutexLock lock(_mutex);
 	return _appStartTime;
 }

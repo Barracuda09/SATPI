@@ -50,7 +50,7 @@
 			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, streamID + "payload");
 
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
-			page += addTableLineEntry("DVR Buffer (Bytes)", xmlDoc, streamID + "dvrbuffer");
+			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 
 			var diseqc = visibleStream.getElementsByTagName("diseqc");

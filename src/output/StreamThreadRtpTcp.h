@@ -1,4 +1,4 @@
-/* DiSEqc.h
+/* StreamThreadRtpTcp.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,63 +17,63 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE
-#define INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE
+#ifndef OUTPUT_STREAMTHREADRTPTCP_H_INCLUDE
+#define OUTPUT_STREAMTHREADRTPTCP_H_INCLUDE OUTPUT_STREAMTHREADRTPTCP_H_INCLUDE
 
-#include <base/XMLSupport.h>
-#include <input/dvb/delivery/Lnb.h>
+#include <FwDecl.h>
+#include <output/StreamThreadBase.h>
+#include <RtcpThread.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+FW_DECL_NS0(StreamClient);
+FW_DECL_NS0(StreamInterface);
+FW_DECL_NS2(decrypt, dvbapi, Client);
 
-	/// The class @c DiSEqc specifies an interface to an connected DiSEqc device
-	class DiSEqc :
-		public base::XMLSupport {
+FW_DECL_UP_NS1(output, StreamThreadRtpTcp);
+
+namespace output {
+
+	/// RTP over TCP Streaming thread
+	class StreamThreadRtpTcp :
+		public StreamThreadBase {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			DiSEqc();
+			StreamThreadRtpTcp(StreamInterface &stream,
+				decrypt::dvbapi::SpClient decrypt);
 
-			virtual ~DiSEqc();
-
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
-
-		public:
-
-			virtual void addToXML(std::string &xml) const override;
-
-			virtual void fromXML(const std::string &xml) override;
+			virtual ~StreamThreadRtpTcp();
 
 			// =======================================================================
-			// -- Other member functions ---------------------------------------------
+			//  -- output::StreamThreadBase ------------------------------------------
 			// =======================================================================
 
 		public:
 
-			///
-			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
-				int src, int pol_v) = 0;
+			virtual bool startStreaming() override;
 
+		protected:
+
+			virtual void threadEntry() override;
+			
+			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
+				StreamClient &client) override;
+
+			virtual int getStreamSocketPort(int clientID) const override;
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
-		protected:
+		private:
 
-			base::Mutex _mutex;
-			unsigned int _diseqcRepeat;
-			Lnb _LNB[MAX_LNB];    // LNB properties
+			int _clientID;
+			uint16_t _cseq;     /// RTP sequence number
+			RtcpThread _rtcp;   ///
 
 	};
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+} // namespace output
 
-#endif // INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE
+#endif // OUTPUT_STREAMTHREADRTPTCP_H_INCLUDE

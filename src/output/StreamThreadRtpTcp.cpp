@@ -1,4 +1,4 @@
-/* StreamThreadHttp.cpp
+/* StreamThreadRtpTcp.cpp
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,29 +17,31 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include <output/StreamThreadHttp.h>
+#include <output/StreamThreadRtpTcp.h>
 
-#include <InterfaceAttr.h>
+#include <StreamClient.h>
 #include <Log.h>
 #include <StreamInterface.h>
-#include <StreamClient.h>
+#include <InterfaceAttr.h>
 #include <Utils.h>
 #include <base/TimeCounter.h>
 
+#include <cstring>
+
 namespace output {
 
-	StreamThreadHttp::StreamThreadHttp(
-		StreamInterface &stream,
-		decrypt::dvbapi::SpClient decrypt) :
-		StreamThreadBase("HTTP", stream, decrypt),
-		_clientID(0) {
+	StreamThreadRtpTcp::StreamThreadRtpTcp(StreamInterface &stream, decrypt::dvbapi::SpClient decrypt) :
+		StreamThreadBase("RTP/TCP", stream, decrypt),
+		_clientID(0),
+		_cseq(0),
+		_rtcp(stream, true) {
 	}
 
-	StreamThreadHttp::~StreamThreadHttp() {
+	StreamThreadRtpTcp::~StreamThreadRtpTcp() {
 		terminateThread();
 	}
 
-	bool StreamThreadHttp::startStreaming() {
+	bool StreamThreadRtpTcp::startStreaming() {
 		const int streamID = _stream.getStreamID();
 		StreamClient &client = _stream.getStreamClient(_clientID);
 
@@ -48,17 +50,19 @@ namespace output {
 		client.setHttpNetworkBufferSize(bufferSize);
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 
-//		client.setSocketTimeoutInSec(2);
+		// RTCP/TCP
+		_rtcp.startStreaming();
 
+		_cseq = 0x0000;
 		StreamThreadBase::startStreaming();
 		return true;
 	}
 
-	int StreamThreadHttp::getStreamSocketPort(int clientID) const {
-		return _stream.getStreamClient(clientID).getHttpSocketPort();
+	int StreamThreadRtpTcp::getStreamSocketPort(int clientID) const {
+		return  _stream.getStreamClient(clientID).getHttpSocketPort();
 	}
 
-	void StreamThreadHttp::threadEntry() {
+	void StreamThreadRtpTcp::threadEntry() {
 		StreamClient &client = _stream.getStreamClient(0);
 		while (running()) {
 			switch (_state) {
@@ -80,24 +84,44 @@ namespace output {
 		}
 	}
 
-	void StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
-		unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
+	void StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
+		unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 
-		const unsigned int size = buffer.getBufferSize();
+		// update sequence number
+		++_cseq;
+		rtpBuffer[2] = ((_cseq >> 8) & 0xFF); // sequence number
+		rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
 
+		// update timestamp
 		const long timestamp = base::TimeCounter::getTicks() * 90;
+		rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
+		rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
+		rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
+		rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+
+		const unsigned int bufSize = buffer.getBufferSize();
 
 		// RTP packet octet count (Bytes)
-		_stream.addRtpData(size, timestamp);
+		_stream.addRtpData(bufSize, timestamp);
 
-		iovec iov[1];
-		iov[0].iov_base = tsBuffer;
-		iov[0].iov_len = size;
+		const unsigned int len = bufSize + RTP_HEADER_LEN;
 
-		// send the HTTP packet
-		if (!client.writeHttpData(iov, 1)) {
+		unsigned char header[4];
+		header[0] = 0x24;
+		header[1] = 0x00;
+		header[2] = (len >> 8) & 0xFF;
+		header[3] = (len >> 0) & 0xFF;
+
+		iovec iov[2];
+		iov[0].iov_base = header;
+		iov[0].iov_len = 4;
+		iov[1].iov_base = rtpBuffer;
+		iov[1].iov_len = len;
+
+		// send the RTP/TCP packet
+		if (!client.writeHttpData(iov, 2)) {
 			if (!client.isSelfDestructing()) {
-				SI_LOG_ERROR("Stream: %d, Error sending HTTP Stream Data to %s", _stream.getStreamID(),
+				SI_LOG_ERROR("Stream: %d, Error sending RTP/TCP Stream Data to %s", _stream.getStreamID(),
 					client.getIPAddress().c_str());
 				client.selfDestruct();
 			}

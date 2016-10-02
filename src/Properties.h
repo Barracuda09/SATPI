@@ -24,6 +24,7 @@
 #include <base/XMLSupport.h>
 
 #include <string>
+#include <ctime>
 
 /// The class @c Properties carries all the available/open Properties
 class Properties :
@@ -97,7 +98,7 @@ class Properties :
 	unsigned int getSsdpAnnounceTimeSec() const;
 
 	/// Get application start time
-	time_t getApplicationStartTime() const;
+	std::time_t getApplicationStartTime() const;
 
 	/// Check do we need to exit the application
 	bool exitApplication() const;
@@ -123,7 +124,7 @@ class Properties :
 	unsigned int _ssdpAnnounceTimeSec;
 	unsigned int _httpPort;
 	unsigned int _rtspPort;
-	time_t _appStartTime;                                        // the application start time (EPOCH)
+	std::time_t _appStartTime;     // the application start time (EPOCH)
 	bool _exitApplication;
 }; // class Properties
 

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #include <cstring>
+#include <ctime>
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
@@ -244,7 +245,7 @@ namespace dvbapi {
 								std::memcpy(&clientData[0], &request, 4);
 								clientData[4] =  demux;
 								clientData[5] =  filter;
-								memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
+								std::memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
 								const int length = sectionLength + 6; // 6 = clientData header
 
 								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x %04x %04x",
@@ -375,9 +376,9 @@ namespace dvbapi {
 						const uint16_t prognr =  (ptr[i + 0] << 8) | ptr[i + 1];
 						const uint16_t pid    = ((ptr[i + 2] & 0x1F) << 8) | ptr[i + 3];
 						if (prognr == 0) {
-							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT: %d", streamID, prognr, pid);
+							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT: %04d", streamID, prognr, pid);
 						} else {
-							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT: %d", streamID, prognr, pid);
+							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT: %04d", streamID, prognr, pid);
 							frontend->setPMT(pid, true);
 						}
 					}
@@ -482,7 +483,7 @@ namespace dvbapi {
 
 				const uint32_t calccrc = calculateCRC32(&cData[5], sectionLength - 4 + 3);
 				if (calccrc == crc) {
-					SI_LOG_INFO("Stream: %d, PMT - Section Length: %d  Prog NR: %d  Version: %d  secNr: %d  lastSecNr: %d  PCR-PID: %d  Program Length: %d  CRC: %04X",
+					SI_LOG_INFO("Stream: %d, PMT - Section Length: %d  Prog NR: %d  Version: %d  secNr: %d  lastSecNr: %d  PCR-PID: %04d  Program Length: %d  CRC: %04X",
 								streamID, sectionLength, programNumber, version, secNr, lastSecNr, pcrPID, prgLength, crc);
 
 					// To save the Program Info
@@ -501,7 +502,7 @@ namespace dvbapi {
 						const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
 						const std::size_t esInfoLength  = ((ptr[i + 3] & 0x0F) << 8) | ptr[i + 4];
 
-						SI_LOG_INFO("Stream: %d, PMT - Stream Type: %d  ES PID: %d  ES-Length: %d",
+						SI_LOG_INFO("Stream: %d, PMT - Stream Type: %d  ES PID: %04d  ES-Length: %d",
 									streamID, streamType, elementaryPID, esInfoLength);
 						for (std::size_t j = 0; j < esInfoLength; ) {
 							const std::size_t subLength = ptr[j + i + 6];
@@ -510,7 +511,7 @@ namespace dvbapi {
 								const int caid   =  (ptr[j + i +  7] << 8) | ptr[j + i + 8];
 								const int ecmpid = ((ptr[j + i +  9] & 0x1F) << 8) | ptr[j + i + 10];
 								const int provid = ((ptr[j + i + 11] & 0x1F) << 8) | ptr[j + i + 12];
-								SI_LOG_INFO("Stream: %d, ECM-PID - CAID: %04X  ECM-PID: %04X  PROVID: %04X ES-Length: %d",
+								SI_LOG_INFO("Stream: %d, ECM-PID - CAID: %04X  ECM-PID: %04d  PROVID: %04X ES-Length: %d",
 											streamID, caid, ecmpid, provid, subLength);
 
 								progInfo.append((const char *)&ptr[j + i + 5], subLength + 2);
@@ -567,7 +568,7 @@ namespace dvbapi {
 		struct pollfd pfd[1];
 
 		// set time to try to connect
-		time_t retryTime = time(nullptr) + 2;
+		std::time_t retryTime = std::time(nullptr) + 2;
 
 		for (;; ) {
 			// try to connect to server
@@ -576,7 +577,7 @@ namespace dvbapi {
 				pfd[0].revents = 0;
 				pfd[0].fd      = -1;
 				if (_enabled) {
-					const time_t currTime = time(nullptr);
+					const std::time_t currTime = std::time(nullptr);
 					if (retryTime < currTime) {
 						if (initClientSocket(_client, _serverPort, _serverIpAddr.c_str())) {
 							sendClientInfo();

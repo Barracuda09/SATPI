@@ -50,6 +50,14 @@ class Stream :
 	public:
 		static const unsigned int MAX_CLIENTS;
 
+		enum class StreamingType {
+			NONE,
+			HTTP,
+			RTSP,
+			RTP_TCP,
+			FILE
+		};
+
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
@@ -138,6 +146,12 @@ class Stream :
 			return _enabled;
 		}
 
+		/// Get the stream type of this stream
+		StreamingType getStreamingType() const {
+			base::MutexLock lock(_mutex);
+			return _streamingType;
+		}
+
 		/// Close the stream client with clientID
 		void close(int clientID);
 
@@ -156,10 +170,10 @@ class Stream :
 	public:
 
 		///
-		bool processStream(const std::string &msg, int clientID, const std::string &method);
+		bool processStreamingRequest(const std::string &msg, int clientID, const std::string &method);
 
 		///
-		bool update(int clientID);
+		bool update(int clientID, bool start);
 
 		///
 		int getCSeq(int clientID) const {
@@ -177,6 +191,12 @@ class Stream :
 		unsigned int getSessionTimeout(int clientID) const {
 			base::MutexLock lock(_mutex);
 			return _client[clientID].getSessionTimeout();
+		}
+
+		///
+		std::string getIPAddress(int clientID) const {
+			base::MutexLock lock(_mutex);
+			return _client[clientID].getIPAddress();
 		}
 
 		///
@@ -198,13 +218,6 @@ class Stream :
 		///
 		void processStopStream_L(int clientID, bool gracefull);
 
-
-		enum class StreamingType {
-			NONE,
-			HTTP,
-			RTSP,
-			FILE
-		};
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

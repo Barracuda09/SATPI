@@ -26,6 +26,7 @@
 #include <input/dvb/delivery/DiSEqcSwitch.h>
 #include <input/dvb/delivery/DiSEqcEN50494.h>
 #include <input/dvb/delivery/DiSEqcEN50607.h>
+#include <input/dvb/delivery/Lnb.h>
 
 #include <cstdlib>
 
@@ -103,8 +104,8 @@ namespace delivery {
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
 		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-S(2)...", _streamID);
 
-		// DiSEqC switch position differs from src
-		const int src = frontendData.getDiSEqcSource() - 1;
+		// DiSEqC switch position differs from src and adjust to MAX_LNB
+		const int src = (frontendData.getDiSEqcSource() - 1) % MAX_LNB;
 		const int pol_v = frontendData.getPolarization();
 		uint32_t freq = frontendData.getFrequency();
 

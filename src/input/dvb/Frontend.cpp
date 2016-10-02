@@ -44,6 +44,8 @@
 namespace input {
 namespace dvb {
 
+	const unsigned long Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
+
 	Frontend::Frontend(int streamID,
 		const std::string &fe,
 		const std::string &dvr,
@@ -60,7 +62,7 @@ namespace dvb {
 		_dvbt2(0),
 		_dvbc(0),
 		_dvbc2(0),
-		_dvrBufferSize(40 * 188 * 1024) {
+		_dvrBufferSizeMB(DEFAULT_DVR_BUFFER_SIZE) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		setupFrontend();
 	}
@@ -182,7 +184,7 @@ namespace dvb {
 		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _ber);
 		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
 
-		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSize, (10 * 188 * 1024), (80 * 188 * 1024));
+		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, 30);
 
 		ADD_XML_BEGIN_ELEMENT(xml, "deliverySystem");
 		_deliverySystem[0]->addToXML(xml);
@@ -196,7 +198,9 @@ namespace dvb {
 			_deliverySystem[0]->fromXML(element);
 		}
 		if (findXMLElement(xml, "dvrbuffer.value", element)) {
-			_dvrBufferSize = atoi(element.c_str());
+			const unsigned int newSize = atoi(element.c_str());
+			_dvrBufferSizeMB = (newSize < DEFAULT_DVR_BUFFER_SIZE * 5) ?
+				newSize : DEFAULT_DVR_BUFFER_SIZE;
 		}
 	}
 
@@ -227,7 +231,7 @@ namespace dvb {
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		// try read maximum amount of bytes from DVR
-		const int bytes = read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		const int bytes = ::read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
 			buffer.addAmountOfBytesWritten(bytes);
 			const bool full = buffer.full();
@@ -898,7 +902,7 @@ namespace dvb {
 
 			{
 				base::MutexLock lock(_mutex);
-				if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSize) == -1) {
+				if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSizeMB * 1024 * 1024) == -1) {
 					PERROR("DMX_SET_BUFFER_SIZE failed");
 				}
 			}

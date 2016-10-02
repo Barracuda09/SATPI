@@ -55,21 +55,36 @@ void RtspServer::threadEntry() {
 }
 
 bool RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody) {
-	static const char *RTSP_SETUP_OK =
-		"RTSP/1.0 200 OK\r\n" \
-		"CSeq: %d\r\n" \
-		"Session: %s;timeout=%d\r\n" \
-		"Transport: RTP/AVP;unicast;client_port=%d-%d\r\n" \
-		"com.ses.streamID: %d\r\n" \
-		"\r\n";
+	if (stream.getStreamingType() == Stream::StreamingType::RTP_TCP) {
+		static const char *RTSP_SETUP_OK =
+			"RTSP/1.0 200 OK\r\n" \
+			"CSeq: %d\r\n" \
+			"Session: %s;timeout=%d\r\n" \
+			"Transport: RTP/AVP/TCP;unicast;client_ip=%s;interleaved=0-1\r\n" \
+			"com.ses.streamID: %d\r\n" \
+			"\r\n";
+
+		// setup reply
+		StringConverter::addFormattedString(htmlBody, RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str(),
+			stream.getSessionTimeout(clientID), stream.getIPAddress(clientID).c_str(), stream.getStreamID());
+
+	} else {
+		static const char *RTSP_SETUP_OK =
+			"RTSP/1.0 200 OK\r\n" \
+			"CSeq: %d\r\n" \
+			"Session: %s;timeout=%d\r\n" \
+			"Transport: RTP/AVP;unicast;client_ip=%s;client_port=%d-%d\r\n" \
+			"com.ses.streamID: %d\r\n" \
+			"\r\n";
+
+		// setup reply
+		StringConverter::addFormattedString(htmlBody, RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str(),
+			stream.getSessionTimeout(clientID), stream.getIPAddress(clientID).c_str(),
+			stream.getRtpSocketPort(clientID), stream.getRtcpSocketPort(clientID), stream.getStreamID());
+	}
 
 // @TODO  check return of update();
-	stream.update(clientID);
-
-	// setup reply
-	StringConverter::addFormattedString(htmlBody, RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str(),
-	                                    stream.getSessionTimeout(clientID), stream.getRtpSocketPort(clientID),
-	                                    stream.getRtcpSocketPort(clientID), stream.getStreamID());
+	stream.update(clientID, false);
 
 	return true;
 }
@@ -80,10 +95,11 @@ bool RtspServer::methodPlay(Stream &stream, int clientID, std::string &htmlBody)
 		"RTP-Info: url=rtsp://%s/stream=%d\r\n" \
 		"CSeq: %d\r\n" \
 		"Session: %s\r\n" \
+		"Range: npt=0.000-\r\n" \
 		"\r\n";
 
 // @TODO  check return of update();
-	stream.update(clientID);
+	stream.update(clientID, true);
 
 	StringConverter::addFormattedString(htmlBody, RTSP_PLAY_OK, _interface.getIPAddress().c_str(), stream.getStreamID(),
 	                   stream.getCSeq(clientID), stream.getSessionID(clientID).c_str());
@@ -149,7 +165,7 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	for (auto i = 0u; i < _streamManager.getMaxStreams(); ++i) {
 		bool active = false;
-		std::string desc_attr = _streamManager.attributeDescribeString(i, active);
+		const std::string desc_attr = _streamManager.attributeDescribeString(i, active);
 		if (desc_attr.size() > 5) {
 			++streams_setup;
 			StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT2, i, desc_attr.c_str(), (active) ? "sendonly" : "inactive");
