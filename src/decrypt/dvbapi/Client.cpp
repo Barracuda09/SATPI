@@ -376,9 +376,9 @@ namespace dvbapi {
 						const uint16_t prognr =  (ptr[i + 0] << 8) | ptr[i + 1];
 						const uint16_t pid    = ((ptr[i + 2] & 0x1F) << 8) | ptr[i + 3];
 						if (prognr == 0) {
-							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT: %04d", streamID, prognr, pid);
+							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT PID: %04d", streamID, prognr, pid);
 						} else {
-							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT: %04d", streamID, prognr, pid);
+							SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT PID: %04d", streamID, prognr, pid);
 							frontend->setPMT(pid, true);
 						}
 					}

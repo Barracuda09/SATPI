@@ -84,7 +84,7 @@ bool RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 	}
 
 // @TODO  check return of update();
-	stream.update(clientID, false);
+	stream.update(clientID, true);
 
 	return true;
 }
