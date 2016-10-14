@@ -70,7 +70,7 @@ class StreamManager :
 		SpStream findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
 
 		///
-		void checkStreamClientsWithTimeout();
+		void checkForSessionTimeout();
 
 		///
 		std::string getXMLDeliveryString() const;

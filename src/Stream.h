@@ -160,9 +160,9 @@ class Stream :
 		/// probably occurred.
 		bool teardown(int clientID, bool gracefull);
 
-		/// Check if there are any stream clients with a time-out that should be
-		/// closed
-		void checkStreamClientsWithTimeout();
+		/// Check if there are any stream clients with a session time-out
+		/// that should be closed
+		void checkForSessionTimeout();
 
 		// =======================================================================
 		// -- Functions used for RTSP Server -------------------------------------

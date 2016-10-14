@@ -50,7 +50,7 @@ void RtspServer::threadEntry() {
 		// call poll with a timeout of 500 ms
 		poll(500);
 
-		_streamManager.checkStreamClientsWithTimeout();
+		_streamManager.checkForSessionTimeout();
 	}
 }
 
@@ -196,10 +196,10 @@ bool RtspServer::methodTeardown(Stream &stream, int clientID, std::string &htmlB
 		"Session: %s\r\n" \
 		"\r\n";
 
+	StringConverter::addFormattedString(htmlBody, RTSP_TEARDOWN_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str());
+
 	// after setting up reply, else sessionID is reset
 	stream.teardown(clientID, true);
-
-	StringConverter::addFormattedString(htmlBody, RTSP_TEARDOWN_OK, stream.getCSeq(clientID), stream.getSessionID(clientID).c_str());
 
 	return true;
 }

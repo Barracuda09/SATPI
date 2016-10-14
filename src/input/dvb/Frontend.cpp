@@ -954,12 +954,14 @@ namespace dvb {
 
 	void Frontend::processPID_L(const std::string &pids, bool add) {
 		std::string::size_type begin = 0;
-		if (pids == "all" ) {
-			// All pids requested then 'remove' all used PIDS
+		if (pids == "all" || pids == "none") {
+			// all/none pids requested then 'remove' all used PIDS
 			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
 				_frontendData.setPID(i, false);
 			}
-			_frontendData.setAllPID(add);
+			if (pids == "all") {
+				_frontendData.setAllPID(add);
+			}
 		} else {
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);

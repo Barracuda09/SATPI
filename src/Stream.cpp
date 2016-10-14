@@ -54,7 +54,7 @@ Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient d
 	_rtcpSignalUpdate(1) {
 	ASSERT(device);
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		_client[i].setClientID(i);
+		_client[i].setStreamIDandClientID(streamID, i);
 	}
 }
 
@@ -144,7 +144,7 @@ void Stream::fromXML(const std::string &xml) {
 
 		std::string element;
 		if (findXMLElement(xml, "enable.value", element)) {
-			_enabled = (element == "true") ? true : false;;
+			_enabled = (element == "true") ? true : false;
 		}
 		if (findXMLElement(xml, "rtcpSignalUpdate.value", element)) {
 			_rtcpSignalUpdate = atoi(element.c_str());
@@ -226,11 +226,11 @@ void Stream::setSocketClient(SocketClient &socketClient) {
 	_client[0].setSocketClient(socketClient);
 }
 
-void Stream::checkStreamClientsWithTimeout() {
+void Stream::checkForSessionTimeout() {
 	base::MutexLock lock(_mutex);
 
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		if (_client[i].checkWatchDogTimeout()) {
+		if (_client[i].sessionTimeout()) {
 			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
 			            _streamID, i, _client[i].getSessionID().c_str());
 			teardown(i, false);
@@ -298,7 +298,7 @@ bool Stream::update(int clientID, bool start) {
 void Stream::close(int clientID) {
 	base::MutexLock lock(_mutex);
 
-	if (_client[clientID].canClose()) {
+	if (_client[clientID].sessionCanClose()) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
 		            _streamID, clientID, _client[clientID].getSessionID().c_str());
 
@@ -352,22 +352,15 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 		_client[clientID].setCSeq(atoi(cseq.c_str()));
 	}
 
-	bool canClose = false;
+	bool sessionCanClose = false;
 	if (method != "SETUP") {
 		std::string sessionID;
 		const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
 		const bool teardown = (method == "TEARDOWN");
-		canClose = teardown || !foundSessionID;
+		sessionCanClose = teardown || !foundSessionID;
 	}
-	_client[clientID].setCanClose(canClose);
+	_client[clientID].setSessionCanClose(sessionCanClose);
 
-/*
-        // Close connection or keep-alive
-        std::string connState;
-        const bool foundConnection = StringConverter::getHeaderFieldParameter(msg, "Connection:", connState);
-        const bool connectionClose = foundConnection && (strncasecmp(connState.c_str(), "Close", 5) == 0);
-        _client[clientID].setCanClose(!connectionClose);
- */
 	_client[clientID].restartWatchDog();
 	return true;
 }

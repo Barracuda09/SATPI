@@ -44,7 +44,8 @@ class StreamClient {
 		// =======================================================================
 
 		///
-		void setClientID(int id) {
+		void setStreamIDandClientID(int streamID, int id) {
+			_streamID = streamID;
 			_clientID = id;
 		}
 
@@ -61,7 +62,7 @@ class StreamClient {
 		void restartWatchDog();
 
 		///
-		bool checkWatchDogTimeout() const;
+		bool sessionTimeout() const;
 
 		///
 		void setSocketClient(SocketClient &socket);
@@ -103,10 +104,10 @@ class StreamClient {
 		}
 
 		///
-		void setCanClose(bool close);
+		void setSessionCanClose(bool close);
 
 		///
-		bool canClose() const  {
+		bool sessionCanClose() const  {
 			base::MutexLock lock(_mutex);
 			return _canClose;
 		}
@@ -151,6 +152,7 @@ class StreamClient {
 		base::Mutex  _mutex;           ///
 		SocketClient *_httpc;          /// Client of this stream. Used for sending
 		                               /// reply to and checking connections
+		int          _streamID;        ///
 		int          _clientID;
 		std::string  _sessionID;       ///
 		std::time_t  _watchdog;        /// watchdog

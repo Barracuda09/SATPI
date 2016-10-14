@@ -32,6 +32,8 @@
 
 	StreamClient::StreamClient() :
 			_httpc(nullptr),
+			_streamID(-1),
+			_clientID(-1),
 			_sessionID("-1"),
 			_watchdog(0),
 			_sessionTimeout(60),
@@ -40,10 +42,10 @@
 
 	StreamClient::~StreamClient() {}
 
-	void StreamClient::setCanClose(bool close) {
+	void StreamClient::setSessionCanClose(bool close) {
 		base::MutexLock lock(_mutex);
 
-		SI_LOG_DEBUG("Connection can close: %d", close);
+		SI_LOG_DEBUG("Stream: %d, Session can close: %d", _streamID, close);
 		_canClose = close;
 	}
 
@@ -75,7 +77,7 @@
 		return _watchdog == 1;
 	}
 
-	bool StreamClient::checkWatchDogTimeout() const {
+	bool StreamClient::sessionTimeout() const {
 		base::MutexLock lock(_mutex);
 
 		return (((_httpc == nullptr) ? -1 : _httpc->getFD()) == -1) &&

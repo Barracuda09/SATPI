@@ -196,14 +196,14 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	return nullptr;
 }
 
-void StreamManager::checkStreamClientsWithTimeout() {
+void StreamManager::checkForSessionTimeout() {
 	base::MutexLock lock(_mutex);
 
 	assert(!_stream.empty());
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		SpStream stream = *it;
 		if (stream->streamInUse()) {
-			stream->checkStreamClientsWithTimeout();
+			stream->checkForSessionTimeout();
 		}
 	}
 }
