@@ -32,7 +32,7 @@ developing SatPI.<br>
 <br>
 Thank You.
 
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SaPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
 
 
 Contact
@@ -52,6 +52,7 @@ Tested Hardware
 ---------------
 - Raspberry Pi see: http://www.raspberrypi.org/
 - BeagleBone Black see: http://www.beagleboard.org/
+- Orange Pi One with armbian see: http://www.orangepi.org/
 - Sundtek DVB-C/T/T2 see: http://www.sundtek.com/
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
