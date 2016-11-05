@@ -25,12 +25,21 @@
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>
 
+#include <cstring>
+
 namespace input {
 namespace stream {
 
 	Streamer::Streamer(int streamID) :
 		_streamID(streamID),
-		_uri("None") {}
+		_uri("None"),
+		_multiAddr("None"),
+		_port(0),
+		_udp(false) {
+		_pfd[0].events  = 0;
+		_pfd[0].revents = 0;
+		_pfd[0].fd      = -1;
+	}
 
 	Streamer::~Streamer() {}
 
@@ -77,20 +86,82 @@ namespace stream {
 	}
 
 	bool Streamer::isDataAvailable() {
-		usleep(1000);
-		return true;
+		// call poll with a timeout of 500 ms
+		const int pollRet = poll(_pfd, 1, 500);
+		if (pollRet > 0) {
+			return _pfd[0].revents != 0;
+		}
+		return false;
 	}
 
-	bool Streamer::readFullTSPacket(mpegts::PacketBuffer &UNUSED(buffer)) {
+	bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+		if (_udpMultiListen.getFD() != -1) {
+			// Read from stream
 /*
-		if (_file.is_open()) {
-			auto size = buffer.getAmountOfBytesToWrite();
-			_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), size);
-			buffer.addAmountOfBytesWritten(size);
+			char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
+			const auto size = buffer.getAmountOfBytesToWrite();
+
+			struct sockaddr_in si_other;
+			socklen_t addrlen = sizeof(si_other);
+			const ssize_t readSize = ::recvfrom(_udpMultiListen.getFD(), ptr, size, MSG_DONTWAIT, (struct sockaddr *)&si_other, &addrlen);
+			if (readSize > 0) {
+				buffer.addAmountOfBytesWritten(readSize);
+			} else {
+				PERROR("_udpMultiListen");
+			}
+
+
 			return buffer.full();
-		}
 */
-		// Read from stream
+			static char buf[MTU_MAX_TS_PACKET_SIZE];
+			static size_t bufIndex = 0;
+
+			const size_t reqSize = MTU_MAX_TS_PACKET_SIZE - bufIndex;
+
+			// Read recv buffer
+			struct sockaddr_in si_other;
+			socklen_t addrlen = sizeof(si_other);
+			const ssize_t readSize = ::recvfrom(_udpMultiListen.getFD(), &buf[bufIndex], reqSize, MSG_DONTWAIT, (struct sockaddr *)&si_other, &addrlen);
+			bufIndex += readSize;
+
+			// Check are we in sync
+			if (bufIndex >= MTU_MAX_TS_PACKET_SIZE) {
+				for (size_t i = 0; i < bufIndex; ++i) {
+					if (i < bufIndex - (TS_PACKET_SIZE * 3) &&
+						buf[i + (TS_PACKET_SIZE * 0)] == 0x47 &&
+						buf[i + (TS_PACKET_SIZE * 1)] == 0x47 &&
+						buf[i + (TS_PACKET_SIZE * 2)] == 0x47) {
+
+						// copy ALL or what is left
+						const size_t sizeLeft = bufIndex - i;
+
+						char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
+						std::memcpy(ptr, &buf[i], sizeLeft);
+						buffer.addAmountOfBytesWritten(sizeLeft);
+
+						// is the buffer full
+						if (sizeLeft < MTU_MAX_TS_PACKET_SIZE) {
+							// How much do we need to fill buffer up again
+							const ssize_t sizeNeeded = MTU_MAX_TS_PACKET_SIZE - sizeLeft;
+
+							// Read the rest from recv buffer
+							const ssize_t readSize = ::recvfrom(_udpMultiListen.getFD(), &buf, sizeNeeded, MSG_DONTWAIT, (struct sockaddr *)&si_other, &addrlen);
+
+							// Copy rest to send buffer
+							if (readSize == sizeNeeded) {
+								char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
+								std::memcpy(ptr, &buf, sizeNeeded);
+								buffer.addAmountOfBytesWritten(sizeNeeded);
+								bufIndex = 0;
+							}
+						} else if (sizeLeft == MTU_MAX_TS_PACKET_SIZE) {
+							bufIndex = 0;
+						}
+						return buffer.full();
+					}
+				}
+			}
+		}
 		return false;
 	}
 
@@ -104,10 +175,43 @@ namespace stream {
 		return false;
 	}
 
+// Server side
+// vlc -vvv "D:\test.ts" :sout=#udp{dst=239.0.0.1:12345} :sout-all :sout-keep --loop
+
+// Client side
+// http://192.168.178.10:8875/?msys=streamer&uri=udp://239.0.0.1:12345
+
 	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
-		std::string uri;
-		if (StringConverter::getStringParameter(msg, method, "uri=", uri) == true) {
+		if (StringConverter::getStringParameter(msg, method, "uri=", _uri) == true) {
+
 			// Open stream
+			_udp = _uri.find("udp") != std::string::npos;
+			std::string::size_type begin = _uri.find("//");
+			if (begin != std::string::npos) {
+				std::string::size_type end = _uri.find_first_of(":", begin);
+				if (end != std::string::npos) {
+					begin += 2;
+					_multiAddr = _uri.substr(begin, end - begin);
+					begin = end + 1;
+					end = _uri.size();
+					_port = std::atoi(_uri.substr(begin, end - begin).c_str());
+
+					//  Open mutlicast stream
+					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr.c_str(), _port, "0.0.0.0")) {
+						SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID, _multiAddr.c_str(), _port, _udpMultiListen.getFD());
+						// set receive buffer to 8MB
+						const int bufferSize =  1024 * 1024 * 8;
+						_udpMultiListen.setNetworkReceiveBufferSize(bufferSize);
+
+						_pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+						_pfd[0].revents = 0;
+						_pfd[0].fd      = _udpMultiListen.getFD();
+
+					} else {
+						SI_LOG_ERROR("Stream: %d, Init UDP Multicast socket failed", _streamID);
+					}
+				}
+			}
 		}
 	}
 
@@ -117,15 +221,19 @@ namespace stream {
 
 	bool Streamer::teardown() {
 		// Close stream
+		_udpMultiListen.closeFD();
 		return true;
 	}
 
 	std::string Streamer::attributeDescribeString() const {
-		std::string desc("");
-		// ver=1.5;tuner=<feID>;file=<file>
-//		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
-//				_streamID + 1, _uri.c_str());
-
+		std::string desc;
+		if (_udpMultiListen.getFD() != -1) {
+			// ver=1.5;tuner=<feID>;uri=<uri>
+			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;uri=%s",
+					_streamID + 1, _uri.c_str());
+		} else {
+			desc = "";
+		}
 		return desc;
 	}
 

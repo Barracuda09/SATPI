@@ -137,11 +137,11 @@ class StreamClient {
 		/// Get the HTTP/RTSP port of the connected client
 		int getHttpSocketPort() const;
 
-		/// Get the HTTP/RTSP network buffer size for this Socket
-		int getHttpNetworkBufferSize() const;
+		/// Get the HTTP/RTSP network send buffer size for this Socket
+		int getHttpNetworkSendBufferSize() const;
 
-		/// Set the HTTP/RTSP network buffer size for this Socket
-		bool setHttpNetworkBufferSize(int size);
+		/// Set the HTTP/RTSP network send buffer size for this Socket
+		bool setHttpNetworkSendBufferSize(int size);
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

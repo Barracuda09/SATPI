@@ -85,7 +85,7 @@ namespace dvb {
 		_inversion = INVERSION_AUTO;
 
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			resetPid(i);
+			resetPidData(i);
 		}
 		resetPIDTableChanged();
 

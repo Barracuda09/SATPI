@@ -332,10 +332,13 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 			_streamingType = StreamingType::HTTP;
 		} else {
 			std::string transport;
-			StringConverter::getHeaderFieldParameter(msg, "Transport", transport);
+			StringConverter::getHeaderFieldParameter(msg, "Transport:", transport);
 			// First check 'RTP/AVP/TCP' then 'RTP/AVP'
 			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
 				_streamingType = StreamingType::RTP_TCP;
+				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
+				if (interleaved != -1) {
+				}
 			} else if (transport.find("RTP/AVP") != std::string::npos) {
 				_streamingType = StreamingType::RTSP;
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");

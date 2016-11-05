@@ -72,8 +72,8 @@ namespace dvb {
 			/// Reset/clear the 'Channel Data changed' flag
 			void resetFrontendDataChanged();
 
-			/// Reset the pid
-			void resetPid(int pid);
+			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
+			void resetPidData(int pid);
 
 			/// Reset 'PID has changed' flag
 			void resetPIDTableChanged();

@@ -26,10 +26,45 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cctype>
+#include <string>
+
 void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
 	std::string::size_type end = fullPath.find_last_of("/\\");
 	path = fullPath.substr(0, end).c_str();
 	file = fullPath.substr(end + 1).c_str();
+}
+
+std::string StringConverter::stringToUpper(const char *str) {
+	std::string result(str);
+	std::size_t i = 0;
+	while (*str) {
+		if (islower(*str)) {
+			result[i] = static_cast<char>(std::toupper(*str));
+		}
+		++str;
+		++i;
+	}
+	return result;
+}
+
+std::string StringConverter::stringToUpper(const std::string &str) {
+	return stringToUpper(str.c_str());
+}
+
+void StringConverter::trimWhitespace(const std::string &str, std::string &sub) {
+	sub = str;
+	if (str.size() > 0) {
+		// trim leading
+		while (sub.size() > 0 && std::isspace(sub[0])) {
+			sub.erase(0, 1);
+		}
+
+		// trim trailing
+		while (sub.size() > 1 && std::isspace(sub[sub.size() - 1])) {
+			sub.erase(sub.size() - 1, 1);
+		}
+	}
 }
 
 bool StringConverter::getline(const std::string &msg, std::string::size_type &begin, std::string &line, const char *line_delim) {
@@ -127,8 +162,9 @@ bool StringConverter::getMethod(const std::string &msg, std::string &method) {
 bool StringConverter::getContentFrom(const std::string &msg, std::string &content) {
 	bool ret = false;
 	std::string parameter;
-	const std::size_t contentLength = StringConverter::getHeaderFieldParameter(msg, "Content-Length", parameter) ?
+	const std::size_t contentLength = StringConverter::getHeaderFieldParameter(msg, "Content-Length:", parameter) ?
 	                                  atoi(parameter.c_str()) : 0;
+
 	if (contentLength > 0) {
 		const std::string::size_type headerSize = msg.find("\r\n\r\n", 0);
 		if (headerSize != std::string::npos) {
@@ -163,11 +199,11 @@ bool StringConverter::getHeaderFieldParameter(const std::string &msg, const std:
 		std::string::const_iterator it_h = header_field.begin();
 
 		// remove any leading whitespace
-		while (*it == ' ') ++it;
+		while (std::isspace(*it)) ++it;
 
 		// check if we find header_field
 		bool found = true;
-		while (*it != ':' && *it != ' ') {
+		while (it != line.end() && it_h != header_field.end()) {
 			if (toupper(*it) != toupper(*it_h)) {
 				found = false;
 				break;
@@ -176,38 +212,36 @@ bool StringConverter::getHeaderFieldParameter(const std::string &msg, const std:
 			++it_h;
 		}
 		if (found) {
-			std::string::size_type begin = line.find_first_of(":") + 1;
-			begin = line.find_first_not_of(" ", begin);
-			std::string::size_type end = line.size();
-			parameter = line.substr(begin, end - begin);
+			// copy parameter and trim whitespace
+			const std::string::size_type begin = it - line.begin();
+			const std::string::size_type end = line.size();
+			StringConverter::trimWhitespace(line.substr(begin, end - begin), parameter);
 			return true;
 		}
 	}
 	return false;
+
 }
 
 bool StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
                                          const std::string &parameter, std::string &value) {
-	const char delim[] = "/?; &\r\n=";
+	const char delim[] = "&?; \r\n";
 	std::string line;
-	if (getHeaderFieldParameter(msg, header_field, line)) {
-		std::string::size_type begin = line.find_first_of(delim, 0);
-		std::string::size_type end = begin;
-		while (begin != std::string::npos) {
-			end = line.find_first_of(delim, begin + 1);
-			if (end != std::string::npos) {
-				std::string token = line.substr(begin + 1, end - begin);
-				if (strncmp(token.c_str(), parameter.c_str(), parameter.size()) == 0) {
-					begin = end + 1;
-					end = line.find_first_of(delim, begin);
-					value = line.substr(begin, end - begin);
-					return true;
-				} else {
-					begin = line.find_first_of(delim, end);
-				}
-			} else {
-				break;
+	if (StringConverter::getHeaderFieldParameter(msg, header_field, line)) {
+		std::string::size_type begin = line.find(parameter);
+		if (begin != std::string::npos) {
+			begin += parameter.size();
+
+			// trim leading whitespace
+			while (std::isspace(line[begin])) ++begin;
+
+			std::string::size_type end = line.find_first_of(delim, begin);
+			if (end == std::string::npos) {
+				end = line.size();
 			}
+			// copy and trim whitespace
+			StringConverter::trimWhitespace(line.substr(begin, end - begin), value);
+			return true;
 		}
 	}
 	return false;

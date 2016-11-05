@@ -108,11 +108,11 @@ namespace file {
 				_filePath = file;
 				_file.open(_filePath, std::ifstream::binary | std::ifstream::in);
 				if (_file.is_open()) {
-					SI_LOG_INFO("TS Reader using path: %s", _filePath.c_str());
+					SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, _filePath.c_str());
 				} else {
-					SI_LOG_ERROR("TS Reader unable to open path: %s", _filePath.c_str());
+					SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, _filePath.c_str());
 				}
-			}		
+			}
 		}
 	}
 
@@ -122,6 +122,7 @@ namespace file {
 
 	bool TSReader::teardown() {
 		_file.close();
+		_filePath = "None";
 		return true;
 	}
 

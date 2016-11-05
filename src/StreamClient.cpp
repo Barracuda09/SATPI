@@ -117,12 +117,12 @@
 		return (_httpc == nullptr) ? 0 : _httpc->getSocketPort();
 	}
 
-	int StreamClient::getHttpNetworkBufferSize() const {
+	int StreamClient::getHttpNetworkSendBufferSize() const {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? 0 : _httpc->getNetworkBufferSize();
+		return (_httpc == nullptr) ? 0 : _httpc->getNetworkSendBufferSize();
 	}
 
-	bool StreamClient::setHttpNetworkBufferSize(int size) {
+	bool StreamClient::setHttpNetworkSendBufferSize(int size) {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? false : _httpc->setNetworkBufferSize(size);
+		return (_httpc == nullptr) ? false : _httpc->setNetworkSendBufferSize(size);
 	}

@@ -916,7 +916,7 @@ namespace dvb {
 			PERROR("DMX_STOP");
 		}
 		_frontendData.closeDMXFileDescriptor(pid);
-		_frontendData.resetPid(pid);
+		_frontendData.resetPidData(pid);
 	}
 
 	bool Frontend::updatePIDFilters() {

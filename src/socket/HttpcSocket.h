@@ -39,15 +39,15 @@ FW_DECL_NS0(SocketClient);
 			//  -- Constructors and destructor -----------------------------------
 			// ===================================================================
 			HttpcSocket();
-			
+
 			virtual ~HttpcSocket();
 
 			// ===================================================================
 			//  -- Other member functions ----------------------------------------
 			// ===================================================================
-			
+
 		protected:
-		
+
 			/// Receive an HTTP message from client
 			/// @param client
 			/// @param recv_flags

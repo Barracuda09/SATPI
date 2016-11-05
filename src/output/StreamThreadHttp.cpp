@@ -32,8 +32,7 @@ namespace output {
 		StreamInterface &stream,
 		decrypt::dvbapi::SpClient decrypt) :
 		StreamThreadBase("HTTP", stream, decrypt),
-		_clientID(0) {
-	}
+		_clientID(0) {}
 
 	StreamThreadHttp::~StreamThreadHttp() {
 		terminateThread();
@@ -44,8 +43,8 @@ namespace output {
 		StreamClient &client = _stream.getStreamClient(_clientID);
 
 		// Get default buffer size and set it x times as big
-		const int bufferSize = client.getHttpNetworkBufferSize() * 20;
-		client.setHttpNetworkBufferSize(bufferSize);
+		const int bufferSize = client.getHttpNetworkSendBufferSize() * 20;
+		client.setHttpNetworkSendBufferSize(bufferSize);
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 
 //		client.setSocketTimeoutInSec(2);

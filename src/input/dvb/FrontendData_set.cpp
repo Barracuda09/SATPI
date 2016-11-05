@@ -32,9 +32,9 @@ namespace dvb {
 		_pidTable.addPIDData(pid, cc);
 	}
 
-	void FrontendData::resetPid(int pid) {
+	void FrontendData::resetPidData(int pid) {
 		base::MutexLock lock(_mutex);
-		_pidTable.resetPid(pid);
+		_pidTable.resetPidData(pid);
 	}
 
 	void FrontendData::setDMXFileDescriptor(int pid, int fd) {

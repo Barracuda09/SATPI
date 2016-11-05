@@ -103,11 +103,14 @@ FW_DECL_NS0(SocketClient);
 			/// Set the Receive and Send timeout in Sec for this socket
 			void setSocketTimeoutInSec(unsigned int timeout);
 
-			/// Get the network buffer size for this Socket
-			int getNetworkBufferSize() const;
+			/// Get the network send buffer size for this Socket
+			int getNetworkSendBufferSize() const;
 
-			/// Set the network buffer size for this Socket
-			bool setNetworkBufferSize(int size);
+			/// Set the network send buffer size for this Socket
+			bool setNetworkSendBufferSize(int size);
+
+			/// Set the network receive buffer size for this Socket
+			bool setNetworkReceiveBufferSize(int size);
 
 			// ===================================================================
 			//  -- Data members --------------------------------------------------

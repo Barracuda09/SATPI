@@ -29,14 +29,14 @@ namespace dvb {
 	PidTable::PidTable() {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
 			_data[i].fd_dmx = -1;
-			resetPid(i);
+			resetPidData(i);
 		}
 		_changed = false;
 	}
 
 	PidTable::~PidTable() {}
 
-	void PidTable::resetPid(int pid) {
+	void PidTable::resetPidData(int pid) {
 		_data[pid].used     = false;
 		_data[pid].cc       = 0x80;
 		_data[pid].cc_error = 0;

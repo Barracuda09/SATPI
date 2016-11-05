@@ -42,6 +42,15 @@ class StringConverter  {
 		static void addFormattedString(std::string &str, const char *fmt, ...);
 
 		///
+		static void trimWhitespace(const std::string &str, std::string &sub);
+
+		///
+		static std::string stringToUpper(const char *str);
+
+		///
+		static std::string stringToUpper(const std::string &str);
+
+		///
 		static std::string getFormattedString(const char *fmt, ...);
 
 		///

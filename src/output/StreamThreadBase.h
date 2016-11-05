@@ -25,8 +25,9 @@
 #include <mpegts/PacketBuffer.h>
 
 #include <atomic>
+#include <chrono>
 
-#define MAX_BUF 150
+#define MAX_BUF 250
 
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
@@ -106,6 +107,9 @@ namespace output {
 			size_t _writeIndex;
 			size_t _readIndex;
 			decrypt::dvbapi::SpClient _decrypt;
+			unsigned long _sendInterval;
+			std::chrono::steady_clock::time_point _t1;
+			std::chrono::steady_clock::time_point _t2;
 
 	};
 

@@ -23,6 +23,8 @@
 #include <FwDecl.h>
 #include <base/Mutex.h>
 #include <input/Device.h>
+#include <socket/SocketClient.h>
+#include <socket/UdpSocket.h>
 
 #include <vector>
 #include <string>
@@ -36,9 +38,12 @@ FW_DECL_VECTOR_NS0(Stream);
 namespace input {
 namespace stream {
 
-	/// The class @c Streamer is for reading from an TS stream as input device
+	/// The class @c Streamer is for reading from an TS stream as input device.
+	/// Stream can be an Multicast UDP e.g.
+	/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://239.1.2.3:12345
 	class Streamer :
-		public input::Device {
+		public input::Device,
+		public UdpSocket {
 		public:
 
 			// =======================================================================
@@ -113,6 +118,11 @@ namespace stream {
 			base::Mutex _mutex;
 			int _streamID;
 			std::string _uri;
+			struct pollfd _pfd[1];
+			SocketClient _udpMultiListen;
+			std::string _multiAddr;
+			int _port;
+			bool _udp;
 	};
 
 } // namespace stream

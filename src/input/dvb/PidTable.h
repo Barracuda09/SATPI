@@ -47,8 +47,8 @@ namespace dvb {
 
 		public:
 
-			/// Reset the pid
-			void resetPid(int pid);
+			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
+			void resetPidData(int pid);
 
 			/// Reset that PID has changed
 			void resetPIDTableChanged();

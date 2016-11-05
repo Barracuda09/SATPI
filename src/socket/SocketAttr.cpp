@@ -196,7 +196,7 @@
 		}
 	}
 
-	int SocketAttr::getNetworkBufferSize() const {
+	int SocketAttr::getNetworkSendBufferSize() const {
 		int bufferSize;
 		socklen_t optlen = sizeof(bufferSize);
 		if (::getsockopt(_fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {
@@ -206,9 +206,17 @@
 		return bufferSize / 2;
 	}
 
-	bool SocketAttr::setNetworkBufferSize(int size) {
+	bool SocketAttr::setNetworkSendBufferSize(int size) {
 		if (::setsockopt(_fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1) {
 			PERROR("setsockopt: SO_SNDBUF");
+			return false;
+		}
+		return true;
+	}
+
+	bool SocketAttr::setNetworkReceiveBufferSize(int size) {
+		if (::setsockopt(_fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1) {
+			PERROR("setsockopt: SO_RCVBUF");
 			return false;
 		}
 		return true;

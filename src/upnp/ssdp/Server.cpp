@@ -64,8 +64,8 @@ void Server::threadEntry() {
 	StringConverter::addFormattedString(location, "http://%s:%d/%s", _interface.getIPAddress().c_str(),
 		_properties.getHttpPort(), xmlDeviceDescriptionFile.c_str());
 
-	init_udp_socket(_udpMultiSend, SSDP_PORT, "239.255.255.250");
-	init_mutlicast_udp_socket(_udpMultiListen, "239.255.255.250", SSDP_PORT, _interface.getIPAddress().c_str());
+	initUDPSocket(_udpMultiSend, SSDP_PORT, "239.255.255.250");
+	initMutlicastUDPSocket(_udpMultiListen, "239.255.255.250", SSDP_PORT, _interface.getIPAddress().c_str());
 
 	std::time_t repeat_time = 0;
 	struct pollfd pfd[1];
@@ -90,14 +90,14 @@ void Server::threadEntry() {
 					// @TODO we should probably listen to only one message
 					// check do we hear our echo, same UUID
 					std::string usn("None");
-					StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "USN", usn);
+					StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "USN:", usn);
 					if (!(usn.size() > 5 && usn.compare(5, _properties.getUUID().size(), _properties.getUUID()) == 0)) {
 						// get method from message
 						std::string method;
 						if (StringConverter::getMethod(_udpMultiListen.getMessage(), method)) {
 							if (method.compare("NOTIFY") == 0) {
 								std::string param;
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM", param) &&
+								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param) &&
 								    usn.find("SatIPServer:1") != std::string::npos) {
 									// get device id of other
 									const unsigned int otherDeviceID = atoi(param.c_str());
@@ -106,7 +106,7 @@ void Server::threadEntry() {
 									if (_properties.getDeviceID() == otherDeviceID) {
 										SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d defending", ip_addr, otherDeviceID);
 										SocketClient udpSend;
-										init_udp_socket(udpSend, SSDP_PORT, ip_addr);
+										initUDPSocket(udpSend, SSDP_PORT, ip_addr);
 										char msg[1024];
 										// send message back
 										const char *UPNP_M_SEARCH =
@@ -141,7 +141,7 @@ void Server::threadEntry() {
 								        "CONFIGID.UPNP.ORG: 0\r\n" \
 								        "DEVICEID.SES.COM: %d\r\n" \
 								        "\r\n";
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM", param)) {
+								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
 									// someone contacted us, so this should mean we have the same DEVICEID
 									SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, _properties.getDeviceID());
 
@@ -165,7 +165,7 @@ void Server::threadEntry() {
 									repeat_time =  std::time(nullptr) + 5;
 								}
 								std::string st_param;
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST", st_param)) {
+								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", st_param)) {
 									if (st_param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
 										// client is sending a discover
 										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr);

@@ -51,8 +51,8 @@ namespace output {
 		}
 
 		// Get default buffer size and set it x times as big
-		const int bufferSize = rtp.getNetworkBufferSize() * 20;
-		rtp.setNetworkBufferSize(bufferSize);
+		const int bufferSize = rtp.getNetworkSendBufferSize() * 20;
+		rtp.setNetworkSendBufferSize(bufferSize);
 		SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
 
 		// RTCP

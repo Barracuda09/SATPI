@@ -19,6 +19,7 @@
  */
 #include <output/StreamThreadBase.h>
 
+#include <base/TimeCounter.h>
 #include <StreamInterface.h>
 #include <StreamClient.h>
 #include <StringConverter.h>
@@ -37,7 +38,8 @@ namespace output {
 		_stream(stream),
 		_protocol(protocol),
 		_state(State::Paused),
-		_decrypt(decrypt) {
+		_decrypt(decrypt),
+		_sendInterval(100) {
 		// Initialize all TS packets
 		uint32_t ssrc = _stream.getSSRC();
 		long timestamp = _stream.getTimestamp();
@@ -73,6 +75,9 @@ namespace output {
 		}
 		// Set priority above normal for this Thread
 		setPriority(Priority::AboveNormal);
+
+		// set begin timestamp
+		_t1 = std::chrono::steady_clock::now();
 
 		// Set affinity with CPU
 //		setAffinity(3);
@@ -149,21 +154,26 @@ namespace output {
 
 				// reset next
 				_tsBuffer[_writeIndex].reset();
-
-				// should we send some packets
-				while (_tsBuffer[_readIndex].isReadyToSend()) {
-					writeDataToOutputDevice(_tsBuffer[_readIndex], client);
-
-					// inc read index
-					++_readIndex;
-					_readIndex %= MAX_BUF;
-
-					// should we stop searching
-					if (_readIndex == _writeIndex) {
-						break;
-					}
-				}
 			}
+		}
+
+		// calculate interval
+		_t2 = std::chrono::steady_clock::now();
+		const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
+
+		if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
+			//
+			_t1 = _t2;
+
+			if (!_tsBuffer[_readIndex].isSynced()) {
+				SI_LOG_INFO("Stream: %d, PacketBuffer not in sync", _stream.getStreamID());
+			}
+
+			writeDataToOutputDevice(_tsBuffer[_readIndex], client);
+
+			// inc read index
+			++_readIndex;
+			_readIndex %= MAX_BUF;
 		}
 	}
 

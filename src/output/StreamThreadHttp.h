@@ -68,7 +68,6 @@ namespace output {
 		private:
 
 			int _clientID;
-
 	};
 
 } // namespace output

@@ -56,7 +56,7 @@ namespace output {
 		protected:
 
 			virtual void threadEntry() override;
-			
+
 			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
 				StreamClient &client) override;
 
@@ -71,7 +71,6 @@ namespace output {
 			int _clientID;
 			uint16_t _cseq;     /// RTP sequence number
 			RtcpThread _rtcp;   ///
-
 	};
 
 } // namespace output

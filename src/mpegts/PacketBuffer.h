@@ -57,6 +57,13 @@ class PacketBuffer {
 			_writeIndex = RTP_HEADER_LEN;
 		}
 
+		/// Check if these packets are in sync
+		bool isSynced() const {
+			return _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 0)] == 0x47 &&
+			       _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 1)] == 0x47 &&
+			       _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 2)] == 0x47;
+		}
+
 		/// This function will return the number of TS Packets that are
 		/// in this TS Packet
 		std::size_t getNumberOfTSPackets() const {

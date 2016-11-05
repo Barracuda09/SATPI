@@ -49,14 +49,14 @@ class UdpSocket :
 		/// @param server
 		/// @param port
 		/// @param s_addr
-		bool init_udp_socket(SocketClient &server, int port, const char *ip_addr);
+		bool initUDPSocket(SocketClient &server, int port, const char *ip_addr);
 
 		/// Initialize an Multicast UDP socket
 		/// @param server
 		/// @param multicastIPAddr
 		/// @param port
 		/// @param interfaceIPaddr
-		bool init_mutlicast_udp_socket(
+		bool initMutlicastUDPSocket(
 			SocketClient &server,
 			const char *multicastIPAddr,
 			int port,

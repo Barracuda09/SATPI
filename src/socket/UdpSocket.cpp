@@ -34,7 +34,7 @@ UdpSocket::UdpSocket() {}
 
 UdpSocket::~UdpSocket() {}
 
-bool UdpSocket::init_udp_socket(SocketClient &server, int port, const char *ip_addr) {
+bool UdpSocket::initUDPSocket(SocketClient &server, int port, const char *ip_addr) {
 	// fill in the socket structure with host information
 	server.setupSocketStructure(port, ip_addr);
 
@@ -45,7 +45,7 @@ bool UdpSocket::init_udp_socket(SocketClient &server, int port, const char *ip_a
 	return true;
 }
 
-bool UdpSocket::init_mutlicast_udp_socket(SocketClient &server,
+bool UdpSocket::initMutlicastUDPSocket(SocketClient &server,
 		const char *multicastIPAddr,
 		int port,
 		const char *interfaceIPaddr) {
