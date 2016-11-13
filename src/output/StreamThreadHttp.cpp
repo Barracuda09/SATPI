@@ -79,7 +79,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
+	bool StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
 		unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 		const unsigned int size = buffer.getBufferSize();
@@ -101,6 +101,7 @@ namespace output {
 				client.selfDestruct();
 			}
 		}
+		return true;
 	}
 
 } // namespace output

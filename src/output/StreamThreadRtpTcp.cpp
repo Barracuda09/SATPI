@@ -82,7 +82,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
+	bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
 		unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 
 		// update sequence number
@@ -124,6 +124,7 @@ namespace output {
 				client.selfDestruct();
 			}
 		}
+		return true;
 	}
 
 } // namespace output

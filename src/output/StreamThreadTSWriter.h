@@ -55,7 +55,7 @@ namespace output {
 
 			virtual void threadEntry() override;
 
-			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
+			virtual bool writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
 				StreamClient &client) override;
 
 			virtual int getStreamSocketPort(int clientID) const override;

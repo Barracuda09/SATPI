@@ -194,7 +194,7 @@ namespace stream {
 					_multiAddr = _uri.substr(begin, end - begin);
 					begin = end + 1;
 					end = _uri.size();
-					_port = std::atoi(_uri.substr(begin, end - begin).c_str());
+					_port = std::stoi(_uri.substr(begin, end - begin));
 
 					//  Open mutlicast stream
 					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr.c_str(), _port, "0.0.0.0")) {

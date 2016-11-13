@@ -141,7 +141,12 @@ namespace output {
 
 		input::SpDevice inputDevice = _stream.getInputDevice();
 
-		if (inputDevice->isDataAvailable()) {
+		size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
+		if (availableSize > MAX_BUF) {
+			availableSize %= MAX_BUF;
+		}
+//		SI_LOG_DEBUG("Stream: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getStreamID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+		if (inputDevice->isDataAvailable() && availableSize > 1) {
 			if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
 				if (_decrypt != nullptr) {
@@ -160,20 +165,19 @@ namespace output {
 		// calculate interval
 		_t2 = std::chrono::steady_clock::now();
 		const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
-
 		if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
 			//
 			_t1 = _t2;
 
 			if (!_tsBuffer[_readIndex].isSynced()) {
-				SI_LOG_INFO("Stream: %d, PacketBuffer not in sync", _stream.getStreamID());
+				SI_LOG_ERROR("Stream: %d, PacketBuffer not in sync!", _stream.getStreamID());
 			}
 
-			writeDataToOutputDevice(_tsBuffer[_readIndex], client);
-
-			// inc read index
-			++_readIndex;
-			_readIndex %= MAX_BUF;
+			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
+				// inc read index only when send is successful
+				++_readIndex;
+				_readIndex %= MAX_BUF;
+			}
 		}
 	}
 

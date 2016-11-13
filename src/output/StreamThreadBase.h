@@ -27,7 +27,7 @@
 #include <atomic>
 #include <chrono>
 
-#define MAX_BUF 250
+#define MAX_BUF 100
 
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
@@ -79,7 +79,7 @@ namespace output {
 			virtual void readDataFromInputDevice(StreamClient &client);
 
 			/// send the TS packets to an output device
-			virtual void writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
+			virtual bool writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
 				StreamClient &client) = 0;
 
 			///

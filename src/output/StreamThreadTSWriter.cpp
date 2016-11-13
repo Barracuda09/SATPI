@@ -66,7 +66,7 @@ namespace output {
 		}
 	}
 
-	void StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
+	bool StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
 		const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
 		const unsigned int size = buffer.getBufferSize();
@@ -80,6 +80,7 @@ namespace output {
 		if (_file.is_open()) {
 			_file.write(reinterpret_cast<const char *>(tsBuffer), size);
 		}
+		return true;
 	}
 
 } // namespace output

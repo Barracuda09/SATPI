@@ -6,13 +6,13 @@
 CXX = $(CXXPREFIX)g++$(CXXSUFFIX)
 
 # Includes needed for proper compilation
-INCLUDES =
+INCLUDES +=
 
 # Libraries needed for linking
-LDFLAGS = -pthread -lrt
+LDFLAGS += -pthread -lrt
 
 # Set Compiler Flags
-CFLAGS = -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq ($(BUILD),debug)

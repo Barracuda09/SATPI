@@ -24,9 +24,11 @@
 #include <StringConverter.h>
 #include <input/dvb/FrontendData.h>
 
-#include <cmath>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+
+#include <cmath>
+#include <string>
 
 namespace input {
 namespace dvb {

@@ -23,10 +23,12 @@
 #include <FwDecl.h>
 #include <base/Mutex.h>
 #include <input/Device.h>
+#include <mpegts/TableData.h>
 
 #include <vector>
 #include <string>
 #include <fstream>
+#include <chrono>
 
 FW_DECL_NS1(input, DeviceData);
 
@@ -118,6 +120,15 @@ namespace file {
 			int _streamID;
 			std::ifstream _file;
 			std::string _filePath;
+
+			mpegts::TableData _pmt;
+			mpegts::TableData _pat;
+			bool _pmtPIDS[8193];
+			int _pcrPID;
+			uint64_t _pcrPrev;
+			int64_t _pcrDelta;
+			std::chrono::steady_clock::time_point _t1;
+			std::chrono::steady_clock::time_point _t2;
 	};
 
 } // namespace file

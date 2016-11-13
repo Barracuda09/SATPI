@@ -26,6 +26,12 @@ namespace mpegts {
 
 	class TableData {
 		public:
+			#define CRC(data, sectionLength) \
+				(data[sectionLength - 4 + 8] << 24) |     \
+				(data[sectionLength - 4 + 8 + 1] << 16) | \
+				(data[sectionLength - 4 + 8 + 2] <<  8) | \
+				 data[sectionLength - 4 + 8 + 3]
+
 			#define PAT_TABLE_ID           0x00
 			#define CAT_TABLE_ID           0x01
 			#define PMT_TABLE_ID           0x02
@@ -45,6 +51,14 @@ namespace mpegts {
 			TableData();
 
 			virtual ~TableData();
+
+			// ================================================================
+			//  -- Static member functions ------------------------------------
+			// ================================================================
+
+		public:
+
+			static uint32_t calculateCRC32(const unsigned char *data, int len);
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------

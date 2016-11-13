@@ -20,6 +20,8 @@
 #ifndef INTERFACEATTR_H_INCLUDE
 #define INTERFACEATTR_H_INCLUDE INTERFACEATTR_H_INCLUDE
 
+#include <stdio.h>
+
 #include <string>
 
 	/// Socket attributes
