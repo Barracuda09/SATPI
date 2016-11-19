@@ -163,13 +163,14 @@ input::dvb::SpFrontendDecryptInterface Stream::getFrontendDecryptInterface() {
 #endif
 
 bool Stream::findClientIDFor(SocketClient &socketClient,
-                             bool newSession,
-                             std::string sessionID,
+                             const bool newSession,
+                             const std::string sessionID,
                              const std::string &method,
                              int &clientID) {
 	base::MutexLock lock(_mutex);
 
-	const input::InputSystem msys = StringConverter::getMSYSParameter(socketClient.getMessage(), method);
+	const std::string &message = socketClient.getMessage();
+	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
 
 	// Check if the input device is set, else this stream is not usable
 	if (!_device) {
@@ -186,9 +187,14 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			SI_LOG_INFO("Stream: %d, New session but this stream is in use, skipping...", _streamID);
 			return false;
 		} else if (!_device->capableOf(msys)) {
-			SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
-						_streamID, StringConverter::delsys_to_string(msys));
-			return false;
+			if (_device->capableToTranslate(message, method)) {
+				SI_LOG_INFO("Stream: %d, Capable of translating msys=%s",
+							_streamID, StringConverter::delsys_to_string(msys));
+			} else {
+				SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
+							_streamID, StringConverter::delsys_to_string(msys));
+				return false;
+			}
 		}
 	}
 

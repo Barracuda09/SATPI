@@ -63,6 +63,7 @@ bool UdpSocket::initMutlicastUDPSocket(SocketClient &server,
 		return false;
 	}
 
+	// request that the kernel joins a multicast group
 	struct ip_mreq mreq;
 	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr);
 	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr);

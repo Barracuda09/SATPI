@@ -40,7 +40,7 @@ namespace stream {
 
 	/// The class @c Streamer is for reading from an TS stream as input device.
 	/// Stream can be an Multicast UDP e.g.
-	/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://239.1.2.3:12345
+	/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://224.0.1.3:1234
 	class Streamer :
 		public input::Device,
 		public UdpSocket {
@@ -91,6 +91,8 @@ namespace stream {
 			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
 
 			virtual bool capableOf(input::InputSystem msys) const override;
+
+			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const override;
 
 			virtual void monitorSignal(bool showStatus) override;
 

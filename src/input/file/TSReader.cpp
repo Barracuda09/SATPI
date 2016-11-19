@@ -100,6 +100,8 @@ namespace file {
 			const auto size = buffer.getAmountOfBytesToWrite();
 			_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), size);
 			buffer.addAmountOfBytesWritten(size);
+			buffer.trySyncing();
+
 ///////////////////////////////////////////////////////////////////////////////
 // @todo Should be shared with decrypt/dvbapi/Client.cpp
 			if (buffer.full()) {
@@ -222,6 +224,11 @@ namespace file {
 
 	bool TSReader::capableOf(const input::InputSystem system) const {
 		return system == input::InputSystem::FILE;
+	}
+
+	bool TSReader::capableToTranslate(const std::string &UNUSED(msg),
+			const std::string &UNUSED(method)) const {
+		return false;
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {}

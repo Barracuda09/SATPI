@@ -64,6 +64,9 @@ class PacketBuffer {
 			       _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 2)] == 0x47;
 		}
 
+		/// try to sync this buffer
+		bool trySyncing();
+
 		/// This function will return the number of TS Packets that are
 		/// in this TS Packet
 		std::size_t getNumberOfTSPackets() const {

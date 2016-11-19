@@ -255,7 +255,7 @@ namespace dvb {
 		return false;
 	}
 
-	bool Frontend::capableOf(input::InputSystem system) const {
+	bool Frontend::capableOf(const input::InputSystem system) const {
 		for (input::dvb::delivery::SystemVector::const_iterator it = _deliverySystem.begin();
 		     it != _deliverySystem.end();
 		     ++it) {
@@ -266,7 +266,12 @@ namespace dvb {
 		return false;
 	}
 
-	void Frontend::monitorSignal(bool showStatus) {
+	bool Frontend::capableToTranslate(const std::string &UNUSED(msg),
+			const std::string &UNUSED(method)) const {
+		return false;
+	}
+
+	void Frontend::monitorSignal(const bool showStatus) {
 		base::MutexLock lock(_mutex);
 		// first read status
 		if (ioctl(_fd_fe, FE_READ_STATUS, &_status) == 0) {
@@ -302,24 +307,22 @@ namespace dvb {
 	}
 
 	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
-		double doubleVal = 0.0;
-		int intVal = 0;
 		std::string strVal;
-
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
 		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
-		doubleVal = StringConverter::getDoubleParameter(msg, method, "freq=");
-		if (doubleVal != -1) {
+		const double oldFreq = _frontendData.getFrequency() / 1000.0;
+		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		if (freq != -1 && freq != oldFreq) {
 			// new frequency so initialize FrontendData and 'remove' all used PIDS
 			_frontendData.initialize();
-			_frontendData.setFrequency(doubleVal * 1000.0);
+			_frontendData.setFrequency(freq * 1000.0);
 			SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
 		}
 		// !!!!
-		intVal = StringConverter::getIntParameter(msg, method, "sr=");
-		if (intVal != -1) {
-			_frontendData.setSymbolRate(intVal * 1000);
+		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
+		if (sr != -1) {
+			_frontendData.setSymbolRate(sr * 1000);
 		}
 		const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
 		if (msys != input::InputSystem::UNDEFINED) {
@@ -332,9 +335,9 @@ namespace dvb {
 				_frontendData.setPolarization(POL_V);
 			}
 		}
-		intVal = StringConverter::getIntParameter(msg, method, "src=");
-		if (intVal != -1) {
-			_frontendData.setDiSEqcSource(intVal);
+		const int src = StringConverter::getIntParameter(msg, method, "src=");
+		if (src != -1) {
+			_frontendData.setDiSEqcSource(src);
 		}
 		if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
 			// "on", "off"[, "auto"]
@@ -424,13 +427,13 @@ namespace dvb {
 				break;
 			}
 		}
-		intVal = StringConverter::getIntParameter(msg, method, "specinv=");
-		if (intVal != -1) {
-			_frontendData.setSpectralInversion(intVal);
+		const int specinv = StringConverter::getIntParameter(msg, method, "specinv=");
+		if (specinv != -1) {
+			_frontendData.setSpectralInversion(specinv);
 		}
-		doubleVal = StringConverter::getDoubleParameter(msg, method, "bw=");
-		if (doubleVal != -1) {
-			_frontendData.setBandwidthHz(doubleVal * 1000000.0);
+		const double bw = StringConverter::getDoubleParameter(msg, method, "bw=");
+		if (bw != -1) {
+			_frontendData.setBandwidthHz(bw * 1000000.0);
 		}
 		if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
 			// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
@@ -471,17 +474,17 @@ namespace dvb {
 				_frontendData.setGuardInverval(GUARD_INTERVAL_AUTO);
 			}
 		}
-		intVal = StringConverter::getIntParameter(msg, method, "plp=");
-		if (intVal != -1) {
-			_frontendData.setUniqueIDPlp(intVal);
+		const int plp = StringConverter::getIntParameter(msg, method, "plp=");
+		if (plp != -1) {
+			_frontendData.setUniqueIDPlp(plp);
 		}
-		intVal = StringConverter::getIntParameter(msg, method, "t2id=");
-		if (intVal != -1) {
-			_frontendData.setUniqueIDT2(intVal);
+		const int t2id = StringConverter::getIntParameter(msg, method, "t2id=");
+		if (t2id != -1) {
+			_frontendData.setUniqueIDT2(t2id);
 		}
-		intVal = StringConverter::getIntParameter(msg, method, "sm=");
-		if (intVal != -1) {
-			_frontendData.setSISOMISO(intVal);
+		const int sm = StringConverter::getIntParameter(msg, method, "sm=");
+		if (sm != -1) {
+			_frontendData.setSISOMISO(sm);
 		}
 		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
 			StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {

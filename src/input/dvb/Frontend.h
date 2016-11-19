@@ -172,6 +172,8 @@ namespace dvb {
 
 			virtual bool capableOf(InputSystem system) const override;
 
+			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const override;
+
 			virtual void monitorSignal(bool showStatus) override;
 
 			virtual bool hasDeviceDataChanged() const override;

@@ -21,6 +21,8 @@
 
 #include <assert.h>
 
+#include <cstring>
+
 namespace mpegts {
 
 static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
@@ -48,6 +50,28 @@ void PacketBuffer::initialize(uint32_t ssrc, long timestamp) {
 	_buffer[11] = (ssrc >>  0) & 0xff;          // synchronization source
 
 	_initialized = true;
+}
+
+bool PacketBuffer::trySyncing() {
+	if (!isSynced()) {
+		for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
+			const unsigned char *cData = _buffer + i;
+			if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
+			    cData[TS_PACKET_SIZE * 1] == 0x47 &&
+			    cData[TS_PACKET_SIZE * 2] == 0x47) {
+				// found sync, now move it to begin of buffer
+				const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
+				_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
+				std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
+				return true;
+			}
+		}
+		// did not find a sync, so flush buffer
+		reset();
+		return false;
+	} else {
+		return true;
+	}
 }
 
 } // namespace mpegts

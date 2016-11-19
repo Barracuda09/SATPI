@@ -34,6 +34,9 @@ Thank You.
 
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
 
+Sponsors
+--------
+- <a href="http://www.apfutura.net/en">APfutura</a>
 
 Contact
 -------
@@ -50,14 +53,13 @@ Tested Programs
 
 Tested Hardware
 ---------------
-- Raspberry Pi see: http://www.raspberrypi.org/
-- BeagleBone Black see: http://www.beagleboard.org/
-- Orange Pi One with armbian see: http://www.orangepi.org/
-- Sundtek DVB-C/T/T2 see: http://www.sundtek.com/
+- <a href="http://www.raspberrypi.org">Raspberry Pi</a>
+- <a href="http://www.beagleboard.org">BeagleBone Black</a>
+- <a href="http://www.orangepi.org">Orange Pi One with armbian</a>
+- <a href="http://www.sundtek.co">Sundtek DVB-C/T/T2</a>
+- <a href="http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf">Schwaiger DSR41IP</a> (Thanks to Axel Hartmann for kindly suppling this to me)
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
-- Schwaiger DSR41IP (Thanks to Axel Hartmann for kindly suppling this to me)
-  see: http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf
 
 Build
 -----
@@ -65,8 +67,7 @@ Build Status: <a href="https://travis-ci.org/Barracuda09/SATPI"><img src="https:
 
 Coverity Scan Build Status <a href="https://scan.coverity.com/projects/4842">
   <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/4842/badge.svg"/>
-</a>
+       src="https://scan.coverity.com/projects/4842/badge.svg"/></a>
 
 To build SatPI just run these commands:
 

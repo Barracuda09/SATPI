@@ -73,6 +73,12 @@ namespace input {
 			/// @param system
 			virtual bool capableOf(input::InputSystem system) const = 0;
 
+			/// Check if this device can translate the reguest according to an M3U file
+			/// This function should be called after function @c capableOf
+			/// @param msg
+			/// @param method
+			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const = 0;
+
 			/// Monitor signal of this device
 			virtual void monitorSignal(bool showStatus) = 0;
 
@@ -80,8 +86,10 @@ namespace input {
 			virtual bool hasDeviceDataChanged() const = 0;
 
 			/// Parse the input/request string from client.
-			/// For example:
-			/// rtp://ip.of.your.box/?fe=3&freq=170&sr=6900&msys=dvbc&mtype=256qam&fec=35&addpids=0,1,16,17
+			///   For example:
+			///   rtsp://ip.of.your.box/?fe=3&freq=170&sr=6900&msys=dvbc&mtype=256qam&fec=35&addpids=0,1,16,17
+			/// @param msg
+			/// @param method
 			virtual void parseStreamString(const std::string &msg, const std::string &method) = 0;
 
 			/// Update the Channel and PID. Will close DVR and reopen it if channel did change
