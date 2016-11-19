@@ -65,11 +65,6 @@ bool RtcpThread::startStreaming() {
 			SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
 		}
 
-		// connect the UDP socket, so we can use writev(..)
-		if (!rtcp.connectTo()) {
-			SI_LOG_ERROR("Stream: %d, RTCP connect failed", _stream.getStreamID());
-		}
-
 		if (!startThread()) {
 			SI_LOG_ERROR("Stream: %d, Start RTCP/UDP stream to %s:%d ERROR", _stream.getStreamID(),
 						 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
@@ -281,17 +276,16 @@ void RtcpThread::threadEntry() {
 						client.getIPAddress().c_str());
 				}
 			} else {
-				iovec iov[3];
-				iov[0].iov_base = sr;
-				iov[0].iov_len = srlen;
-				iov[1].iov_base = sdes;
-				iov[1].iov_len = sdeslen;
-				iov[2].iov_base = app;
-				iov[2].iov_len = applen;
+				const std::size_t len = srlen + sdeslen + applen;
+				uint8_t data[len];
+
+				memcpy(data, sr, srlen);
+				memcpy(data + srlen, sdes, sdeslen);
+				memcpy(data + srlen + sdeslen, app, applen);
 
 				// send the RTCP/UDP packet
 				SocketAttr &rtcp = client.getRtcpSocketAttr();
-				if (!rtcp.writeData(iov, 3)) {
+				if (!rtcp.sendDataTo(data, len, 0)) {
 					SI_LOG_ERROR("Stream: %d, Error sending RTCP/UDP data to %s:%d", _stream.getStreamID(),
 								 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
 				}

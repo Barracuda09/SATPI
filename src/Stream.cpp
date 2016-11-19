@@ -342,19 +342,31 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 			// First check 'RTP/AVP/TCP' then 'RTP/AVP'
 			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
 				_streamingType = StreamingType::RTP_TCP;
-				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
-				if (interleaved != -1) {
-				}
 			} else if (transport.find("RTP/AVP") != std::string::npos) {
 				_streamingType = StreamingType::RTSP;
+			}
+		}
+	}
+	switch (_streamingType) {
+		case StreamingType::RTP_TCP: {
+				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
+				if (interleaved != -1) {
+					//
+				}
+			}
+			break;
+		case StreamingType::RTSP: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
 				if (port != -1) {
 					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
 					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
 				}
 			}
-		}
-	}
+			break;
+		default:
+			// Do nothing here
+			break;
+	};
 
 	std::string cseq("0");
 	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
