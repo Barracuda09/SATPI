@@ -226,7 +226,7 @@ namespace dvb {
 			void resetPid(int pid);
 
 			///
-			void processPID_L(const std::string &pids, bool add);
+			void processPID_L(const std::string &pids, bool clearPidsFirst, bool add);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

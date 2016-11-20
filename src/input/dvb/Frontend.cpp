@@ -313,11 +313,13 @@ namespace dvb {
 		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 		const double oldFreq = _frontendData.getFrequency() / 1000.0;
 		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		if (freq != -1 && freq != oldFreq) {
-			// new frequency so initialize FrontendData and 'remove' all used PIDS
-			_frontendData.initialize();
+		if (freq != -1) {
+			if (freq != oldFreq) {
+				// new frequency so initialize FrontendData and 'remove' all used PIDS
+				_frontendData.initialize();
+				SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
+			}
 			_frontendData.setFrequency(freq * 1000.0);
-			SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
 		}
 		// !!!!
 		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
@@ -486,12 +488,14 @@ namespace dvb {
 		if (sm != -1) {
 			_frontendData.setSISOMISO(sm);
 		}
-		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true ||
-			StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-			processPID_L(strVal, true);
+		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
+			processPID_L(strVal, true, true);
+		}
+		if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
+			processPID_L(strVal, false, true);
 		}
 		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
-			processPID_L(strVal, false);
+			processPID_L(strVal, false, false);
 		}
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
@@ -955,7 +959,7 @@ namespace dvb {
 		return true;
 	}
 
-	void Frontend::processPID_L(const std::string &pids, bool add) {
+	void Frontend::processPID_L(const std::string &pids, bool clearPidsFirst, const bool add) {
 		std::string::size_type begin = 0;
 		if (pids == "all" || pids == "none") {
 			// all/none pids requested then 'remove' all used PIDS
@@ -966,6 +970,11 @@ namespace dvb {
 				_frontendData.setAllPID(add);
 			}
 		} else {
+			if (clearPidsFirst) {
+				for (std::size_t i = 0; i < MAX_PIDS; ++i) {
+					_frontendData.setPID(i, false);
+				}
+			}
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
