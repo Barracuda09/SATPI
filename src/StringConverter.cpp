@@ -21,6 +21,7 @@
 
 #include <Log.h>
 #include <input/dvb/dvbfix.h>
+#include <base/Tokenizer.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,23 +226,27 @@ bool StringConverter::getHeaderFieldParameter(const std::string &msg, const std:
 
 bool StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
                                          const std::string &parameter, std::string &value) {
-	const char delim[] = "&?; \r\n";
+    const std::string delim("/&?;");
 	std::string line;
 	if (StringConverter::getHeaderFieldParameter(msg, header_field, line)) {
-		std::string::size_type begin = line.find(parameter);
-		if (begin != std::string::npos) {
-			begin += parameter.size();
+		base::StringTokenizer tokenizer(line, delim);
+		std::string token;
+		while (tokenizer.isNextToken(token)) {
+			std::string::size_type begin = token.find(parameter);
+			if (begin != std::string::npos && begin == 0) {
+				begin += parameter.size();
 
-			// trim leading whitespace
-			while (std::isspace(line[begin])) ++begin;
+				// trim leading whitespace
+				while (std::isspace(token[begin])) ++begin;
 
-			std::string::size_type end = line.find_first_of(delim, begin);
-			if (end == std::string::npos) {
-				end = line.size();
+				std::string::size_type end = token.find_first_of(delim + " \r\n", begin);
+				if (end == std::string::npos) {
+					end = token.size();
+				}
+				// copy and trim whitespace
+				trimWhitespace(token.substr(begin, end - begin), value);
+				return true;
 			}
-			// copy and trim whitespace
-			StringConverter::trimWhitespace(line.substr(begin, end - begin), value);
-			return true;
 		}
 	}
 	return false;
