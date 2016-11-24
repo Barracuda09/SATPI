@@ -236,9 +236,14 @@ void Stream::checkForSessionTimeout() {
 	base::MutexLock lock(_mutex);
 
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		if (_client[i].sessionTimeout()) {
-			SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
-			            _streamID, i, _client[i].getSessionID().c_str());
+		if (_client[i].sessionTimeout() || !_enabled) {
+			if (_enabled) {
+				SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
+							_streamID, i, _client[i].getSessionID().c_str());
+			} else {
+				SI_LOG_INFO("Stream: %d, Reclaiming StreamClient[%d] with SessionID %s",
+							_streamID, i, _client[i].getSessionID().c_str());
+			}
 			teardown(i, false);
 		}
 	}
