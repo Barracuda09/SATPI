@@ -231,7 +231,9 @@ namespace file {
 		return false;
 	}
 
-	void TSReader::monitorSignal(bool UNUSED(showStatus)) {}
+	void TSReader::monitorSignal(bool UNUSED(showStatus)) {
+		_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
+	}
 
 	bool TSReader::hasDeviceDataChanged() const {
 		return false;
@@ -245,6 +247,7 @@ namespace file {
 				_file.open(_filePath, std::ifstream::binary | std::ifstream::in);
 				if (_file.is_open()) {
 ///////////////////////////////////////////////////////////////////////////////
+					_deviceData.initialize();
 					_pcrPID = -1;
 					_pcrPrev = 0;
 					_pcrDelta = 0;
@@ -271,15 +274,21 @@ namespace file {
 	bool TSReader::teardown() {
 		_file.close();
 		_filePath = "None";
+		_deviceData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 		return true;
 	}
 
 	std::string TSReader::attributeDescribeString() const {
 		std::string desc;
 		if (_file.is_open()) {
-			// ver=1.5;tuner=<feID>;file=<file>
-			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;file=%s",
-					_streamID + 1, _filePath.c_str());
+			base::MutexLock lock(_mutex);
+			// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;file=<file>
+			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;file=%s",
+					_streamID + 1,
+					_deviceData.getSignalStrength(),
+					_deviceData.hasLock(),
+					_deviceData.getSignalToNoiseRatio(),
+					_filePath.c_str());
 		} else {
 			desc = "";
 		}

@@ -21,7 +21,6 @@
 #define INPUT_STREAM_STREAMER_H_INCLUDE INPUT_STREAM_STREAMER_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/Device.h>
 #include <socket/SocketClient.h>
 #include <socket/UdpSocket.h>
@@ -117,7 +116,6 @@ namespace stream {
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;
 			int _streamID;
 			std::string _uri;
 			struct pollfd _pfd[1];

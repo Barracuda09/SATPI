@@ -22,10 +22,13 @@
 #include <Log.h>
 #include <StringConverter.h>
 #include <Utils.h>
-#include <input/dvb/delivery/DiSEqc.h>
 
 namespace input {
 namespace dvb {
+
+	// =======================================================================
+	// -- Constructors and destructor ----------------------------------------
+	// =======================================================================
 
 	FrontendData::FrontendData() {
 		initialize();
@@ -51,7 +54,7 @@ namespace dvb {
 			case input::InputSystem::DVBS2:
 		                StringConverter::addFormattedString(xml, "<rolloff>%s</rolloff>", StringConverter::rolloff_to_sting(_rolloff));
 		                StringConverter::addFormattedString(xml, "<src>%d</src>", _src);
-		                StringConverter::addFormattedString(xml, "<pol>%c</pol>", (_pol_v == POL_V) ? 'V' : 'H');
+		                StringConverter::addFormattedString(xml, "<pol>%c</pol>", getPolarizationChar());
 				break;
 			case input::InputSystem::DVBT:
 				// Empty
@@ -76,65 +79,7 @@ namespace dvb {
 
 	void FrontendData::initialize() {
 		base::MutexLock lock(_mutex);
-		_delsys = input::InputSystem::UNDEFINED;
-		_freq = 0;
-		_modtype = QAM_64;
-		_srate = 0;
-		_fec = FEC_AUTO;
-		_rolloff = ROLLOFF_AUTO;
-		_inversion = INVERSION_AUTO;
-
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			resetPidData(i);
-		}
-		resetPIDTableChanged();
-
-		// =======================================================================
-		// DVB-S(2) Data members
-		// =======================================================================
-		_pilot = PILOT_AUTO;
-		_src = 1;
-		_pol_v = 0;
-
-		// =======================================================================
-		// DVB-C2 Data members
-		// =======================================================================
-		_c2tft = 0;
-		_data_slice = 0;
-
-		// =======================================================================
-		// DVB-T(2) Data members
-		// =======================================================================
-		_transmission = TRANSMISSION_MODE_AUTO;
-		_guard = GUARD_INTERVAL_AUTO;
-		_hierarchy = HIERARCHY_AUTO;
-		_bandwidthHz = 8000000;
-		_plp_id = 0;
-		_t2_system_id = 0;
-		_siso_miso = 0;
-	}
-
-////////////////////////////////////
-////////////////////////////////////
-
-	void FrontendData::setPMT(int pid, bool set) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setPMT(pid, set);
-	}
-
-	bool FrontendData::isPMT(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.isPMT(pid);
-	}
-
-	void FrontendData::setKeyParity(int pid, int parity) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setKeyParity(pid, parity);
-	}
-
-	int FrontendData::getKeyParity(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getKeyParity(pid);
+		DeviceData::initialize();
 	}
 
 	void FrontendData::setECMInfo(
@@ -148,156 +93,6 @@ namespace dvb {
 		const std::string &UNUSED(sourceName),
 		const std::string &UNUSED(protocolName),
 		int UNUSED(hops)) {
-	}
-
-////////////////////////////////////
-////////////////////////////////////
-
-	bool FrontendData::hasFrontendDataChanged() const {
-		base::MutexLock lock(_mutex);
-		return _changed;
-	}
-
-	input::InputSystem FrontendData::getDeliverySystem() const {
-		base::MutexLock lock(_mutex);
-		return _delsys;
-	}
-
-	int FrontendData::getDiSEqcSource() const {
-		base::MutexLock lock(_mutex);
-		return _src;
-	}
-
-	int FrontendData::getPolarization() const {
-		base::MutexLock lock(_mutex);
-		return _pol_v;
-	}
-
-	uint32_t FrontendData::getFrequency() const {
-		base::MutexLock lock(_mutex);
-		return _freq;
-	}
-
-	bool FrontendData::isPIDUsed(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.isPIDUsed(pid);
-	}
-
-	uint32_t FrontendData::getPacketCounter(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getPacketCounter(pid);
-	}
-
-	int FrontendData::getDMXFileDescriptor(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getDMXFileDescriptor(pid);
-	}
-
-	bool FrontendData::hasPIDTableChanged() const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.hasPIDTableChanged();
-	}
-
-	std::string FrontendData::getPidCSV() const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getPidCSV();
-	}
-
-	int FrontendData::getModulationType() const {
-		base::MutexLock lock(_mutex);
-		return _modtype;
-	}
-
-	int FrontendData::getSymbolRate() const {
-		base::MutexLock lock(_mutex);
-		return _srate;
-	}
-
-	int FrontendData::getFEC() const {
-		base::MutexLock lock(_mutex);
-		return _fec;
-	}
-
-	int FrontendData::getRollOff() const {
-		base::MutexLock lock(_mutex);
-		return _rolloff;
-	}
-
-	int FrontendData::getPilotTones() const {
-		base::MutexLock lock(_mutex);
-		return _pilot;
-	}
-
-	int FrontendData::getSpectralInversion() const {
-		base::MutexLock lock(_mutex);
-		return _inversion;
-	}
-
-	int FrontendData::getBandwidthHz() const {
-		base::MutexLock lock(_mutex);
-		return _bandwidthHz;
-	}
-
-	int FrontendData::getTransmissionMode() const {
-		base::MutexLock lock(_mutex);
-		return _transmission;
-	}
-
-	int FrontendData::getHierarchy() const {
-		base::MutexLock lock(_mutex);
-		return _hierarchy;
-	}
-
-	int FrontendData::getGuardInverval() const {
-		base::MutexLock lock(_mutex);
-		return _guard;
-	}
-
-	int FrontendData::getUniqueIDPlp() const {
-		base::MutexLock lock(_mutex);
-		return _plp_id;
-	}
-
-	int FrontendData::getSISOMISO() const {
-		base::MutexLock lock(_mutex);
-		return _siso_miso;
-	}
-
-	int FrontendData::getDataSlice() const {
-		base::MutexLock lock(_mutex);
-		return _data_slice;
-	}
-
-	int FrontendData::getC2TuningFrequencyType() const {
-		base::MutexLock lock(_mutex);
-		return _c2tft;
-	}
-
-	int FrontendData::getUniqueIDT2() const {
-		base::MutexLock lock(_mutex);
-		return _t2_system_id;
-	}
-
-	fe_delivery_system FrontendData::convertDeliverySystem() const {
-		base::MutexLock lock(_mutex);
-		switch (_delsys) {
-			case input::InputSystem::DVBT:
-				return SYS_DVBT;
-			case input::InputSystem::DVBT2:
-				return SYS_DVBT2;
-			case input::InputSystem::DVBS:
-				return SYS_DVBS;
-			case input::InputSystem::DVBS2:
-				return SYS_DVBS2;
-			case input::InputSystem::DVBC:
-#if FULL_DVB_API_VERSION >= 0x0505
-				return SYS_DVBC_ANNEX_A;
-#else
-				return SYS_DVBC_ANNEX_AC;
-#endif
-			default:
-				return SYS_UNDEFINED;
-		}
 	}
 
 } // namespace dvb

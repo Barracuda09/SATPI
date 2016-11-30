@@ -21,13 +21,12 @@
 #define INPUT_DEVICE_H_INCLUDE INPUT_DEVICE_H_INCLUDE
 
 #include <FwDecl.h>
-#include <input/InputSystem.h>
 #include <base/XMLSupport.h>
+#include <input/InputSystem.h>
+#include <base/Mutex.h>
 
 #include <string>
-#include <cstddef>
 
-FW_DECL_NS1(input, DeviceData);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 FW_DECL_SP_NS1(input, Device);
@@ -101,6 +100,13 @@ namespace input {
 			///
 			virtual std::string attributeDescribeString() const = 0;
 
+			// =======================================================================
+			// -- Data members -------------------------------------------------------
+			// =======================================================================
+
+		protected:
+
+			base::Mutex _mutex;
 	};
 
 } // namespace input

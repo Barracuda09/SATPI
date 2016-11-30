@@ -40,13 +40,14 @@ SOURCES = Version.cpp \
 	StreamClient.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
+	base/M3UParser.cpp \
 	base/ThreadBase.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
+	input/DeviceData.cpp \
+	input/Translation.cpp \
 	input/dvb/Frontend.cpp \
 	input/dvb/FrontendData.cpp \
-	input/dvb/FrontendData_set.cpp \
-	input/dvb/PidTable.cpp \
 	input/dvb/delivery/DiSEqc.cpp \
 	input/dvb/delivery/DiSEqcEN50494.cpp \
 	input/dvb/delivery/DiSEqcEN50607.cpp \
@@ -57,6 +58,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/Lnb.cpp \
 	input/file/TSReader.cpp \
 	input/stream/Streamer.cpp \
+	mpegts/PidTable.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/TableData.cpp \
 	output/StreamThreadBase.cpp \

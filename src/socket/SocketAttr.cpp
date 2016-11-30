@@ -117,6 +117,8 @@
 
 			client.setSocketTimeoutInSec(2);
 
+			client.setKeepAlive();
+
 			// save client ip address
 			client.setIPAddress(inet_ntoa(client._addr.sin_addr));
 
@@ -193,6 +195,17 @@
 		}
 		if (::setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval))) {
 			PERROR("setsockopt: SO_SNDTIMEO");
+		}
+	}
+
+	void SocketAttr::setKeepAlive() {
+		// /proc/sys/net/ipv4/tcp_keepalive_time
+		// /proc/sys/net/ipv4/tcp_keepalive_intvl
+		// /proc/sys/net/ipv4/tcp_keepalive_probes
+		// sysctl -p
+		int optval = 1;
+		if (::setsockopt(_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) == -1) {
+			PERROR("setsockopt: SO_KEEPALIVE");
 		}
 	}
 

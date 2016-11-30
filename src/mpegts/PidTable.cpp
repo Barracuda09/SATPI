@@ -17,14 +17,13 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include <input/dvb/PidTable.h>
+#include <mpegts/PidTable.h>
 
 #include <Utils.h>
 
 #include <StringConverter.h>
 
-namespace input {
-namespace dvb {
+namespace mpegts {
 
 	PidTable::PidTable() {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
@@ -136,5 +135,4 @@ namespace dvb {
 		return _data[pid].parity;
 	}
 
-} // namespace dvb
-} // namespace input
+} // namespace mpegts

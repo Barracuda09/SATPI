@@ -46,6 +46,10 @@ namespace dvb {
 
 	const unsigned long Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
 
+	// =======================================================================
+	// -- Constructors and destructor ----------------------------------------
+	// =======================================================================
+
 	Frontend::Frontend(int streamID,
 		const std::string &fe,
 		const std::string &dvr,
@@ -178,11 +182,11 @@ namespace dvb {
 		_frontendData.addToXML(xml);
 
 		// Monitor
-		StringConverter::addFormattedString(xml, "<status>%d</status>", _status);
-		StringConverter::addFormattedString(xml, "<signal>%d</signal>", _strength);
-		StringConverter::addFormattedString(xml, "<snr>%d</snr>", _snr);
-		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _ber);
-		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _ublocks);
+		StringConverter::addFormattedString(xml, "<status>%d</status>", _frontendData.getSignalStatus());
+		StringConverter::addFormattedString(xml, "<signal>%d</signal>", _frontendData.getSignalStrength());
+		StringConverter::addFormattedString(xml, "<snr>%d</snr>", _frontendData.getSignalToNoiseRatio());
+		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _frontendData.getBitErrorRate());
+		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _frontendData.getUncorrectedBlocks());
 
 		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, 30);
 
@@ -266,49 +270,61 @@ namespace dvb {
 		return false;
 	}
 
-	bool Frontend::capableToTranslate(const std::string &UNUSED(msg),
-			const std::string &UNUSED(method)) const {
-		return false;
+	bool Frontend::capableToTranslate(const std::string &msg,
+			const std::string &method) const {
+		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		const input::InputSystem system = _translation.getTranslationSystemFor(freq);
+		return capableOf(system);
 	}
 
 	void Frontend::monitorSignal(const bool showStatus) {
-		base::MutexLock lock(_mutex);
+		fe_status_t status;
+		uint16_t strength;
+		uint16_t snr;
+		uint32_t ber;
+		uint32_t ublocks;
+
 		// first read status
-		if (ioctl(_fd_fe, FE_READ_STATUS, &_status) == 0) {
+		if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 			// some frontends might not support all these ioctls
-			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &_strength) != 0) {
-				_strength = 0;
+			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
+				strength = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_SNR, &_snr) != 0) {
-				_snr = 0;
+			if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
+				snr = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_BER, &_ber) != 0) {
-				_ber = 0;
+			if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
+				ber = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &_ublocks) != 0) {
-				_ublocks = 0;
+			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
+				ublocks = 0;
 			}
-			_strength = (_strength * 240) / 0xffff;
-			_snr = (_snr * 15) / 0xffff;
+			strength = (strength * 240) / 0xffff;
+			snr = (snr * 15) / 0xffff;
 
 			// Print Status
 			if (showStatus) {
 				SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
-					_status, _strength, _snr, _ber, _ublocks,
-					(_status & FE_HAS_LOCK) ? 1 : 0);
+					status, strength, snr, ber, ublocks,
+					(status & FE_HAS_LOCK) ? 1 : 0);
 			}
+			_frontendData.setMonitorData(status, strength, snr, ber, ublocks);
 		} else {
 			PERROR("FE_READ_STATUS failed");
 		}
 	}
 
 	bool Frontend::hasDeviceDataChanged() const {
-		return _frontendData.hasFrontendDataChanged();
+		return _frontendData.hasDeviceDataChanged();
 	}
 
-	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
-		std::string strVal;
+	void Frontend::parseStreamString(const std::string &msg1, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+
+		// Do we need to translate this request?
+		std::string msg = _translation.translateStreamString(_streamID, msg1, method);
+
+		std::string strVal;
 
 		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
 		const double oldFreq = _frontendData.getFrequency() / 1000.0;
@@ -317,7 +333,7 @@ namespace dvb {
 			if (freq != oldFreq) {
 				// new frequency so initialize FrontendData and 'remove' all used PIDS
 				_frontendData.initialize();
-				SI_LOG_DEBUG("Stream: %d, New frequency requested, clearing channel data...", _streamID);
+				SI_LOG_INFO("Stream: %d, New frequency requested, clearing channel data...", _streamID);
 			}
 			_frontendData.setFrequency(freq * 1000.0);
 		}
@@ -489,14 +505,15 @@ namespace dvb {
 			_frontendData.setSISOMISO(sm);
 		}
 		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
-			processPID_L(strVal, true, true);
+			processPID(_frontendData, strVal, true, true);
 		}
 		if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-			processPID_L(strVal, false, true);
+			processPID(_frontendData, strVal, false, true);
 		}
 		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
-			processPID_L(strVal, false, false);
+			processPID(_frontendData, strVal, false, false);
 		}
+
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
 
@@ -504,8 +521,8 @@ namespace dvb {
 		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
 #ifndef SIMU
 		// Setup, tune and set PID Filters
-		if (_frontendData.hasFrontendDataChanged()) {
-			_frontendData.resetFrontendDataChanged();
+		if (_frontendData.hasDeviceDataChanged()) {
+			_frontendData.resetDeviceDataChanged();
 			_tuned = false;
 			CLOSE_FD(_fd_dvr);
 		}
@@ -518,7 +535,6 @@ namespace dvb {
 				return false;
 			}
 		}
-
 		updatePIDFilters();
 #endif
 		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
@@ -539,96 +555,14 @@ namespace dvb {
 		_tuned = false;
 		CLOSE_FD(_fd_fe);
 		CLOSE_FD(_fd_dvr);
-		{
-			base::MutexLock lock(_mutex);
-			_status = static_cast<fe_status_t>(0);
-			_strength = 0;
-			_snr = 0;
-			_ber = 0;
-			_ublocks = 0;
-		}
+		_frontendData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
+		_translation.resetTranslationFlag();
 		return true;
 	}
 
 	std::string Frontend::attributeDescribeString() const {
-		const double freq = _frontendData.getFrequency() / 1000.0;
-		const int srate = _frontendData.getSymbolRate() / 1000;
-		const int locked = (_status & FE_HAS_LOCK) ? 1 : 0;
-
-		std::string desc;
-		std::string csv = _frontendData.getPidCSV();
-		switch (_frontendData.getDeliverySystem()) {
-			case input::InputSystem::DVBS:
-			case input::InputSystem::DVBS2:
-				// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,<polarisation>
-				//             <system>,<type>,<pilots>,<roll_off>,<symbol_rate>,<fec_inner>;pids=<pid0>,..,<pidn>
-				StringConverter::addFormattedString(desc, "ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
-						_frontendData.getDiSEqcSource(),
-						_streamID + 1,
-						_strength,
-						locked,
-						_snr,
-						freq,
-						(_frontendData.getPolarization() == POL_V) ? 'v' : 'h',
-						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
-						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
-						StringConverter::pilot_tone_to_string(_frontendData.getPilotTones()),
-						StringConverter::rolloff_to_sting(_frontendData.getRollOff()),
-						srate,
-						StringConverter::fec_to_string(_frontendData.getFEC()),
-						csv.c_str());
-				break;
-			case input::InputSystem::DVBT:
-			case input::InputSystem::DVBT2:
-				// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<tmode>,<mtype>,<gi>,
-				//               <fec>,<plp>,<t2id>,<sm>;pids=<pid0>,..,<pidn>
-				StringConverter::addFormattedString(desc, "ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
-						_streamID + 1,
-						_strength,
-						locked,
-						_snr,
-						freq,
-						_frontendData.getBandwidthHz() / 1000000.0,
-						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
-						StringConverter::transmode_to_string(_frontendData.getTransmissionMode()),
-						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
-						StringConverter::guardinter_to_string(_frontendData.getGuardInverval()),
-						StringConverter::fec_to_string(_frontendData.getFEC()),
-						_frontendData.getUniqueIDPlp(),
-						_frontendData.getUniqueIDT2(),
-						_frontendData.getSISOMISO(),
-						csv.c_str());
-				break;
-			case input::InputSystem::DVBC:
-				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
-				//               <plp>,<specinv>;pids=<pid0>,..,<pidn>
-				StringConverter::addFormattedString(desc, "ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
-						_streamID + 1,
-						_strength,
-						locked,
-						_snr,
-						freq,
-						_frontendData.getBandwidthHz() / 1000000.0,
-						StringConverter::delsys_to_string(_frontendData.getDeliverySystem()),
-						StringConverter::modtype_to_sting(_frontendData.getModulationType()),
-						srate,
-						_frontendData.getC2TuningFrequencyType(),
-						_frontendData.getDataSlice(),
-						_frontendData.getUniqueIDPlp(),
-						_frontendData.getSpectralInversion(),
-						csv.c_str());
-				break;
-			case input::InputSystem::UNDEFINED:
-				// Not setup yet
-				StringConverter::addFormattedString(desc, "NONE");
-				break;
-			default:
-				// Not supported/
-				StringConverter::addFormattedString(desc, "NONE");
-				break;
-		}
-//		SI_LOG_DEBUG("Stream: %d, %s", _streamID, desc.c_str());
-		return desc;
+		const DeviceData &data = _translation.translateDeviceData(_frontendData);
+		return data.attributeDescribeString(_streamID);
 	}
 
 	// =======================================================================
@@ -878,16 +812,16 @@ namespace dvb {
 			// check if frontend is locked, if not try a few times
 			timeout = 0;
 			while (timeout < 4) {
-				_status = FE_TIMEDOUT;
+				fe_status_t status = FE_TIMEDOUT;
 				// first read status
-				if (ioctl(_fd_fe, FE_READ_STATUS, &_status) == 0) {
-					if (_status & FE_HAS_LOCK) {
+				if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+					if (status & FE_HAS_LOCK) {
 						// We are tuned now
 						_tuned = true;
-						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, _status);
+						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, status);
 						break;
 					} else {
-						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, _status);
+						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 					}
 				}
 				usleep(150000);
@@ -959,40 +893,41 @@ namespace dvb {
 		return true;
 	}
 
-	void Frontend::processPID_L(const std::string &pids, bool clearPidsFirst, const bool add) {
+	void Frontend::processPID(DeviceData &data, const std::string &pids,
+			bool clearPidsFirst, const bool add) {
 		std::string::size_type begin = 0;
 		if (pids == "all" || pids == "none") {
 			// all/none pids requested then 'remove' all used PIDS
 			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-				_frontendData.setPID(i, false);
+				data.setPID(i, false);
 			}
 			if (pids == "all") {
-				_frontendData.setAllPID(add);
+				data.setAllPID(add);
 			}
 		} else {
 			if (clearPidsFirst) {
 				for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-					_frontendData.setPID(i, false);
+					data.setPID(i, false);
 				}
 			}
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
 					const int pid = atoi(pids.substr(begin, end - begin).c_str());
-					_frontendData.setPID(pid, add);
+					data.setPID(pid, add);
 					begin = end + 1;
 				} else {
 					// Get the last one
 					if (begin < pids.size()) {
 						const int pid = atoi(pids.substr(begin, end - begin).c_str());
-						_frontendData.setPID(pid, add);
+						data.setPID(pid, add);
 					}
 					break;
 				}
 			}
 			// always request PID 0 - Program Association Table (PAT)
-			if (add && !_frontendData.isPIDUsed(0)) {
-				_frontendData.setPID(0, true);
+			if (add && !data.isPIDUsed(0)) {
+				data.setPID(0, true);
 			}
 		}
 	}

@@ -21,8 +21,8 @@
 #define INPUT_DVB_FRONTEND_H_INCLUDE INPUT_DVB_FRONTEND_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/Device.h>
+#include <input/Translation.h>
 #include <input/dvb/delivery/System.h>
 #include <input/dvb/dvbfix.h>
 #include <input/dvb/FrontendData.h>
@@ -226,14 +226,13 @@ namespace dvb {
 			void resetPid(int pid);
 
 			///
-			void processPID_L(const std::string &pids, bool clearPidsFirst, bool add);
+			void processPID(DeviceData &data, const std::string &pids, bool clearPidsFirst, bool add);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;
 			int _streamID;
 			bool _tuned;
 			int _fd_fe;
@@ -244,21 +243,15 @@ namespace dvb {
 			struct dvb_frontend_info _fe_info;
 
 			input::dvb::delivery::SystemVector _deliverySystem;
-			input::dvb::FrontendData _frontendData;///
-
+			input::dvb::FrontendData _frontendData;
+			input::Translation _translation;
 			std::size_t _dvbs2;
 			std::size_t _dvbt;
 			std::size_t _dvbt2;
 			std::size_t _dvbc;
 			std::size_t _dvbc2;
 
-			fe_status_t _status;    /// FE_HAS_LOCK | FE_HAS_SYNC | FE_HAS_SIGNAL
-			uint16_t _strength;     ///
-			uint16_t _snr;          ///
-			uint32_t _ber;          ///
-			uint32_t _ublocks;      ///
-			unsigned long _dvrBufferSizeMB; ///
-
+			unsigned long _dvrBufferSizeMB;
 	};
 
 } // namespace dvb

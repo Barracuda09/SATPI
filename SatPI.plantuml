@@ -42,9 +42,9 @@ socket::TcpSocket --|> socket::HttpcSocket
 socket::TcpSocket *-- socket::SocketAttr : "_server"
 socket::TcpSocket *-- socket::SocketClient : "_client[..]"
 class socket::TcpSocket {
-  poll(..)
-  process(..)
-  closeConnection(..)
+  poll(..) -> calls recvHttpcMessage(..)
+           -> calls process(..)
+           -> calls closeConnection(..)
   std::string _protocolString
 }
 
@@ -57,13 +57,31 @@ class socket::UdpSocket {
 SsdpServer --|> socket::UdpSocket
 
 RtspServer --|> HttpcServer
+class RtspServer {
+  threadEntry() -> calls poll(..)
+  methodSetup(..)
+  methodPlay(..)
+  methodOptions(..)
+  methodDescribe(..)
+  methodTeardown(..)
+}
 
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
+class HttpServer {
+  threadEntry() -> calls poll(..)
+  methodPost(..)
+  methodGet(..)
+}
 
 HttpcServer --|> socket::TcpSocket
 HttpcServer *.. StreamManager : "_streamManager"
 HttpcServer *.. InterfaceAttr
+class HttpcServer {
+  process(..)
+  closeConnection(..)
+  processStreamingRequest(..)
+}
 
 Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
@@ -121,10 +139,11 @@ class decrypt::dvbapi::Client {
 input::file::TSReader --|> input::Device
 
 input::Device <|-- input::dvb::Frontend
+FrontendDecryptInterface <|-- input::dvb::Frontend
 
-input::dvb::Frontend --|> FrontendDecryptInterface
 input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
 input::dvb::Frontend *-- input::dvb::FrontendData
+input::dvb::Frontend *-- input::Translation : " _translation "
 
 
 input::dvb::delivery::System <|-- DVBS
@@ -142,9 +161,9 @@ decrypt::dvbapi::ClientProperties *-- TSTableData : " _pat "
 decrypt::dvbapi::ClientProperties *-- TSTableData : " _pmt "
 
 input::DeviceData <|-- input::dvb::FrontendData
+mpegts::PidTable --* input::DeviceData
 
 input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties
-input::dvb::FrontendData *-- input::dvb::PidTable
 
 @enduml
 

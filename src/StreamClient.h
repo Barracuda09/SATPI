@@ -61,7 +61,7 @@ class StreamClient {
 		///
 		void restartWatchDog();
 
-		///
+		/// Check if this client has an session timeout
 		bool sessionTimeout() const;
 
 		///

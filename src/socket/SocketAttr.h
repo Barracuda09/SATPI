@@ -103,6 +103,9 @@ FW_DECL_NS0(SocketClient);
 			/// Set the Receive and Send timeout in Sec for this socket
 			void setSocketTimeoutInSec(unsigned int timeout);
 
+			///
+			void setKeepAlive();
+
 			/// Get the network send buffer size for this Socket
 			int getNetworkSendBufferSize() const;
 

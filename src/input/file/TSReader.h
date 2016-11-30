@@ -21,16 +21,14 @@
 #define INPUT_INPUT_TSREADER_H_INCLUDE INPUT_INPUT_TSREADER_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/Device.h>
+#include <input/DeviceData.h>
 #include <mpegts/TableData.h>
 
 #include <vector>
 #include <string>
 #include <fstream>
 #include <chrono>
-
-FW_DECL_NS1(input, DeviceData);
 
 FW_DECL_SP_NS2(input, file, TSReader);
 
@@ -118,10 +116,10 @@ namespace file {
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;
 			int _streamID;
 			std::ifstream _file;
 			std::string _filePath;
+			input::DeviceData _deviceData;
 
 			mpegts::TableData _pmt;
 			mpegts::TableData _pat;
