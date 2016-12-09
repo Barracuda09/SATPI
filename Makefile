@@ -45,7 +45,7 @@ SOURCES = Version.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSupport.cpp \
 	input/DeviceData.cpp \
-	input/Translation.cpp \
+	input/Transformation.cpp \
 	input/dvb/Frontend.cpp \
 	input/dvb/FrontendData.cpp \
 	input/dvb/delivery/DiSEqc.cpp \

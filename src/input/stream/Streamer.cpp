@@ -116,7 +116,7 @@ namespace stream {
 		return system == input::InputSystem::STREAMER;
 	}
 
-	bool Streamer::capableToTranslate(const std::string &UNUSED(msg),
+	bool Streamer::capableToTransform(const std::string &UNUSED(msg),
 			const std::string &UNUSED(method)) const {
 		return false;
 	}
@@ -134,8 +134,8 @@ namespace stream {
 // http://192.168.178.10:8875/?msys=streamer&uri=udp://224.0.1.3:1234
 
 	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
-		if (StringConverter::getStringParameter(msg, method, "uri=", _uri) == true) {
-
+		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+		if (StringConverter::getURIParameter(msg, method, _uri) == true) {
 			// Open stream
 			_udp = _uri.find("udp") != std::string::npos;
 			std::string::size_type begin = _uri.find("//");
@@ -165,6 +165,7 @@ namespace stream {
 				}
 			}
 		}
+		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
 
 	bool Streamer::update() {

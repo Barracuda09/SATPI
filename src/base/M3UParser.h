@@ -31,7 +31,7 @@ namespace base {
 	/// The class @c M3UParser can be used to parse M3U files with 'satip-freq' extensions.
 	class M3UParser {
 		public:
-			typedef std::map<double, std::string> TranslationMap;
+			typedef std::map<double, std::string> TransformationMap;
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
@@ -46,10 +46,21 @@ namespace base {
 
 		public:
 
-			void parse(const std::string &filePath);
-			
+			/// Pars the M3U mapping file
+			/// @param filePath
+			/// @retval true specifies the file is mapped false means something
+			/// is wrong with the file
+			bool parse(const std::string &filePath);
+
+			/// Get the uri for the requested frequency
+			/// @param freq  requested frequency to transform
+			/// @param uri   the uri is freq is available
+			/// @retval
 			bool findURIFor(double freq, std::string &uri) const;
 
+			/// Check if the requested frequency can be transformed
+			/// @retval true means the frequency can be used for
+			/// transformation
 			bool exist(const double freq) const;
 
 			// =======================================================================
@@ -58,7 +69,7 @@ namespace base {
 
 		private:
 
-			TranslationMap _translationMap;
+			TransformationMap _transformationMap;
 	};
 
 } // namespace base

@@ -79,10 +79,17 @@ class StringConverter  {
 
 		///
 		static bool getStringParameter(const std::string &msg, const std::string &header_field,
+		                               const std::string &delim, const std::string &parameter, std::string &value);
+
+		///
+		static bool getStringParameter(const std::string &msg, const std::string &header_field,
 		                               const std::string &parameter, std::string &value);
 
 		///
 		static double getDoubleParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
+
+		///
+		static int getURIParameter(const std::string &msg, const std::string &header_field, std::string &value);
 
 		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);

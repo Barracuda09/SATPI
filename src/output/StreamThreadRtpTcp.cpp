@@ -37,6 +37,10 @@ namespace output {
 
 	StreamThreadRtpTcp::~StreamThreadRtpTcp() {
 		terminateThread();
+		const int streamID = _stream.getStreamID();
+		StreamClient &client = _stream.getStreamClient(_clientID);
+		SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
+			client.getIPAddress().c_str(), getStreamSocketPort(_clientID));
 	}
 
 	bool StreamThreadRtpTcp::startStreaming() {

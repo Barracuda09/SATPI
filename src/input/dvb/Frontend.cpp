@@ -190,6 +190,10 @@ namespace dvb {
 
 		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, 30);
 
+		ADD_XML_BEGIN_ELEMENT(xml, "transformation");
+		_transform.addToXML(xml);
+		ADD_XML_END_ELEMENT(xml, "transformation");
+
 		ADD_XML_BEGIN_ELEMENT(xml, "deliverySystem");
 		_deliverySystem[0]->addToXML(xml);
 		ADD_XML_END_ELEMENT(xml, "deliverySystem");
@@ -205,6 +209,9 @@ namespace dvb {
 			const unsigned int newSize = atoi(element.c_str());
 			_dvrBufferSizeMB = (newSize < DEFAULT_DVR_BUFFER_SIZE * 5) ?
 				newSize : DEFAULT_DVR_BUFFER_SIZE;
+		}
+		if (findXMLElement(xml, "transformation", element)) {
+			_transform.fromXML(element);
 		}
 	}
 
@@ -270,10 +277,10 @@ namespace dvb {
 		return false;
 	}
 
-	bool Frontend::capableToTranslate(const std::string &msg,
+	bool Frontend::capableToTransform(const std::string &msg,
 			const std::string &method) const {
 		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		const input::InputSystem system = _translation.getTranslationSystemFor(freq);
+		const input::InputSystem system = _transform.getTransformationSystemFor(freq);
 		return capableOf(system);
 	}
 
@@ -321,8 +328,8 @@ namespace dvb {
 	void Frontend::parseStreamString(const std::string &msg1, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
-		// Do we need to translate this request?
-		std::string msg = _translation.translateStreamString(_streamID, msg1, method);
+		// Do we need to transform this request?
+		std::string msg = _transform.transformStreamString(_streamID, msg1, method);
 
 		std::string strVal;
 
@@ -556,12 +563,12 @@ namespace dvb {
 		CLOSE_FD(_fd_fe);
 		CLOSE_FD(_fd_dvr);
 		_frontendData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
-		_translation.resetTranslationFlag();
+		_transform.resetTransformFlag();
 		return true;
 	}
 
 	std::string Frontend::attributeDescribeString() const {
-		const DeviceData &data = _translation.translateDeviceData(_frontendData);
+		const DeviceData &data = _transform.transformDeviceData(_frontendData);
 		return data.attributeDescribeString(_streamID);
 	}
 

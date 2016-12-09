@@ -226,7 +226,7 @@ namespace file {
 		return system == input::InputSystem::FILE;
 	}
 
-	bool TSReader::capableToTranslate(const std::string &UNUSED(msg),
+	bool TSReader::capableToTransform(const std::string &UNUSED(msg),
 			const std::string &UNUSED(method)) const {
 		return false;
 	}

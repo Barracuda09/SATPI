@@ -22,10 +22,6 @@
 
 #include <Log.h>
 
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/prctl.h>
-
 namespace base {
 
 	///
@@ -64,6 +60,26 @@ namespace base {
 				} else {
 					return false;
 				}
+			}
+
+			/// This function removes the requested token
+			/// @param searchToken is the token to be removed
+			/// @retval the modified string
+			STRING_TYPE removeToken(STRING_TYPE searchToken) {
+				std::string token;
+				while (isNextToken(token)) {
+					typename STRING_TYPE::size_type pos = token.find(searchToken);
+					if (pos == 0) {
+						const typename STRING_TYPE::size_type size = token.size() + 1;
+						const typename STRING_TYPE::size_type start = _begin - size - 1;
+						_string.erase(start, size);
+						_atEnd = false;
+						_begin = 0;
+						_end = 0;
+						break;
+					}
+				}
+				return _string;
 			}
 
 			// =======================================================================

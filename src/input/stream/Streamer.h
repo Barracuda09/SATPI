@@ -91,7 +91,7 @@ namespace stream {
 
 			virtual bool capableOf(input::InputSystem msys) const override;
 
-			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const override;
+			virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
 
 			virtual void monitorSignal(bool showStatus) override;
 

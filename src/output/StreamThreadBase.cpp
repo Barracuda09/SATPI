@@ -55,8 +55,6 @@ namespace output {
 			_decrypt->stopDecrypt(_stream.getStreamID());
 		}
 #endif
-		const int streamID = _stream.getStreamID();
-		SI_LOG_INFO("Stream: %d, Destroy %s stream", streamID, _protocol.c_str());
 	}
 
 	bool StreamThreadBase::startStreaming() {

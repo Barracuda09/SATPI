@@ -40,11 +40,14 @@ RtcpThread::RtcpThread(StreamInterface &stream, bool tcp) :
 RtcpThread::~RtcpThread() {
 	terminateThread();
 	if (_tcpMode) {
-		SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream", _stream.getStreamID());
+		const StreamClient &client = _stream.getStreamClient(_clientID);
+		SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream to %s:%d", _stream.getStreamID(),
+			client.getIPAddress().c_str(), client.getHttpSocketPort());
 	} else {
-		StreamClient &client = _stream.getStreamClient(_clientID);
-		client.getRtcpSocketAttr().closeFD();
-		SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream", _stream.getStreamID());
+		SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
+		SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream to %s:%d", _stream.getStreamID(),
+			rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+		rtcp.closeFD();
 	}
 }
 

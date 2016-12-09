@@ -225,8 +225,7 @@ bool StringConverter::getHeaderFieldParameter(const std::string &msg, const std:
 }
 
 bool StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
-                                         const std::string &parameter, std::string &value) {
-    const std::string delim("/&?;");
+		const std::string &delim, const std::string &parameter, std::string &value) {
 	std::string line;
 	if (StringConverter::getHeaderFieldParameter(msg, header_field, line)) {
 		base::StringTokenizer tokenizer(line, delim);
@@ -250,6 +249,15 @@ bool StringConverter::getStringParameter(const std::string &msg, const std::stri
 		}
 	}
 	return false;
+}
+
+bool StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
+		const std::string &parameter, std::string &value) {
+	return StringConverter::getStringParameter(msg, header_field, "/&?;", parameter, value);
+}
+
+int StringConverter::getURIParameter(const std::string &msg, const std::string &header_field, std::string &value) {
+	return StringConverter::getStringParameter(msg, header_field, "&?;", "uri=", value);
 }
 
 double StringConverter::getDoubleParameter(const std::string &msg, const std::string &header_field, const std::string &parameter) {

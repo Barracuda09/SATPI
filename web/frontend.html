@@ -53,6 +53,13 @@
 			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 
+			var transformation = visibleStream.getElementsByTagName("transformation");
+			if (transformation.length > 0) {
+				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Transformation Info</th></tr>";
+				page += addTableLineEntry("Transformation enable", xmlDoc, streamID + "transformEnable");
+				page += addTableLineEntry("Transformation Mapping M3U", xmlDoc, streamID + "transformM3U");
+			}
+
 			var diseqc = visibleStream.getElementsByTagName("diseqc");
 			if (diseqc.length > 0) {
 

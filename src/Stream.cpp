@@ -187,8 +187,8 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			SI_LOG_INFO("Stream: %d, New session but this stream is in use, skipping...", _streamID);
 			return false;
 		} else if (!_device->capableOf(msys)) {
-			if (_device->capableToTranslate(message, method)) {
-				SI_LOG_INFO("Stream: %d, Capable of translating msys=%s",
+			if (_device->capableToTransform(message, method)) {
+				SI_LOG_INFO("Stream: %d, Capable of transforming msys=%s",
 							_streamID, StringConverter::delsys_to_string(msys));
 			} else {
 				SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",

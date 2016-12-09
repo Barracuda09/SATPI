@@ -1,4 +1,4 @@
-/* Translation.h
+/* Transformation.h
 
    Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,10 +17,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_TRANSLATION_H_INCLUDE
-#define INPUT_TRANSLATION_H_INCLUDE INPUT_TRANSLATION_H_INCLUDE
+#ifndef INPUT_TRANSFORMATION_H_INCLUDE
+#define INPUT_TRANSFORMATION_H_INCLUDE INPUT_TRANSFORMATION_H_INCLUDE
 
 #include <base/M3UParser.h>
+#include <base/XMLSupport.h>
+#include <base/Mutex.h>
 #include <input/InputSystem.h>
 #include <input/DeviceData.h>
 
@@ -28,17 +30,29 @@
 
 namespace input {
 
-	/// The class @c Translation is an interface for translation
+	/// The class @c Transformation is an interface for transform
 	/// an input request to an different request red from an M3U file.
-	class Translation {
+	class Transformation :
+		public base::XMLSupport  {
 		public:
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			Translation();
+			Transformation();
 
-			virtual ~Translation();
+			virtual ~Transformation();
+
+			// =======================================================================
+			// -- base::XMLSupport ---------------------------------------------------
+			// =======================================================================
+
+		public:
+			///
+			virtual void addToXML(std::string &xml) const override;
+
+			///
+			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
@@ -46,20 +60,23 @@ namespace input {
 
 		public:
 
+			/// Check if transformation is enabled
+			bool isEnabled() const;
+
 			///
-			void resetTranslationFlag();
+			void resetTransformFlag();
 
 			/// This function may return the input system for the
 			/// requested input frequency.
-			input::InputSystem getTranslationSystemFor(double frequency) const;
+			input::InputSystem getTransformationSystemFor(double frequency) const;
 
-			/// This function may return the translated input message
-			std::string translateStreamString(int streamID,
+			/// This function may return the transformed input message
+			std::string transformStreamString(int streamID,
 				const std::string &msg,
 				const std::string &method);
 
-			/// This function may return the translated Device Data
-			const DeviceData &translateDeviceData(
+			/// This function may return the transformed Device Data
+			const DeviceData &transformDeviceData(
 				const DeviceData &deviceData) const;
 
 		private:
@@ -69,12 +86,15 @@ namespace input {
 			// =======================================================================
 
 		private:
+			base::Mutex _mutex;
 
-			bool _translate;
+			bool _transform;
 			base::M3UParser _m3u;
-			mutable input::DeviceData _translatedDeviceData;
+			std::string _transformFileM3U;
+			bool _enabled;
+			mutable input::DeviceData _transformedDeviceData;
 	};
 
 } // namespace input
 
-#endif // INPUT_TRANSLATION_H_INCLUDE
+#endif // INPUT_TRANSFORMATION_H_INCLUDE

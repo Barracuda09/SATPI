@@ -32,13 +32,13 @@ namespace base {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void M3UParser::parse(const std::string &filePath) {
+	bool M3UParser::parse(const std::string &filePath) {
 		std::ifstream file;
 		file.open(filePath);
 		std::string line;
 		if (file.is_open()) {
+			_transformationMap.clear();
 			// first line should be '#EXTM3U'
-			_translationMap.clear();
 			if (std::getline(file, line) && line.find("#EXTM3U") != std::string::npos) {
 				// seems we are dealing with an M3U file
 				while (std::getline(file, line)) {
@@ -64,7 +64,11 @@ namespace base {
 											const double freq = std::atof(freqStr.c_str());
 											// next line should be
 											if (std::getline(file, line) && !line.empty()) {
-												_translationMap[freq] = line;
+												if (exist(freq)) {
+													SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
+												} else {
+													_transformationMap[freq] = line;
+												}
 											}
 											// do next one
 											break;
@@ -77,15 +81,16 @@ namespace base {
 				}
 			}
 			file.close();
+			return true;
 		} else {
-			SI_LOG_DEBUG("Error could not open file: %s", filePath.c_str());
-			
+			SI_LOG_ERROR("Error: could not open file: %s", filePath.c_str());
+			return false;
 		}
 	}
 
 	bool M3UParser::findURIFor(double freq, std::string &uri) const {
-		const auto uriMap = _translationMap.find(freq);
-		if(uriMap != _translationMap.end()) {
+		const auto uriMap = _transformationMap.find(freq);
+		if(uriMap != _transformationMap.end()) {
 			uri = uriMap->second;
 			return true;
 		}
@@ -93,8 +98,8 @@ namespace base {
 	}
 
 	bool M3UParser::exist(const double freq) const {
-		const auto uriMap = _translationMap.find(freq);
-		return uriMap != _translationMap.end();
+		const auto uriMap = _transformationMap.find(freq);
+		return uriMap != _transformationMap.end();
 	}
 
 } // namespace base

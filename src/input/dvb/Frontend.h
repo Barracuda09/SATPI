@@ -22,7 +22,7 @@
 
 #include <FwDecl.h>
 #include <input/Device.h>
-#include <input/Translation.h>
+#include <input/Transformation.h>
 #include <input/dvb/delivery/System.h>
 #include <input/dvb/dvbfix.h>
 #include <input/dvb/FrontendData.h>
@@ -172,7 +172,7 @@ namespace dvb {
 
 			virtual bool capableOf(InputSystem system) const override;
 
-			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const override;
+			virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
 
 			virtual void monitorSignal(bool showStatus) override;
 
@@ -244,7 +244,7 @@ namespace dvb {
 
 			input::dvb::delivery::SystemVector _deliverySystem;
 			input::dvb::FrontendData _frontendData;
-			input::Translation _translation;
+			input::Transformation _transform;
 			std::size_t _dvbs2;
 			std::size_t _dvbt;
 			std::size_t _dvbt2;

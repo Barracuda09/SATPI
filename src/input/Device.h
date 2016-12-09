@@ -72,11 +72,11 @@ namespace input {
 			/// @param system
 			virtual bool capableOf(input::InputSystem system) const = 0;
 
-			/// Check if this device can translate the reguest according to an M3U file
+			/// Check if this device can transform the reguest according to an M3U file
 			/// This function should be called after function @c capableOf
 			/// @param msg
 			/// @param method
-			virtual bool capableToTranslate(const std::string &msg, const std::string &method) const = 0;
+			virtual bool capableToTransform(const std::string &msg, const std::string &method) const = 0;
 
 			/// Monitor signal of this device
 			virtual void monitorSignal(bool showStatus) = 0;
