@@ -1,6 +1,6 @@
 /* RtspServer.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -115,8 +115,6 @@ bool RtspServer::methodOptions(Stream &stream, int clientID, std::string &htmlBo
 		"%s" \
 		"\r\n";
 
-	std::string rtsp;
-
 	// check if we are in session, then we need to send the Session ID
 	char sessionID[50] = "";
 	if (stream.getSessionID(clientID).size() > 2) {
@@ -129,8 +127,6 @@ bool RtspServer::methodOptions(Stream &stream, int clientID, std::string &htmlBo
 }
 
 bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlBody) {
-	static const char *RTSP_200_OK    = "RTSP/1.0 200 OK\r\n";
-	static const char *RTSP_404_ERROR = "RTSP/1.0 404 Not Found\r\n";
 	static const char *RTSP_DESCRIBE  =
 		"%s" \
 		"CSeq: %d\r\n" \
@@ -158,7 +154,6 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	unsigned int streams_setup = 0;
 
 	// Describe streams
-	std::string cont1;
 	StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT1,
 		_interface.getIPAddress().c_str(),
 		_streamManager.getRTSPDescribeString().c_str());
@@ -180,9 +175,11 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	// Are there any streams setup already
 	if (streams_setup != 0) {
+		static const char *RTSP_200_OK = "RTSP/1.0 200 OK\r\n";
 		StringConverter::addFormattedString(htmlBody, RTSP_DESCRIBE, RTSP_200_OK, stream.getCSeq(clientID),
 		                                    _interface.getIPAddress().c_str(), desc.size(), sessionID, desc.c_str());
 	} else {
+		static const char *RTSP_404_ERROR = "RTSP/1.0 404 Not Found\r\n";
 		StringConverter::addFormattedString(htmlBody, RTSP_DESCRIBE, RTSP_404_ERROR, stream.getCSeq(clientID),
 		                                    _interface.getIPAddress().c_str(), 0, sessionID, "");
 	}

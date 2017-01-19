@@ -1,6 +1,6 @@
 /* Stream.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -42,6 +42,7 @@ Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient d
 	_streamingType(StreamingType::NONE),
 	_enabled(true),
 	_streamInUse(false),
+	_streamActive(false),
 	_client(new StreamClient[MAX_CLIENTS]),
 	_streaming(nullptr),
 	_decrypt(decrypt),

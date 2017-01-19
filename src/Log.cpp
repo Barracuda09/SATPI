@@ -1,6 +1,6 @@
 /* Log.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -25,19 +25,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
 #include <iostream>
 
 #define LOG_SIZE 350
 
-static LogBuffer_t appLog;
-static base::Mutex mutex;
 int syslog_on = 1;
+static base::Mutex logMutex;
 
-void open_app_log() {}
+Log::LogBuffer_t Log::appLogBuffer;
 
-void close_app_log() {}
+void Log::open_app_log() {}
 
-void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...) {
+void Log::close_app_log() {}
+
+void Log::binlog(int priority, const unsigned char *p, int length, const char *fmt, ...) {
 	std::string strData;
 	for (int i = 1; i <= length; ++i) {
 		StringConverter::addFormattedString(strData, "%02X ", p[i-1]);
@@ -54,8 +56,8 @@ void binlog(int priority, const unsigned char *p, int length, const char *fmt, .
 	applog(priority, "%s\r\n%s\r\nEND\r\n", txt, strData.c_str());
 }
 
-void applog(int priority, const char *fmt, ...) {
-	base::MutexLock lock(mutex);
+void Log::applog(int priority, const char *fmt, ...) {
+	base::MutexLock lock(logMutex);
 
 	char txt[2048];
 	va_list arglist;
@@ -91,10 +93,10 @@ void applog(int priority, const char *fmt, ...) {
 		elem.msg = line;
 
 		// save to deque
-		if (appLog.size() == LOG_SIZE) {
-			appLog.pop_front();
+		if (appLogBuffer.size() == LOG_SIZE) {
+			appLogBuffer.pop_front();
 		}
-		appLog.push_back(elem);
+		appLogBuffer.push_back(elem);
 
 		// log to syslog
 		if (syslog_on != 0) {
@@ -107,13 +109,13 @@ void applog(int priority, const char *fmt, ...) {
 	}
 }
 
-std::string make_log_xml() {
+std::string Log::makeXml() {
 	std::string log("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n");
 	{
-		base::MutexLock lock(mutex);
-		if (!appLog.empty()) {
-			for (LogBuffer_t::iterator it = appLog.begin(); it != appLog.end(); ++it) {
-				LogElem_t elem = *it;
+		base::MutexLock lock(logMutex);
+		if (!appLogBuffer.empty()) {
+			for (LogBuffer_t::iterator it = appLogBuffer.begin(); it != appLogBuffer.end(); ++it) {
+				const LogElem_t elem = *it;
 				StringConverter::addFormattedString(log,
 					"<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
 					elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(),

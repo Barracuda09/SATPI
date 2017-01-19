@@ -1,6 +1,6 @@
 /* ClientProperties.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,15 +20,13 @@
 #ifndef DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 #define DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 
-#include <Utils.h>
+#include <FwDecl.h>
 #include <mpegts/TableData.h>
 #include <base/TimeCounter.h>
 #include <decrypt/dvbapi/Filter.h>
 #include <decrypt/dvbapi/Keys.h>
 
-extern "C" {
-	#include <dvbcsa/dvbcsa.h>
-}
+FW_DECL_NS0(dvbcsa_bs_batch_s);
 
 namespace decrypt {
 namespace dvbapi {
@@ -111,8 +109,8 @@ namespace dvbapi {
 			}
 
 			/// Stop the requested filter
-			void stopOSCamFilterData(int pid, int demux, int filter) {
-				_filter.stop(pid, demux, filter);
+			void stopOSCamFilterData(int demux, int filter) {
+				_filter.stop(demux, filter);
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet

@@ -1,6 +1,6 @@
 /* Filter.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@
 #ifndef DECRYPT_DVBAPI_FILTER_H_INCLUDE
 #define DECRYPT_DVBAPI_FILTER_H_INCLUDE DECRYPT_DVBAPI_FILTER_H_INCLUDE
 
-#include <Utils.h>
 #include <base/Mutex.h>
 #include <decrypt/dvbapi/FilterData.h>
 
@@ -109,7 +108,7 @@ namespace dvbapi {
 				return false;
 			}
 
-			void stop(int UNUSED(pid), int demux, int filter) {
+			void stop(int demux, int filter) {
 				base::MutexLock lock(_mutex);
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].clear();

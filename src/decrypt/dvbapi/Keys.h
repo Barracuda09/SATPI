@@ -1,6 +1,6 @@
 /* Keys.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,15 +20,14 @@
 #ifndef DECRYPT_DVBAPI_KEYS_H_INCLUDE
 #define DECRYPT_DVBAPI_KEYS_H_INCLUDE DECRYPT_DVBAPI_KEYS_H_INCLUDE
 
+#include <FwDecl.h>
 #include <base/TimeCounter.h>
 #include <Log.h>
 
 #include <utility>
 #include <queue>
 
-extern "C" {
-	#include <dvbcsa/dvbcsa.h>
-}
+FW_DECL_NS0(dvbcsa_bs_key_s);
 
 namespace decrypt {
 namespace dvbapi {
@@ -42,9 +41,9 @@ namespace dvbapi {
 			// ================================================================
 			//  -- Constructors and destructor --------------------------------
 			// ================================================================
-			Keys() {}
+			Keys();
 
-			virtual ~Keys() {}
+			virtual ~Keys();
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------
@@ -52,36 +51,13 @@ namespace dvbapi {
 
 		public:
 
-			void set(const unsigned char *cw, int parity, int /*index*/) {
-				dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
-				dvbcsa_bs_key_set(cw, k);
-				_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
-			}
+			void set(const unsigned char *cw, int parity, int index);
 
-			const dvbcsa_bs_key_s *get(int parity) const {
-				if (!_key[parity].empty()) {
-					const KeyPair pair = _key[parity].front();
-//					const long duration = base::TimeCounter::getTicks() - pair.first;
-					return pair.second;
-				} else {
-					return nullptr;
-				}
-			}
+			const dvbcsa_bs_key_s *get(int parity) const;
 
-			void remove(int parity) {
-				const KeyPair pair = _key[parity].front();
-				dvbcsa_bs_key_free(pair.second);
-				_key[parity].pop();
-			}
+			void remove(int parity);
 
-			void freeKeys() {
-				while (!_key[0].empty()) {
-					remove(0);
-				}
-				while (!_key[1].empty()) {
-					remove(1);
-				}
-			}
+			void freeKeys();
 
 			// ================================================================
 			//  -- Data members -----------------------------------------------

@@ -78,6 +78,7 @@ ifeq ($(LIBDVBCSA),yes)
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
   SOURCES += decrypt/dvbapi/ClientProperties.cpp
+  SOURCES += decrypt/dvbapi/Keys.cpp
   SOURCES += input/dvb/Frontend_DecryptInterface.cpp
 endif
 

@@ -1,6 +1,6 @@
 /* XMLSupport.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ bool XMLSupport::findXMLElement(const std::string &xml, const std::string &eleme
 	bool found = false;
 	element.clear();
 	const bool ok = parseXML(xml, elementToFind, found, element, it, tag, itEndElement);
-	return ok & found;
+	return ok && found;
 }
 
 bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,

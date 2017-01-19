@@ -1,6 +1,6 @@
 /* Server.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 #include <Properties.h>
 #include <StringConverter.h>
 #include <Log.h>
+#include <Utils.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -343,11 +344,11 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 unsigned int Server::readBootIDFromFile(const char *file) {
 
 	// Get BOOTID from file, increment and save it again
-	const char *BOOTID_STR = "bootID=%d";
 	unsigned int bootId = 0;
-	char content[50];
 	int fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
 	if (fd > 0) {
+		char content[50];
+		const char *BOOTID_STR = "bootID=%d";
 		if (read(fd, content, sizeof(content)) >= 0) {
 			if (strlen(content) != 0) {
 				sscanf(content, BOOTID_STR, &bootId);

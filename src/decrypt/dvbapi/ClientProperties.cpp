@@ -1,6 +1,6 @@
 /* ClientProperties.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,6 +18,12 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
 #include <decrypt/dvbapi/ClientProperties.h>
+
+#include <Utils.h>
+
+extern "C" {
+	#include <dvbcsa/dvbcsa.h>
+}
 
 namespace decrypt {
 namespace dvbapi {

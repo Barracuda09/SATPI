@@ -1,6 +1,6 @@
 /* ThreadBase.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ namespace base {
 			// ===================================================================
 			//  -- Constructors and destructor -----------------------------------
 			// ===================================================================
-			ThreadBase(std::string name);
+			explicit ThreadBase(std::string name);
 
 			virtual ~ThreadBase();
 
@@ -110,7 +110,7 @@ namespace base {
 			virtual void threadEntry() = 0;
 
 		private:
-			static void * threadEntryFunc(void *arg) {((ThreadBase *)arg)->threadEntryBase(); return nullptr;}
+			static void * threadEntryFunc(void *arg) {(static_cast<ThreadBase *>(arg))->threadEntryBase(); return nullptr;}
 
 			void threadEntryBase();
 

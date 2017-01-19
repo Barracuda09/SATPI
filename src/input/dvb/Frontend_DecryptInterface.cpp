@@ -1,6 +1,6 @@
 /* Frontend_DecryptInterface.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -84,7 +84,7 @@ namespace dvb {
 
 	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
 		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
-		_frontendData.stopOSCamFilterData(pid, demux, filter);
+		_frontendData.stopOSCamFilterData(demux, filter);
 		_frontendData.setPID(pid, false);
 		// now update frontend, PID list has changed
 		updateInputDevice();

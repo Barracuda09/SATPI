@@ -1,6 +1,6 @@
 /* HttpServer.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 #include <base/XMLSupport.h>
 #include <InterfaceAttr.h>
 #include <Log.h>
+#include <Utils.h>
 #include <Properties.h>
 #include <Stream.h>
 #include <StreamManager.h>
@@ -171,7 +172,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
 #endif
 			} else if (file.compare("log.xml") == 0) {
-				docType = make_log_xml();
+				docType = Log::makeXml();
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);

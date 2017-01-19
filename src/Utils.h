@@ -1,6 +1,6 @@
 /* Utils.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -25,8 +25,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-
-#define UNUSED(x)
 
 #define ASSERT(EXPRESSION) assert(EXPRESSION)
 

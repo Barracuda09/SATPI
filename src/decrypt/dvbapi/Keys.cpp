@@ -1,4 +1,4 @@
-/* DiSEqc.cpp
+/* Keys.cpp
 
    Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,57 +17,57 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
-#include <input/dvb/delivery/DiSEqc.h>
+#include <decrypt/dvbapi/Keys.h>
 
-#include <Log.h>
-#include <StringConverter.h>
+#include <Unused.h>
 
-#include <cmath>
-#include <string>
+extern "C" {
+	#include <dvbcsa/dvbcsa.h>
+}
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace decrypt {
+namespace dvbapi {
 
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DiSEqc::DiSEqc() :
-		_diseqcRepeat(2) {}
+	Keys::Keys() {}
 
-	DiSEqc::~DiSEqc() {}
+	Keys::~Keys() {}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
+	//  -- Other member functions --------------------------------------------
 	// =======================================================================
-
-	void DiSEqc::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			StringConverter::addFormattedString(xml, "<lnb%zu>", i);
-			_LNB[i].addToXML(xml);
-			StringConverter::addFormattedString(xml, "</lnb%zu>", i);
-		}
-
-		ADD_CONFIG_NUMBER_INPUT(xml, "diseqc_repeat", _diseqcRepeat, 1, 10);
+	void Keys::set(const unsigned char *cw, int parity, int UNUSED(index)) {
+		dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
+		dvbcsa_bs_key_set(cw, k);
+		_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
 	}
 
-	void DiSEqc::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
-		std::string element;
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			std::string lnb;
-			StringConverter::addFormattedString(lnb, "lnb%zu", i);
-			if (findXMLElement(xml, lnb, element)) {
-				_LNB[i].fromXML(element);
-			}
-		}
-
-		if (findXMLElement(xml, "diseqc_repeat.value", element)) {
-			_diseqcRepeat = std::stoi(element);
+	const dvbcsa_bs_key_s *Keys::get(int parity) const {
+		if (!_key[parity].empty()) {
+			const KeyPair pair = _key[parity].front();
+//			const long duration = base::TimeCounter::getTicks() - pair.first;
+			return pair.second;
+		} else {
+			return nullptr;
 		}
 	}
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+	void Keys::remove(int parity) {
+		const KeyPair pair = _key[parity].front();
+		dvbcsa_bs_key_free(pair.second);
+		_key[parity].pop();
+	}
+
+	void Keys::freeKeys() {
+		while (!_key[0].empty()) {
+			remove(0);
+		}
+		while (!_key[1].empty()) {
+			remove(1);
+		}
+	}	
+
+} // namespace dvbapi
+} // namespace decrypt

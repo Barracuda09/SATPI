@@ -1,6 +1,6 @@
 /* FrontendDecryptInterface.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -22,9 +22,7 @@
 
 #include <FwDecl.h>
 
-extern "C" {
-	#include <dvbcsa/dvbcsa.h>
-}
+FW_DECL_NS0(dvbcsa_bs_key_s);
 
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 

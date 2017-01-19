@@ -1,6 +1,6 @@
 /* Client.cpp
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 #include <decrypt/dvbapi/Client.h>
 
 #include <Log.h>
+#include <Unused.h>
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>
@@ -91,7 +92,7 @@ namespace dvbapi {
 
 	void Client::decrypt(const int streamID, mpegts::PacketBuffer &buffer) {
 		if (_connected && _enabled) {
-			input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(streamID);
+			const input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(streamID);
 			const std::size_t size = buffer.getNumberOfTSPackets();
 			for (std::size_t i = 0; i < size; ++i) {
 				// Get TS packet from the buffer
@@ -541,7 +542,7 @@ namespace dvbapi {
 
 //										SI_LOG_BIN_DEBUG(&buf[i], 65, "Stream: %d, DVBAPI_DMX_SET_FILTER", adapter);
 
-										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
+										const input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 
 										// Goto next cmd
@@ -554,7 +555,7 @@ namespace dvbapi {
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
 
-										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
+										const input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->stopOSCamFilterData(pid, demux, filter);
 
 										// Goto next cmd
@@ -569,7 +570,7 @@ namespace dvbapi {
 										memcpy(cw, &buf[i + 13], 8);
 										cw[8] = 0;
 
-										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
+										const input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->setKey(cw, parity, index);
 										SI_LOG_DEBUG("Stream: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
 													 adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
@@ -605,7 +606,7 @@ namespace dvbapi {
 										const int hops = buf[i];
 										++i;
 
-										input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
+										const input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(adapter);
 										frontend->setECMInfo(pid, serviceID, caID, provID, emcTime,
 														  cardSystem, readerName, sourceName, protocolName, hops);
 										SI_LOG_DEBUG("Stream: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s  ECM Time: %d",

@@ -1,6 +1,6 @@
 /* DiSEqcEN50494.h
 
-   Copyright (C) 2015, 2016 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -21,7 +21,6 @@
 #define INPUT_DVB_DELIVERY_DISEQCEN50494_H_INCLUDE INPUT_DVB_DELIVERY_DISEQCEN50494_H_INCLUDE
 
 #include <FwDecl.h>
-#include <input/dvb/dvbfix.h>
 #include <input/dvb/delivery/DiSEqc.h>
 
 #include <stdint.h>

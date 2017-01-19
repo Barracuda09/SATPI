@@ -1,6 +1,6 @@
-/* dvbfix.h
+/* Unused.h
 
-   Copyright (C) 2014 - 2017 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,25 +17,9 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef DVB_FIX_H_INCLUDE
-#define DVB_FIX_H_INCLUDE DVB_FIX_H_INCLUDE
+#ifndef UNUSED_H_INCLUDE
+#define UNUSED_H_INCLUDE UNUSED_H_INCLUDE
 
-#include <linux/dvb/frontend.h>
-#include <linux/dvb/version.h>
+#define UNUSED(x)
 
-#define FULL_DVB_API_VERSION (DVB_API_VERSION << 8 | DVB_API_VERSION_MINOR)
-
-#if FULL_DVB_API_VERSION < 0x0500
-#error Not correct DVB_API_VERSION should be >= 5.0
-#endif
-
-#if FULL_DVB_API_VERSION < 0x0505
-#define DTV_ENUM_DELSYS       44
-#define NOT_PREFERRED_DVB_API 1
-#endif
-
-#ifndef DTV_STREAM_ID
-#define DTV_STREAM_ID         42
-#endif
-
-#endif // DVB_FIX_H_INCLUDE
+#endif // UNUSED_H_INCLUDE

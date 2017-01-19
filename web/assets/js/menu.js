@@ -34,7 +34,7 @@ function buildfooter() {
 	var menu = "";
 	menu += "<div class=\"navbar navbar-default navbar-fixed-bottom\">";
 	menu += "	<div class=\"container\">";
-	menu += "		<p class=\"navbar-text pull-left\">Copyright &#169; 2015, 2016 Marc Postema</p>";
+	menu += "		<p class=\"navbar-text pull-left\">Copyright &#169; 2015, 2016, 2017 Marc Postema</p>";
 	menu += "	</div>";
 	menu += "</div>";
 	return menu;
