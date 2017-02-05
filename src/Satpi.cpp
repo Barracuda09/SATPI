@@ -29,6 +29,10 @@
 #include <Utils.h>
 #include <StringConverter.h>
 
+#include <atomic>
+#include <chrono>
+#include <thread>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,8 +42,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#include <atomic>
 
 #define DAEMON_NAME "SatPI"
 #define LOCK_FILE   "SatPI.lock"
@@ -85,7 +87,7 @@ static void child_handler(int signum) {
 /*
  *
  */
-static void daemonize(const char *lockfile, const char *user) {
+static void daemonize(const std::string &lockfile, const char *user) {
 	pid_t pid, sid;
 	int lfp = -1;
 	char str[10];
@@ -97,10 +99,10 @@ static void daemonize(const char *lockfile, const char *user) {
 
 	// create the lock file as the current user
 	// give group 'rw' permission and other users 'r' permissions
-	if (lockfile && lockfile[0]) {
-		lfp = open(lockfile, O_RDWR | O_CREAT, 0664);
+	if (!lockfile.empty()) {
+		lfp = open(lockfile.c_str(), O_RDWR | O_CREAT, 0664);
 		if (lfp < 0) {
-			printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile, strerror(errno), errno);
+			printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile.c_str(), strerror(errno), errno);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -153,7 +155,7 @@ static void daemonize(const char *lockfile, const char *user) {
 
 	// at this point we are executing as the child process
 	struct passwd *pw = getpwuid(geteuid());
-	printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile);
+	printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile.c_str());
 
 	// now record our pid to lockfile
 	sprintf(str, "%d\n", getpid());
@@ -300,7 +302,7 @@ int main(int argc, char *argv[]) {
 
 			// Loop
 			while (!exitApp && !properties.exitApplication() && !restartApp) {
-				usleep(12000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(120));
 			}
 		} catch (...) {
 			SI_LOG_ERROR("Caught an Exception");

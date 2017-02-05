@@ -21,6 +21,9 @@
 
 #include <Log.h>
 
+#include <chrono>
+#include <thread>
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE _GNU_SOURCE
 #endif
@@ -33,8 +36,11 @@ namespace base {
 	// =========================================================================
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
-	ThreadBase::ThreadBase(std::string name) :
-		_run(false), _exit(false), _name(name) {}
+	ThreadBase::ThreadBase(const std::string &name) :
+		_thread(0u),
+		_run(false),
+		_exit(false),
+		_name(name) {}
 	
 	ThreadBase::~ThreadBase() {}
 
@@ -70,11 +76,11 @@ namespace base {
 
 	void ThreadBase::stopThread() {
 		_run = false;
-		size_t timeout = 0;
+		size_t timeout = 0u;
 		while (!_exit) {
-			usleep(100000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			++timeout;
-			if (timeout > 50) {
+			if (timeout > 50u) {
 				cancelThread();
 				SI_LOG_DEBUG("%s: Thread did not stop within timeout?  !!TIMEOUT!!", _name.c_str());
 				break;

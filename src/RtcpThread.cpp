@@ -24,11 +24,14 @@
 #include <Log.h>
 #include <Utils.h>
 
+#include <chrono>
+#include <cstring>
+#include <thread>
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 
-#include <cstring>
 
 RtcpThread::RtcpThread(StreamInterface &stream, bool tcp) :
 		ThreadBase("RtcpThread"),
@@ -282,9 +285,9 @@ void RtcpThread::threadEntry() {
 				const std::size_t len = srlen + sdeslen + applen;
 				uint8_t data[len];
 
-				memcpy(data, sr, srlen);
-				memcpy(data + srlen, sdes, sdeslen);
-				memcpy(data + srlen + sdeslen, app, applen);
+				std::memcpy(data, sr, srlen);
+				std::memcpy(data + srlen, sdes, sdeslen);
+				std::memcpy(data + srlen + sdeslen, app, applen);
 
 				// send the RTCP/UDP packet
 				SocketAttr &rtcp = client.getRtcpSocketAttr();
@@ -299,6 +302,6 @@ void RtcpThread::threadEntry() {
 		DELETE_ARRAY(app);
 
 		// update 5 Hz
-		usleep(200000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 }

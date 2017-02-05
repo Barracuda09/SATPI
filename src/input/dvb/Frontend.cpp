@@ -30,6 +30,9 @@
 #include <input/dvb/delivery/DVBT.h>
 #include <input/dvb/delivery/DiSEqc.h>
 
+#include <chrono>
+#include <thread>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -536,7 +539,7 @@ namespace dvb {
 
 		std::size_t timeout = 0;
 		while (!setupAndTune()) {
-			usleep(150000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			++timeout;
 			if (timeout > 3) {
 				return false;
@@ -808,7 +811,7 @@ namespace dvb {
 			// try tuning
 			std::size_t timeout = 0;
 			while (!tune()) {
-				usleep(450000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(450));
 				++timeout;
 				if (timeout > 3) {
 					return false;
@@ -831,7 +834,7 @@ namespace dvb {
 						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 					}
 				}
-				usleep(150000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 				++timeout;
 			}
 		}
@@ -840,7 +843,7 @@ namespace dvb {
 			// try opening DVR, try again if fails
 			std::size_t timeout = 0;
 			while ((_fd_dvr = open_dvr(_path_to_dvr)) == -1) {
-				usleep(150000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 				++timeout;
 				if (timeout > 3) {
 					return false;
@@ -880,7 +883,7 @@ namespace dvb {
 						_frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
 						std::size_t timeout = 0;
 						while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
-							usleep(350000);
+							std::this_thread::sleep_for(std::chrono::milliseconds(350));
 							++timeout;
 							if (timeout > 3) {
 								return false;

@@ -67,11 +67,6 @@ FW_DECL_NS0(StreamInterface);
 			int _clientID;
 			StreamInterface &_stream;
 			bool _tcpMode;
-			uint8_t _sr[28];              // Sender Report (SR Packet)
-			uint8_t _srb[24];             // Sender Report Block n (SR Packet)
-			uint8_t _sdes[24];            // Source Description (SDES Packet)
-			uint8_t _app[500];            // Application Defined packet (APP Packet)
-
 	};
 
 #endif // RTCP_THREAD_H_INCLUDE

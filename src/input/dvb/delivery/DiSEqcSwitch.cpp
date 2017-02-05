@@ -23,6 +23,9 @@
 #include <StringConverter.h>
 #include <input/dvb/FrontendData.h>
 
+#include <chrono>
+#include <thread>
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
@@ -101,19 +104,19 @@ namespace delivery {
 			PERROR("FE_SET_VOLTAGE failed");
 			return false;
 		}
-		usleep(15 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(15));
 		if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 			PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			return false;
 		}
-		usleep(20 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		{
 			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
 			cmd.msg[0] = 0xe1;
 
 			base::MutexLock lock(_mutex);
 			for (size_t i = 0; i < _diseqcRepeat; ++i) {
-				usleep(20 * 1000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 					PERROR("Repeated FE_DISEQC_SEND_MASTER_CMD failed");
 					return false;
@@ -124,7 +127,7 @@ namespace delivery {
 			PERROR("FE_DISEQC_SEND_BURST failed");
 			return false;
 		}
-		usleep(15 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(15));
 		if (ioctl(feFD, FE_SET_TONE, t) == -1) {
 			PERROR("FE_SET_TONE failed");
 			return false;

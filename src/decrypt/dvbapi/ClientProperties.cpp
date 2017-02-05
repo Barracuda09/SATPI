@@ -37,6 +37,7 @@ namespace dvbapi {
 		_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
 		_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
 		_batchCount = 0;
+		_parity = 0;
 	}
 
 	ClientProperties::~ClientProperties() {

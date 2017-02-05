@@ -22,11 +22,12 @@
 #include <StringConverter.h>
 #include <base/Mutex.h>
 
+#include <iostream>
+#include <ctime>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
-#include <iostream>
 
 #define LOG_SIZE 350
 
@@ -78,15 +79,15 @@ void Log::applog(int priority, const char *fmt, ...) {
 		elem.priority = priority;
 
 		// set timestamp
-		char asc_time[30];
-		ctime_r(&time_stamp.tv_sec, asc_time);
-		// remove '\n' from string
-		const std::size_t l = strlen(asc_time);
-		asc_time[l-1] = 0;
+		char ascTime[100];
+		struct tm result;
+		localtime_r(&time_stamp.tv_sec, &result);
+		std::strftime(ascTime, sizeof(ascTime), "%c", &result);
+
 		// cut line to insert nsec '.000000000'
-		asc_time[19] = 0;
-		char time[100];
-		snprintf(time, sizeof(time), "%s.%04lu %s", &asc_time[0], time_stamp.tv_nsec/100000, &asc_time[20]);
+		ascTime[19] = 0;
+		char time[150];
+		snprintf(time, sizeof(time), "%s.%04lu %s", &ascTime[0], time_stamp.tv_nsec/100000, &ascTime[20]);
 		elem.timestamp = time;
 
 		// set message

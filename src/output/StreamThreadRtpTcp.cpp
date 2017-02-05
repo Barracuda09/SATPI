@@ -25,6 +25,9 @@
 #include <InterfaceAttr.h>
 #include <base/TimeCounter.h>
 
+#include <chrono>
+#include <thread>
+
 namespace output {
 
 	StreamThreadRtpTcp::StreamThreadRtpTcp(StreamInterface &stream, decrypt::dvbapi::SpClient decrypt) :
@@ -72,14 +75,14 @@ namespace output {
 				break;
 			case State::Paused:
 				// Do nothing here, just wait
-				usleep(50000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				break;
 			case State::Running:
 				readDataFromInputDevice(client);
 				break;
 			default:
 				PERROR("Wrong State");
-				usleep(50000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				break;
 			}
 		}

@@ -180,6 +180,9 @@ uncrustify:
 	uncrustify -c SatPI.uncrustify --replace $(HEADERS)
 	@echo uncrustify Done
 
+check:
+	../cppcheck/cppcheck -I ./src --enable=all --std=posix --std=c++11 ./src 1> cppcheck.log 2>&1
+
 .PHONY:
 	clean
 

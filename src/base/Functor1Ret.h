@@ -53,7 +53,7 @@ class Functor1Ret : protected FunctorBase {
 template <class RETURN, class P1, class FUNC>
 class FunctionWrapper1 : public Functor1Ret<RETURN, P1> {
 	public:
-		FunctionWrapper1(FUNC func) :
+		explicit FunctionWrapper1(FUNC func) :
 			Functor1Ret<RETURN, P1>(functionFunctor, nullptr, (void *)func, 0) {}
 
 		static RETURN functionFunctor(const FunctorBase &ftor, P1 p1) {

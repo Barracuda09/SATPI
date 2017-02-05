@@ -23,6 +23,9 @@
 #include <StringConverter.h>
 #include <input/dvb/FrontendData.h>
 
+#include <chrono>
+#include <thread>
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
@@ -80,7 +83,7 @@ namespace delivery {
 		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 			PERROR("FE_SET_TONE failed");
 		}
-		usleep(900 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(900));
 
 		return sendDiseqcJess(feFD, streamID, freq, src, pol_v);
 	}
@@ -109,17 +112,17 @@ namespace delivery {
 		cmd.msg[3] = (((src << 2) & 0x0f) | ((pol_v == POL_V) ? 0 : 2) | (hiband ? 1 : 0));
 
 		for (size_t i = 0; i < _diseqcRepeat; ++i) {
-			usleep(300 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(300));
 			SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x] [%02x]", streamID, cmd.msg[0],
 					cmd.msg[1], cmd.msg[2], cmd.msg[3], cmd.msg[4]);
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
 			}
-			usleep(50 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
-			usleep(70 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(70));
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
 			}

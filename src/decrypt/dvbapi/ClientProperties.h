@@ -42,6 +42,10 @@ namespace dvbapi {
 
 			virtual ~ClientProperties();
 
+			ClientProperties(const ClientProperties&) = delete;
+
+			ClientProperties& operator=(const ClientProperties&) = delete;
+
 			// ================================================================
 			//  -- Other member functions -------------------------------------
 			// ================================================================

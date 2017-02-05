@@ -40,7 +40,7 @@ namespace base {
 			// ===================================================================
 			//  -- Constructors and destructor -----------------------------------
 			// ===================================================================
-			explicit ThreadBase(std::string name);
+			explicit ThreadBase(const std::string &name);
 
 			virtual ~ThreadBase();
 

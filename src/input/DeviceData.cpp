@@ -27,7 +27,14 @@ namespace input {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	DeviceData::DeviceData() {}
+	DeviceData::DeviceData() {
+		initialize();
+		_changed = false;
+		_strength = 0u;
+		_snr = 0u;
+		_ber = 0u;
+		_ublocks = 0u;
+	}
 
 	DeviceData::~DeviceData() {}
 

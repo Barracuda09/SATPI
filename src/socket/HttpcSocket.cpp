@@ -23,6 +23,9 @@
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
 
+#include <chrono>
+#include <thread>
+
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -93,7 +96,7 @@ const int HttpcSocket::HTTPC_TIMEOUT = 500;
 				}
 			} else {
 				if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-					usleep(1000);
+					std::this_thread::sleep_for(std::chrono::microseconds(1000));
 					--timeout;
 				} else {
 					return size;

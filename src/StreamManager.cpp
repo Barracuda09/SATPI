@@ -32,6 +32,9 @@
 	#include <input/dvb/FrontendDecryptInterface.h>
 #endif
 
+#include <random>
+#include <cmath>
+
 #include <assert.h>
 
 StreamManager::StreamManager(const std::string &xmlFilePath) :
@@ -64,7 +67,7 @@ void StreamManager::enumerateDevices() {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
-	SI_LOG_DEBUG("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
+	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
@@ -138,9 +141,11 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			sessionID = socketClient.getSessionID();
 			SI_LOG_INFO("Found SessionID %s by SocketClient", sessionID.c_str());
 		} else if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
-			// Do we need to make a new sessionID (only if there are transport parameters
-			static unsigned int seedp = 0xBEEF;
-			StringConverter::addFormattedString(sessionID, "%010d", rand_r(&seedp) % 0xffffffff);
+			// Do we need to make a new sessionID (only if there are transport parameters)
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::normal_distribution<> dist(0xfffffff, 0xffffff);
+			StringConverter::addFormattedString(sessionID, "%010d", std::lround(dist(gen)) % 0xffffffff);
 			newSession = true;
 		} else {
 			// None of the above.. so it is just an outside session give an temporary StreamClient

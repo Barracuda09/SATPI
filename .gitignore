@@ -12,6 +12,4 @@ satpi
 /src/*~
 bootID
 plantuml.jar
-
-
-
+cppcheck.log

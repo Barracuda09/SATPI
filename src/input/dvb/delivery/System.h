@@ -44,7 +44,7 @@ namespace delivery {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			System(int streamID) : _streamID(streamID) {}
+			explicit System(int streamID) : _streamID(streamID) {}
 
 			virtual ~System() {}
 

@@ -25,6 +25,9 @@
 #include <Log.h>
 #include <Utils.h>
 
+#include <chrono>
+#include <thread>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -37,7 +40,7 @@
 namespace upnp {
 namespace ssdp {
 
-#define UTIME_DEL    200000
+#define UTIME_DEL 200000
 
 Server::Server(const InterfaceAttr &interface,
                Properties &properties) :
@@ -116,7 +119,7 @@ void Server::threadEntry() {
 										        "MAN: \"ssdp:discover\"\r\n" \
 										        "ST: urn:ses-com:device:SatIPServer:1\r\n" \
 										        "USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
-										        "DEVICEID.SES.COM: %d\r\n" \
+										        "DEVICEID.SES.COM: %ul\r\n" \
 										        "\r\n";
 										snprintf(msg, sizeof(msg), UPNP_M_SEARCH, _interface.getIPAddress().c_str(), SSDP_PORT,
 										         _properties.getSoftwareVersion().c_str(), _properties.getDeviceID());
@@ -132,15 +135,15 @@ void Server::threadEntry() {
 								std::string param;
 								const char *UPNP_M_SEARCH_OK =
 								        "HTTP/1.1 200 OK\r\n" \
-								        "CACHE-CONTROL: max-age=%d\r\n" \
+								        "CACHE-CONTROL: max-age=%ul\r\n" \
 								        "EXT:\r\n" \
 								        "LOCATION: %s\r\n" \
 								        "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 								        "ST: urn:ses-com:device:SatIPServer:1\r\n" \
 								        "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-								        "BOOTID.UPNP.ORG: %d\r\n" \
+								        "BOOTID.UPNP.ORG: %ul\r\n" \
 								        "CONFIGID.UPNP.ORG: 0\r\n" \
-								        "DEVICEID.SES.COM: %d\r\n" \
+								        "DEVICEID.SES.COM: %ul\r\n" \
 								        "\r\n";
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
 									// someone contacted us, so this should mean we have the same DEVICEID
@@ -218,15 +221,15 @@ void Server::threadEntry() {
 			const char *UPNP_ROOTDEVICE =
 			        "NOTIFY * HTTP/1.1\r\n" \
 			        "HOST: 239.255.255.250:1900\r\n" \
-			        "CACHE-CONTROL: max-age=%d\r\n" \
+			        "CACHE-CONTROL: max-age=%ul\r\n" \
 			        "LOCATION: %s\r\n" \
 			        "NT: upnp:rootdevice\r\n" \
 			        "NTS: ssdp:alive\r\n" \
 			        "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 			        "USN: uuid:%s::upnp:rootdevice\r\n" \
-			        "BOOTID.UPNP.ORG: %d\r\n" \
+			        "BOOTID.UPNP.ORG: %ul\r\n" \
 			        "CONFIGID.UPNP.ORG: 0\r\n" \
-			        "DEVICEID.SES.COM: %d\r\n" \
+			        "DEVICEID.SES.COM: %ul\r\n" \
 			        "\r\n";
 			snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE, _properties.getSsdpAnnounceTimeSec(),
 				location.c_str(), _properties.getSoftwareVersion().c_str(),
@@ -235,21 +238,21 @@ void Server::threadEntry() {
 			if (!_udpMultiSend.sendDataTo(msg, strlen(msg), 0)) {
 				SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE data send failed");
 			}
-			usleep(UTIME_DEL);
+			std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 
 			// broadcast message
 			const char *UPNP_ALIVE =
 			        "NOTIFY * HTTP/1.1\r\n" \
 			        "HOST: 239.255.255.250:1900\r\n" \
-			        "CACHE-CONTROL: max-age=%d\r\n" \
+			        "CACHE-CONTROL: max-age=%ul\r\n" \
 			        "LOCATION: %s\r\n" \
 			        "NT: uuid:%s\r\n" \
 			        "NTS: ssdp:alive\r\n" \
 			        "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 			        "USN: uuid:%s\r\n" \
-			        "BOOTID.UPNP.ORG: %d\r\n" \
+			        "BOOTID.UPNP.ORG: %ul\r\n" \
 			        "CONFIGID.UPNP.ORG: 0\r\n" \
-			        "DEVICEID.SES.COM: %d\r\n" \
+			        "DEVICEID.SES.COM: %ul\r\n" \
 			        "\r\n";
 			snprintf(msg, sizeof(msg), UPNP_ALIVE, _properties.getSsdpAnnounceTimeSec(),
 				location.c_str(), _properties.getUUID().c_str(),
@@ -258,21 +261,21 @@ void Server::threadEntry() {
 			if (!_udpMultiSend.sendDataTo(msg, strlen(msg), 0)) {
 				SI_LOG_ERROR("SSDP UPNP_ALIVE data send failed");
 			}
-			usleep(UTIME_DEL);
+			std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 
 			// broadcast message
 			const char *UPNP_DEVICE =
 			        "NOTIFY * HTTP/1.1\r\n" \
 			        "HOST: 239.255.255.250:1900\r\n" \
-			        "CACHE-CONTROL: max-age=%d\r\n" \
+			        "CACHE-CONTROL: max-age=%ul\r\n" \
 			        "LOCATION: %s\r\n" \
 			        "NT: urn:ses-com:device:SatIPServer:1\r\n" \
 			        "NTS: ssdp:alive\r\n" \
 			        "SERVER: Linux/1.0 UPnP/1.1 SatPI/%s\r\n" \
 			        "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-			        "BOOTID.UPNP.ORG: %d\r\n" \
+			        "BOOTID.UPNP.ORG: %ul\r\n" \
 			        "CONFIGID.UPNP.ORG: 0\r\n" \
-			        "DEVICEID.SES.COM: %d\r\n" \
+			        "DEVICEID.SES.COM: %ul\r\n" \
 			        "\r\n";
 			snprintf(msg, sizeof(msg), UPNP_DEVICE, _properties.getSsdpAnnounceTimeSec(),
 				location.c_str(), _properties.getSoftwareVersion().c_str(),
@@ -294,7 +297,7 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 	        "NT: upnp:rootdevice\r\n" \
 	        "NTS: ssdp:byebye\r\n" \
 	        "USN: uuid:%s::upnp:rootdevice\r\n" \
-	        "BOOTID.UPNP.ORG: %d\r\n" \
+	        "BOOTID.UPNP.ORG: %ul\r\n" \
 	        "CONFIGID.UPNP.ORG: 0\r\n" \
 	        "\r\n";
 	snprintf(msg, sizeof(msg), UPNP_ROOTDEVICE_BB, uuid, bootId);
@@ -302,7 +305,7 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 		SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE_BB data send failed");
 		return false;
 	}
-	usleep(UTIME_DEL);
+	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 
 	// broadcast message
 	const char *UPNP_BYEBYE =
@@ -311,7 +314,7 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 	        "NT: uuid:%s\r\n" \
 	        "NTS: ssdp:byebye\r\n" \
 	        "USN: uuid:%s\r\n" \
-	        "BOOTID.UPNP.ORG: %d\r\n" \
+	        "BOOTID.UPNP.ORG: %ul\r\n" \
 	        "CONFIGID.UPNP.ORG: 0\r\n" \
 	        "\r\n";
 	snprintf(msg, sizeof(msg), UPNP_BYEBYE, uuid, uuid, bootId);
@@ -319,7 +322,7 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 		SI_LOG_ERROR("SSDP BYEBYE data send failed");
 		return false;
 	}
-	usleep(UTIME_DEL);
+	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 
 	// broadcast message
 	const char *UPNP_DEVICE_BB =
@@ -328,7 +331,7 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 	        "NT: urn:ses-com:device:SatIPServer:1\r\n" \
 	        "NTS: ssdp:byebye\r\n" \
 	        "USN: uuid:%s::urn:ses-com:device:SatIPServer:1\r\n" \
-	        "BOOTID.UPNP.ORG: %d\r\n" \
+	        "BOOTID.UPNP.ORG: %ul\r\n" \
 	        "CONFIGID.UPNP.ORG: 0\r\n" \
 	        "\r\n";
 	snprintf(msg, sizeof(msg), UPNP_DEVICE_BB, uuid, bootId);
@@ -336,19 +339,17 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 		SI_LOG_ERROR("SSDP UPNP_DEVICE_BB data send failed");
 		return false;
 	}
-	usleep(UTIME_DEL);
-
+	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 	return true;
 }
 
 unsigned int Server::readBootIDFromFile(const char *file) {
-
 	// Get BOOTID from file, increment and save it again
 	unsigned int bootId = 0;
 	int fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
 	if (fd > 0) {
 		char content[50];
-		const char *BOOTID_STR = "bootID=%d";
+		const char *BOOTID_STR = "bootID=%ul";
 		if (read(fd, content, sizeof(content)) >= 0) {
 			if (strlen(content) != 0) {
 				sscanf(content, BOOTID_STR, &bootId);

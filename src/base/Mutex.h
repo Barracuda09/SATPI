@@ -22,6 +22,9 @@
 
 #include <Log.h>
 
+#include <chrono>
+#include <thread>
+
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/prctl.h>
@@ -56,7 +59,7 @@ class Mutex {
 		bool tryLock(unsigned int timeout) const {
 			bool locked = true;
 			while (pthread_mutex_trylock(&_mutex) != 0) {
-				usleep(1000);
+				std::this_thread::sleep_for(std::chrono::microseconds(1000));
 				--timeout;
 				if (timeout == 0) {
 					locked = false;

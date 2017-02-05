@@ -12,7 +12,7 @@ SatPI *-- Properties
 SatPI *-- InterfaceAttr
 
 
-class SatPI {
+class SatPI #ffcccc {
   Properties
   InterfaceAttr
 }
@@ -103,7 +103,7 @@ class StreamManager {
 StreamClient *-- socket::SocketAttr : " _rtp "
 StreamClient *-- socket::SocketAttr : " _rtcp "
 StreamClient *.. socket::SocketClient : " _httpc "
-class StreamClient {
+class StreamClient #aaaaff {
   Mutex
   SocketClient *_httpc
   watchdog

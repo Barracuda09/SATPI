@@ -29,6 +29,9 @@
 	#include <decrypt/dvbapi/Client.h>
 #endif
 
+#include <chrono>
+#include <thread>
+
 namespace output {
 
 	StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream,
@@ -37,12 +40,14 @@ namespace output {
 		_stream(stream),
 		_protocol(protocol),
 		_state(State::Paused),
+		_writeIndex(0u),
+		_readIndex(0u),
 		_decrypt(decrypt),
-		_sendInterval(100) {
+		_sendInterval(100u) {
 		// Initialize all TS packets
 		uint32_t ssrc = _stream.getSSRC();
 		long timestamp = _stream.getTimestamp();
-		for (size_t i = 0; i < MAX_BUF; ++i) {
+		for (size_t i = 0u; i < MAX_BUF; ++i) {
 			_tsBuffer[i].initialize(ssrc, timestamp);
 		}
 	}
@@ -61,8 +66,8 @@ namespace output {
 		const int clientID = 0;
 		const StreamClient &client = _stream.getStreamClient(clientID);
 
-		_writeIndex        = 0;
-		_readIndex         = 0;
+		_writeIndex        = 0u;
+		_readIndex         = 0u;
 		_tsBuffer[_writeIndex].reset();
 
 		if (!startThread()) {
@@ -89,8 +94,8 @@ namespace output {
 	bool StreamThreadBase::restartStreaming(int clientID) {
 		// Check if thread is running
 		if (running()) {
-			_writeIndex = 0;
-			_readIndex  = 0;
+			_writeIndex = 0u;
+			_readIndex  = 0u;
 			_tsBuffer[_writeIndex].reset();
 			_state = State::Running;
 			SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
@@ -110,7 +115,7 @@ namespace output {
 			// try waiting on pause
 			auto timeout = 0;
 			while (_state != State::Paused) {
-				usleep(50000);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				++timeout;
 				if (timeout > 50) {
 					SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",

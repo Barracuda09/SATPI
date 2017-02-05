@@ -23,6 +23,9 @@
 #include <StringConverter.h>
 #include <input/dvb/FrontendData.h>
 
+#include <chrono>
+#include <thread>
+
 #include <cmath>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -103,26 +106,26 @@ namespace delivery {
 		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
 			PERROR("FE_SET_VOLTAGE failed");
 		}
-		usleep(50 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 			PERROR("FE_SET_TONE failed");
 		}
-		usleep(50 * 1000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		for (size_t i = 0; i < _diseqcRepeat; ++i) {
 			SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x] [%02x]", streamID, cmd.msg[0],
 					cmd.msg[1], cmd.msg[2], cmd.msg[3], cmd.msg[4]);
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
 			}
-			usleep(15 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(15));
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
-			usleep(50 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
 			}
-			usleep(150 * 1000);
+			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 		}
 		return true;
 	}
