@@ -108,7 +108,7 @@ std::string StreamManager::getRTSPDescribeString() const {
 		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
 	StringConverter::addFormattedString(describeStr, "%zu,%zu,%zu",
-		dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+		dvb_s2, dvb_t, dvb_c);
 	return describeStr;
 }
 
