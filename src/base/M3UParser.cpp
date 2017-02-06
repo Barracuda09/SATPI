@@ -81,7 +81,7 @@ namespace base {
 				}
 			}
 			file.close();
-			return true;
+			return !_transformationMap.empty();
 		} else {
 			SI_LOG_ERROR("Error: could not open file: %s", filePath.c_str());
 			return false;
