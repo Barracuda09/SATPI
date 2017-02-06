@@ -135,7 +135,7 @@ namespace dvb {
 								snprintf(dmx_path, FE_PATH_LEN, DMX, adapt_nr, fe_nr);
 
 								const StreamVector::size_type size = streamVector.size();
-								input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe_path, dvr_path, dmx_path);
+								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe_path, dvr_path, dmx_path);
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
 							}
 							break;
@@ -240,7 +240,7 @@ namespace dvb {
 		pfd[0].fd = _fd_dvr;
 		pfd[0].events = POLLIN | POLLPRI;
 		pfd[0].revents = 0;
-		return poll(pfd, 1, 100) > 0;
+		return ::poll(pfd, 1, 100) > 0;
 	}
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
@@ -295,18 +295,18 @@ namespace dvb {
 		uint32_t ublocks;
 
 		// first read status
-		if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+		if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 			// some frontends might not support all these ioctls
-			if (ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
+			if (::ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
 				strength = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
+			if (::ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
 				snr = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
+			if (::ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
 				ber = 0;
 			}
-			if (ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
+			if (::ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
 				ublocks = 0;
 			}
 			strength = (strength * 240) / 0xffff;
@@ -552,7 +552,7 @@ namespace dvb {
 	}
 
 	bool Frontend::teardown() {
-		for (std::size_t i = 0; i < MAX_PIDS; ++i) {
+		for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
 			if (_frontendData.isPIDUsed(i)) {
 				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
 						_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
@@ -595,7 +595,7 @@ namespace dvb {
 			return;
 		}
 
-		if (ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0) {
+		if (::ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0) {
 			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 			PERROR("FE_GET_INFO");
 			CLOSE_FD(fd_fe);
@@ -622,7 +622,7 @@ namespace dvb {
 		struct dtv_properties dtvProperties;
 		dtvProperties.num = 1;       // size
 		dtvProperties.props = &dtvProperty;
-		if (ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
+		if (::ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
 			// If we are here it can mean we have an DVB-API <= 5.4
 			SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
 			auto index = 0;
@@ -668,7 +668,7 @@ namespace dvb {
 		CLOSE_FD(fd_fe);
 #endif
 		// get capability of this frontend and count the delivery systems
-		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; i++) {
+		for (std::size_t i = 0u; i < dtvProperty.u.buffer.len; ++i) {
 			switch (dtvProperty.u.buffer.data[i]) {
 				case SYS_DSS:
 					SI_LOG_INFO("Frontend Type: DSS");
@@ -737,7 +737,7 @@ namespace dvb {
 	}
 
 	int Frontend::open_fe(const std::string &path, bool readonly) const {
-		const int fd = open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
+		const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
 			PERROR("FRONTEND DEVICE");
 		}
@@ -745,7 +745,7 @@ namespace dvb {
 	}
 
 	int Frontend::open_dmx(const std::string &path) {
-		const int fd = open(path.c_str(), O_RDWR | O_NONBLOCK);
+		const int fd = ::open(path.c_str(), O_RDWR | O_NONBLOCK);
 		if (fd < 0) {
 			PERROR("DMX DEVICE");
 		}
@@ -753,7 +753,7 @@ namespace dvb {
 	}
 
 	int Frontend::open_dvr(const std::string &path) {
-		const int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+		const int fd = ::open(path.c_str(), O_RDONLY | O_NONBLOCK);
 		if (fd < 0) {
 			PERROR("DVR DEVICE");
 		}
@@ -769,7 +769,7 @@ namespace dvb {
 		pesFilter.pes_type = DMX_PES_OTHER;
 		pesFilter.flags    = DMX_IMMEDIATE_START;
 
-		if (ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
+		if (::ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
 			PERROR("DMX_SET_PES_FILTER");
 			return false;
 		}
@@ -824,7 +824,7 @@ namespace dvb {
 			while (timeout < 4) {
 				fe_status_t status = FE_TIMEDOUT;
 				// first read status
-				if (ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 					if (status & FE_HAS_LOCK) {
 						// We are tuned now
 						_tuned = true;
@@ -853,7 +853,7 @@ namespace dvb {
 
 			{
 				base::MutexLock lock(_mutex);
-				if (ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSizeMB * 1024 * 1024) == -1) {
+				if (::ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSizeMB * 1024 * 1024) == -1) {
 					PERROR("DMX_SET_BUFFER_SIZE failed");
 				}
 			}
@@ -863,7 +863,7 @@ namespace dvb {
 
 	void Frontend::resetPid(int pid) {
 		if (_frontendData.getDMXFileDescriptor(pid) != -1 &&
-			ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+			::ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 			PERROR("DMX_STOP");
 		}
 		_frontendData.closeDMXFileDescriptor(pid);
