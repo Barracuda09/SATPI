@@ -87,8 +87,8 @@ namespace dvb {
 	// =======================================================================
 
 	static void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
-			const std::string &path) {
-		const std::string ADAPTER = path + "/adapter%d";
+			const std::string &path, const std::string &startPath) {
+		const std::string ADAPTER = startPath + "/adapter%d";
 		const std::string DMX = ADAPTER + "/demux%d";
 		const std::string DVR = ADAPTER + "/dvr%d";
 		const std::string FRONTEND = ADAPTER + "/frontend%d";
@@ -142,7 +142,7 @@ namespace dvb {
 						case S_IFDIR:
 							// do not use dir '.' an '..'
 							if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-								getAttachedFrontends(streamVector, decrypt, full_path);
+								getAttachedFrontends(streamVector, decrypt, full_path, startPath);
 							}
 							break;
 					}
@@ -162,7 +162,7 @@ namespace dvb {
 		const std::string &path) {
 		const StreamVector::size_type beginSize = streamVector.size();
 		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
-		getAttachedFrontends(streamVector, decrypt, path);
+		getAttachedFrontends(streamVector, decrypt, path, path);
 		const StreamVector::size_type endSize = streamVector.size();
 		SI_LOG_INFO("Frontends found: %zu", endSize - beginSize);
 	}
