@@ -224,9 +224,6 @@ namespace dvb {
 			///
 			void resetPid(int pid);
 
-			///
-			void processPID(DeviceData &data, const std::string &pids, bool clearPidsFirst, bool add);
-
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
@@ -243,6 +240,7 @@ namespace dvb {
 
 			input::dvb::delivery::SystemVector _deliverySystem;
 			input::dvb::FrontendData _frontendData;
+			input::dvb::FrontendData _transformFrontendData;
 			input::Transformation _transform;
 			std::size_t _dvbs2;
 			std::size_t _dvbt;

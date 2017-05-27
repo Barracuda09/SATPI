@@ -40,7 +40,7 @@ void Log::open_app_log() {}
 
 void Log::close_app_log() {}
 
-void Log::binlog(int priority, const unsigned char *p, int length, const char *fmt, ...) {
+void Log::binlog(const int priority, const unsigned char *p, const int length, const char *fmt, ...) {
 	std::string strData;
 	for (int i = 1; i <= length; ++i) {
 		StringConverter::addFormattedString(strData, "%02X ", p[i-1]);
@@ -57,7 +57,7 @@ void Log::binlog(int priority, const unsigned char *p, int length, const char *f
 	applog(priority, "%s\r\n%s\r\nEND\r\n", txt, strData.c_str());
 }
 
-void Log::applog(int priority, const char *fmt, ...) {
+void Log::applog(const int priority, const char *fmt, ...) {
 	base::MutexLock lock(logMutex);
 
 	char txt[2048];

@@ -64,6 +64,7 @@ namespace dvb {
 		_path_to_fe(fe),
 		_path_to_dvr(dvr),
 		_path_to_dmx(dmx),
+		_transform(_transformFrontendData),
 		_dvbs2(0),
 		_dvbt(0),
 		_dvbt2(0),
@@ -144,6 +145,9 @@ namespace dvb {
 							if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
 								getAttachedFrontends(streamVector, decrypt, full_path, startPath);
 							}
+							break;
+						default:
+							// Do nothing here, just find next
 							break;
 					}
 				}
@@ -329,197 +333,9 @@ namespace dvb {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
 		// Do we need to transform this request?
-		std::string msg = _transform.transformStreamString(_streamID, msg1, method);
+		const std::string msg = _transform.transformStreamString(_streamID, msg1, method);
 
-		std::string strVal;
-
-		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
-		const double oldFreq = _frontendData.getFrequency() / 1000.0;
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		if (freq != -1) {
-			if (freq != oldFreq) {
-				// new frequency so initialize FrontendData and 'remove' all used PIDS
-				_frontendData.initialize();
-				SI_LOG_INFO("Stream: %d, New frequency requested, clearing channel data...", _streamID);
-			}
-			_frontendData.setFrequency(freq * 1000.0);
-		}
-		// !!!!
-		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
-		if (sr != -1) {
-			_frontendData.setSymbolRate(sr * 1000);
-		}
-		const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
-		if (msys != input::InputSystem::UNDEFINED) {
-			_frontendData.setDeliverySystem(msys);
-		}
-		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
-			if (strVal.compare("h") == 0) {
-				_frontendData.setPolarization(POL_H);
-			} else if (strVal.compare("v") == 0) {
-				_frontendData.setPolarization(POL_V);
-			}
-		}
-		const int src = StringConverter::getIntParameter(msg, method, "src=");
-		if (src != -1) {
-			_frontendData.setDiSEqcSource(src);
-		}
-		if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
-			// "on", "off"[, "auto"]
-			if (strVal.compare("on") == 0) {
-				_frontendData.setPilotTones(PILOT_ON);
-			} else if (strVal.compare("off") == 0) {
-				_frontendData.setPilotTones(PILOT_OFF);
-			} else if (strVal.compare("auto") == 0) {
-				_frontendData.setPilotTones(PILOT_AUTO);
-			} else {
-				SI_LOG_ERROR("Unknown Pilot Tone [%s]", strVal.c_str());
-				_frontendData.setPilotTones(PILOT_AUTO);
-			}
-		}
-		if (StringConverter::getStringParameter(msg, method, "ro=", strVal) == true) {
-			// "0.35", "0.25", "0.20"[, "auto"]
-			if (strVal.compare("0.35") == 0) {
-				_frontendData.setRollOff(ROLLOFF_35);
-			} else if (strVal.compare("0.25") == 0) {
-				_frontendData.setRollOff(ROLLOFF_25);
-			} else if (strVal.compare("0.20") == 0) {
-				_frontendData.setRollOff(ROLLOFF_20);
-			} else if (strVal.compare("auto") == 0) {
-				_frontendData.setRollOff(ROLLOFF_AUTO);
-			} else {
-				SI_LOG_ERROR("Unknown Rolloff [%s]", strVal.c_str());
-				_frontendData.setRollOff(ROLLOFF_AUTO);
-			}
-		}
-		if (StringConverter::getStringParameter(msg, method, "fec=", strVal) == true) {
-			const int fec = atoi(strVal.c_str());
-			// "12", "23", "34", "56", "78", "89", "35", "45", "910"
-			if (fec == 12) {
-				_frontendData.setFEC(FEC_1_2);
-			} else if (fec == 23) {
-				_frontendData.setFEC(FEC_2_3);
-			} else if (fec == 34) {
-				_frontendData.setFEC(FEC_3_4);
-			} else if (fec == 35) {
-				_frontendData.setFEC(FEC_3_5);
-			} else if (fec == 45) {
-				_frontendData.setFEC(FEC_4_5);
-			} else if (fec == 56) {
-				_frontendData.setFEC(FEC_5_6);
-			} else if (fec == 67) {
-				_frontendData.setFEC(FEC_6_7);
-			} else if (fec == 78) {
-				_frontendData.setFEC(FEC_7_8);
-			} else if (fec == 89) {
-				_frontendData.setFEC(FEC_8_9);
-			} else if (fec == 910) {
-				_frontendData.setFEC(FEC_9_10);
-			} else if (fec == 999) {
-				_frontendData.setFEC(FEC_AUTO);
-			} else {
-				_frontendData.setFEC(FEC_NONE);
-			}
-		}
-		if (StringConverter::getStringParameter(msg, method, "mtype=", strVal) == true) {
-			if (strVal.compare("8psk") == 0) {
-				_frontendData.setModulationType(PSK_8);
-			} else if (strVal.compare("qpsk") == 0) {
-				_frontendData.setModulationType(QPSK);
-			} else if (strVal.compare("16qam") == 0) {
-				_frontendData.setModulationType(QAM_16);
-			} else if (strVal.compare("64qam") == 0) {
-				_frontendData.setModulationType(QAM_64);
-			} else if (strVal.compare("256qam") == 0) {
-				_frontendData.setModulationType(QAM_256);
-			}
-		} else if (msys != input::InputSystem::UNDEFINED) {
-			// no 'mtype' set so guess one according to 'msys'
-			switch (msys) {
-			case input::InputSystem::DVBS:
-				_frontendData.setModulationType(QPSK);
-				break;
-			case input::InputSystem::DVBS2:
-				_frontendData.setModulationType(PSK_8);
-				break;
-			case input::InputSystem::DVBT:
-			case input::InputSystem::DVBT2:
-			case input::InputSystem::DVBC:
-				_frontendData.setModulationType(QAM_AUTO);
-				break;
-			default:
-				SI_LOG_ERROR("Not supported delivery system");
-				break;
-			}
-		}
-		const int specinv = StringConverter::getIntParameter(msg, method, "specinv=");
-		if (specinv != -1) {
-			_frontendData.setSpectralInversion(specinv);
-		}
-		const double bw = StringConverter::getDoubleParameter(msg, method, "bw=");
-		if (bw != -1) {
-			_frontendData.setBandwidthHz(bw * 1000000.0);
-		}
-		if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
-			// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
-			if (strVal.compare("1k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_1K);
-			} else if (strVal.compare("2k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_2K);
-			} else if (strVal.compare("4k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_4K);
-			} else if (strVal.compare("8k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_8K);
-			} else if (strVal.compare("16k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_16K);
-			} else if (strVal.compare("32k") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_32K);
-			} else if (strVal.compare("auto") == 0) {
-				_frontendData.setTransmissionMode(TRANSMISSION_MODE_AUTO);
-			}
-		}
-		if (StringConverter::getStringParameter(msg, method, "gi=", strVal) == true) {
-			// "14", "18", "116", "132","1128", "19128", "19256"
-			const int gi = atoi(strVal.c_str());
-			if (gi == 14) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_1_4);
-			} else if (gi == 18) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_1_8);
-			} else if (gi == 116) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_1_16);
-			} else if (gi == 132) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_1_32);
-			} else if (gi == 1128) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_1_128);
-			} else if (gi == 19128) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_19_128);
-			} else if (gi == 19256) {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_19_256);
-			} else {
-				_frontendData.setGuardInverval(GUARD_INTERVAL_AUTO);
-			}
-		}
-		const int plp = StringConverter::getIntParameter(msg, method, "plp=");
-		if (plp != -1) {
-			_frontendData.setUniqueIDPlp(plp);
-		}
-		const int t2id = StringConverter::getIntParameter(msg, method, "t2id=");
-		if (t2id != -1) {
-			_frontendData.setUniqueIDT2(t2id);
-		}
-		const int sm = StringConverter::getIntParameter(msg, method, "sm=");
-		if (sm != -1) {
-			_frontendData.setSISOMISO(sm);
-		}
-		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
-			processPID(_frontendData, strVal, true, true);
-		}
-		if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-			processPID(_frontendData, strVal, false, true);
-		}
-		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
-			processPID(_frontendData, strVal, false, false);
-		}
+		_frontendData.parseStreamString(_streamID, msg, method);
 
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
@@ -688,27 +504,27 @@ namespace dvb {
 					break;
 #if FULL_DVB_API_VERSION >= 0x0505
 				case SYS_DVBC_ANNEX_A:
-					if (_dvbc == 0) {
+					if (_dvbc == 0u) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex A)");
 					break;
 				case SYS_DVBC_ANNEX_C:
-					if (_dvbc == 0) {
+					if (_dvbc == 0u) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
 					break;
 #else
 				case SYS_DVBC_ANNEX_AC:
-					if (_dvbc == 0) {
+					if (_dvbc == 0u) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
 					break;
 #endif
 				case SYS_DVBC_ANNEX_B:
-					if (_dvbc == 0) {
+					if (_dvbc == 0u) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
@@ -722,18 +538,18 @@ namespace dvb {
 		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
 		// Set delivery systems
-		if (_dvbs2 > 0) {
+		if (_dvbs2 > 0u) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBS(_streamID));
 		}
-		if (_dvbt > 0 || _dvbt2 > 0) {
+		if (_dvbt > 0u || _dvbt2 > 0u) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBT(_streamID));
 		}
-		if (_dvbc > 0) {
+		if (_dvbc > 0u) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBC(_streamID));
 		}
 	}
 
-	int Frontend::open_fe(const std::string &path, bool readonly) const {
+	int Frontend::open_fe(const std::string &path, const bool readonly) const {
 		const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
 			PERROR("FRONTEND DEVICE");
@@ -757,7 +573,7 @@ namespace dvb {
 		return fd;
 	}
 
-	bool Frontend::set_demux_filter(int fd, uint16_t pid) {
+	bool Frontend::set_demux_filter(const int fd, const uint16_t pid) {
 		struct dmx_pes_filter_params pesFilter;
 
 		pesFilter.pid      = pid;
@@ -858,7 +674,7 @@ namespace dvb {
 		return (_fd_dvr != -1) && _tuned;
 	}
 
-	void Frontend::resetPid(int pid) {
+	void Frontend::resetPid(const int pid) {
 		if (_frontendData.getDMXFileDescriptor(pid) != -1 &&
 			::ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
 			PERROR("DMX_STOP");
@@ -871,8 +687,7 @@ namespace dvb {
 		if (_frontendData.hasPIDTableChanged()) {
 			_frontendData.resetPIDTableChanged();
 			SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
-			int i;
-			for (i = 0; i < MAX_PIDS; ++i) {
+			for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
 				// check if PID is used or removed
 				if (_frontendData.isPIDUsed(i)) {
 					// check if we have no DMX for this PID, then open one
@@ -886,7 +701,7 @@ namespace dvb {
 								return false;
 							}
 						}
-						SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
+						SI_LOG_DEBUG("Stream: %d, Set filter PID: %04zu - fd: %03d%s",
 								_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isPMT(i) ? " - PMT" : "");
 					}
 				} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
@@ -898,45 +713,6 @@ namespace dvb {
 			}
 		}
 		return true;
-	}
-
-	void Frontend::processPID(DeviceData &data, const std::string &pids,
-			bool clearPidsFirst, const bool add) {
-		std::string::size_type begin = 0;
-		if (pids == "all" || pids == "none") {
-			// all/none pids requested then 'remove' all used PIDS
-			for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-				data.setPID(i, false);
-			}
-			if (pids == "all") {
-				data.setAllPID(add);
-			}
-		} else {
-			if (clearPidsFirst) {
-				for (std::size_t i = 0; i < MAX_PIDS; ++i) {
-					data.setPID(i, false);
-				}
-			}
-			for (;; ) {
-				const std::string::size_type end = pids.find_first_of(",", begin);
-				if (end != std::string::npos) {
-					const int pid = atoi(pids.substr(begin, end - begin).c_str());
-					data.setPID(pid, add);
-					begin = end + 1;
-				} else {
-					// Get the last one
-					if (begin < pids.size()) {
-						const int pid = atoi(pids.substr(begin, end - begin).c_str());
-						data.setPID(pid, add);
-					}
-					break;
-				}
-			}
-			// always request PID 0 - Program Association Table (PAT)
-			if (add && !data.isPIDUsed(0)) {
-				data.setPID(0, true);
-			}
-		}
 	}
 
 } // namespace dvb

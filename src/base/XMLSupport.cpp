@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include <cassert>
 #include <iostream>
 #include <fstream>
 
@@ -59,98 +60,101 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 	std::string tag;
 	for (; it != xml.end(); ++it) {
 		switch (state) {
-		case StateXML::SEARCH_START_TAG:
-			// Check begin of 'tag'?
-			if (*it == '<') {
-				++it;
-				if (it != xml.end()) {
-					itBegin = it;
-					switch (*it) {
-					case '!':
-						state = StateXML::COMMENT;
-						break;
-					case '?':
-						state = StateXML::XML_DECL;
-						break;
-					case '/':
-						itEndElement = it - 1;
-						state = StateXML::TAG_END;
-						break;
-					case '&':
-						state = StateXML::ESCAPE;
-						break;
-					default:
-						state = StateXML::TAG_START;
-						break;
-					}
-				} else {
-					return false;
-				}
-			} else {
-				itBegin = it;
-				state = StateXML::ELEMENT;
-			}
-			break;
-		case StateXML::XML_DECL:
-			if (*it == '?') {
-				++it;
-				if (it != xml.end() && *it == '>') {
-					state = StateXML::SEARCH_START_TAG;
-				} else {
-					return false;
-				}
-			}
-			break;
-		case StateXML::TAG_START:
-			if (*it == '>') {
-				tag = xml.substr(itBegin - xml.begin(), it - itBegin);
-				const std::string::size_type end = elementToFind.find_first_of('.', 0);
-				const std::string findTag = elementToFind.substr(0, end);
-				const bool tagMatch = findTag == tag;
-				const std::string nextElementToFind = (tagMatch) ? ((end != std::string::npos) ? elementToFind.substr(end + 1) : "") : elementToFind;
-				++it;
-				if (it != xml.end()) {
-					itBegin = it;
-					if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
+			case StateXML::SEARCH_START_TAG:
+				// Check begin of 'tag'?
+				if (*it == '<') {
+					++it;
+					if (it != xml.end()) {
+						itBegin = it;
+						switch (*it) {
+							case '!':
+								state = StateXML::COMMENT;
+								break;
+							case '?':
+								state = StateXML::XML_DECL;
+								break;
+							case '/':
+								itEndElement = it - 1;
+								state = StateXML::TAG_END;
+								break;
+							case '&':
+								state = StateXML::ESCAPE;
+								break;
+							default:
+								state = StateXML::TAG_START;
+								break;
+						}
+					} else {
 						return false;
 					}
-					if (tag != tagEnd) {
+				} else {
+					itBegin = it;
+					state = StateXML::ELEMENT;
+				}
+				break;
+			case StateXML::XML_DECL:
+				if (*it == '?') {
+					++it;
+					if (it != xml.end() && *it == '>') {
+						state = StateXML::SEARCH_START_TAG;
+					} else {
 						return false;
 					}
-					if (tagMatch && end == std::string::npos) {
-						element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
-						found = true;
-					}
-					state = StateXML::SEARCH_START_TAG;
-				} else {
-					return false;
 				}
-			}
-			break;
-		case StateXML::TAG_END:
-			if (*it == '>') {
-				++itBegin;
-				tagEnd = xml.substr(itBegin - xml.begin(), it - itBegin);
-				return true;
-			}
-			break;
-		case StateXML::COMMENT:
-			if (*it == '>') {
-				state = StateXML::SEARCH_START_TAG;
-			}
-			break;
-		case StateXML::ESCAPE:
-			if (*it == ';') {
-				state = StateXML::SEARCH_START_TAG;
-			}
-			break;
-		case StateXML::ELEMENT:
-			if (*it == '<') {
-				itEndElement = it - 1;
-				state = StateXML::SEARCH_START_TAG;
-				--it;
-			}
-			break;
+				break;
+			case StateXML::TAG_START:
+				if (*it == '>') {
+					tag = xml.substr(itBegin - xml.begin(), it - itBegin);
+					const std::string::size_type end = elementToFind.find_first_of('.', 0);
+					const std::string findTag = elementToFind.substr(0, end);
+					const bool tagMatch = findTag == tag;
+					const std::string nextElementToFind = (tagMatch) ? ((end != std::string::npos) ? elementToFind.substr(end + 1) : "") : elementToFind;
+					++it;
+					if (it != xml.end()) {
+						itBegin = it;
+						if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
+							return false;
+						}
+						if (tag != tagEnd) {
+							return false;
+						}
+						if (tagMatch && end == std::string::npos) {
+							element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
+							found = true;
+						}
+						state = StateXML::SEARCH_START_TAG;
+					} else {
+						return false;
+					}
+				}
+				break;
+			case StateXML::TAG_END:
+				if (*it == '>') {
+					++itBegin;
+					tagEnd = xml.substr(itBegin - xml.begin(), it - itBegin);
+					return true;
+				}
+				break;
+			case StateXML::COMMENT:
+				if (*it == '>') {
+					state = StateXML::SEARCH_START_TAG;
+				}
+				break;
+			case StateXML::ESCAPE:
+				if (*it == ';') {
+					state = StateXML::SEARCH_START_TAG;
+				}
+				break;
+			case StateXML::ELEMENT:
+				if (*it == '<') {
+					itEndElement = it - 1;
+					state = StateXML::SEARCH_START_TAG;
+					--it;
+				}
+				break;
+			default:
+				assert(!"Unkown StateXML");
+				break;
 		}
 	}
 	return true;

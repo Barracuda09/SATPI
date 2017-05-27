@@ -212,7 +212,7 @@ void StreamManager::checkForSessionTimeout() {
 	}
 }
 
-std::string StreamManager::attributeDescribeString(std::size_t stream, bool &active) const {
+std::string StreamManager::attributeDescribeString(const std::size_t stream, bool &active) const {
 	base::MutexLock lock(_mutex);
 
 	assert(!_stream.empty());

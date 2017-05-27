@@ -162,6 +162,9 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				methodDescribe(*stream, clientID, httpc);
 			} else if (method == "TEARDOWN") {
 				methodTeardown(*stream, clientID, httpc);
+			} else {
+				// method not supported
+				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
 			}
 		}
 	} else {

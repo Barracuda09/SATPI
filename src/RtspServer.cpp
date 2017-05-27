@@ -151,7 +151,7 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 		"a=%s\r\n";
 
 	std::string desc;
-	unsigned int streams_setup = 0;
+	std::size_t streams_setup = 0;
 
 	// Describe streams
 	StringConverter::addFormattedString(desc, RTSP_DESCRIBE_CONT1,

@@ -32,8 +32,7 @@ namespace input {
 namespace file {
 
 	TSReader::TSReader(int streamID) :
-		_streamID(streamID),
-		_filePath("None") {}
+		_streamID(streamID) {}
 
 	TSReader::~TSReader() {}
 
@@ -44,7 +43,7 @@ namespace file {
 	void TSReader::enumerate(StreamVector &streamVector, const std::string &path) {
 		SI_LOG_INFO("Setting up TS Reader using path: %s", path.c_str());
 		const StreamVector::size_type size = streamVector.size();
-		input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size);
+		const input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size);
 		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
 	}
 
@@ -55,7 +54,8 @@ namespace file {
 	void TSReader::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
 		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", "TS Reader");
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _filePath.c_str());
+
+		_deviceData.addToXML(xml);
 	}
 
 	void TSReader::fromXML(const std::string &UNUSED(xml)) {
@@ -109,7 +109,7 @@ namespace file {
 				const std::size_t size = buffer.getNumberOfTSPackets();
 				for (std::size_t i = 0; i < size; ++i) {
 					// Get TS packet from the buffer
-					unsigned char *data = buffer.getTSPacketPtr(i);
+					const unsigned char *data = buffer.getTSPacketPtr(i);
 
 					// Check is this the beginning of the TS and no Transport error indicator
 					if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
@@ -200,7 +200,7 @@ namespace file {
 							#define PCR_BASE(DATA) static_cast<uint64_t>(DATA[6] << 24 | DATA[7] << 16 | DATA[8] << 8 | DATA[9]) << 1
 							#define PCR_EXT(DATA)  static_cast<uint64_t>((DATA[10] & 0x01 << 8) | DATA[11])
 
-							uint64_t pcrCur = PCR_BASE(data);
+							const uint64_t pcrCur = PCR_BASE(data);
 
 							_pcrDelta = pcrCur - _pcrPrev;
 							_pcrPrev = pcrCur;
@@ -237,63 +237,51 @@ namespace file {
 	}
 
 	bool TSReader::hasDeviceDataChanged() const {
-		return false;
+		return _deviceData.hasDeviceDataChanged();
 	}
 
 	void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-		std::string file;
-		if (StringConverter::getStringParameter(msg, method, "uri=", file) == true) {
-			if (!_file.is_open()) {
-				_filePath = file;
-				_file.open(_filePath, std::ifstream::binary | std::ifstream::in);
-				if (_file.is_open()) {
-///////////////////////////////////////////////////////////////////////////////
-					_deviceData.initialize();
-					_pcrPID = -1;
-					_pcrPrev = 0;
-					_pcrDelta = 0;
-					_pmt.setCollected(false);
-					_pat.setCollected(false);
-					_t1 = std::chrono::steady_clock::now();
-					_t2 = _t1;
-					for (size_t i = 0; i < 8193; ++i) {
-						_pmtPIDS[i] = false;
-					}
-///////////////////////////////////////////////////////////////////////////////
-					SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, _filePath.c_str());
-				} else {
-					SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, _filePath.c_str());
-				}
-			}
-		}
+		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+		_deviceData.parseStreamString(_streamID, msg, method);
+		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
 
 	bool TSReader::update() {
+		if (!_file.is_open()) {
+			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+			const std::string filePath = _deviceData.getFilePath();
+			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
+			if (_file.is_open()) {
+				SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
+				_pcrPID = -1;
+				_pcrPrev = 0;
+				_pcrDelta = 0;
+				_pmt.setCollected(false);
+				_pat.setCollected(false);
+				_t1 = std::chrono::steady_clock::now();
+				_t2 = _t1;
+				for (size_t i = 0; i < 8193; ++i) {
+					_pmtPIDS[i] = false;
+				}
+			} else {
+				SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
+			}
+		}
 		return true;
 	}
 
 	bool TSReader::teardown() {
+		_deviceData.clearData();
 		_file.close();
-		_filePath = "None";
-		_deviceData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 		return true;
 	}
 
 	std::string TSReader::attributeDescribeString() const {
-		std::string desc;
-		if (_file.is_open()) {
-			base::MutexLock lock(_mutex);
-			// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;file=<file>
-			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;file=%s",
-					_streamID + 1,
-					_deviceData.getSignalStrength(),
-					_deviceData.hasLock(),
-					_deviceData.getSignalToNoiseRatio(),
-					_filePath.c_str());
+		if (_deviceData.hasFilePath()) {
+			return _deviceData.attributeDescribeString(_streamID);
 		} else {
-			desc = "";
+			return "";
 		}
-		return desc;
 	}
 
 	// =======================================================================

@@ -17,7 +17,7 @@ CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 # Build "debug", "release" or "simu"
 ifeq ($(BUILD),debug)
   # "Debug" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all
+  CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
 else ifeq ($(BUILD),simu)
   # "Debug Simu" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
@@ -57,6 +57,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DVBT.cpp \
 	input/dvb/delivery/Lnb.cpp \
 	input/file/TSReader.cpp \
+	input/file/TSReaderData.cpp \
 	input/stream/Streamer.cpp \
 	mpegts/PidTable.cpp \
 	mpegts/PacketBuffer.cpp \

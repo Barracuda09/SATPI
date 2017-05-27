@@ -50,7 +50,7 @@ namespace stream {
 	void Streamer::enumerate(StreamVector &streamVector) {
 		SI_LOG_INFO("Setting up TS Streamer");
 		const StreamVector::size_type size = streamVector.size();
-		input::stream::SpStreamer streamer = std::make_shared<input::stream::Streamer>(size);
+		const input::stream::SpStreamer streamer = std::make_shared<input::stream::Streamer>(size);
 		streamVector.push_back(std::make_shared<Stream>(size, streamer, nullptr));
 	}
 

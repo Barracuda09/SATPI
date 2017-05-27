@@ -22,6 +22,7 @@
 #include <Log.h>
 #include <StringConverter.h>
 #include <base/Tokenizer.h>
+#include <input/DeviceData.h>
 #include <input/dvb/dvbfix.h>
 
 #include <cstdint>
@@ -32,9 +33,10 @@ namespace input {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	Transformation::Transformation() :
+	Transformation::Transformation(input::DeviceData &transformedDeviceData) :
 			_transform(false),
-			_transformFileM3U("mapping.m3u") {
+			_transformFileM3U("mapping.m3u"),
+			_transformedDeviceData(transformedDeviceData) {
 		_enabled = _m3u.parse(_transformFileM3U);
 		_transformedDeviceData.initialize();
 	}

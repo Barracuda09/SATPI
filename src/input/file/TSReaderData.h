@@ -1,4 +1,4 @@
-/* Transformation.h
+/* FrontendData.h
 
    Copyright (C) 2015 - 2017 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,33 +17,26 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_TRANSFORMATION_H_INCLUDE
-#define INPUT_TRANSFORMATION_H_INCLUDE INPUT_TRANSFORMATION_H_INCLUDE
+#ifndef INPUT_FILE_TSREADER_DATA_H_INCLUDE
+#define INPUT_FILE_TSREADER_DATA_H_INCLUDE INPUT_FILE_TSREADER_DATA_H_INCLUDE
 
-#include <FwDecl.h>
-#include <base/M3UParser.h>
-#include <base/XMLSupport.h>
-#include <base/Mutex.h>
-#include <input/InputSystem.h>
+#include <input/DeviceData.h>
 
 #include <string>
 
-FW_DECL_NS1(input, DeviceData);
-
 namespace input {
+namespace file {
 
-	/// The class @c Transformation is an interface for transform
-	/// an input request to an different request red from an M3U file.
-	class Transformation :
-		public base::XMLSupport  {
+	/// The class @c TSReaderData carries all the data/information for Reading
+	/// from an file
+	class TSReaderData :
+		public DeviceData {
 		public:
-
 			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
+			// Constructors and destructor
 			// =======================================================================
-			Transformation(input::DeviceData &transformedDeviceData);
-
-			virtual ~Transformation();
+			TSReaderData();
+			virtual ~TSReaderData();
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -57,46 +50,45 @@ namespace input {
 			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
+			// -- input::DeviceData --------------------------------------------------
+			// =======================================================================
+
+		public:
+
+			///
+			virtual void initialize() override;
+
+			///
+			virtual void parseStreamString(int streamID, const std::string &msg, const std::string &method) override;
+
+			///
+			virtual std::string attributeDescribeString(int streamID) const override;
+
+			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
 
 		public:
 
-			/// Check if transformation is enabled
-			bool isEnabled() const;
+			///
+			std::string getFilePath() const;
+			
+			bool hasFilePath() const;
 
 			///
-			void resetTransformFlag();
-
-			/// This function may return the input system for the
-			/// requested input frequency.
-			input::InputSystem getTransformationSystemFor(double frequency) const;
-
-			/// This function may return the transformed input message
-			std::string transformStreamString(int streamID,
-				const std::string &msg,
-				const std::string &method);
-
-			/// This function may return the transformed Device Data
-			const DeviceData &transformDeviceData(
-				const DeviceData &deviceData) const;
-
-		private:
+			void clearData();
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;
 
-			bool _enabled;
-			bool _transform;
-			base::M3UParser _m3u;
-			std::string _transformFileM3U;
-			input::DeviceData &_transformedDeviceData;
+			std::string _filePath;
+
 	};
 
+} // namespace file
 } // namespace input
 
-#endif // INPUT_TRANSFORMATION_H_INCLUDE
+#endif // INPUT_FILE_TSREADER_DATA_H_INCLUDE

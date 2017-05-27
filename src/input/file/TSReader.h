@@ -22,13 +22,13 @@
 
 #include <FwDecl.h>
 #include <input/Device.h>
-#include <input/DeviceData.h>
+#include <input/file/TSReaderData.h>
 #include <mpegts/TableData.h>
 
 #include <vector>
 #include <string>
-#include <fstream>
 #include <chrono>
+#include <fstream>
 
 FW_DECL_SP_NS2(input, file, TSReader);
 
@@ -118,8 +118,7 @@ namespace file {
 		private:
 			int _streamID;
 			std::ifstream _file;
-			std::string _filePath;
-			input::DeviceData _deviceData;
+			TSReaderData _deviceData;
 
 			mpegts::TableData _pmt;
 			mpegts::TableData _pat;

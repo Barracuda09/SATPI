@@ -73,45 +73,45 @@ class HttpcServer :
 		void getHtmlBodyNoContent(std::string &htmlBody, const std::string &html,
 			const std::string &location, const std::string &contentType, std::size_t cseq) const;
 
-		/// Method for getting the required files
+		/// HTTP Method for getting the required files or stream
 		virtual bool methodGet(SocketClient &UNUSED(client)) {
 			return false;
 		}
 
-		/// Method for getting the required files
+		/// HTTP Method for received 'posted' data
 		virtual bool methodPost(SocketClient &UNUSED(client)) {
 			return false;
 		}
 
-		///
+		/// RTSP Method
 		virtual bool methodSetup(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
 			return false;
 		}
 
-		///
+		/// RTSP Method
 		virtual bool methodPlay(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
 			return false;
 		}
 
-		///
+		/// RTSP Method
 		virtual bool methodOptions(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
 			return false;
 		}
 
-		///
+		/// RTSP Method
 		virtual bool methodDescribe(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
 			return false;
 		}
 
-		///
+		/// RTSP Method
 		virtual bool methodTeardown(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
 			return false;
 		}
 
-		/// Process the @c SocketClient when there is data received
+		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client);
 
-		///
+		/// Process the the Method HTTP/RTSP
 		void processStreamingRequest(SocketClient &client);
 
 		/// Is called when the connection is closed by the client and should
@@ -133,3 +133,4 @@ class HttpcServer :
 };
 
 #endif // HTTPC_SERVER_H_INCLUDE
+
