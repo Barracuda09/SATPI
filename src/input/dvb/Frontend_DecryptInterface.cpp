@@ -79,7 +79,7 @@ namespace dvb {
 		_frontendData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 		_frontendData.setPID(pid, true);
 		// now update frontend, PID list has changed
-		updateInputDevice();
+		updatePIDFilters();
    }
 
 	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
@@ -87,7 +87,7 @@ namespace dvb {
 		_frontendData.stopOSCamFilterData(demux, filter);
 		_frontendData.setPID(pid, false);
 		// now update frontend, PID list has changed
-		updateInputDevice();
+		updatePIDFilters();
 	}
 
 	bool Frontend::findOSCamFilterData(const int pid, const unsigned char *tsPacket,

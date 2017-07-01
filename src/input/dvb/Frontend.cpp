@@ -589,19 +589,6 @@ namespace dvb {
 		return true;
 	}
 
-	bool Frontend::updateInputDevice() {
-		//	base::MutexLock lock(_mutex);
-		if (_frontendData.hasPIDTableChanged()) {
-			if (isTuned()) {
-				update();
-			} else {
-				SI_LOG_INFO("Stream: %d, Updating PID filters requested but frontend not tuned!",
-							_streamID);
-			}
-		}
-		return true;
-	}
-
 	bool Frontend::tune() {
 		const input::InputSystem delsys = _frontendData.getDeliverySystem();
 		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
@@ -684,32 +671,38 @@ namespace dvb {
 	}
 
 	bool Frontend::updatePIDFilters() {
+		base::MutexLock lock(_mutex);
 		if (_frontendData.hasPIDTableChanged()) {
 			_frontendData.resetPIDTableChanged();
-			SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
-			for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
-				// check if PID is used or removed
-				if (_frontendData.isPIDUsed(i)) {
-					// check if we have no DMX for this PID, then open one
-					if (_frontendData.getDMXFileDescriptor(i) == -1) {
-						_frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
-						std::size_t timeout = 0;
-						while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
-							std::this_thread::sleep_for(std::chrono::milliseconds(350));
-							++timeout;
-							if (timeout > 3) {
-								return false;
+			if (isTuned()) {
+				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
+				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+					// check if PID is used or removed
+					if (_frontendData.isPIDUsed(i)) {
+						// check if we have no DMX for this PID, then open one
+						if (_frontendData.getDMXFileDescriptor(i) == -1) {
+							_frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
+							std::size_t timeout = 0;
+							while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
+								std::this_thread::sleep_for(std::chrono::milliseconds(350));
+								++timeout;
+								if (timeout > 3) {
+									return false;
+								}
 							}
+							SI_LOG_DEBUG("Stream: %d, Set filter PID: %04zu - fd: %03d%s",
+									_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isPMT(i) ? " - PMT" : "");
 						}
-						SI_LOG_DEBUG("Stream: %d, Set filter PID: %04zu - fd: %03d%s",
-								_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isPMT(i) ? " - PMT" : "");
+					} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
+						// We have a DMX but no PID anymore, so reset it
+						SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+								_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
+						resetPid(i);
 					}
-				} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
-					// We have a DMX but no PID anymore, so reset it
-					SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-							_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
-					resetPid(i);
 				}
+			} else {
+				SI_LOG_INFO("Stream: %d, Update PID filters requested, but frontend not tuned!",
+							_streamID);
 			}
 		}
 		return true;

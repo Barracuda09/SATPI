@@ -193,9 +193,6 @@ namespace dvb {
 
 			void setupFrontend();
 
-			/// Update the input device
-			bool updateInputDevice();
-
 			///
 			int open_fe(const std::string &path, bool readonly) const;
 
