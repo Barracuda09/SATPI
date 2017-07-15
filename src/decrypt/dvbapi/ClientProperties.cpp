@@ -43,12 +43,23 @@ namespace dvbapi {
 	ClientProperties::~ClientProperties() {
 		DELETE_ARRAY(_batch);
 		DELETE_ARRAY(_ts);
-		freeKeys();
+		_keys.freeKeys();
 	}
 
 	// ===========================================================================
 	// -- Other member functions -------------------------------------------------
 	// ===========================================================================
+
+	void ClientProperties::stopOSCamFilters(int streamID) {
+		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
+		setTableCollected(PAT_TABLE_ID, false);
+		setTableCollected(PMT_TABLE_ID, false);
+		// free keys
+		_keys.freeKeys();
+		_batchCount = 0;
+
+		_filter.clear();
+	}
 
 	void ClientProperties::setBatchData(unsigned char *ptr, int len,
 		int parity, unsigned char *originalPtr) {

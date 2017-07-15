@@ -125,15 +125,13 @@ namespace dvb {
 			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, std::string &filterData) override;
 
-			virtual void clearOSCamFilters() override;
+			virtual void stopOSCamFilters(int streamID) override;
 
 			virtual void setPMT(int pid, bool set) override;
 
 			virtual bool isPMT(int pid) const override;
 
 			virtual void setKey(const unsigned char *cw, int parity, int index) override;
-
-			virtual void freeKeys() override;
 
 			virtual void setKeyParity(int pid, int parity) override;
 

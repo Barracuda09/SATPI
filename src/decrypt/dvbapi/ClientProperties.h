@@ -75,12 +75,6 @@ namespace dvbapi {
 			/// on failure it will make a NULL TS Packet and clear scramble flag
 			void decryptBatch(bool final);
 
-			/// Free all keys
-			void freeKeys() {
-				_keys.freeKeys();
-				_batchCount = 0;
-			}
-
 			/// Set the 'next' key for the requested parity
 			void setKey(const unsigned char *cw, int parity, int index) {
 				_keys.set(cw, parity, index);
@@ -124,9 +118,7 @@ namespace dvbapi {
 			}
 
 			/// Clear all 'active' filters
-			void clearOSCamFilters() {
-				_filter.clear();
-			}
+			void stopOSCamFilters(int streamID);
 
 			// ================================================================
 			//  -- Data members -----------------------------------------------

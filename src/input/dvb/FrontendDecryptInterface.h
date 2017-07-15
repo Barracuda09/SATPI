@@ -91,7 +91,7 @@ namespace dvb {
 				int &filter, int &demux, std::string &filterData) = 0;
 
 			///
-			virtual void clearOSCamFilters() = 0;
+			virtual void stopOSCamFilters(int streamID) = 0;
 
 			///
 			virtual void setPMT(int pid, bool set) = 0;
@@ -101,9 +101,6 @@ namespace dvb {
 
 			///
 			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
-
-			///
-			virtual void freeKeys() = 0;
 
 			///
 			virtual void setKeyParity(int pid, int parity) = 0;

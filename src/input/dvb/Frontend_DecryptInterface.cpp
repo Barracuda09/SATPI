@@ -74,8 +74,8 @@ namespace dvb {
 
 	void Frontend::startOSCamFilterData(int pid, int demux, int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
-		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %04x mask %04x)",
-			_streamID, pid, demux, filter, filterData[0], filterMask[0]);
+		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
+			_streamID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
 		_frontendData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 		_frontendData.setPID(pid, true);
 		// now update frontend, PID list has changed
@@ -95,8 +95,8 @@ namespace dvb {
 		return _frontendData.findOSCamFilterData(pid, tsPacket, tableID, filter, demux, filterData);
 	}
 
-	void Frontend::clearOSCamFilters() {
-		_frontendData.clearOSCamFilters();
+	void Frontend::stopOSCamFilters(int streamID) {
+		_frontendData.stopOSCamFilters(streamID);
 	}
 
 	void Frontend::setPMT(int pid, bool set) {
@@ -109,10 +109,6 @@ namespace dvb {
 
 	void Frontend::setKey(const unsigned char *cw, int parity, int index) {
 		_frontendData.setKey(cw, parity, index);
-	}
-
-	void Frontend::freeKeys() {
-		_frontendData.freeKeys();
 	}
 
 	void Frontend::setKeyParity(int pid, int parity) {

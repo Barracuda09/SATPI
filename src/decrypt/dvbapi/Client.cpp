@@ -157,7 +157,7 @@ namespace dvbapi {
 							if (pid == 0 || frontend->isPMT(pid)) {
 							} else {
 								const unsigned char *tableData = reinterpret_cast<const unsigned char *>(filterData.c_str());
-								const int sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
+								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
 
 								unsigned char clientData[sectionLength + 25];
 								const uint32_t request = htonl(DVBAPI_FILTER_DATA);
@@ -167,8 +167,8 @@ namespace dvbapi {
 								std::memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
 								const int length = sectionLength + 6; // 6 = clientData header
 
-								SI_LOG_DEBUG("Stream: %d, Send Filter Data for demux %d  filter %d  PID %04d  TableID %04x %04x %04x",
-									streamID, demux, filter, pid, tableID, tableData[8], tableData[9]);
+								SI_LOG_DEBUG("Stream: %d, Send Filter Data with size %d for demux %d filter %d PID %04d TableID %02x %02x %02x %02x %02x",
+									streamID, length, demux, filter, pid, tableData[5], tableData[6], tableData[7], tableData[8], tableData[9]);
 
 								if (!_client.sendData(clientData, length, MSG_DONTWAIT)) {
 									SI_LOG_ERROR("Stream: %d, Filter - send data to server failed", streamID);
@@ -195,27 +195,24 @@ namespace dvbapi {
 	bool Client::stopDecrypt(int streamID) {
 		if (_connected) {
 			unsigned char buff[8];
+			const char demuxIndex = static_cast<char>(streamID + _adapterOffset);
+
 			// Stop 9F 80 3f 04 83 02 00 <demux index>
 			const uint32_t request = htonl(DVBAPI_AOT_CA_STOP);
 			std::memcpy(&buff[0], &request, 4);
 			buff[4] = 0x83;
 			buff[5] = 0x02;
 			buff[6] = 0x00;
-			buff[7] = static_cast<char>(streamID + _adapterOffset);  // demux
+			buff[7] = demuxIndex;
 
-			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt", streamID);
+			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt with demux index %d", streamID, demuxIndex);
 
-			// cleaning tables
-			SI_LOG_DEBUG("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
+			// cleaning tables etc.
 			input::dvb::SpFrontendDecryptInterface frontend = _getFrontendDecryptInterface(streamID);
-			frontend->setTableCollected(PAT_TABLE_ID, false);
-			frontend->setTableCollected(PMT_TABLE_ID, false);
-			frontend->freeKeys();
-
-			frontend->clearOSCamFilters();
+			frontend->stopOSCamFilters(streamID);
 
 			if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
-				SI_LOG_ERROR("Stream: %d, Stop CA Decrypt - send data to server failed", streamID);
+				SI_LOG_ERROR("Stream: %d, Stop CA Decrypt with demux index %d - send data to server failed", streamID, demuxIndex);
 				return false;
 			}
 		}
@@ -444,6 +441,7 @@ namespace dvbapi {
 					}
 
 					// Send it here !!
+					const char demuxIndex = static_cast<char>(streamID + _adapterOffset);
 					const int cpyLength = progInfo.size();
 					const int piLenght  = cpyLength + 1 + 4;
 					const int totLength = piLenght + 6;
@@ -464,11 +462,11 @@ namespace dvbapi {
 					caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
 					caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
 					caPMT[14] = 0x02;                                // Length
-					caPMT[15] = static_cast<char>(streamID + _adapterOffset); // Demux ID
-					caPMT[16] = static_cast<char>(streamID + _adapterOffset); // streamID
+					caPMT[15] = demuxIndex;                          // Demux ID
+					caPMT[16] = demuxIndex;                          // streamID
 					std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
-					SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam", streamID);
+					SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam with demux index %d", streamID, demuxIndex);
 
 					if (!_client.sendData(caPMT, totLength + 6, MSG_DONTWAIT)) {
 						SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
