@@ -45,7 +45,7 @@ namespace delivery {
 		base::MutexLock lock(_mutex);
 		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
 			StringConverter::addFormattedString(xml, "<lnb%zu>", i);
-			_LNB[i].addToXML(xml);
+			_lnb[i].addToXML(xml);
 			StringConverter::addFormattedString(xml, "</lnb%zu>", i);
 		}
 
@@ -59,7 +59,7 @@ namespace delivery {
 			std::string lnb;
 			StringConverter::addFormattedString(lnb, "lnb%zu", i);
 			if (findXMLElement(xml, lnb, element)) {
-				_LNB[i].fromXML(element);
+				_lnb[i].fromXML(element);
 			}
 		}
 

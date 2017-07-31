@@ -76,19 +76,6 @@ namespace dvb {
 
 		public:
 
-			///
-			void setECMInfo(
-				int pid,
-				int serviceID,
-				int caID,
-				int provID,
-				int emcTime,
-				const std::string &cardSystem,
-				const std::string &readerName,
-				const std::string &sourceName,
-				const std::string &protocolName,
-				int hops);
-
 			/// Set DMX file descriptor
 			void setDMXFileDescriptor(int pid, int fd);
 

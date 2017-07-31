@@ -75,7 +75,7 @@ namespace delivery {
 		// size    0x04: send x bytes
 
 		bool hiband = false;
-		_LNB[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
 
 		// param: high nibble: reset bits
 		//        low nibble: set bits

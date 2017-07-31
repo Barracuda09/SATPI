@@ -68,7 +68,7 @@ namespace delivery {
 
 			base::Mutex _mutex;
 			unsigned int _diseqcRepeat;
-			Lnb _LNB[MAX_LNB];    // LNB properties
+			Lnb _lnb[MAX_LNB];    // LNB properties
 
 	};
 

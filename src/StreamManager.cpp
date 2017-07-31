@@ -71,8 +71,11 @@ void StreamManager::enumerateDevices() {
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 
+	// Make an dummy stream
 	input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(0);
 	_dummyStream = std::make_shared<Stream>(0, tsreader, _decrypt);
+
+	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
 	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
 	input::stream::Streamer::enumerate(_stream);

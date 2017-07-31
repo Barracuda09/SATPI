@@ -83,20 +83,33 @@ class HttpcServer {
   processStreamingRequest(..)
 }
 
+class RtcpThread
+
+class StreamInterface #aaaaff
+StreamInterface ..* RtcpThread
+
 Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
 Stream *-- input::Device
 Stream *-- output::StreamThreadBase
-class Stream {
+class Stream #aaaaff {
   Mutex
   streamInUse
   enabled
   StreamingType
 }
 
+class decrypt::dvbapi::Client           #ffbb11 {
+  Mutex
+  callback getFrontendDecryptInterface(..) via StreamManager
+}
+class decrypt::dvbapi::ClientProperties #ffbb11
+class Keys                              #ffbb11
+class Filter                            #ffbb11
+
 StreamManager *-- Stream : " _stream[..] "
-StreamManager *-- decrypt::dvbapi::Client
-class StreamManager {
+StreamManager *-- decrypt::dvbapi::Client : " _decrypt "
+class StreamManager #aaaaff {
   Mutex
 }
 
@@ -111,40 +124,59 @@ class StreamClient #aaaaff {
   cseq
 }
 
-output::StreamThreadBase *.. decrypt::dvbapi::Client
-output::StreamThreadBase *-- TSPacketBuffer : " _tsBuffer[..] "
-output::StreamThreadBase *.. StreamInterface
-class output::StreamThreadBase {
-}
+class mpegts::PacketBuffer  #11ff11
+class mpegts::TableData     #11ff11
+class mpegts::PidTable      #11ff11
 
+output::StreamThreadBase *.. decrypt::dvbapi::Client
+output::StreamThreadBase *-- mpegts::PacketBuffer : " _tsBuffer[..] "
+output::StreamThreadBase *.. StreamInterface
+class output::StreamThreadBase #ccffff
+
+
+RtcpThread --* output::StreamThreadRtp
 
 output::StreamThreadRtp --|> output::StreamThreadBase
-output::StreamThreadRtp *-- RtcpThread
-class output::StreamThreadRtp {
+class output::StreamThreadRtp #ccffff {
   cseq
 }
 
-RtcpThread *.. StreamInterface
-class RtcpThread {
-}
+output::StreamThreadHttp --|> output::StreamThreadBase
+class output::StreamThreadHttp #ccffff
 
-StreamThreadHttp --|> output::StreamThreadBase
+class input::stream::Streamer #55ccff
+input::Device <|-- input::stream::Streamer
 
-decrypt::dvbapi::Client  .  StreamManager
-class decrypt::dvbapi::Client {
-  Mutex
-  getFrontendDecryptInterface(..)
-}
+input::dvb::FrontendDecryptInterface  .  decrypt::dvbapi::Client : " callback getFrontendDecryptInterface(..) via StreamManager "
 
-input::file::TSReader --|> input::Device
+class input::file::TSReader     #99cc11
+class TSReaderData              #99cc11
+
+input::Device <|-- input::file::TSReader
+input::file::TSReader *-- TSReaderData
+
+TSReaderData --|> input::DeviceData
 
 input::Device <|-- input::dvb::Frontend
-FrontendDecryptInterface <|-- input::dvb::Frontend
+class input::Device      #aaccaa
+class input::Translation #aaccaa
+class input::DeviceData  #aaccaa
+
+input::dvb::FrontendDecryptInterface <|-- input::dvb::Frontend
+
+class input::dvb::FrontendDecryptInterface #ffccaa
+class input::dvb::Frontend                 #ffccaa
+class input::dvb::FrontendData             #ffccaa
 
 input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
 input::dvb::Frontend *-- input::dvb::FrontendData
 input::dvb::Frontend *-- input::Translation : " _translation "
 
+class input::dvb::delivery::System #aacccc
+class DVBS                         #aacccc
+class DVBC                         #aacccc
+class DVBT                         #aacccc
+class ATSC                         #aacccc
 
 input::dvb::delivery::System <|-- DVBS
 input::dvb::delivery::System <|-- DVBC
@@ -152,18 +184,31 @@ input::dvb::delivery::System <|-- DVBT
 input::dvb::delivery::System <|-- ATSC
 
 
-DVBS *-- DiSEqc_t
+class DiSEqcSwitch  #aacccc
+class DiSEqcEN50494 #aacccc
+class DiSEqcEN50607 #aacccc
+class DiSEqc        #aacccc
+class Lnb           #aacccc
 
-DiSEqc_t *-- Lnb_t
+DiSEqc <|-- DiSEqcSwitch
+DiSEqc <|-- DiSEqcEN50494
+DiSEqc <|-- DiSEqcEN50607
 
-decrypt::dvbapi::ClientProperties *-- dvbcsa_key_s
-decrypt::dvbapi::ClientProperties *-- TSTableData : " _pat "
-decrypt::dvbapi::ClientProperties *-- TSTableData : " _pmt "
+DVBS *-- DiSEqc : " _diseqc "
+
+DiSEqc *-- Lnb : " _lnb[MAX_LNB] "
+
+decrypt::dvbapi::ClientProperties *-- dvbcsa_bs_batch_s : " _batch "
+decrypt::dvbapi::ClientProperties *-- mpegts::TableData : " _pat "
+decrypt::dvbapi::ClientProperties *-- mpegts::TableData : " _pmt "
+decrypt::dvbapi::ClientProperties *-- Filter
+decrypt::dvbapi::ClientProperties *-- Keys
 
 input::DeviceData <|-- input::dvb::FrontendData
 mpegts::PidTable --* input::DeviceData
 
-input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties
+
+input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties : " Only with LIBDVBCSA "
 
 @enduml
 

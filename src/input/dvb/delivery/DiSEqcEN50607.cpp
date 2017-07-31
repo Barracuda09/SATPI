@@ -102,7 +102,7 @@ namespace delivery {
 		};
 
 		bool hiband = false;
-		_LNB[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
 		freq /= 1000;
 		const uint32_t t = freq - 100;
 		freq = _chFreq * 1000;

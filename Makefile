@@ -175,6 +175,7 @@ help:
 # and put it into the root of the project directory
 plantuml:
 	java -jar plantuml.jar -tsvg SatPI.plantuml
+	java -jar plantuml.jar -tpng SatPI.plantuml
 
 uncrustify:
 	uncrustify -c SatPI.uncrustify --replace $(SOURCES_UNC)

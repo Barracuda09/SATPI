@@ -20,6 +20,7 @@
 #include <decrypt/dvbapi/ClientProperties.h>
 
 #include <Utils.h>
+#include <Unused.h>
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
@@ -163,6 +164,19 @@ namespace dvbapi {
 			default:
 				return false;
 		}
+	}
+
+	void ClientProperties::setECMInfo(
+		int UNUSED(pid),
+		int UNUSED(serviceID),
+		int UNUSED(caID),
+		int UNUSED(provID),
+		int UNUSED(emcTime),
+		const std::string &UNUSED(cardSystem),
+		const std::string &UNUSED(readerName),
+		const std::string &UNUSED(sourceName),
+		const std::string &UNUSED(protocolName),
+		int UNUSED(hops)) {
 	}
 
 } // namespace dvbapi
