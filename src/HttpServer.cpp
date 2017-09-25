@@ -182,20 +182,29 @@ bool HttpServer::methodGet(SocketClient &client) {
 				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 			} else if ((docTypeSize = readFile(filePath.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
-					// check if the request is the SAT>IP description xml then fill in the server version, UUID and tuner string
+					// check if the request is the SAT>IP description xml then fill in the server version, UUID,
+					// XSatipM3U, presentationURL and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
 						SI_LOG_DEBUG("Client: %s requesed %s", client.getIPAddress().c_str(), file.c_str());
 						// check did we get our desc.xml (we assume there are some %s in there)
 						if (docType.find("%s") != std::string::npos) {
-							docTypeSize -= 4 * 2; // minus 4x %s
+							// @todo 'presentationURL' change this later
+							std::string presentationURL = "http://";
+							presentationURL += _interface.getIPAddress().c_str();
+							presentationURL += ":";
+							presentationURL += std::to_string(_properties.getHttpPort());
+							presentationURL += "/";
+
+							docTypeSize -= 5 * 2; // minus 5x %s
 							docTypeSize += _streamManager.getXMLDeliveryString().size();
 							docTypeSize += _properties.getUUID().size();
 							docTypeSize += _properties.getSoftwareVersion().size();
 							docTypeSize += _properties.getXSatipM3U().size();
+							docTypeSize += presentationURL.size();
 							char *doc_desc_xml = new char[docTypeSize + 1];
 							if (doc_desc_xml != nullptr) {
 								snprintf(doc_desc_xml, docTypeSize + 1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-								         _properties.getUUID().c_str(), _streamManager.getXMLDeliveryString().c_str(),
+								         _properties.getUUID().c_str(), presentationURL.c_str(), _streamManager.getXMLDeliveryString().c_str(),
 								         _properties.getXSatipM3U().c_str());
 								docType = doc_desc_xml;
 								DELETE_ARRAY(doc_desc_xml);

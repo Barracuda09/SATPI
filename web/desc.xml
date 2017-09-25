@@ -50,7 +50,9 @@
 				<url>/assets/images/icons/lr.jpg</url>
 			</icon>
 		</iconList>
-		<presentationURL>/</presentationURL>
+		<!-- filled in by server -->
+		<presentationURL>%s</presentationURL>
+		<!-- filled in by server -->
 		<!-- filled in by server -->
 		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPCAP>
 		<!-- filled in by server -->
