@@ -23,8 +23,12 @@
 #include <FwDecl.h>
 
 FW_DECL_NS0(dvbcsa_bs_key_s);
+FW_DECL_NS1(mpegts, PAT);
+FW_DECL_NS1(mpegts, PMT);
+FW_DECL_NS1(mpegts, SDT);
 
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
+
 
 namespace input {
 namespace dvb {
@@ -65,21 +69,6 @@ namespace dvb {
 			virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
 
 			///
-			virtual bool isTableCollected(int tableID) const = 0;
-
-			///
-			virtual void setTableCollected(int tableID, bool collected) = 0;
-
-			///
-			virtual const unsigned char *getTableData(int tableID) const = 0;
-
-			///
-			virtual void collectTableData(int streamID, int tableID, const unsigned char *data) = 0;
-
-			///
-			virtual int getTableDataSize(int tableID) const = 0;
-
-			///
 			virtual void startOSCamFilterData(int pid, int demux, int filter,
 			           const unsigned char *filterData, const unsigned char *filterMask) = 0;
 
@@ -87,17 +76,14 @@ namespace dvb {
 			virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
 
 			///
-			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, std::string &filterData) = 0;
 
 			///
 			virtual void stopOSCamFilters(int streamID) = 0;
 
 			///
-			virtual void setPMT(int pid, bool set) = 0;
-
-			///
-			virtual bool isPMT(int pid) const = 0;
+			virtual bool isMarkedAsPMT(int pid) const = 0;
 
 			///
 			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
@@ -121,6 +107,8 @@ namespace dvb {
 				const std::string &protocolName,
 				int hops) = 0;
 
+			///
+			virtual mpegts::PMT &getPMTData() = 0;
 	};
 
 } // namespace dvb

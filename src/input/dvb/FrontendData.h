@@ -21,6 +21,9 @@
 #define INPUT_DVB_FRONTEND_DATA_H_INCLUDE INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 
 #include <input/DeviceData.h>
+#include <mpegts/PAT.h>
+#include <mpegts/PMT.h>
+#include <mpegts/SDT.h>
 #ifdef LIBDVBCSA
 #include <decrypt/dvbapi/ClientProperties.h>
 #endif
@@ -76,6 +79,34 @@ namespace dvb {
 
 		public:
 
+			///
+			void clearMPEGTables(int streamID);
+
+			///
+			mpegts::PAT &getPATData() {
+				return _pat;
+			}
+
+			///
+			mpegts::PMT &getPMTData() {
+				return _pmt;
+			}
+
+			///
+			const mpegts::PMT &getPMTData() const {
+				return _pmt;
+			}
+
+			///
+			mpegts::SDT &getSDTData() {
+				return _sdt;
+			}
+
+			///
+			const mpegts::SDT &getSDTData() const {
+				return _sdt;
+			}
+
 			/// Set DMX file descriptor
 			void setDMXFileDescriptor(int pid, int fd);
 
@@ -116,10 +147,10 @@ namespace dvb {
 			bool isPIDUsed(int pid) const;
 
 			/// Check if pid is an PMT PID
-			bool isPMT(int pid) const;
+			bool isMarkedAsPMT(int pid) const;
 
 			///
-			void setPMT(int pid, bool set);
+			void markAsPMT(int pid, bool set);
 
 			/// Set all PID
 			void setAllPID(bool val);
@@ -128,19 +159,19 @@ namespace dvb {
 			uint32_t getFrequency() const;
 
 			///
-			int  getSymbolRate() const;
+			int getSymbolRate() const;
 
 			/// Get modulation type
-			int  getModulationType() const;
+			int getModulationType() const;
 
 			/// Set modulation type
 			void setModulationType(int modtype);
 
 			///
-			int  getRollOff() const;
+			int getRollOff() const;
 
 			///
-			int  getFEC() const;
+			int getFEC() const;
 
 			///
 			int getPilotTones() const;
@@ -152,25 +183,25 @@ namespace dvb {
 			/// Get the DiSEqc source
 			int getDiSEqcSource() const;
 
-			int  getSpectralInversion() const;
+			int getSpectralInversion() const;
 
-			int  getBandwidthHz() const;
+			int getBandwidthHz() const;
 
-			int  getTransmissionMode() const;
+			int getTransmissionMode() const;
 
-			int  getGuardInverval() const;
+			int getGuardInverval() const;
 
-			int  getHierarchy() const;
+			int getHierarchy() const;
 
-			int  getUniqueIDPlp() const;
+			int getUniqueIDPlp() const;
 
-			int  getUniqueIDT2() const;
+			int getUniqueIDT2() const;
 
-			int  getSISOMISO() const;
+			int getSISOMISO() const;
 
-			int  getDataSlice() const;
+			int getDataSlice() const;
 
-			int  getC2TuningFrequencyType() const;
+			int getC2TuningFrequencyType() const;
 
 		private:
 
@@ -214,6 +245,10 @@ namespace dvb {
 			int _plp_id;             // DVB-T2/C2
 			int _t2_system_id;       // DVB-T2
 			int _siso_miso;          // DVB-T2
+
+			mpegts::PMT _pmt;
+			mpegts::SDT _sdt;
+			mpegts::PAT _pat;
 
 	};
 

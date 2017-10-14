@@ -48,7 +48,7 @@ void Log::binlog(const int priority, const unsigned char *p, const int length, c
 			StringConverter::addFormattedString(strData, "\r\n");
 		}
 	}
-	char txt[2048];
+	char txt[4096];
 	va_list arglist;
 	va_start(arglist, fmt);
 	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
@@ -60,7 +60,7 @@ void Log::binlog(const int priority, const unsigned char *p, const int length, c
 void Log::applog(const int priority, const char *fmt, ...) {
 	base::MutexLock lock(logMutex);
 
-	char txt[2048];
+	char txt[4096];
 	va_list arglist;
 	va_start(arglist, fmt);
 	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);

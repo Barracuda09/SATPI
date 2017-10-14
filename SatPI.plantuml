@@ -31,6 +31,7 @@ class socket::SocketClient {
   std::string _msg
   std::string _protocolString
   std::string _sessionID
+  std::string _userAgent
 }
 
 class socket::SocketAttr {
@@ -85,13 +86,18 @@ class HttpcServer {
 
 class RtcpThread
 
-class StreamInterface #aaaaff
+class StreamInterface #aaaaff {
+  getInputDevice() = 0
+  getStreamClient(..) = 0
+  getDecryptDevice() = 0
+}
 StreamInterface ..* RtcpThread
 
 Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
 Stream *-- input::Device
 Stream *-- output::StreamThreadBase
+decrypt::dvbapi::Client ..* Stream : " _decrypt "
 class Stream #aaaaff {
   Mutex
   streamInUse
@@ -101,16 +107,18 @@ class Stream #aaaaff {
 
 class decrypt::dvbapi::Client           #ffbb11 {
   Mutex
-  callback getFrontendDecryptInterface(..) via StreamManager
 }
 class decrypt::dvbapi::ClientProperties #ffbb11
 class Keys                              #ffbb11
 class Filter                            #ffbb11
 
+decrypt::dvbapi::Client --* StreamManager  : " _decrypt "
+decrypt::dvbapi::Client *.. StreamManager  : " _streamManager "
+
 StreamManager *-- Stream : " _stream[..] "
-StreamManager *-- decrypt::dvbapi::Client : " _decrypt "
 class StreamManager #aaaaff {
   Mutex
+  getFrontendDecryptInterface(..)
 }
 
 StreamClient *-- socket::SocketAttr : " _rtp "
@@ -127,8 +135,10 @@ class StreamClient #aaaaff {
 class mpegts::PacketBuffer  #11ff11
 class mpegts::TableData     #11ff11
 class mpegts::PidTable      #11ff11
+class mpegts::PAT           #11ff11
+class mpegts::PMT           #11ff11
+class mpegts::SDT           #11ff11
 
-output::StreamThreadBase *.. decrypt::dvbapi::Client
 output::StreamThreadBase *-- mpegts::PacketBuffer : " _tsBuffer[..] "
 output::StreamThreadBase *.. StreamInterface
 class output::StreamThreadBase #ccffff
@@ -147,8 +157,6 @@ class output::StreamThreadHttp #ccffff
 class input::stream::Streamer #55ccff
 input::Device <|-- input::stream::Streamer
 
-input::dvb::FrontendDecryptInterface  .  decrypt::dvbapi::Client : " callback getFrontendDecryptInterface(..) via StreamManager "
-
 class input::file::TSReader     #99cc11
 class TSReaderData              #99cc11
 
@@ -158,7 +166,10 @@ input::file::TSReader *-- TSReaderData
 TSReaderData --|> input::DeviceData
 
 input::Device <|-- input::dvb::Frontend
-class input::Device      #aaccaa
+class input::Device      #aaccaa {
+  isDataAvailable() = 0
+  readFullTSPacket(..) = 0
+}
 class input::Translation #aaccaa
 class input::DeviceData  #aaccaa
 
@@ -199,8 +210,6 @@ DVBS *-- DiSEqc : " _diseqc "
 DiSEqc *-- Lnb : " _lnb[MAX_LNB] "
 
 decrypt::dvbapi::ClientProperties *-- dvbcsa_bs_batch_s : " _batch "
-decrypt::dvbapi::ClientProperties *-- mpegts::TableData : " _pat "
-decrypt::dvbapi::ClientProperties *-- mpegts::TableData : " _pmt "
 decrypt::dvbapi::ClientProperties *-- Filter
 decrypt::dvbapi::ClientProperties *-- Keys
 
@@ -209,6 +218,14 @@ mpegts::PidTable --* input::DeviceData
 
 
 input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties : " Only with LIBDVBCSA "
+
+mpegts::PAT --|> mpegts::TableData
+mpegts::PMT --|> mpegts::TableData
+mpegts::SDT --|> mpegts::TableData
+
+input::dvb::FrontendData *-- mpegts::PAT : " _pat "
+input::dvb::FrontendData *-- mpegts::PMT : " _pmt "
+input::dvb::FrontendData *-- mpegts::SDT : " _sdt "
 
 @enduml
 

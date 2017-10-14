@@ -24,6 +24,9 @@
 #include <input/Device.h>
 #include <input/file/TSReaderData.h>
 #include <mpegts/TableData.h>
+#include <mpegts/PAT.h>
+#include <mpegts/PMT.h>
+#include <mpegts/SDT.h>
 
 #include <vector>
 #include <string>
@@ -120,8 +123,9 @@ namespace file {
 			std::ifstream _file;
 			TSReaderData _deviceData;
 
-			mpegts::TableData _pmt;
-			mpegts::TableData _pat;
+			mpegts::PMT _pmt;
+			mpegts::PAT _pat;
+			mpegts::SDT _sdt;
 			bool _pmtPIDS[8193];
 			int _pcrPID;
 			uint64_t _pcrPrev;

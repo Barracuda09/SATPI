@@ -260,6 +260,49 @@ namespace dvb {
 						const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 						const uint8_t  cc  =   ptr[3] & 0x0f;
 						_frontendData.addPIDData(pid, cc);
+
+/////////////////////////////////////////////////////
+						if (pid == 0) {
+							mpegts::PAT &pat = _frontendData.getPATData();
+							if (!pat.isCollected()) {
+								// collect PAT data
+								pat.collectData(_streamID, PAT_TABLE_ID, ptr, false);
+
+								// Did we finish collecting PAT
+								if (pat.isCollected()) {
+									pat.parse(_streamID);
+									// Check which PIDs are PMTs and mark them in frontend
+									for (size_t i = 0u; i < MAX_PIDS; ++i) {
+										if (pat.isMarkedAsPMT(i)) {
+											_frontendData.markAsPMT(i, true);
+										}
+									}
+								}
+							}
+						} else if (_frontendData.isMarkedAsPMT(pid)) {
+							mpegts::PMT &pmt = _frontendData.getPMTData();
+							if (!pmt.isCollected()) {
+								// collect PMT data
+								pmt.collectData(_streamID, PMT_TABLE_ID, ptr, false);
+
+								// Did we finish collecting PMT
+								if (pmt.isCollected()) {
+									pmt.parse(_streamID);
+								}
+							}
+						} else if (pid == 17) {
+							mpegts::SDT &sdt = _frontendData.getSDTData();
+							if (!sdt.isCollected()) {
+								// collect SDT data
+								sdt.collectData(_streamID, SDT_TABLE_ID, ptr, false);
+
+								// Did we finish collecting SDT
+								if (sdt.isCollected()) {
+									sdt.parse(_streamID);
+								}
+							}
+						}
+/////////////////////////////////////////////////////
 					}
 				}
 			}
@@ -691,7 +734,7 @@ namespace dvb {
 								}
 							}
 							SI_LOG_DEBUG("Stream: %d, Set filter PID: %04zu - fd: %03d%s",
-									_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isPMT(i) ? " - PMT" : "");
+									_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isMarkedAsPMT(i) ? " - PMT" : "");
 						}
 					} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
 						// We have a DMX but no PID anymore, so reset it

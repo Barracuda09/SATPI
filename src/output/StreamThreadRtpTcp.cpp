@@ -30,8 +30,8 @@
 
 namespace output {
 
-	StreamThreadRtpTcp::StreamThreadRtpTcp(StreamInterface &stream, decrypt::dvbapi::SpClient decrypt) :
-		StreamThreadBase("RTP/TCP", stream, decrypt),
+	StreamThreadRtpTcp::StreamThreadRtpTcp(StreamInterface &stream) :
+		StreamThreadBase("RTP/TCP", stream),
 		_clientID(0),
 		_cseq(0),
 		_rtcp(stream, true) {

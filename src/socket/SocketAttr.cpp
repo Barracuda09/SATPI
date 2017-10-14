@@ -20,6 +20,7 @@
 #include <socket/SocketAttr.h>
 
 #include <Utils.h>
+#include <StringConverter.h>
 #include <socket/SocketClient.h>
 
 #include <string>
@@ -114,6 +115,9 @@
 		socklen_t addrlen = sizeof(client._addr);
 		const int fd_conn = ::accept(_fd, (struct sockaddr *) &client._addr, &addrlen);
 		if (fd_conn > 0) {
+
+// @todo should 'client' handle this himself?
+
 			// save connected file descriptor
 			client.setFD(fd_conn);
 

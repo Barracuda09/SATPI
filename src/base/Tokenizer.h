@@ -40,6 +40,10 @@ namespace base {
 
 			virtual ~TokenizerTempl() {}
 
+			TokenizerTempl(const TokenizerTempl &) = delete;
+
+			TokenizerTempl &operator=(const TokenizerTempl &) = delete;
+
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
@@ -87,11 +91,6 @@ namespace base {
 			// =======================================================================
 
 		private:
-			/// Copy Constructor (Empty function)
-			TokenizerTempl(const TokenizerTempl &);
-
-			/// Assignment Operator (Empty function)
-			TokenizerTempl &operator=(const TokenizerTempl &);
 
 			typename STRING_TYPE::size_type _begin;
 			typename STRING_TYPE::size_type _end;

@@ -18,6 +18,9 @@ CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 ifeq ($(BUILD),debug)
   # "Debug" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+else ifeq ($(BUILD),debug1)
+  # "Debug" build - with optimization, with debugging symbols
+  CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
 else ifeq ($(BUILD),simu)
   # "Debug Simu" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
@@ -62,6 +65,9 @@ SOURCES = Version.cpp \
 	mpegts/PidTable.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/TableData.cpp \
+	mpegts/PAT.cpp \
+	mpegts/PMT.cpp \
+	mpegts/SDT.cpp \
 	output/StreamThreadBase.cpp \
 	output/StreamThreadHttp.cpp \
 	output/StreamThreadRtp.cpp \
@@ -123,9 +129,13 @@ $(OBJ_DIR)/Version.o:
 	@mkdir -p $(@D)
 	$(CXX) -c $(CFLAGS) $(SRC_DIR)/Version.cpp -o $@
 
-# Create a debug version
+# Create debug versions
 debug:
 	$(MAKE) "BUILD=debug"
+
+debug1:
+	@echo $(CXX)
+	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
 
 # Create a 'simulation' version
 simu:
@@ -137,6 +147,8 @@ testsuite:
 	$(MAKE) debug LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
 	$(MAKE) clean
 	$(MAKE) debug
+	$(MAKE) clean
+	$(MAKE) LIBDVBCSA=yes
 	$(MAKE) clean
 	$(MAKE)
 	$(MAKE) clean
@@ -165,11 +177,12 @@ docu:
 
 help:
 	@echo "Help, use these command for building this project:"
-	@echo " - Make debug version              :  make debug"
-	@echo " - Make debug version with DVBAPI  :  make debug LIBDVBCSA=yes"
-	@echo " - Make PlantUML graph             :  make plantuml"
-	@echo " - Make Doxygen docmumentation     :  make docu"
-	@echo " - Make Uncrustify Code Beautifier :  make uncrustify"
+	@echo " - Make debug version                   :  make debug"
+	@echo " - Make debug version with DVBAPI       :  make debug LIBDVBCSA=yes"
+	@echo " - Make production version with DVBAPI  :  make LIBDVBCSA=yes"
+	@echo " - Make PlantUML graph                  :  make plantuml"
+	@echo " - Make Doxygen docmumentation          :  make docu"
+	@echo " - Make Uncrustify Code Beautifier      :  make uncrustify"
 
 # Download PlantUML from http://plantuml.com/download.html
 # and put it into the root of the project directory

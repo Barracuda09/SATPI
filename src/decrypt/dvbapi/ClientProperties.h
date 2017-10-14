@@ -85,21 +85,6 @@ namespace dvbapi {
 				return _keys.get(parity);
 			}
 
-			/// Collect Table data for tableID
-			void collectTableData(int streamID, int tableID, const unsigned char *data);
-
-			/// Get the collected Table Data for tableID
-			const unsigned char *getTableData(int tableID) const;
-
-			/// Get the current size of the Table data for tableID
-			int getTableDataSize(int tableID) const;
-
-			/// Set if Table has been collected (or not) for tableID
-			void setTableCollected(int tableID, bool collected);
-
-			/// Check if Table is collected for tableID
-			bool isTableCollected(int tableID) const;
-
 			/// Start and add the requested filter
 			void startOSCamFilterData(int pid, int demux, int filter,
 				const unsigned char *filterData, const unsigned char *filterMask) {
@@ -112,9 +97,9 @@ namespace dvbapi {
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
-			bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+			bool findOSCamFilterData(const int streamID, int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, std::string &filterData) {
-				return _filter.find(pid, tsPacket, tableID, filter, demux, filterData);
+				return _filter.find(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 			}
 
 			/// Clear all 'active' filters
@@ -146,10 +131,8 @@ namespace dvbapi {
 			int _parity;
 			Keys _keys;
 			Filter _filter;
-			mpegts::TableData _pmt;
-			mpegts::TableData _pat;
 
-	}; // class ClientProperties
+	};
 
 } // namespace dvbapi
 } // namespace decrypt

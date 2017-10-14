@@ -26,7 +26,6 @@
 
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
-FW_DECL_NS2(decrypt, dvbapi, Client);
 
 FW_DECL_UP_NS1(output, StreamThreadRtpTcp);
 
@@ -40,8 +39,7 @@ namespace output {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			StreamThreadRtpTcp(StreamInterface &stream,
-				decrypt::dvbapi::SpClient decrypt);
+			StreamThreadRtpTcp(StreamInterface &stream);
 
 			virtual ~StreamThreadRtpTcp();
 

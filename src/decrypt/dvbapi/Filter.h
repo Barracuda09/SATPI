@@ -62,19 +62,21 @@ namespace dvbapi {
 				}
 			}
 
-			bool find(const int pid, const unsigned char *data, int &tableID, int &filter,
+			bool find(const int streamID, const int pid, const unsigned char *data, int &tableID, int &filter,
 				int &demux, std::string &filterData) {
 				base::MutexLock lock(_mutex);
 				if (_collecting) {
 					// We are collecting, but is this the correct PID for this filter
 					if (_filterData[_demux][_filter].active(pid)) {
-						_filterData[_demux][_filter].collectTableData(-1, _tableID, data);
+						// Collect raw (true)
+						_filterData[_demux][_filter].collectTableData(streamID, _tableID, data, true);
 						if (_filterData[_demux][_filter].isTableCollected()) {
 							filter = _filter;
 							demux = _demux;
 							tableID = _tableID;
 							_collecting = false;
-							_filterData[demux][filter].getTableData(filterData);
+							// Because we collect raw there is only 1
+							_filterData[demux][filter].getTableData(0, filterData);
 							_filterData[demux][filter].resetTableData();
 							return true;
 						}
@@ -85,15 +87,16 @@ namespace dvbapi {
 						for (filter = 0; filter < FILTER_SIZE; ++filter) {
 							if (_filterData[demux][filter].active(pid)) {
 								if (_filterData[demux][filter].match(data)) {
-									_filterData[demux][filter].collectTableData(-1, tableID, data);
-									// Do we need to collect more data for this table, then save this filter
+									// Collect raw (true)
+									_filterData[demux][filter].collectTableData(streamID, tableID, data, true);
 									if (!_filterData[demux][filter].isTableCollected()) {
 										_collecting = true;
 										_filter = filter;
 										_demux = demux;
 										_tableID = tableID;
 									} else {
-										_filterData[demux][filter].getTableData(filterData);
+										// Because we collect raw there is only 1
+										_filterData[demux][filter].getTableData(0, filterData);
 										_filterData[demux][filter].resetTableData();
 										return true;
 									}

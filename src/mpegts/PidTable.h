@@ -83,10 +83,10 @@ namespace mpegts {
 			void setAllPID(bool val);
 
 			/// Set if pid is an PMT PID
-			void setPMT(int pid, bool set);
+			void markAsPMT(int pid, bool set);
 
 			/// Check if pid is an PMT PID
-			bool isPMT(int pid) const;
+			bool isMarkedAsPMT(int pid) const;
 
 			///
 			void setKeyParity(int pid, int parity);

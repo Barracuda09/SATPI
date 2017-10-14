@@ -52,13 +52,10 @@ namespace dvbapi {
 	// ===========================================================================
 
 	void ClientProperties::stopOSCamFilters(int streamID) {
-		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT Tables and Keys...", streamID);
-		setTableCollected(PAT_TABLE_ID, false);
-		setTableCollected(PMT_TABLE_ID, false);
+		SI_LOG_INFO("Stream: %d, Clearing OSCam filters and Keys...", streamID);
 		// free keys
 		_keys.freeKeys();
 		_batchCount = 0;
-
 		_filter.clear();
 	}
 
@@ -103,67 +100,6 @@ namespace dvbapi {
 		}
 		// decrypted this batch reset counter
 		_batchCount = 0;
-	}
-
-	void ClientProperties::collectTableData(const int streamID, const int tableID, const unsigned char *data) {
-		switch (tableID) {
-			case PMT_TABLE_ID:
-				_pmt.collectData(streamID, tableID, data);
-				break;
-			case PAT_TABLE_ID:
-				_pat.collectData(streamID, tableID, data);
-				break;
-			default:
-				// Do nothing here
-				break;
-		}
-	}
-
-	const unsigned char *ClientProperties::getTableData(const int tableID) const {
-		switch (tableID) {
-			case PMT_TABLE_ID:
-				return _pmt.getData();
-			case PAT_TABLE_ID:
-				return _pat.getData();
-			default:
-				return reinterpret_cast<const unsigned char *>("");
-		}
-	}
-
-	int ClientProperties::getTableDataSize(const int tableID) const {
-		switch (tableID) {
-			case PMT_TABLE_ID:
-				return _pmt.getDataSize();
-			case PAT_TABLE_ID:
-				return _pat.getDataSize();
-			default:
-				return 0;
-		}
-	}
-
-	void ClientProperties::setTableCollected(const int tableID, const bool collected) {
-		switch (tableID) {
-			case PMT_TABLE_ID:
-				_pmt.setCollected(collected);
-				break;
-			case PAT_TABLE_ID:
-				_pat.setCollected(collected);
-				break;
-			default:
-				// Do nothing here
-				break;
-		}
-	}
-
-	bool ClientProperties::isTableCollected(const int tableID) const {
-		switch (tableID) {
-			case PMT_TABLE_ID:
-				return _pmt.isCollected();
-			case PAT_TABLE_ID:
-				return _pat.isCollected();
-			default:
-				return false;
-		}
 	}
 
 	void ClientProperties::setECMInfo(

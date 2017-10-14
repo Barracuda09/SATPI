@@ -92,9 +92,9 @@ namespace mpegts {
 		0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 	};
 
-	uint32_t TableData::calculateCRC32(const unsigned char *data, int len) {
+	uint32_t TableData::calculateCRC32(const unsigned char *data, const std::size_t len) {
 		uint32_t crc = 0xffffffff;
-		for(int i = 0; i < len; ++i) {
+		for(size_t i = 0u; i < len; ++i) {
 			crc = (crc << 8) ^ crc32Table[((crc >> 24) ^ (data[i] & 0xff)) & 0xff];
 		}
 		return crc;
@@ -105,14 +105,23 @@ namespace mpegts {
 	// ========================================================================
 
 	TableData::TableData() :
-		_cc(-1),
-		_pid(-1),
-		_collected(false) {}
+		_numberOfSections(0),
+		_currentSectionNumber(0) {}
 
 	TableData::~TableData() {}
 
-	const char* TableData::getTableTXT() const {
-		switch (_tableID) {
+	// =======================================================================
+	//  -- Other member functions --------------------------------------------
+	// =======================================================================
+
+	void TableData::clear() {
+		_numberOfSections = 0;
+		_currentSectionNumber = 0;
+		_dataTable.clear();
+	}
+
+	const char* TableData::getTableTXT(const int tableID) const {
+		switch (tableID) {
 			case PAT_TABLE_ID:
 				return "PAT";
 			case CAT_TABLE_ID:
@@ -126,10 +135,13 @@ namespace mpegts {
 			case EIT2_TABLE_ID:
 				return "EIT";
 			case ECM0_TABLE_ID:
+				// Fall Through
 			case ECM1_TABLE_ID:
 				return "ECM";
 			case EMM1_TABLE_ID:
+				// Fall Through
 			case EMM2_TABLE_ID:
+				// Fall Through
 			case EMM3_TABLE_ID:
 				return "EMM";
 			default:
@@ -137,66 +149,133 @@ namespace mpegts {
 		}
 	}
 
-	void TableData::collectData(const int streamID, const int tableID, const unsigned char *data) {
-		const int initialTableSize = getDataSize();
-		const unsigned char options = (data[1] & 0xE0);
-		if (options == 0x40 && data[4] == 0x00 && data[5] == tableID && initialTableSize == 0) {
-			const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-			const int cc            =   data[3] & 0x0f;
-			const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
-			// Add Table Data
-			if (addData(tableID, data, 188, pid, cc)) {
-				if (streamID != -1) {
-					SI_LOG_INFO("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(), pid, sectionLength, getDataSize());
-				}
-				// Check did we finish collecting Table Data
-				if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
-					setCollected(true);
-				}
-			} else {
-				setCollected(false);
-			}
-		} else if (initialTableSize > 0) {
-			const unsigned char *cData = getData();
-			const int sectionLength    = ((cData[6] & 0x0F) << 8) | cData[7];
+	void TableData::collectData(const int streamID, const int tableID, const unsigned char *data, const bool raw) {
+		Data &currentTableData = _dataTable[_currentSectionNumber];
+		const std::size_t tableSize = currentTableData.data.size();
+		const unsigned char options = (data[1u] & 0xE0);
+		if (options == 0x40 && data[4u] == 0x00 && data[5u] == tableID && tableSize == 0) {
+			const int pid                   = ((data[1u] & 0x1F) << 8) | data[2u];
+			const int cc                    =   data[3u] & 0x0F;
+			const std::size_t sectionLength = ((data[6u] & 0x0F) << 8) | data[7u];
+			const int         version       =   data[10u];
+			const std::size_t secNr         =   data[11u];
+			const std::size_t lastSecNr     =   data[12u];
 
-			// get current PID and next CC
-			const int pid = ((data[1] & 0x1f) << 8) | data[2];
-			const int cc  =   data[3] & 0x0f;
+			if (raw || secNr == _currentSectionNumber) {
+				if (raw) {
+					_numberOfSections = 1u;
+				} else {
+					_numberOfSections = lastSecNr + 1u;
+				}
+				currentTableData.sectionLength = sectionLength;
+				currentTableData.version       = version;
+				currentTableData.secNr         = secNr;
+				currentTableData.lastSecNr     = lastSecNr;
+
+				// Add Table Data
+				if (addData(tableID, data, 188, pid, cc)) {
+					if (!raw) {
+						SI_LOG_INFO("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
+							streamID, getTableTXT(tableID), pid, sectionLength, currentTableData.data.size(), secNr, lastSecNr, _currentSectionNumber);
+					}
+					// Check did we finish collecting Table Data
+					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
+						setCollected();
+					}
+				} else {
+					_dataTable.erase(_dataTable.find(_currentSectionNumber));
+				}
+			}
+		} else if (tableSize > 0) {
+			const std::size_t sectionLength = currentTableData.sectionLength;
+
+			// Get current PID and next CC
+			const int pid = ((data[1u] & 0x1f) << 8) | data[2u];
+			const int cc  =   data[3u] & 0x0f;
 
 			// Add Table Data without TS Header
-			if (addData(tableID, &data[4], 188 - 4, pid, cc)) { // 4 = TS Header
-				const int tableDataSize = getDataSize();
-				if (streamID != -1) {
-					SI_LOG_DEBUG("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d", streamID, getTableTXT(), pid, sectionLength, tableDataSize);
+			if (addData(tableID, &data[4u], 188 - 4, pid, cc)) { // 4 = TS Header
+				const std::size_t tableDataSize = currentTableData.data.size();
+				if (!raw) {
+					SI_LOG_INFO("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
+							streamID, getTableTXT(tableID), pid, sectionLength, tableDataSize, currentTableData.secNr, currentTableData.lastSecNr, _currentSectionNumber);
 				}
 				// Check did we finish collecting Table Data
 				if (sectionLength <= (tableDataSize - 9)) { // 9 = Untill Table Section Length
-					setCollected(true);
+					const unsigned char *crcData = currentTableData.getData();
+					const uint32_t crc     = CRC(crcData, sectionLength);
+					const uint32_t calccrc = calculateCRC32(&crcData[5], sectionLength - 4 + 3);
+					if (calccrc == crc) {
+						currentTableData.crc = crc;
+						setCollected();
+					} else {
+						SI_LOG_ERROR("Stream: %d, %s - CRC Error! Calc CRC32: 0x%04X - TS CRC32: 0x%04X  Retrying to collect data...",
+								streamID, getTableTXT(tableID), calccrc, crc);
+						_dataTable.erase(_dataTable.find(_currentSectionNumber));
+					}
 				}
 			} else {
-				SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(), pid);
-				setCollected(false);
+				SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data",
+						streamID, getTableTXT(tableID), pid);
+				_dataTable.erase(_dataTable.find(_currentSectionNumber));
 			}
 		} else {
-//			SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(), pid);
-			setCollected(false);
+//			SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(0), pid);
+			_dataTable.erase(_dataTable.find(_currentSectionNumber));
 		}
 	}
 
-	bool TableData::addData(int tableID, const unsigned char *data, int length, int pid, int cc) {
-		_tableID = tableID;
-		if ((_cc  == -1 ||  cc == _cc + 1) &&
-			(_pid == -1 || pid == _pid)) {
-			if (_cc == -1 && _pid == -1) {
-				_data.clear();
-			}
-			_data.append(reinterpret_cast<const char *>(data), length);
-			_cc   = cc;
-			_pid  = pid;
+	bool TableData::addData(const int tableID, const unsigned char *data,
+			const int length, const int pid, const int cc) {
+		Data &currentTableData = _dataTable[_currentSectionNumber];
+		currentTableData.tableID = tableID;
+		// Is this the first try or a follow-up then check cc
+		if (currentTableData.data.size() == 0 ||
+			(cc == (currentTableData.cc + 1) % 0x10 && pid == currentTableData.pid)) {
+			currentTableData.data.append(reinterpret_cast<const char *>(data), length);
+			currentTableData.cc   = cc;
+			currentTableData.pid  = pid;
 			return true;
 		}
 		return false;
+	}
+
+	bool TableData::getDataForSectionNumber(const size_t secNr, TableData::Data &data) const {
+		auto s = _dataTable.find(secNr);
+		if (s != _dataTable.end()) {
+			data = s->second;
+			return true;
+		}
+		return false;
+	}
+
+	void TableData::getData(const size_t secNr, std::string &data) const {
+		TableData::Data tableData;
+		if (getDataForSectionNumber(secNr, tableData)) {
+			data = tableData.data;
+		}
+	}
+
+	bool TableData::isCollected() const {
+		bool collected = false;
+		for (std::size_t i = 0; i < _numberOfSections; ++i) {
+			TableData::Data tableData;
+			if (getDataForSectionNumber(i, tableData) && tableData.collected) {
+				collected = true;
+			} else {
+				collected = false;
+				break;
+			}
+		}
+		return collected;
+	}
+
+	void TableData::setCollected() {
+		_dataTable[_currentSectionNumber].collected = true;
+		// Do we need to read more sections, then increment
+		if (_currentSectionNumber < (_numberOfSections - 1u)) {
+			++_currentSectionNumber;
+		}
 	}
 
 } // namespace mpegts

@@ -85,6 +85,12 @@ class StreamClient {
 			return (_httpc == nullptr) ? "0.0.0.0" : _httpc->getIPAddress();
 		}
 
+		/// Get the User-Agent of this client
+		std::string getUserAgent() const {
+			base::MutexLock lock(_mutex);
+			return (_httpc == nullptr) ? "None" : _httpc->getUserAgent();
+		}
+
 		///
 		std::string getSessionID() const {
 			base::MutexLock lock(_mutex);

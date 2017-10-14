@@ -85,6 +85,11 @@ class Stream :
 
 		virtual input::SpDevice getInputDevice() const override;
 
+#ifdef LIBDVBCSA
+		///
+		virtual decrypt::dvbapi::SpClient getDecryptDevice() const override;
+#endif
+
 		virtual uint32_t getSSRC() const override;
 
 		virtual long getTimestamp() const override;

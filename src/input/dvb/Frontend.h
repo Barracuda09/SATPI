@@ -107,29 +107,17 @@ namespace dvb {
 
 			virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
 
-			virtual bool isTableCollected(int tableID) const override;
-
-			virtual void setTableCollected(int tableID, bool collected) override;
-
-			virtual const unsigned char *getTableData(int tableID) const override;
-
-			virtual void collectTableData(int streamID, int tableID, const unsigned char *data) override;
-
-			virtual int getTableDataSize(int tableID) const override;
-
 			virtual void startOSCamFilterData(int pid, int demux, int filter,
 			           const unsigned char *filterData, const unsigned char *filterMask) override;
 
 			virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
 
-			virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int &tableID,
+			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, std::string &filterData) override;
 
 			virtual void stopOSCamFilters(int streamID) override;
 
-			virtual void setPMT(int pid, bool set) override;
-
-			virtual bool isPMT(int pid) const override;
+			virtual bool isMarkedAsPMT(int pid) const override;
 
 			virtual void setKey(const unsigned char *cw, int parity, int index) override;
 
@@ -148,6 +136,8 @@ namespace dvb {
 				const std::string &sourceName,
 				const std::string &protocolName,
 				int hops) override;
+
+			virtual mpegts::PMT &getPMTData() override;
 #endif
 
 			// =======================================================================

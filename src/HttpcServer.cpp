@@ -137,8 +137,19 @@ bool HttpcServer::closeConnection(SocketClient &socketclient) {
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
 	std::string msg = client.getMessage();
-	SI_LOG_DEBUG("%s Stream data from client %s Port %d: %s", client.getProtocolString().c_str(),
-		client.getIPAddress().c_str(), client.getSocketPort(), msg.c_str());
+
+	// Save clients User-Agent
+	std::string userAgent;
+	if (StringConverter::getHeaderFieldParameter(msg, "User-Agent:", userAgent)) {
+		client.setUserAgent(userAgent);
+	}
+#ifdef DEBUG
+	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
+		client.getUserAgent().c_str(), client.getIPAddress().c_str(), client.getSocketPort(), msg.c_str());
+#else
+	SI_LOG_INFO("%s Stream data from client %s with IP %s on Port %d", client.getProtocolString().c_str(),
+		client.getUserAgent().c_str(), client.getIPAddress().c_str(), client.getSocketPort());
+#endif
 
 	std::string httpc;
 	int clientID;

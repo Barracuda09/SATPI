@@ -21,11 +21,20 @@
 #define MPEGTS_TABLE_DATA_H_INCLUDE MPEGTS_TABLE_DATA_H_INCLUDE
 
 #include <string>
+#include <map>
 
 namespace mpegts {
 
 	class TableData {
 		public:
+			// ================================================================
+			// -- Forward declaration -----------------------------------------
+			// ================================================================
+			struct Data;
+
+			// ================================================================
+			// -- Defines -----------------------------------------------------
+			// ================================================================
 			#define CRC(data, sectionLength) \
 				(data[sectionLength - 4 + 8] << 24) |     \
 				(data[sectionLength - 4 + 8 + 1] << 16) | \
@@ -58,7 +67,7 @@ namespace mpegts {
 
 		public:
 
-			static uint32_t calculateCRC32(const unsigned char *data, int len);
+			static uint32_t calculateCRC32(const unsigned char *data, std::size_t len);
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------
@@ -67,57 +76,64 @@ namespace mpegts {
 		public:
 
 			///
-			const char* getTableTXT() const;
+			virtual void clear();
+
+			/// Get an copy of the requested table data
+			/// @param secNr
+			/// @param data
+			bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
 
 			/// Collect Table data for tableID
-			void collectData(int streamID, int tableID, const unsigned char *data);
+			void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
 
 			/// Get the collected Table Data
-			const unsigned char *getData() const {
-				return reinterpret_cast<const unsigned char *>(_data.c_str());
-			}
-
-			/// Get the collected Table Data
-			void getData(std::string &data) const {
-				data = _data;
-			}
-
-			/// Get the current size of the Table Packet
-			int getDataSize() const {
-				return _data.size();
-			}
-
-			/// Set if Table has been collected or not
-			void setCollected(bool collected) {
-				_collected = collected;
-				if (!collected) {
-					_cc  = -1;
-					_pid = -1;
-					_data.clear();
-				}
-			}
+			void getData(size_t secNr, std::string &data) const;
 
 			/// Check if Table is collected
-			bool isCollected() const {
-				return _collected;
-			}
+			bool isCollected() const;
 
 		protected:
 
 			/// Add Table data that was collected
 			bool addData(int tableID, const unsigned char *data, int length, int pid, int cc);
 
+			/// Set if the current Table has been collected
+			void setCollected();
+
+			///
+			const char* getTableTXT(int tableID) const;
+
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
 
+		public:
+
+			struct Data {
+				int tableID;
+				std::size_t sectionLength;
+				int version;
+				int secNr;
+				int lastSecNr;
+				uint32_t crc;
+				std::string data;
+				int cc;
+				int pid;
+				bool collected;
+				const unsigned char *getData() const {
+					return reinterpret_cast<const unsigned char *>(data.c_str());
+				}
+			};
+
+		protected:
+
+			std::size_t _numberOfSections;
+
 		private:
 
-			int _tableID;
-			std::string _data;
-			int _cc;
-			int _pid;
-			bool _collected;
+			std::size_t _currentSectionNumber;
+			std::map<int, Data> _dataTable;
+
 	};
 
 } // namespace mpegts

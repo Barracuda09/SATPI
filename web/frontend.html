@@ -46,6 +46,7 @@
 			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
 			page += addTableLineEntry("Owner", xmlDoc, streamID + "owner");
 			page += addTableLineEntry("Session ID", xmlDoc, streamID + "ownerSessionID");
+			page += addTableLineEntry("User-Agent", xmlDoc, streamID + "userAgent");
 			page += addTableLineEntry("RTP packet count", xmlDoc, streamID + "spc");
 			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, streamID + "payload");
 
@@ -84,6 +85,9 @@
 			var freq = visibleStream.getElementsByTagName("tunefreq");
 			if (freq.length > 0) {
 				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
+
+				page += addTableLineEntry("Network Name", xmlDoc, streamID + "networkname");
+				page += addTableLineEntry("Channel Name", xmlDoc, streamID + "channelname");
 
 				page += addTableLineEntry("Delivery System", xmlDoc, streamID + "delsys");
 

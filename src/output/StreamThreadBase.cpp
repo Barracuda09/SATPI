@@ -34,15 +34,13 @@
 
 namespace output {
 
-	StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream,
-			decrypt::dvbapi::SpClient decrypt) :
+	StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream) :
 		ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
 		_stream(stream),
 		_protocol(protocol),
 		_state(State::Paused),
 		_writeIndex(0u),
 		_readIndex(0u),
-		_decrypt(decrypt),
 		_sendInterval(100u) {
 		// Initialize all TS packets
 		uint32_t ssrc = _stream.getSSRC();
@@ -54,9 +52,9 @@ namespace output {
 
 	StreamThreadBase::~StreamThreadBase() {
 #ifdef LIBDVBCSA
-		// Do not destroy decrypt here
-		if (_decrypt != nullptr) {
-			_decrypt->stopDecrypt(_stream.getStreamID());
+		decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
+		if (decrypt != nullptr) {
+			decrypt->stopDecrypt(_stream.getStreamID());
 		}
 #endif
 	}
@@ -131,8 +129,9 @@ namespace output {
 						getStreamSocketPort(clientID), payload);
 			}
 #ifdef LIBDVBCSA
-			if (_decrypt != nullptr) {
-				_decrypt->stopDecrypt(_stream.getStreamID());
+			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
+			if (decrypt != nullptr) {
+				decrypt->stopDecrypt(_stream.getStreamID());
 			}
 #endif
 		}
@@ -151,8 +150,11 @@ namespace output {
 		if (inputDevice->isDataAvailable() && availableSize > 1) {
 			if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
-				if (_decrypt != nullptr) {
-					_decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
+				decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
+				if (decrypt != nullptr) {
+					decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
+				} else {
+//					SI_LOG_DEBUG("Stream: %d, No decrypt device found", _stream.getStreamID());
 				}
 #endif
 				// goto next, so inc write index

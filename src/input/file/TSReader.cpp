@@ -103,8 +103,6 @@ namespace file {
 			buffer.addAmountOfBytesWritten(size);
 			buffer.trySyncing();
 
-///////////////////////////////////////////////////////////////////////////////
-// @todo Should be shared with decrypt/dvbapi/Client.cpp
 			if (buffer.full()) {
 				const std::size_t size = buffer.getNumberOfTSPackets();
 				for (std::size_t i = 0; i < size; ++i) {
@@ -118,74 +116,35 @@ namespace file {
 
 						if (pid == 0 && !_pat.isCollected()) {
 							// collect PAT data
-							_pat.collectData(_streamID, PAT_TABLE_ID, data);
+							_pat.collectData(_streamID, PAT_TABLE_ID, data, false);
 
 							// Did we finish collecting PAT
 							if (_pat.isCollected()) {
-								const unsigned char *cData = _pat.getData();
-
-								// Parse PAT Data
-								const int sectionLength = ((cData[ 6] & 0x0F) << 8) | cData[ 7];
-								const int tid           =  (cData[ 8] << 8) | cData[ 9];
-								const int version       =   cData[10];
-								const int secNr         =   cData[11];
-								const int lastSecNr     =   cData[12];
-								const uint32_t crc      =  CRC(cData, sectionLength);
-
-								const uint32_t calccrc = mpegts::TableData::calculateCRC32(&cData[5], sectionLength - 4 + 3);
-								if (calccrc == crc) {
-									SI_LOG_INFO("Stream: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: %04X",
-												_streamID, sectionLength, tid, version, secNr, lastSecNr, crc);
-
-									// 4 = CRC  6 = PAT Table begin from section length
-									const int len = sectionLength - 4 - 6;
-
-									// skip to Table begin and iterate over entries
-									const unsigned char *ptr = &cData[13];
-									for (int i = 0; i < len; i += 4) {
-										// Get PAT entry
-										const uint16_t prognr =  (ptr[i + 0] << 8) | ptr[i + 1];
-										const uint16_t pid    = ((ptr[i + 2] & 0x1F) << 8) | ptr[i + 3];
-										if (prognr == 0) {
-											SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  NIT PID: %04d", _streamID, prognr, pid);
-										} else {
-											SI_LOG_INFO("Stream: %d, PAT: Prog NR: %d  PMT PID: %04d", _streamID, prognr, pid);
-											_pmtPIDS[pid] = true;
-										}
+								_pat.parse(_streamID);
+								// Check which PIDs are PMTs and mark them in frontend
+								for (size_t i = 0u; i < MAX_PIDS; ++i) {
+									if (_pat.isMarkedAsPMT(i)) {
+										_pmtPIDS[i] = true;
 									}
-								} else {
-									SI_LOG_ERROR("Stream: %d, PAT: CRC Error! Calc CRC32: %04X - Msg CRC32: %04X  Retrying to collect data...", _streamID, calccrc, crc);
-									_pat.setCollected(false);
 								}
 							}
+						} else if (pid == 17 && !_sdt.isCollected()) {
+							// collect SDT data
+							_sdt.collectData(_streamID, SDT_TABLE_ID, data, false);
+
+							// Did we finish collecting SDT
+							if (_sdt.isCollected()) {
+								_sdt.parse(_streamID);
+							}
 						} else if (_pmtPIDS[pid] && !_pmt.isCollected()) {
-							// collect PAT data
-							_pmt.collectData(_streamID, PMT_TABLE_ID, data);
+							// collect PMT data
+							_pmt.collectData(_streamID, PMT_TABLE_ID, data, false);
 
-							// Did we finish collecting PAT
+							// Did we finish collecting PMT
 							if (_pmt.isCollected()) {
-								const unsigned char *cData = _pmt.getData();
-
-								// Parse PMT Data
-								const int sectionLength = ((cData[ 6] & 0x0F) << 8) | cData[ 7];
-								const int programNumber = ((cData[ 8]       ) << 8) | cData[ 9];
-								const int version       =   cData[10];
-								const int secNr         =   cData[11];
-								const int lastSecNr     =   cData[12];
-								const int pcrPID        = ((cData[13] & 0x1F) << 8) | cData[14];
-								const int prgLength     = ((cData[15] & 0x0F) << 8) | cData[16];
-								const uint32_t crc      =  CRC(cData, sectionLength);
-
-								const uint32_t calccrc = mpegts::TableData::calculateCRC32(&cData[5], sectionLength - 4 + 3);
-								if (calccrc == crc) {
-									_pcrPID = pcrPID;
-									SI_LOG_INFO("Stream: %d, PMT - Section Length: %d  Prog NR: %d  Version: %d  secNr: %d  lastSecNr: %d  PCR-PID: %04d  Program Length: %d  CRC: %04X",
-												_streamID, sectionLength, programNumber, version, secNr, lastSecNr, pcrPID, prgLength, crc);
-									SI_LOG_INFO("Stream: %d, PMT Found: %04d with PCR: %04d", _streamID, pid, _pcrPID);
-								} else {
-									SI_LOG_ERROR("Stream: %d, PMT: CRC Error! Calc CRC32: %04X - Msg CRC32: %04X  Retrying to collect data...", _streamID, calccrc, crc);
-									_pmt.setCollected(false);
-								}
+								_pmt.parse(_streamID);
+								_pcrPID = _pmt.getPCRPid();
+								SI_LOG_INFO("Stream: %d, PMT Found: %04d with PCR: %04d", _streamID, pid, _pcrPID);
 							}
 						} else if (pid == _pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
 							// Check for 'adaptation field flag' and 'PCR field present'
@@ -217,7 +176,6 @@ namespace file {
 					}
 				}
 			}
-///////////////////////////////////////////////////////////////////////////////
 			return buffer.full();
 		}
 		return false;
@@ -256,11 +214,12 @@ namespace file {
 				_pcrPID = -1;
 				_pcrPrev = 0;
 				_pcrDelta = 0;
-				_pmt.setCollected(false);
-				_pat.setCollected(false);
+				_pmt.clear();
+				_pat.clear();
+				_sdt.clear();
 				_t1 = std::chrono::steady_clock::now();
 				_t2 = _t1;
-				for (size_t i = 0; i < 8193; ++i) {
+				for (size_t i = 0; i < MAX_PIDS; ++i) {
 					_pmtPIDS[i] = false;
 				}
 			} else {

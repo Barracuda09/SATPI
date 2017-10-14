@@ -79,6 +79,12 @@ input::SpDevice Stream::getInputDevice() const {
 	return _device;
 }
 
+#ifdef LIBDVBCSA
+decrypt::dvbapi::SpClient Stream::getDecryptDevice() const {
+	return _decrypt;
+}
+#endif
+
 uint32_t Stream::getSSRC() const {
 	return _ssrc;
 }
@@ -130,6 +136,7 @@ void Stream::addToXML(std::string &xml) const {
 		ADD_CONFIG_TEXT(xml, "attached", _streamInUse ? "yes" : "no");
 		ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
 		ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
+		ADD_CONFIG_TEXT(xml, "userAgent", _client[0].getUserAgent().c_str());
 
 		ADD_CONFIG_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 
@@ -264,19 +271,19 @@ bool Stream::update(int clientID, bool start) {
 				break;
 			case StreamingType::HTTP:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: HTTP", _streamID);
-				_streaming.reset(new output::StreamThreadHttp(*this, _decrypt));
+				_streaming.reset(new output::StreamThreadHttp(*this));
 				break;
 			case StreamingType::RTSP:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP", _streamID);
-				_streaming.reset(new output::StreamThreadRtp(*this, _decrypt));
+				_streaming.reset(new output::StreamThreadRtp(*this));
 				break;
 			case StreamingType::RTP_TCP:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTP/TCP", _streamID);
-				_streaming.reset(new output::StreamThreadRtpTcp(*this, _decrypt));
+				_streaming.reset(new output::StreamThreadRtpTcp(*this));
 				break;
 			case StreamingType::FILE:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: FILE", _streamID);
-				_streaming.reset(new output::StreamThreadTSWriter(*this, _decrypt, "test.ts"));
+				_streaming.reset(new output::StreamThreadTSWriter(*this, "test.ts"));
 				break;
 			default:
 				_streaming.reset(nullptr);

@@ -43,11 +43,7 @@ StreamManager::StreamManager(const std::string &xmlFilePath) :
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
 #ifdef LIBDVBCSA
-	base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> getFrontendDecryptInterface =
-		makeFunctor((base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int>*) 0,
-			*this, &StreamManager::getFrontendDecryptInterface);
-
-	_decrypt = std::make_shared<decrypt::dvbapi::Client>(xmlFilePath + "/" + "dvbapi.xml", getFrontendDecryptInterface);
+	_decrypt = std::make_shared<decrypt::dvbapi::Client>(xmlFilePath + "/" + "dvbapi.xml", *this);
 #endif
 }
 

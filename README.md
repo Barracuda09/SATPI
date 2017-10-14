@@ -34,10 +34,6 @@ Thank You.
 
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
 
-Sponsors
---------
-- <a href="http://www.apfutura.net/en">APfutura</a>
-
 Contact
 -------
 If you like to contact me, you can do so by sending an email to:
@@ -57,7 +53,8 @@ Tested Hardware
 - <a href="http://www.beagleboard.org">BeagleBone Black</a>
 - <a href="http://www.orangepi.org">Orange Pi One with armbian</a>
 - <a href="http://www.sundtek.co">Sundtek DVB-C/T/T2</a>
-- <a href="http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf">Schwaiger DSR41IP</a> (Thanks to Axel Hartmann for kindly suppling this to me)
+- <a href="http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf">Schwaiger DSR41IP</a> - Thanks to Axel Hartmann for kindly suppling this to me
+- <a href="https://www.digitalbox.de/de_DE/HD-6i/490-1460-10080/">DIGITALBOX IMPERIAL HD 6i</a> - Thanks to <a href="http://www.apfutura.net/en">APfutura</a> for kindly suppling this to me
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
 

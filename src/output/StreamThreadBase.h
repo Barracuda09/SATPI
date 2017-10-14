@@ -33,7 +33,6 @@ FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
 
 FW_DECL_UP_NS1(output, StreamThreadBase);
-FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 namespace output {
 
@@ -48,8 +47,7 @@ namespace output {
 
 			StreamThreadBase(
 				const std::string &protocol,
-				StreamInterface &stream,
-				decrypt::dvbapi::SpClient decrypt);
+				StreamInterface &stream);
 
 			virtual ~StreamThreadBase();
 
@@ -106,7 +104,6 @@ namespace output {
 			mpegts::PacketBuffer _tsBuffer[MAX_BUF];
 			size_t _writeIndex;
 			size_t _readIndex;
-			decrypt::dvbapi::SpClient _decrypt;
 			unsigned long _sendInterval;
 			std::chrono::steady_clock::time_point _t1;
 			std::chrono::steady_clock::time_point _t2;

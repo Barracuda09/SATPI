@@ -32,7 +32,11 @@ class SocketClient :
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
-		SocketClient() {}
+		SocketClient() :
+			_msg(""),
+			_protocolString("None"),
+			_sessionID("-1"),
+			_userAgent("None") {}
 
 		virtual ~SocketClient() {
 			closeFD();
@@ -58,6 +62,17 @@ class SocketClient :
 		/// Get the HTTP message from this client
 		const std::string &getMessage() const {
 			return _msg;
+		}
+
+		/// Set the User-Agent of this client
+		/// @param userAgent specifies the IP address of this client
+		void setUserAgent(const std::string userAgent) {
+			_userAgent = userAgent;
+		}
+
+		/// Get the User-Agent of this client
+		const std::string &getUserAgent() const {
+			return _userAgent;
 		}
 
 		/// Set the IP address of this client
@@ -97,6 +112,7 @@ class SocketClient :
 		virtual void closeFD() override {
 			SocketAttr::closeFD();
 			_sessionID = "-1";
+			_userAgent = "None";
 			_msg.clear();
 		}
 
@@ -109,6 +125,7 @@ class SocketClient :
 		std::string _msg;
 		std::string _protocolString;
 		std::string _sessionID;
+		std::string _userAgent;
 
 };
 

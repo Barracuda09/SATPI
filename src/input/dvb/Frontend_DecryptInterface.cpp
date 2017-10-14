@@ -52,26 +52,6 @@ namespace dvb {
 		return _frontendData.getKey(parity);
 	}
 
-	bool Frontend::isTableCollected(int tableID) const {
-		return _frontendData.isTableCollected(tableID);
-	}
-
-	void Frontend::setTableCollected(int tableID, bool collected) {
-		_frontendData.setTableCollected(tableID, collected);
-	}
-
-	const unsigned char *Frontend::getTableData(int tableID) const {
-		return _frontendData.getTableData(tableID);
-	}
-
-	void Frontend::collectTableData(int streamID, int tableID, const unsigned char *data) {
-		_frontendData.collectTableData(streamID, tableID, data);
-	}
-
-	int  Frontend::getTableDataSize(int tableID) const {
-		return _frontendData.getTableDataSize(tableID);
-	}
-
 	void Frontend::startOSCamFilterData(int pid, int demux, int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
 		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
@@ -90,21 +70,18 @@ namespace dvb {
 		updatePIDFilters();
 	}
 
-	bool Frontend::findOSCamFilterData(const int pid, const unsigned char *tsPacket,
+	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
 		int &tableID, int &filter, int &demux, std::string &filterData) {
-		return _frontendData.findOSCamFilterData(pid, tsPacket, tableID, filter, demux, filterData);
+		return _frontendData.findOSCamFilterData(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 	}
 
 	void Frontend::stopOSCamFilters(int streamID) {
 		_frontendData.stopOSCamFilters(streamID);
+		_frontendData.clearMPEGTables(streamID);
 	}
 
-	void Frontend::setPMT(int pid, bool set) {
-		_frontendData.setPMT(pid, set);
-	}
-
-	bool Frontend::isPMT(int pid) const {
-		return _frontendData.isPMT(pid);
+	bool Frontend::isMarkedAsPMT(int pid) const {
+		return _frontendData.isMarkedAsPMT(pid);
 	}
 
 	void Frontend::setKey(const unsigned char *cw, int parity, int index) {
@@ -125,6 +102,10 @@ namespace dvb {
 		int hops) {
 		_frontendData.setECMInfo(pid, serviceID, caID, provID, emcTime,
 			cardSystem, readerName, sourceName, protocolName, hops);
+	}
+
+	mpegts::PMT &Frontend::getPMTData() {
+		return _frontendData.getPMTData();
 	}
 
 } // namespace dvb

@@ -30,6 +30,7 @@
 #include <atomic>
 #include <string>
 
+FW_DECL_NS0(StreamManager);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
@@ -47,8 +48,7 @@ namespace dvbapi {
 			// -- Constructors and destructor ---------------------------------
 			// ================================================================
 
-			Client(const std::string &xmlFilePath,
-				const base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> getFrontendDecryptInterface);
+			Client(const std::string &xmlFilePath, StreamManager &streamManager);
 
 			virtual ~Client();
 
@@ -92,12 +92,7 @@ namespace dvbapi {
 			void sendClientInfo();
 
 			///
-			void collectPAT(input::dvb::SpFrontendDecryptInterface frontend,
-				const unsigned char *data);
-
-			///
-			void collectPMT(input::dvb::SpFrontendDecryptInterface frontend,
-				const unsigned char *data);
+			void sendPMT(input::dvb::SpFrontendDecryptInterface frontend);
 
 			///
 			void cleanPMT(input::dvb::SpFrontendDecryptInterface frontend,
@@ -119,8 +114,7 @@ namespace dvbapi {
 			std::string      _serverIpAddr;
 			std::string      _serverName;
 
-			base::Functor1Ret<input::dvb::SpFrontendDecryptInterface, int> _getFrontendDecryptInterface;
-
+			StreamManager &_streamManager;
 	};
 
 } // namespace dvbapi

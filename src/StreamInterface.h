@@ -24,6 +24,7 @@
 
 FW_DECL_NS0(StreamClient);
 FW_DECL_SP_NS1(input, Device);
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 /// The class @c StreamInterface is an interface to an @c Stream
 class StreamInterface {
@@ -47,6 +48,11 @@ class StreamInterface {
 
 		///
 		virtual input::SpDevice getInputDevice() const = 0;
+
+#ifdef LIBDVBCSA
+		///
+		virtual decrypt::dvbapi::SpClient getDecryptDevice() const = 0;
+#endif
 
 		virtual uint32_t getSSRC() const = 0;
 

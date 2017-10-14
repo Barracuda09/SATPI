@@ -119,11 +119,11 @@ namespace mpegts {
 		_changed = true;
 	}
 
-	void PidTable::setPMT(int pid, bool set) {
+	void PidTable::markAsPMT(int pid, bool set) {
 		_data[pid].pmt = set;
 	}
 
-	bool PidTable::isPMT(int pid) const {
+	bool PidTable::isMarkedAsPMT(int pid) const {
 		return _data[pid].pmt;
 	}
 

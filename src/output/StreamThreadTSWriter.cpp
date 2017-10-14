@@ -33,9 +33,8 @@ namespace output {
 
 	StreamThreadTSWriter::StreamThreadTSWriter(
 		StreamInterface &stream,
-		decrypt::dvbapi::SpClient decrypt,
 		const std::string &file) :
-		StreamThreadBase("TSWRITER", stream, decrypt),
+		StreamThreadBase("TSWRITER", stream),
 		_filePath(file) {}
 
 	StreamThreadTSWriter::~StreamThreadTSWriter() {

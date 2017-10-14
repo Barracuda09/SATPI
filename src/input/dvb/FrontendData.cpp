@@ -43,6 +43,12 @@ namespace dvb {
 
 	void FrontendData::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
+
+		mpegts::SDT::Data sdtData;
+		_sdt.getSDTDataFor(_pmt.getProgramNumber(), sdtData);
+
+		StringConverter::addFormattedString(xml, "<channelname>%s</channelname>", sdtData.channelNameUTF8.c_str());
+		StringConverter::addFormattedString(xml, "<networkname>%s</networkname>", sdtData.networkNameUTF8.c_str());
 		StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_delsys));
 		StringConverter::addFormattedString(xml, "<tunefreq>%d</tunefreq>", _freq);
 		StringConverter::addFormattedString(xml, "<modulation>%s</modulation>", StringConverter::modtype_to_sting(_modtype));
@@ -135,6 +141,7 @@ namespace dvb {
 				// new frequency so initialize FrontendData and 'remove' all used PIDS
 				initialize();
 				SI_LOG_INFO("Stream: %d, New frequency requested, clearing channel data...", streamID);
+				clearMPEGTables(streamID);
 			}
 			_freq = freq * 1000.0;
 			_changed = true;
@@ -404,6 +411,13 @@ namespace dvb {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
+	void FrontendData::clearMPEGTables(int streamID) {
+		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT/SDT Tables...", streamID);
+		_pat.clear();
+		_pmt.clear();
+		_sdt.clear();
+	}
+
 	void FrontendData::parsePIDString(
 			const std::string &pids,
 			const bool clearPidsFirst,
@@ -445,9 +459,9 @@ namespace dvb {
 		}
 	}
 
-	void FrontendData::setPMT(const int pid, const bool set) {
+	void FrontendData::markAsPMT(const int pid, const bool set) {
 		base::MutexLock lock(_mutex);
-		_pidTable.setPMT(pid, set);
+		_pidTable.markAsPMT(pid, set);
 	}
 
 	void FrontendData::setKeyParity(const int pid, const int parity) {
@@ -490,9 +504,9 @@ namespace dvb {
 		_pidTable.setAllPID(val);
 	}
 
-	bool FrontendData::isPMT(const int pid) const {
+	bool FrontendData::isMarkedAsPMT(const int pid) const {
 		base::MutexLock lock(_mutex);
-		return _pidTable.isPMT(pid);
+		return _pidTable.isMarkedAsPMT(pid);
 	}
 
 	int FrontendData::getKeyParity(const int pid) const {

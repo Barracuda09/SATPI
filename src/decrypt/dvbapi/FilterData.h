@@ -53,12 +53,12 @@ namespace dvbapi {
 				_pid = -1;
 				std::memset(_data, 0x00, 16);
 				std::memset(_mask, 0x00, 16);
-				_tableData.setCollected(false);
+				_tableData.clear();
 			}
 
 			/// Collect Table data for tableID
-			void collectTableData(const int streamID, const int tableID, const unsigned char *data) {
-				_tableData.collectData(streamID, tableID, data);
+			void collectTableData(const int streamID, const int tableID, const unsigned char *data, bool raw) {
+				_tableData.collectData(streamID, tableID, data, raw);
 			}
 
 			/// Check if Table is collected for tableID
@@ -67,13 +67,13 @@ namespace dvbapi {
 			}
 
 			/// Get the collected table data
-			void getTableData(std::string &data) const {
-				_tableData.getData(data);
+			void getTableData(size_t secNr, std::string &data) const {
+				_tableData.getData(secNr, data);
 			}
 
 			/// Reset/Clear the collected table data
 			void resetTableData() {
-				_tableData.setCollected(false);
+				_tableData.clear();
 			}
 
 			/// Is the requested pid 'active' in use for filtering
