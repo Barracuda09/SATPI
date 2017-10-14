@@ -58,8 +58,8 @@ namespace mpegts {
 			SI_LOG_INFO("Stream: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: 0x%04X",
 						streamID, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, tableData.crc);
 
-			// 4 = CRC  6 = PAT Table begin from section length
-			const size_t len = tableData.sectionLength - 4u - 6u;
+			// 4 = CRC  5 = PAT Table begin from section length
+			const size_t len = tableData.sectionLength - 4u - 5u;
 
 			// skip to Table begin and iterate over entries
 			const unsigned char *ptr = &data[13u];

@@ -180,7 +180,21 @@ namespace mpegts {
 					}
 					// Check did we finish collecting Table Data
 					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
-						setCollected();
+						if (raw) {
+							setCollected();
+						} else {
+							const unsigned char *crcData = currentTableData.getData();
+							const uint32_t crc     = CRC(crcData, sectionLength);
+							const uint32_t calccrc = calculateCRC32(&crcData[5], sectionLength - 4 + 3);
+							if (calccrc == crc) {
+								currentTableData.crc = crc;
+								setCollected();
+							} else {
+								SI_LOG_ERROR("Stream: %d, %s - CRC Error! Calc CRC32: 0x%04X - TS CRC32: 0x%04X  Retrying to collect data...",
+										streamID, getTableTXT(tableID), calccrc, crc);
+								_dataTable.erase(_dataTable.find(_currentSectionNumber));
+							}
+						}
 					}
 				} else {
 					_dataTable.erase(_dataTable.find(_currentSectionNumber));
