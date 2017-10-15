@@ -90,6 +90,13 @@ If you like to try DVBAPI (OSCam), use:
 
     make debug LIBDVBCSA=yes
 
+For Cross Compiling, here are some tips you can try (I did not try this myself):
+
+    export INCLUDES=--sysroot=dir         (get the sys root like headers and libraries for your device and copy it to dir)
+    export CXXPREFIX=arm-linux-gnueabihf- (for pointing to a different compiler for your device)
+    export CXXSUFFIX=                     (for pointing to a different compiler for your device, if it needs it!)
+    make debug                            (Or some other build you like)
+
 If you like to build the documentation, use:
 
     make docu   (!! you need Doxygen and Graphviz/dot !!)
