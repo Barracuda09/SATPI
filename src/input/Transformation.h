@@ -66,6 +66,9 @@ namespace input {
 			bool isEnabled() const;
 
 			///
+			bool advertiseAsDVBS2() const;
+
+			///
 			void resetTransformFlag();
 
 			/// This function may return the input system for the
@@ -92,6 +95,7 @@ namespace input {
 
 			bool _enabled;
 			bool _transform;
+			bool _advertiseAsDVBS2;
 			base::M3UParser _m3u;
 			std::string _transformFileM3U;
 			input::DeviceData &_transformedDeviceData;

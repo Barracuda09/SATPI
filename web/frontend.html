@@ -58,6 +58,7 @@
 			if (transformation.length > 0) {
 				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Transformation Info</th></tr>";
 				page += addTableLineEntry("Transformation enable", xmlDoc, streamID + "transformEnable");
+				page += addTableLineEntry("Advertise as DVB-S2", xmlDoc, streamID + "advertiseAsDVBS2");
 				page += addTableLineEntry("Transformation Mapping M3U", xmlDoc, streamID + "transformM3U");
 			}
 

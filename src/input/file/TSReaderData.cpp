@@ -31,7 +31,7 @@ namespace file {
 	// =======================================================================
 
 	TSReaderData::TSReaderData() :
-		_filePath("None")  {
+		_filePath("None") {
 		initialize();
 	}
 
@@ -42,7 +42,8 @@ namespace file {
 	// =======================================================================
 
 	void TSReaderData::addToXML(std::string &xml) const {
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _filePath.c_str());
+		base::MutexLock lock(_mutex);
+		ADD_CONFIG_TEXT(xml, "pathname", _filePath.c_str());
 	}
 
 	void TSReaderData::fromXML(const std::string &UNUSED(xml)) {}
@@ -88,14 +89,17 @@ namespace file {
 	// =======================================================================
 
 	std::string TSReaderData::getFilePath() const {
+		base::MutexLock lock(_mutex);
 		return _filePath;
 	}
 
 	bool TSReaderData::hasFilePath() const {
+		base::MutexLock lock(_mutex);
 		return _filePath != "None";
 	}
 
 	void TSReaderData::clearData() {
+		base::MutexLock lock(_mutex);
 		_filePath = "None";
 		setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 	}

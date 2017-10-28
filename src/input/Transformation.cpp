@@ -35,6 +35,7 @@ namespace input {
 
 	Transformation::Transformation(input::DeviceData &transformedDeviceData) :
 			_transform(false),
+			_advertiseAsDVBS2(false),
 			_transformFileM3U("mapping.m3u"),
 			_transformedDeviceData(transformedDeviceData) {
 		_enabled = _m3u.parse(_transformFileM3U);
@@ -50,6 +51,7 @@ namespace input {
 	void Transformation::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
 		ADD_CONFIG_CHECKBOX(xml, "transformEnable", (_enabled ? "true" : "false"));
+		ADD_CONFIG_CHECKBOX(xml, "advertiseAsDVBS2", (_advertiseAsDVBS2 ? "true" : "false"));
 		ADD_CONFIG_TEXT_INPUT(xml, "transformM3U", _transformFileM3U.c_str());
 	}
 
@@ -58,6 +60,9 @@ namespace input {
 		std::string element;
 		if (findXMLElement(xml, "transformEnable.value", element)) {
 			_enabled = (element == "true") ? true : false;
+		}
+		if (findXMLElement(xml, "advertiseAsDVBS2.value", element)) {
+			_advertiseAsDVBS2 = (element == "true") ? true : false;
 		}
 		if (findXMLElement(xml, "transformM3U.value", element)) {
 			_transformFileM3U = element;
@@ -72,6 +77,11 @@ namespace input {
 	bool Transformation::isEnabled() const {
 		base::MutexLock lock(_mutex);
 		return _enabled;
+	}
+
+	bool Transformation::advertiseAsDVBS2() const {
+		base::MutexLock lock(_mutex);
+		return _advertiseAsDVBS2;
 	}
 
 	void Transformation::resetTransformFlag() {

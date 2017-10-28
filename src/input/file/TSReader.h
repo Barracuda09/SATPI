@@ -22,6 +22,7 @@
 
 #include <FwDecl.h>
 #include <input/Device.h>
+#include <input/Transformation.h>
 #include <input/file/TSReaderData.h>
 #include <mpegts/TableData.h>
 #include <mpegts/PAT.h>
@@ -122,6 +123,8 @@ namespace file {
 			int _streamID;
 			std::ifstream _file;
 			TSReaderData _deviceData;
+			TSReaderData _transformDeviceData;
+			input::Transformation _transform;
 
 			mpegts::PMT _pmt;
 			mpegts::PAT _pat;

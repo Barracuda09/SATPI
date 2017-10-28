@@ -1,34 +1,37 @@
 #EXTM3U
 
-#EXTINF:-1 satip-freq="10744", DVB-C Translation to 514MHz
+#EXTINF:-1 satip-freq="10123", Translation to: File uri=test.ts
+rtsp://192.168.178.10/?msys=file&uri=test.ts
+
+#EXTINF:-1 satip-freq="10744", Translation to: DVB-C 514MHz
 rtsp://192.168.178.10/?freq=514&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10773", DVB-C Translation to 530MHz
+#EXTINF:-1 satip-freq="10773", Translation to: DVB-C 530MHz
 rtsp://192.168.178.10/?freq=530&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10788", DVB-C Translation to 554MHz
+#EXTINF:-1 satip-freq="10788", Translation to: DVB-C 554MHz
 rtsp://192.168.178.10/?freq=554&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10818", DVB-C Translation to 578MHz
+#EXTINF:-1 satip-freq="10818", Translation to: DVB-C 578MHz
 rtsp://192.168.178.10/?freq=578&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10832", DVB-C Translation to 610MHz
+#EXTINF:-1 satip-freq="10832", Translation to: DVB-C 610MHz
 rtsp://192.168.178.10/?freq=610&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10847", DVB-C Translation to 618MHz
+#EXTINF:-1 satip-freq="10847", Translation to: DVB-C 618MHz
 rtsp://192.168.178.10/?freq=618&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10862", DVB-C Translation to 626MHz
+#EXTINF:-1 satip-freq="10862", Translation to: DVB-C 626MHz
 rtsp://192.168.178.10/?freq=626&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10877", DVB-C Translation to 658MHz
+#EXTINF:-1 satip-freq="10877", Translation to: DVB-C 658MHz
 rtsp://192.168.178.10/?freq=658&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="11494", Stream 1 - Multicast UDP input
+#EXTINF:-1 satip-freq="11494", Translation to: Stream 1 - Multicast UDP input
 udp://@224.0.0.1:12345
 
-#EXTINF:-1 satip-freq="11362", Stream 2 - Multicast RTP input
+#EXTINF:-1 satip-freq="11362", Translation to: Stream 2 - Multicast RTP input
 rtp://@224.0.0.2:12345
 
-#EXTINF:-1 satip-freq="12604", Stream 3 - Unicast UDP input (bind to any address)
+#EXTINF:-1 satip-freq="12604", Translation to: Stream 3 - Unicast UDP input (bind to any address)
 udp://@:12345

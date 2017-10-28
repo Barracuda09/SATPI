@@ -32,7 +32,8 @@ namespace input {
 namespace file {
 
 	TSReader::TSReader(int streamID) :
-		_streamID(streamID) {}
+		_streamID(streamID),
+		_transform(_transformDeviceData) {}
 
 	TSReader::~TSReader() {}
 
@@ -53,13 +54,22 @@ namespace file {
 
 	void TSReader::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", "TS Reader");
+		ADD_CONFIG_TEXT(xml, "frontendname", "TS Reader");
+
+		ADD_XML_BEGIN_ELEMENT(xml, "transformation");
+		_transform.addToXML(xml);
+		ADD_XML_END_ELEMENT(xml, "transformation");
 
 		_deviceData.addToXML(xml);
 	}
 
-	void TSReader::fromXML(const std::string &UNUSED(xml)) {
+	void TSReader::fromXML(const std::string &xml) {
 		base::MutexLock lock(_mutex);
+		std::string element;
+		if (findXMLElement(xml, "transformation", element)) {
+			_transform.fromXML(element);
+		}
+		_deviceData.fromXML(xml);
 	}
 
 	// =======================================================================
@@ -72,7 +82,7 @@ namespace file {
 		std::size_t &dvbt2,
 		std::size_t &dvbc,
 		std::size_t &dvbc2) {
-		dvbs2 += 0;
+		dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
 		dvbt  += 0;
 		dvbt2 += 0;
 		dvbc  += 0;
@@ -185,9 +195,11 @@ namespace file {
 		return system == input::InputSystem::FILE;
 	}
 
-	bool TSReader::capableToTransform(const std::string &UNUSED(msg),
-			const std::string &UNUSED(method)) const {
-		return false;
+	bool TSReader::capableToTransform(const std::string &msg,
+			const std::string &method) const {
+		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		const input::InputSystem system = _transform.getTransformationSystemFor(freq);
+		return capableOf(system);
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {
@@ -200,7 +212,11 @@ namespace file {
 
 	void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
-		_deviceData.parseStreamString(_streamID, msg, method);
+
+		// Do we need to transform this request?
+		const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
+
+		_deviceData.parseStreamString(_streamID, msgTrans, method);
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
 
@@ -231,16 +247,14 @@ namespace file {
 
 	bool TSReader::teardown() {
 		_deviceData.clearData();
+		_transform.resetTransformFlag();
 		_file.close();
 		return true;
 	}
 
 	std::string TSReader::attributeDescribeString() const {
-		if (_deviceData.hasFilePath()) {
-			return _deviceData.attributeDescribeString(_streamID);
-		} else {
-			return "";
-		}
+		const DeviceData &data = _transform.transformDeviceData(_deviceData);
+		return data.attributeDescribeString(_streamID);
 	}
 
 	// =======================================================================
