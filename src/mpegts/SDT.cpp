@@ -51,7 +51,7 @@ namespace mpegts {
 		for (std::size_t secNr = 0; secNr < _numberOfSections; ++secNr) {
 			TableData::Data tableData;
 			if (getDataForSectionNumber(secNr, tableData)) {
-				const unsigned char *data = tableData.getData();
+				const unsigned char *data = tableData.data.c_str();
 				_transportStreamID = (data[ 8u] << 8u) | data[ 9u];
 				_networkID         = (data[13u] << 8u) | data[14u];
 

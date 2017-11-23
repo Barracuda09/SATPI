@@ -98,7 +98,7 @@ namespace dvbapi {
 
 			/// Find the correct filter for the 'collected' data or ts packet
 			bool findOSCamFilterData(const int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, std::string &filterData) {
+				int &filter, int &demux, mpegts::TSData &filterData) {
 				return _filter.find(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 			}
 

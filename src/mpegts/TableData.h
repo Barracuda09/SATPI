@@ -25,6 +25,8 @@
 
 namespace mpegts {
 
+	typedef std::basic_string<unsigned char> TSData;
+
 	class TableData {
 		public:
 			// ================================================================
@@ -87,7 +89,7 @@ namespace mpegts {
 			void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
 
 			/// Get the collected Table Data
-			void getData(size_t secNr, std::string &data) const;
+			void getData(size_t secNr, TSData &data) const;
 
 			/// Check if Table is collected
 			bool isCollected() const;
@@ -116,13 +118,10 @@ namespace mpegts {
 				int secNr;
 				int lastSecNr;
 				uint32_t crc;
-				std::string data;
+				TSData data;
 				int cc;
 				int pid;
 				bool collected;
-				const unsigned char *getData() const {
-					return reinterpret_cast<const unsigned char *>(data.c_str());
-				}
 			};
 
 		protected:

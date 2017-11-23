@@ -54,7 +54,7 @@ namespace mpegts {
 	void PMT::parse(const int streamID) {
 		Data tableData;
 		if (getDataForSectionNumber(0, tableData)) {
-			const unsigned char *data = tableData.getData();
+			const unsigned char *data = tableData.data.c_str();
 			_programNumber = ((data[ 8u]       ) << 8) | data[ 9u];
 			_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 			_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
@@ -66,7 +66,7 @@ namespace mpegts {
 
 			// To save the Program Info
 			if (_prgLength > 0) {
-				_progInfo.append(reinterpret_cast<const char *>(&data[17]), _prgLength);
+				_progInfo.append(&data[17], _prgLength);
 			}
 
 			// 4 = CRC   9 = PMT Header from section length
@@ -91,7 +91,7 @@ namespace mpegts {
 						SI_LOG_INFO("Stream: %d, ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %d",
 									streamID, caid, ecmpid, provid, subLength);
 
-						_progInfo.append(reinterpret_cast<const char *>(&ptr[j + i + 5u]), subLength + 2u);
+						_progInfo.append(&ptr[j + i + 5u], subLength + 2u);
 					}
 					// Goto next ES Info
 					j += subLength + 2u;

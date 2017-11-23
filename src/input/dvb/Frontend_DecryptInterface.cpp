@@ -71,7 +71,7 @@ namespace dvb {
 	}
 
 	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
-		int &tableID, int &filter, int &demux, std::string &filterData) {
+		int &tableID, int &filter, int &demux, mpegts::TSData &filterData) {
 		return _frontendData.findOSCamFilterData(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 	}
 

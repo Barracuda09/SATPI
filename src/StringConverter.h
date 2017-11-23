@@ -24,10 +24,69 @@
 
 #include <string>
 #include <cstdarg>
+#include <cctype>
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <vector>
 
 /// The class @c StringConverter has some string manipulation functions
 class StringConverter  {
 	public:
+
+		/// Helper function for stringFormat
+		template <typename Type>
+		static void makeVectArgs(std::vector<std::string> &vec, Type t) {
+			std::stringstream stream;
+			stream << t;
+			vec.push_back(stream.str());
+		}
+
+		/// Returns a copy of the string where all specified markers are replaced
+		/// with the specified arguments.<br>
+		/// <b>Example:</b> @c std::string s = StringConverter::stringFormat(
+		///   "Stream: %1, Close StreamClient[%2] with SessionID %3", 1, 0, "12345"
+		/// @return A copy of the string where all specified markers are replaced
+		/// with the specified arguments.
+		template <typename... Args>
+		static std::string stringFormat(const char* format, Args&&... args) {
+			std::vector<std::string> vectArgs;
+			vectArgs.push_back("?");
+			// trick for pack expansion
+			const int dummy[] = { 0, ((void) makeVectArgs(vectArgs, std::forward<Args>(args)), 0)... };
+			(void)dummy;
+
+			// Make as little reallocations as possible
+			std::string line;
+			std::size_t size = std::strlen(format);
+			for (std::size_t i = 1; i < vectArgs.size(); ++i) {
+				size += vectArgs[i].size();
+			}
+			size -= (vectArgs.size() - 1) * 2; // remove %-tags
+			line.reserve(size);
+
+			for ( ; *format != '\0'; ++format) {
+				if (*format == '%') {
+					if (*(format + 1) != '\0') {
+						++format;
+						if (*format == '%') {
+							// Escape sequence
+							line += *format;
+						} else {
+							const std::size_t index = (*format - '0');
+							line += vectArgs[(index < vectArgs.size()) ? index : 0];
+						}
+					} else {
+						// Error % near end of line
+						line += "%E";
+					}
+				} else {
+					line += *format;
+				}
+			}
+			return line;
+		}
+
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c true if there is a line found @c false if none was found
 		static bool getline(const std::string &msg, std::string::size_type &begin, std::string &line, const char *line_delim);

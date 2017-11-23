@@ -77,7 +77,7 @@ namespace dvb {
 
 			///
 			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, std::string &filterData) = 0;
+				int &filter, int &demux, mpegts::TSData &filterData) = 0;
 
 			///
 			virtual void stopOSCamFilters(int streamID) = 0;

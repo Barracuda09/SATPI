@@ -63,7 +63,7 @@ namespace dvbapi {
 			}
 
 			bool find(const int streamID, const int pid, const unsigned char *data, int &tableID, int &filter,
-				int &demux, std::string &filterData) {
+				int &demux, mpegts::TSData &filterData) {
 				base::MutexLock lock(_mutex);
 				if (_collecting) {
 					// We are collecting, but is this the correct PID for this filter

@@ -183,7 +183,7 @@ namespace mpegts {
 						if (raw) {
 							setCollected();
 						} else {
-							const unsigned char *crcData = currentTableData.getData();
+							const unsigned char *crcData = currentTableData.data.c_str();
 							const uint32_t crc     = CRC(crcData, sectionLength);
 							const uint32_t calccrc = calculateCRC32(&crcData[5], sectionLength - 4 + 3);
 							if (calccrc == crc) {
@@ -216,7 +216,7 @@ namespace mpegts {
 				}
 				// Check did we finish collecting Table Data
 				if (sectionLength <= (tableDataSize - 9)) { // 9 = Untill Table Section Length
-					const unsigned char *crcData = currentTableData.getData();
+					const unsigned char *crcData = currentTableData.data.c_str();
 					const uint32_t crc     = CRC(crcData, sectionLength);
 					const uint32_t calccrc = calculateCRC32(&crcData[5], sectionLength - 4 + 3);
 					if (calccrc == crc) {
@@ -246,7 +246,7 @@ namespace mpegts {
 		// Is this the first try or a follow-up then check cc
 		if (currentTableData.data.size() == 0 ||
 			(cc == (currentTableData.cc + 1) % 0x10 && pid == currentTableData.pid)) {
-			currentTableData.data.append(reinterpret_cast<const char *>(data), length);
+			currentTableData.data.append(data, length);
 			currentTableData.cc   = cc;
 			currentTableData.pid  = pid;
 			return true;
@@ -263,7 +263,7 @@ namespace mpegts {
 		return false;
 	}
 
-	void TableData::getData(const size_t secNr, std::string &data) const {
+	void TableData::getData(const size_t secNr, TSData &data) const {
 		TableData::Data tableData;
 		if (getDataForSectionNumber(secNr, tableData)) {
 			data = tableData.data;

@@ -113,7 +113,7 @@ namespace dvb {
 			virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
 
 			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, std::string &filterData) override;
+				int &filter, int &demux, mpegts::TSData &filterData) override;
 
 			virtual void stopOSCamFilters(int streamID) override;
 

@@ -67,7 +67,7 @@ namespace dvbapi {
 			}
 
 			/// Get the collected table data
-			void getTableData(size_t secNr, std::string &data) const {
+			void getTableData(size_t secNr, mpegts::TSData &data) const {
 				_tableData.getData(secNr, data);
 			}
 

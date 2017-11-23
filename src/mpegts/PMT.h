@@ -51,7 +51,7 @@ namespace mpegts {
 
 			void parse(int streamID);
 
-			const std::string &getProgramInfo() const {
+			const mpegts::TSData &getProgramInfo() const {
 				return _progInfo;
 			}
 
@@ -79,7 +79,7 @@ namespace mpegts {
 
 		private:
 
-			std::string _progInfo;
+			mpegts::TSData _progInfo;
 			uint16_t _programNumber;
 			int _pcrPID;
 			std::size_t _prgLength;

@@ -50,7 +50,7 @@ namespace mpegts {
 	void PAT::parse(const int streamID) {
 		Data tableData;
 		if (getDataForSectionNumber(0, tableData)) {
-			const unsigned char *data = tableData.getData();
+			const unsigned char *data = tableData.data.c_str();
 			_tid =  (data[8u] << 8) | data[9u];
 
 //			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Stream: %d, PAT data", streamID);

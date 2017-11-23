@@ -156,12 +156,12 @@ namespace dvbapi {
 						int demux = 0;
 						int filter = 0;
 						int tableID = data[5];
-						std::string filterData;
+						mpegts::TSData filterData;
 						if (frontend->findOSCamFilterData(streamID, pid, data, tableID, filter, demux, filterData)) {
 							// Don't send PAT or PMT before we have an active
 							if (pid == 0 || frontend->isMarkedAsPMT(pid)) {
 							} else {
-								const unsigned char *tableData = reinterpret_cast<const unsigned char *>(filterData.c_str());
+								const unsigned char *tableData = filterData.c_str();
 								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
 
 								unsigned char clientData[sectionLength + 25];
@@ -336,7 +336,7 @@ namespace dvbapi {
 		// Did we send the collecting PMT already
 		if (pmt.isReadySend()) {
 			// Send it here !!
-			const std::string &progInfo = pmt.getProgramInfo();
+			const mpegts::TSData &progInfo = pmt.getProgramInfo();
 			const int programNumber = pmt.getProgramNumber();
 
 			const int streamID = frontend->getStreamID();
