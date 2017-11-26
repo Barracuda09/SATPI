@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
 	signal(SIGPIPE, SIG_IGN);
 
 	// notify we are alive
-	SI_LOG_INFO("--- starting SatPI version: %s ---", satpi_version);
+	SI_LOG_INFO("--- Starting SatPI version: %s ---", satpi_version);
 	SI_LOG_INFO("Number of processors online: %d", base::ThreadBase::getNumberOfProcessorsOnline());
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {

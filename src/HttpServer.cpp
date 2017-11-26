@@ -186,29 +186,18 @@ bool HttpServer::methodGet(SocketClient &client) {
 					// XSatipM3U, presentationURL and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
 						SI_LOG_DEBUG("Client: %s requesed %s", client.getIPAddress().c_str(), file.c_str());
-						// check did we get our desc.xml (we assume there are some %s in there)
-						if (docType.find("%s") != std::string::npos) {
+						// check did we get our desc.xml (we assume there are some %1 in there)
+						if (docType.find("%1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
-							std::string presentationURL = "http://";
-							presentationURL += _interface.getIPAddress().c_str();
-							presentationURL += ":";
-							presentationURL += std::to_string(_properties.getHttpPort());
-							presentationURL += "/";
+							const std::string presentationURL = StringConverter::stringFormat("http://%1:%2/",
+									_interface.getIPAddress().c_str(),
+									std::to_string(_properties.getHttpPort()));
 
-							docTypeSize -= 5 * 2; // minus 5x %s
-							docTypeSize += _streamManager.getXMLDeliveryString().size();
-							docTypeSize += _properties.getUUID().size();
-							docTypeSize += _properties.getSoftwareVersion().size();
-							docTypeSize += _properties.getXSatipM3U().size();
-							docTypeSize += presentationURL.size();
-							char *doc_desc_xml = new char[docTypeSize + 1];
-							if (doc_desc_xml != nullptr) {
-								snprintf(doc_desc_xml, docTypeSize + 1, docType.c_str(), _properties.getSoftwareVersion().c_str(),
-								         _properties.getUUID().c_str(), presentationURL.c_str(), _streamManager.getXMLDeliveryString().c_str(),
-								         _properties.getXSatipM3U().c_str());
-								docType = doc_desc_xml;
-								DELETE_ARRAY(doc_desc_xml);
-							}
+							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
+								_properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
+								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
+							docType = newDocType;
+							docTypeSize = docType.size();
 						}
 					}
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
@@ -220,6 +209,14 @@ bool HttpServer::methodGet(SocketClient &client) {
 				} else if (file.find(".css") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_CSS, docTypeSize, 0);
 				} else if (file.find(".m3u") != std::string::npos) {
+					// check did we get our *.m3u (we assume there are some %1 in there, we should fill in IP Address)
+					if (docType.find("%1") != std::string::npos) {
+						SI_LOG_DEBUG("Client: %s requesed %s", client.getIPAddress().c_str(), file.c_str());
+						const std::string newDocType = StringConverter::stringFormat(
+								docType.c_str(), _interface.getIPAddress());
+						docType = newDocType;
+						docTypeSize = docType.size();
+					}
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_VIDEO, docTypeSize, 0);
 				} else if ((file.find(".png") != std::string::npos) ||
 				           (file.find(".ico") != std::string::npos)) {

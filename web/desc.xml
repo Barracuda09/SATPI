@@ -12,12 +12,12 @@
 		<modelDescription>SatPI is a SAT&gt;IP Server for Linux</modelDescription>
 		<modelName>SatPI Server</modelName>
 		<!-- filled in by server -->
-		<modelNumber>%s</modelNumber>
+		<modelNumber>%1</modelNumber>
 		<!-- filled in by server -->
 		<modelURL>https://github.com/Barracuda09/SATPI</modelURL>
 		<serialNumber>1S81A31231000007</serialNumber>
 		<!-- filled in by server -->
-		<UDN>uuid:%s</UDN>
+		<UDN>uuid:%2</UDN>
 		<!-- filled in by server -->
 		<UPC>123456789012</UPC>
 		<iconList>
@@ -51,13 +51,13 @@
 			</icon>
 		</iconList>
 		<!-- filled in by server -->
-		<presentationURL>%s</presentationURL>
+		<presentationURL>%3</presentationURL>
 		<!-- filled in by server -->
 		<!-- filled in by server -->
-		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPCAP>
+		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%4</satip:X_SATIPCAP>
 		<!-- filled in by server -->
 		<!-- filled in by server -->
-		<satip:X_SATIPM3U xmlns:satip="urn:ses-com:satip">%s</satip:X_SATIPM3U>
+		<satip:X_SATIPM3U xmlns:satip="urn:ses-com:satip">%5</satip:X_SATIPM3U>
 		<!-- filled in by server -->
 	</device>
 </root>

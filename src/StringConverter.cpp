@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cstdarg>
+
 void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
 	std::string::size_type end = fullPath.find_last_of("/\\");
 	path = fullPath.substr(0, end).c_str();
