@@ -64,15 +64,21 @@ class StringConverter  {
 
 			for ( ; *format != '\0'; ++format) {
 				if (*format == '%') {
-					if (*(format + 1) != '\0') {
+					if (*(format + 1) != '\0' && std::isdigit(*(format + 1))) {
 						++format;
-						if (*format == '%') {
-							// Escape sequence
-							line += *format;
-						} else {
-							const std::size_t index = (*format - '0');
-							line += vectArgs[(index < vectArgs.size()) ? index : 0];
+						const char *formatDigit = format;
+						while (std::isdigit(*formatDigit)) {
+						  ++formatDigit;
 						}
+						const std::size_t digitCnt = formatDigit - format;
+						const std::size_t index = std::stoul(std::string(format, digitCnt));
+						line += vectArgs[(index < vectArgs.size()) ? index : 0];
+						// -1 because of ++format in for statement
+						format += digitCnt - 1;
+					} else if (*(format + 1) == '%') {
+						// Escape sequence
+						++format;
+						line += *format;
 					} else {
 						// Error % near end of line
 						line += "%E";
