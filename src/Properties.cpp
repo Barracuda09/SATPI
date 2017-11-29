@@ -24,7 +24,7 @@ extern const char *satpi_version;
 
 Properties::Properties(const std::string &xmlFilePath, const std::string &uuid,
                        const std::string &appdataPath, const std::string &webPath,
-					   unsigned int httpPort, unsigned int rtspPort) :
+					   const unsigned int httpPort, const unsigned int rtspPort) :
 	XMLSupport(xmlFilePath),
 	_uuid(uuid),
 	_versionString(satpi_version),
@@ -38,19 +38,23 @@ Properties::Properties(const std::string &xmlFilePath, const std::string &uuid,
 	_appStartTime(std::time(nullptr)),
 	_exitApplication(false) {
 	restoreXML();
-	_httpPort = httpPort;
-	_rtspPort = rtspPort;
+	// Do we need to override these ports, with command args
+	if (_httpPort != httpPort) {
+		_httpPort = httpPort;
+	}
+	if (_rtspPort != rtspPort) {
+		_rtspPort = rtspPort;
+	}
 }
 
-Properties::~Properties() {
-}
+Properties::~Properties() {}
 
 void Properties::fromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "data.configdata.input1.value", element)) {
 		_ssdpAnnounceTimeSec = atoi(element.c_str());
-		SI_LOG_INFO("Setting SSDP annouce interval to: %d Sec", _ssdpAnnounceTimeSec);
+		SI_LOG_DEBUG("Setting SSDP annouce interval to: %d Sec", _ssdpAnnounceTimeSec);
 	}
 	if (findXMLElement(xml, "data.configdata.xsatipm3u.value", element)) {
 		_xSatipM3U = element;
@@ -60,11 +64,11 @@ void Properties::fromXML(const std::string &xml) {
 	}
 	if (findXMLElement(xml, "data.configdata.httpport.value", element)) {
 		_httpPort = atoi(element.c_str());
-//		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
+		SI_LOG_DEBUG("Setting HTTP Port to: %d", _httpPort);
 	}
 	if (findXMLElement(xml, "data.configdata.rtspport.value", element)) {
 		_rtspPort = atoi(element.c_str());
-//		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
+		SI_LOG_DEBUG("Setting RTSP Port to: %d", _rtspPort);
 	}
 	saveXML(xml);
 }
@@ -109,7 +113,12 @@ std::string Properties::getWebPath() const {
 
 std::string Properties::getXSatipM3U() const {
 	base::MutexLock lock(_mutex);
-	return _xSatipM3U;
+	// Should we add a '/'
+	if (_xSatipM3U[0] != '/' && _xSatipM3U.find("http://") == std::string::npos) {
+		return "/" + _xSatipM3U;
+	} else {
+		return _xSatipM3U;
+	}
 }
 
 std::string Properties::getXMLDeviceDescriptionFile() const {
@@ -117,7 +126,7 @@ std::string Properties::getXMLDeviceDescriptionFile() const {
 	return _xmlDeviceDescriptionFile;
 }
 
-void Properties::setBootID(unsigned int bootID) {
+void Properties::setBootID(const unsigned int bootID) {
 	base::MutexLock lock(_mutex);
 	_bootID = bootID;
 }
@@ -127,7 +136,7 @@ unsigned int Properties::getBootID() const {
 	return _bootID;
 }
 
-void Properties::setDeviceID(unsigned int deviceID) {
+void Properties::setDeviceID(const unsigned int deviceID) {
 	base::MutexLock lock(_mutex);
 	_deviceID = deviceID;
 }
@@ -137,7 +146,7 @@ unsigned int Properties::getDeviceID() const {
 	return _deviceID;
 }
 
-void Properties::setHttpPort(unsigned int httpPort) {
+void Properties::setHttpPort(const unsigned int httpPort) {
 	base::MutexLock lock(_mutex);
 	_httpPort = httpPort;
 }
@@ -147,7 +156,7 @@ unsigned int Properties::getHttpPort() const {
 	return _httpPort;
 }
 
-void Properties::setRtspPort(unsigned int rtspPort) {
+void Properties::setRtspPort(const unsigned int rtspPort) {
 	base::MutexLock lock(_mutex);
 	_rtspPort = rtspPort;
 }
@@ -157,7 +166,7 @@ unsigned int Properties::getRtspPort() const {
 	return _rtspPort;
 }
 
-void Properties::setSsdpAnnounceTimeSec(unsigned int sec) {
+void Properties::setSsdpAnnounceTimeSec(const unsigned int sec) {
 	base::MutexLock lock(_mutex);
 	_ssdpAnnounceTimeSec = sec;
 }
