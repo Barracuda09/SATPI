@@ -136,23 +136,22 @@ void Server::threadEntry() {
 								}
 							} else if (method.compare("M-SEARCH") == 0) {
 								std::string param;
-								const char *UPNP_M_SEARCH_OK =
-								        "HTTP/1.1 200 OK\r\n" \
-								        "CACHE-CONTROL: max-age=%1\r\n" \
-								        "EXT:\r\n" \
-								        "LOCATION: %2\r\n" \
-								        "SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-								        "ST: urn:ses-com:device:SatIPServer:1\r\n" \
-								        "USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-								        "BOOTID.UPNP.ORG: %5\r\n" \
-								        "CONFIGID.UPNP.ORG: 0\r\n" \
-								        "DEVICEID.SES.COM: %6\r\n" \
-								        "\r\n";
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
 									// someone contacted us, so this should mean we have the same DEVICEID
 									SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, _properties.getDeviceID());
-
 									// send message back
+									const char *UPNP_M_SEARCH_OK =
+											"HTTP/1.1 200 OK\r\n" \
+											"CACHE-CONTROL: max-age=%1\r\n" \
+											"EXT:\r\n" \
+											"LOCATION: %2\r\n" \
+											"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+											"ST: urn:ses-com:device:SatIPServer:1\r\n" \
+											"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
+											"BOOTID.UPNP.ORG: %5\r\n" \
+											"CONFIGID.UPNP.ORG: 0\r\n" \
+											"DEVICEID.SES.COM: %6\r\n" \
+											"\r\n";
 									const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
 										_properties.getSsdpAnnounceTimeSec(),
 										location,
@@ -173,21 +172,28 @@ void Server::threadEntry() {
 
 									// reset repeat time to annouce new DEVICEID
 									repeat_time =  std::time(nullptr) + 5;
-								}
-								std::string st_param;
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", st_param)) {
-									if (st_param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
+								} else if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", param)) {
+									if (param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
 										// client is sending a discover
 										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr);
-
 										// send message back
+										const char *UPNP_M_SEARCH_OK =
+												"HTTP/1.1 200 OK\r\n" \
+												"CACHE-CONTROL: max-age=%1\r\n" \
+												"EXT:\r\n" \
+												"LOCATION: %2\r\n" \
+												"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+												"ST: urn:ses-com:device:SatIPServer:1\r\n" \
+												"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
+												"BOOTID.UPNP.ORG: %5\r\n" \
+												"CONFIGID.UPNP.ORG: 0\r\n" \
+												"\r\n";
 										const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
 											_properties.getSsdpAnnounceTimeSec(),
 											location,
 											_properties.getSoftwareVersion(),
 											_properties.getUUID(),
-											_properties.getBootID(),
-											_properties.getDeviceID());
+											_properties.getBootID());
 										if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
 											PERROR("send");
 										}
