@@ -28,6 +28,7 @@
 #include <Log.h>
 #include <Utils.h>
 #include <StringConverter.h>
+#include <base/XMLSaveSupport.h>
 
 #include <atomic>
 #include <chrono>
@@ -53,6 +54,129 @@ static std::atomic_bool exitApp;
 std::atomic_bool restartApp;
 static int retval;
 static int otherSig;
+
+class SatPI :
+	public base::XMLSaveSupport,
+	public base::XMLSupport {
+	public:
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+		SatPI(bool ssdp,
+			const std::string &appdataPath,
+			const std::string &webPath,
+			unsigned int httpPort,
+			unsigned int rtspPort) :
+			XMLSaveSupport(appdataPath + "/" + "SatPI.xml"),
+			_streamManager(),
+			_properties(_interface.getUUID(), appdataPath, webPath, httpPort, rtspPort),
+			_httpServer(*this, _streamManager, _interface, _properties),
+			_rtspServer(_streamManager, _interface),
+			_ssdpServer(_interface, _properties) {
+			_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
+			_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
+			//
+			_streamManager.enumerateDevices(appdataPath);
+			//
+			std::string xml;
+			if (restoreXML(xml)) {
+				fromXML(xml);
+			} else {
+				saveXML();
+			}
+
+			_httpServer.initialize(_properties.getHttpPort(), true);
+			_rtspServer.initialize(_properties.getRtspPort(), true);
+			if (ssdp) {
+				_ssdpServer.startThread();
+			}
+		}
+
+		virtual ~SatPI() {}
+
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+
+	public:
+
+		bool exitApplication() const {
+			return _properties.exitApplication();
+		}
+
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+
+	public:
+
+		virtual void addToXML(std::string &xml) const override {
+			xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+			ADD_XML_BEGIN_ELEMENT(xml, "data");
+				{
+					// application data
+					ADD_XML_BEGIN_ELEMENT(xml, "appdata");
+					StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", std::time(nullptr) - _properties.getApplicationStartTime());
+					StringConverter::addFormattedString(xml, "<appversion>%s</appversion>", _properties.getSoftwareVersion().c_str());
+					StringConverter::addFormattedString(xml, "<uuid>%s</uuid>", _properties.getUUID().c_str());
+					ADD_XML_END_ELEMENT(xml, "appdata");
+				}
+
+				ADD_XML_BEGIN_ELEMENT(xml, "streams");
+				_streamManager.addToXML(xml);
+				ADD_XML_END_ELEMENT(xml, "streams");
+
+				ADD_XML_BEGIN_ELEMENT(xml, "configdata");
+				_properties.addToXML(xml);
+				ADD_XML_END_ELEMENT(xml, "configdata");
+
+				ADD_XML_BEGIN_ELEMENT(xml, "ssdp");
+				_ssdpServer.addToXML(xml);
+				ADD_XML_END_ELEMENT(xml, "ssdp");
+
+			ADD_XML_END_ELEMENT(xml, "data");
+		}
+
+		virtual void fromXML(const std::string &xml) override {
+			std::string element;
+			if (findXMLElement(xml, "streams", element)) {
+				_streamManager.fromXML(element);
+			}
+			if (findXMLElement(xml, "configdata", element)) {
+				_properties.fromXML(element);
+			}
+			if (findXMLElement(xml, "ssdp", element)) {
+				_ssdpServer.fromXML(element);
+			}
+			saveXML();
+		}
+
+		// =======================================================================
+		// -- base::XMLSaveSupport -----------------------------------------------
+		// =======================================================================
+
+		public:
+
+            virtual bool saveXML() const {
+                std::string xml;
+                addToXML(xml);
+                return XMLSaveSupport::saveXML(xml);
+            }
+
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+
+	private:
+
+		InterfaceAttr _interface;
+		StreamManager _streamManager;
+		Properties _properties;
+		HttpServer _httpServer;
+		RtspServer _rtspServer;
+		upnp::ssdp::Server _ssdpServer;
+
+};
 
 /*
  *
@@ -218,8 +342,9 @@ int main(int argc, char *argv[]) {
 	exitApp = false;
 	restartApp = false;
 
-	unsigned int httpPort = 8875;
-	unsigned int rtspPort = 554;
+	// Defaults in Properties
+	unsigned int httpPort = 0;
+	unsigned int rtspPort = 0;
 	std::string currentPath;
 	std::string appdataPath;
 	std::string webPath;
@@ -288,20 +413,10 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {
 		try {
-			InterfaceAttr interface;
-			StreamManager streamManager(appdataPath);
-			streamManager.enumerateDevices();
-			Properties properties(appdataPath + "/" + "config.xml", interface.getUUID(),
-								  appdataPath, webPath, httpPort, rtspPort);
-			HttpServer httpserver(streamManager, interface, properties);
-			RtspServer server(streamManager, properties, interface);
-			upnp::ssdp::Server ssdpserver(interface, properties);
-			if (ssdp) {
-				ssdpserver.startThread();
-			}
+			SatPI satpi(ssdp, appdataPath, webPath, httpPort, rtspPort);
 
 			// Loop
-			while (!exitApp && !properties.exitApplication() && !restartApp) {
+			while (!exitApp && !satpi.exitApplication() && !restartApp) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(120));
 			}
 		} catch (...) {

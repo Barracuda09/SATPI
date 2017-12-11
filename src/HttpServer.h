@@ -27,6 +27,7 @@
 FW_DECL_NS0(InterfaceAttr);
 FW_DECL_NS0(Properties);
 FW_DECL_NS0(StreamManager);
+FW_DECL_NS1(base, XMLSupport);
 
 /// HTTP Server
 class HttpServer :
@@ -37,11 +38,20 @@ class HttpServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpServer(StreamManager &streamManager,
+		HttpServer(
+			base::XMLSupport &xml,
+			StreamManager &streamManager,
 			const InterfaceAttr &interface,
 			Properties &properties);
 
 		virtual ~HttpServer();
+
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+
+		/// Call this to initialize, setup and start this server
+		virtual void initialize(int port, bool nonblock) override;
 
 	protected:
 
@@ -55,10 +65,7 @@ class HttpServer :
 		virtual bool methodPost(SocketClient &client);
 
 		///
-		int readFile(const char *file, std::string &data);
-
-		///
-		void makeDataXML(std::string &xml);
+		std::size_t readFile(const char *filePath, std::string &data) const;
 
 		// =======================================================================
 		// Data members
@@ -67,6 +74,7 @@ class HttpServer :
 	private:
 
 		Properties &_properties;
+		base::XMLSupport &_xml;
 
 };
 

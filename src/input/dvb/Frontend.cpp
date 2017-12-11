@@ -168,7 +168,7 @@ namespace dvb {
 		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
 		getAttachedFrontends(streamVector, decrypt, path, path);
 		const StreamVector::size_type endSize = streamVector.size();
-		SI_LOG_INFO("Frontends found: %zu", endSize - beginSize);
+		SI_LOG_INFO("Frontends found: %u", endSize - beginSize);
 	}
 
 	// =======================================================================
@@ -192,7 +192,7 @@ namespace dvb {
 		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _frontendData.getBitErrorRate());
 		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _frontendData.getUncorrectedBlocks());
 
-		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, 30);
+		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, DEFAULT_DVR_BUFFER_SIZE * 10);
 
 		ADD_XML_BEGIN_ELEMENT(xml, "transformation");
 		_transform.addToXML(xml);
@@ -229,7 +229,7 @@ namespace dvb {
 		std::size_t &dvbt2,
 		std::size_t &dvbc,
 		std::size_t &dvbc2) {
-		dvbs2 += _dvbs2;
+		dvbs2 += _transform.advertiseAsDVBS2() ? _dvbc : _dvbs2;
 		dvbt  += _dvbt;
 		dvbt2 += _dvbt2;
 		dvbc  += _dvbc;
@@ -239,9 +239,18 @@ namespace dvb {
 	bool Frontend::isDataAvailable() {
 		struct pollfd pfd[1];
 		pfd[0].fd = _fd_dvr;
-		pfd[0].events = POLLIN | POLLPRI;
+		pfd[0].events = POLLIN;
 		pfd[0].revents = 0;
-		return ::poll(pfd, 1, 100) > 0;
+		const int pollRet = ::poll(pfd, 1, 1000);
+		if (pollRet < 0) {
+			PERROR("Error during polling frontend for data");
+			return false;
+		} else if (pollRet > 0) {
+			return pfd[0].revents & POLLIN;
+		} else {
+			SI_LOG_ERROR("Stream: %d, Timeout during polling frontend for data", _streamID);
+			return false;
+		}
 	}
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
@@ -563,7 +572,7 @@ namespace dvb {
 					if (_dvbc == 0u) {
 						++_dvbc;
 					}
-					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
+					SI_LOG_INFO("Frontend Type: Cable (Annex AC)");
 					break;
 #endif
 				case SYS_DVBC_ANNEX_B:

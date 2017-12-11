@@ -156,7 +156,7 @@
 				$('.nav-tabs a').on('shown.bs.tab', function(event) {
 					var href = $(event.target).attr("href");
 					var id = href.substr(12);
-					filename = "streams.xml";
+					filename = "SatPI.xml";
 					content = "frontend" + id;
 					streamID = id;
 					updatePage();
@@ -183,7 +183,7 @@
 			document.getElementById("footer").innerHTML = buildfooter();
 			setMenuItemActive("frontend");
 
-			filename = "streams.xml";
+			filename = "SatPI.xml";
 			content = "frontend0";
 			streamID = 0;
 

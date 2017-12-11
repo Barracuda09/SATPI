@@ -28,9 +28,6 @@
 #include <chrono>
 #include <thread>
 
-//#include <stdio.h>
-//#include <stdlib.h>
-#include <fcntl.h>
 #include <poll.h>
 
 #include <sys/socket.h>
@@ -44,23 +41,55 @@ namespace ssdp {
 
 Server::Server(const InterfaceAttr &interface,
                Properties &properties) :
+	XMLSupport(),
 	ThreadBase("SSDP Server"),
 	_interface(interface),
-	_properties(properties) {
-}
+	_properties(properties),
+	_announceTimeSec(60),
+	_bootID(0),
+	_deviceID(1) {}
 
 Server::~Server() {
 	cancelThread();
 	joinThread();
 	// we should send bye bye
-	sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());
+	sendByeBye(_deviceID, _properties.getUUID().c_str());
 }
 
-void Server::threadEntry() {
-	std::string fileBootID = _properties.getAppDataPath() + "/" + "bootID";
-	_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
+// ============================================================================
+//  -- base::XMLSupport -------------------------------------------------------
+// ============================================================================
 
-	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d", _properties.getBootID());
+void Server::addToXML(std::string &xml) const {
+	base::MutexLock lock(_xmlMutex);
+
+	ADD_CONFIG_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
+	ADD_CONFIG_NUMBER(xml, "bootID", _bootID);
+	ADD_CONFIG_NUMBER(xml, "deviceID", _deviceID);
+}
+
+void Server::fromXML(const std::string &xml) {
+	base::MutexLock lock(_xmlMutex);
+
+	std::string element;
+	if (findXMLElement(xml, "annouceTime.value", element)) {
+		_announceTimeSec = atoi(element.c_str());
+	}
+	if (findXMLElement(xml, "bootID", element)) {
+		_bootID = atoi(element.c_str());
+	}
+	if (findXMLElement(xml, "deviceID", element)) {
+		_deviceID = atoi(element.c_str());
+	}
+}
+
+// ============================================================================
+// -- Other member functions --------------------------------------------------
+// ============================================================================
+
+void Server::threadEntry() {
+	incrementBootID();
+	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d  annouce interval: %d Sec", _bootID, _announceTimeSec);
 
 	// Get file and constuct new location
 	std::string location;
@@ -109,7 +138,7 @@ void Server::threadEntry() {
 									const unsigned int otherDeviceID = atoi(param.c_str());
 
 									// check server found with clashing DEVICEID? we should defend it!!
-									if (_properties.getDeviceID() == otherDeviceID) {
+									if (_deviceID == otherDeviceID) {
 										SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d defending", ip_addr, otherDeviceID);
 										SocketClient udpSend;
 										initUDPSocket(udpSend, SSDP_PORT, ip_addr);
@@ -122,11 +151,12 @@ void Server::threadEntry() {
 										        "USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
 										        "DEVICEID.SES.COM: %4\r\n" \
 										        "\r\n";
+										base::MutexLock lock(_xmlMutex);
 										const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
 											_interface.getIPAddress(),
 											SSDP_PORT,
 											_properties.getSoftwareVersion(),
-											_properties.getDeviceID());
+											_deviceID);
 										if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 											SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 										}
@@ -138,7 +168,7 @@ void Server::threadEntry() {
 								std::string param;
 								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
 									// someone contacted us, so this should mean we have the same DEVICEID
-									SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, _properties.getDeviceID());
+									SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, _deviceID);
 									// send message back
 									const char *UPNP_M_SEARCH_OK =
 											"HTTP/1.1 200 OK\r\n" \
@@ -152,23 +182,23 @@ void Server::threadEntry() {
 											"CONFIGID.UPNP.ORG: 0\r\n" \
 											"DEVICEID.SES.COM: %6\r\n" \
 											"\r\n";
+									base::MutexLock lock(_xmlMutex);
 									const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
-										_properties.getSsdpAnnounceTimeSec(),
+										_announceTimeSec,
 										location,
 										_properties.getSoftwareVersion(),
 										_properties.getUUID(),
-										_properties.getBootID(),
-										_properties.getDeviceID());
+										_bootID,
+										_deviceID);
 									if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
 										PERROR("send");
 									}
 									// we should increment DEVICEID and send bye bye
-									_properties.setDeviceID(_properties.getDeviceID() + 1);
-									sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());
+									incrementDeviceID();
+									sendByeBye(_deviceID, _properties.getUUID().c_str());
 
 									// now increment bootID
-									_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
-									SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
+									incrementBootID();
 
 									// reset repeat time to annouce new DEVICEID
 									repeat_time =  std::time(nullptr) + 5;
@@ -188,12 +218,13 @@ void Server::threadEntry() {
 												"BOOTID.UPNP.ORG: %5\r\n" \
 												"CONFIGID.UPNP.ORG: 0\r\n" \
 												"\r\n";
+										base::MutexLock lock(_xmlMutex);
 										const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
-											_properties.getSsdpAnnounceTimeSec(),
+											_announceTimeSec,
 											location,
 											_properties.getSoftwareVersion(),
 											_properties.getUUID(),
-											_properties.getBootID());
+											_bootID);
 										if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
 											PERROR("send");
 										}
@@ -216,11 +247,13 @@ void Server::threadEntry() {
 				xmlDeviceDescriptionFile);
 
 			// we should send bye bye
-			sendByeBye(_properties.getDeviceID(), _properties.getUUID().c_str());
+			{
+				base::MutexLock lock(_xmlMutex);
+				sendByeBye(_deviceID, _properties.getUUID().c_str());
+			}
 
 			// now increment bootID
-			_properties.setBootID(readBootIDFromFile(fileBootID.c_str()));
-			SI_LOG_INFO("Changing BOOTID to: %d", _properties.getBootID());
+			incrementBootID();
 
 			// reset repeat time to annouce new 'Device Description File'
 			repeat_time =  std::time(nullptr) + 5;
@@ -230,7 +263,7 @@ void Server::threadEntry() {
 		const std::time_t curr_time = std::time(nullptr);
 		if (repeat_time < curr_time) {
 			// set next announce time
-			repeat_time = _properties.getSsdpAnnounceTimeSec() + curr_time;
+			repeat_time = _announceTimeSec + curr_time;
 			{
 				// broadcast message
 				const char *UPNP_ROOTDEVICE =
@@ -247,12 +280,12 @@ void Server::threadEntry() {
 						"DEVICEID.SES.COM: %6\r\n" \
 						"\r\n";
 				const std::string msg = StringConverter::stringFormat(UPNP_ROOTDEVICE,
-					_properties.getSsdpAnnounceTimeSec(),
+					_announceTimeSec,
 					location,
 					_properties.getSoftwareVersion(),
 					_properties.getUUID(),
-					_properties.getBootID(),
-					_properties.getDeviceID());
+					_bootID,
+					_deviceID);
 				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 					SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE data send failed");
 				}
@@ -274,12 +307,12 @@ void Server::threadEntry() {
 						"DEVICEID.SES.COM: %6\r\n" \
 						"\r\n";
 				const std::string msg = StringConverter::stringFormat(UPNP_ALIVE,
-					_properties.getSsdpAnnounceTimeSec(),
+					_announceTimeSec,
 					location,
 					_properties.getUUID(),
 					_properties.getSoftwareVersion(),
-					_properties.getBootID(),
-					_properties.getDeviceID());
+					_bootID,
+					_deviceID);
 				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 					SI_LOG_ERROR("SSDP UPNP_ALIVE data send failed");
 				}
@@ -301,12 +334,12 @@ void Server::threadEntry() {
 						"DEVICEID.SES.COM: %6\r\n" \
 						"\r\n";
 				const std::string msg = StringConverter::stringFormat(UPNP_DEVICE,
-					_properties.getSsdpAnnounceTimeSec(),
+					_announceTimeSec,
 					location,
 					_properties.getSoftwareVersion(),
 					_properties.getUUID(),
-					_properties.getBootID(),
-					_properties.getDeviceID());
+					_bootID,
+					_deviceID);
 				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 					SI_LOG_ERROR("SSDP UPNP_DEVICE data send failed");
 				}
@@ -373,31 +406,16 @@ bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
 	return true;
 }
 
-unsigned int Server::readBootIDFromFile(const char *file) {
-	// Get BOOTID from file, increment and save it again
-	unsigned int bootId = 0;
-	int fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
-	if (fd > 0) {
-		char content[50];
-		const char *BOOTID_STR = "bootID=%ul";
-		if (read(fd, content, sizeof(content)) >= 0) {
-			if (strlen(content) != 0) {
-				sscanf(content, BOOTID_STR, &bootId);
-				lseek(fd, 0, SEEK_SET);
-			}
-		} else {
-			PERROR("Unable to read file: bootID");
-		}
-		++bootId;
-		sprintf(content, BOOTID_STR, bootId);
-		if (write(fd, content, strlen(content)) == -1) {
-			PERROR("Unable to write file: bootID");
-		}
-		CLOSE_FD(fd);
-	} else {
-		PERROR("Unable to open file: bootID");
-	}
-	return bootId;
+void Server::incrementDeviceID() {
+	base::MutexLock lock(_xmlMutex);
+	++_deviceID;
+	notifyChanges();
+}
+
+void Server::incrementBootID() {
+	base::MutexLock lock(_xmlMutex);
+	++_bootID;
+	notifyChanges();
 }
 
 } // namespace ssdp

@@ -18,6 +18,7 @@
 		var page = "";
 
 		appdata = xmlDoc.getElementsByTagName("appdata");
+		ssdpdata = xmlDoc.getElementsByTagName("ssdp");
 		page +=  "<table class='table table-bordered table-striped' border='5'>";
 		page +=  "<tr>";
 			page +=  "<tr>";
@@ -61,7 +62,7 @@
 			page +=  "Boot ID";
 			page +=  "</td>";
 			page +=  "<td colspan=2>";
-			page +=  appdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
+			page +=  ssdpdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
 			page +=  "<tr>";
@@ -70,14 +71,14 @@
 			page +=  "Device ID";
 			page +=  "</td>";
 			page +=  "<td colspan=2>";
-			page +=  appdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
+			page +=  ssdpdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
 		page +=  "</table><br>";
 		return page;
 	}
 	function updatePage() {
-		loadXMLDoc("data.xml");
+		loadXMLDoc("SatPI.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {

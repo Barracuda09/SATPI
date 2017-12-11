@@ -29,14 +29,13 @@
 
 /// The class @c StringConverter has some string manipulation functions
 class StringConverter  {
+
 	public:
 
-		/// Helper function for stringFormat
-		template <typename Type>
-		static void makeVectArgs(std::vector<std::string> &vec, Type t) {
-			std::stringstream stream;
-			stream << t;
-			vec.push_back(stream.str());
+		/// Convert an enum class to integer
+		template <typename Enumeration>
+		static int asInteger(Enumeration value) {
+			return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 		}
 
 		/// Returns a copy of the string where all specified markers are replaced
@@ -180,6 +179,15 @@ class StringConverter  {
 		///
 		static const char *pilot_tone_to_string(int pilot);
 
-}; // class StringConverter
+	protected:
+
+		/// Helper function for stringFormat
+		template <typename Type>
+		static void makeVectArgs(std::vector<std::string> &vec, Type t) {
+			std::stringstream stream;
+			stream << t;
+			vec.push_back(stream.str());
+		}
+};
 
 #endif // STRING_CONVERTER_H_INCLUDE

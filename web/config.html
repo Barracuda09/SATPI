@@ -30,6 +30,8 @@
 			page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
 			page += addTableLineEntry("Satip Channel list (m3u)", xmlDoc, "xsatipm3u");
 			page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");
+			page += addTableLineEntry("Path to the Web-GUI", xmlDoc, "webPath");
+			page += addTableLineEntry("Path to store Application Data", xmlDoc, "appDataPath");
 		} else if (content == "oscam" && xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {
 			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
 			page += addTableLineEntry("OSCam server Enabled", xmlDoc, "OSCamEnabled");
@@ -82,7 +84,7 @@
 			document.getElementById("footer").innerHTML = buildfooter();
 			setMenuItemActive("config");
 
-			filename = "config.xml";
+			filename = "SatPI.xml";
 			content = "general";
 
 			// Call the ajax refresh each refresh_time seconds
@@ -98,10 +100,8 @@
 				$('.nav-tabs a').on('shown.bs.tab', function(event) {
 					var menuName = $(event.target).attr("href");
 					if (menuName == "#generalTab") {
-						filename = "config.xml";
 						content = "general";
 					} else if (menuName == "#oscamTab") {
-						filename = "dvbapi.xml";
 						content = "oscam";
 					}
 					updatePage();

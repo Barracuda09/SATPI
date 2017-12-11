@@ -32,26 +32,12 @@
 #include <arpa/inet.h>
 
 
-TcpSocket::TcpSocket(int maxClients, const std::string &protocol, int port, bool nonblock) :
+TcpSocket::TcpSocket(int maxClients, const std::string &protocol) :
 		_MAX_CLIENTS(maxClients),
-		_MAX_POLL(maxClients+1),
-		_pfd(new pollfd[maxClients+1]),
+		_MAX_POLL(maxClients + 1),
+		_pfd(new pollfd[maxClients + 1]),
 		_client(new SocketClient[maxClients]),
-		_protocolString(protocol) {
-	if (initServerSocket(maxClients, port, nonblock)) {
-		_pfd[0].fd = _server.getFD();
-		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-		_pfd[0].revents = 0;
-		for (std::size_t i = 1; i < _MAX_POLL; ++i) {
-			_pfd[i].fd = -1;
-			_pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-			_pfd[i].revents = 0;
-		}
-	}
-	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
-		_client[i].setProtocol(protocol);
-	}
-}
+		_protocolString(protocol) {}
 
 TcpSocket::~TcpSocket() {
 	DELETE_ARRAY(_pfd);
@@ -59,7 +45,84 @@ TcpSocket::~TcpSocket() {
 	_server.closeFD();
 }
 
+void TcpSocket::initialize(int port, bool nonblock) {
+	if (initServerSocket(_MAX_CLIENTS, port, nonblock)) {
+		_pfd[0].fd = _server.getFD();
+		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+		_pfd[0].revents = 0;
+
+		struct pollfd pfdNew;
+		pfdNew.fd = _server.getFD();
+		pfdNew.events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+		pfdNew.revents = 0;
+		_pfdVector.push_back(pfdNew);
+
+		for (std::size_t i = 1; i < _MAX_POLL; ++i) {
+			_pfd[i].fd = -1;
+			_pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+			_pfd[i].revents = 0;
+		}
+	}
+	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
+		_client[i].setProtocol(_protocolString);
+	}
+}
+
 int TcpSocket::poll(int timeout) {
+/*
+	if (::poll(&_pfdVector[0], _pfdVector.size(), timeout) > 0) {
+		for (auto pfdIt = _pfdVector.begin(); pfdIt != _pfdVector.end(); ++pfdIt) {
+			pollfd &pfd = (*pfdIt);
+			if (pfd.revents != 0) {
+				if (pfd.fd == _pfdVector[0].fd) {
+					SocketClient client;
+					client.setProtocol(_protocolString);
+					if (acceptConnection(client, true)) {
+						// Save client data
+						_socketClientVector.push_back(client);
+
+						// Setup polling
+						struct pollfd pfdNew;
+						pfdNew.fd = client.getFD();
+						pfdNew.events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+						pfdNew.revents = 0;
+						_pfdVector.push_back(pfdNew);
+
+						// vector changed, so restart
+						pfdIt = _pfdVector.begin();
+					}
+				} else {
+					// Try to find the client that requested something
+					for (auto clientIt = _socketClientVector.begin(); clientIt != _socketClientVector.end(); ++clientIt) {
+						SocketClient &client = (*clientIt);
+						if (client.getFD() == pfd.fd) {
+							// receive httpc messages
+							const auto dataSize = recvHttpcMessage(client, MSG_DONTWAIT);
+							if (dataSize > 0) {
+								process(client);
+							} else {
+								// Close the requested client
+								SI_LOG_DEBUG("%s Client %s:%d Connection closed with fd: %d", client.getProtocolString().c_str(),
+								             client.getIPAddress().c_str(), client.getSocketPort(), client.getFD());
+								closeConnection(client);
+//								client.closeFD();
+								_socketClientVector.erase(clientIt);
+								_pfdVector.erase(pfdIt);
+
+								// vectors changed, so restart
+								clientIt = _socketClientVector.begin();
+								pfdIt = _pfdVector.begin();
+
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return 1;
+*/
 	if (::poll(_pfd, _MAX_POLL, timeout) > 0) {
 		// Check who is sending data, so iterate over pfd
 		for (std::size_t i = 0; i < _MAX_POLL; ++i) {
@@ -79,7 +142,7 @@ int TcpSocket::poll(int timeout) {
 					}
 				} else {
 					// receive httpc messages
-					const int dataSize = recvHttpcMessage(_client[i-1], MSG_DONTWAIT);
+					const auto dataSize = recvHttpcMessage(_client[i-1], MSG_DONTWAIT);
 					if (dataSize > 0) {
 						process(_client[i-1]);
 					} else {

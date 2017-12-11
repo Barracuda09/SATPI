@@ -37,9 +37,12 @@ class RtspServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		RtspServer(StreamManager &streamManager, const Properties &properties, const InterfaceAttr &interface);
+		RtspServer(StreamManager &streamManager, const InterfaceAttr &interface);
 
 		virtual ~RtspServer();
+
+		/// Call this to initialize, setup and start this server
+		virtual void initialize(int port, bool nonblock) override;
 
 	protected:
 		/// Thread function

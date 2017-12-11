@@ -30,7 +30,13 @@
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))
 
-#define CLOSE_FD(x) if (x != -1) { if (::close(x) == -1) { PERROR("close error"); } x = -1; }
+#define CLOSE_FD(x) \
+	if (x != -1) { \
+		if (::close(x) == -1) { \
+			PERROR("close error fd %d", x); \
+		} \
+		x = -1; \
+	}
 
 #define FREE_PTR(x) \
 	{ \

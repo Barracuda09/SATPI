@@ -20,80 +20,94 @@
 #ifndef BASE_XML_SUPPORT_H_INCLUDE
 #define BASE_XML_SUPPORT_H_INCLUDE BASE_XML_SUPPORT_H_INCLUDE
 
+#include <base/Mutex.h>
 #include <StringConverter.h>
 
 #include <string>
+#include <functional>
 
 namespace base {
 
 	/// The class @c XMLSupport has some basic functions to handle XML strings
 	class XMLSupport {
+
+		// =======================================================================
+		// -- Constructors and destructor ----------------------------------------
+		// =======================================================================
 		public:
 
+			XMLSupport() {}
+
+			virtual ~XMLSupport() {}
+
 		// =======================================================================
-		//  -- Constructors and destructor ---------------------------------------
+		// -- Other member functions ---------------------------------------------
 		// =======================================================================
-		explicit XMLSupport(const std::string &filePath = "");
-		virtual ~XMLSupport();
 
-		/// Add data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const = 0;
+		public:
 
-		/// Get data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml) = 0;
+			/// Add data to an XML for storing or web interface
+			virtual void addToXML(std::string &xml) const = 0;
 
-		/// Get the file name for this XML
-		std::string getFileName() const;
+			/// Get data from an XML for restoring or web interface
+			virtual void fromXML(const std::string &xml) = 0;
+
+			typedef std::function<bool()> FunctionNotifyChanges;
+            void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
+                _notifyChanges = notifyChanges;
+            }
 
 		protected:
 
-		///
-		bool findXMLElement(const std::string &xml, const std::string &elementToFind,
-			std::string &element);
+            virtual bool notifyChanges() const;
 
-		///
-		std::string makeXMLString(const std::string &msg);
-
-		/// Save XML file
-		void saveXML(const std::string &xml) const;
-
-		/// Restores/Loads XML file
-		bool restoreXML();
+			///
+			bool findXMLElement(const std::string &xml, const std::string &elementToFind,
+				std::string &element);
 
 		private:
 
-		/// Very basic/simple recursive XML parser
-		bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
-					  std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
+			/// Very basic/simple recursive XML parser
+			bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
+						  std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
 
-		std::string _filePath;
+			// =======================================================================
+			// Data members
+			// =======================================================================
 
+		protected:
+
+			base::Mutex _xmlMutex;
+
+		private:
+
+			FunctionNotifyChanges _notifyChanges;
 	};
 
 } // namespace base
 
 #define ADD_XML_BEGIN_ELEMENT(XML, ELEMENTNAME) \
-	StringConverter::addFormattedString(XML, "<" ELEMENTNAME ">")
+	XML += StringConverter::stringFormat("<%1>", ELEMENTNAME)
 
 #define ADD_XML_END_ELEMENT(XML, ELEMENTNAME) \
-	StringConverter::addFormattedString(XML, "</" ELEMENTNAME ">")
+	XML += StringConverter::stringFormat("</%1>", ELEMENTNAME)
 
 #define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME ">%s</" VARNAME ">", VALUE)
+	XML += StringConverter::stringFormat("<%1>%2</%1>", VARNAME, VALUE)
 
 #define ADD_CONFIG_NUMBER(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME ">%d</" VARNAME ">", VALUE)
+	XML += StringConverter::stringFormat("<%1>%2</%1>", VARNAME, VALUE)
 
 #define ADD_CONFIG_CHECKBOX(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>checkbox</inputtype><value>%s</value></" VARNAME ">", VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>checkbox</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
 #define ADD_CONFIG_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>number</inputtype><value>%lu</value><minvalue>%lu</minvalue><maxvalue>%lu</maxvalue></" VARNAME ">", VALUE, MIN, MAX)
+	XML += StringConverter::stringFormat("<%1><inputtype>number</inputtype><value>%2</value><minvalue>%3</minvalue><maxvalue>%4</maxvalue></%1>", VARNAME, VALUE, MIN, MAX)
 
 #define ADD_CONFIG_TEXT_INPUT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>text</inputtype><value>%s</value></" VARNAME ">", VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>text</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
 #define ADD_CONFIG_IP_INPUT(XML, VARNAME, VALUE) \
-	StringConverter::addFormattedString(XML, "<" VARNAME "><inputtype>ip</inputtype><value>%s</value></" VARNAME ">", VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>ip</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
 #endif // BASE_XML_SUPPORT_H_INCLUDE

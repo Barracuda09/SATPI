@@ -24,6 +24,8 @@
 #include <socket/HttpcSocket.h>
 #include <socket/SocketAttr.h>
 
+#include <vector>
+
 #include <poll.h>
 
 FW_DECL_NS0(SocketClient);
@@ -35,10 +37,12 @@ FW_DECL_NS0(SocketClient);
 			// ===================================================================
 			// -- Constructors and destructor ------------------------------------
 			// ===================================================================
-			TcpSocket(int maxClients, const std::string &protocol,
-			          int port, bool nonblock);
+			TcpSocket(int maxClients, const std::string &protocol);
 
 			virtual ~TcpSocket();
+
+			/// Call this to initialize and setup this socket(s)
+			virtual void initialize(int port, bool nonblock);
 
 			/// Call this function periodically to check for messages
 			/// @param timeout specifies the timeout 'poll' should use
@@ -70,6 +74,10 @@ FW_DECL_NS0(SocketClient);
 			// ===================================================================
 
 		private:
+			typedef std::vector<pollfd> PollfdVector;
+			typedef std::vector<SocketClient> SocketClientVector;
+			PollfdVector       _pfdVector;
+			SocketClientVector _socketClientVector;
 
 			std::size_t        _MAX_CLIENTS;   //
 			std::size_t        _MAX_POLL;      //

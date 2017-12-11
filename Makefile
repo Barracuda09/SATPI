@@ -46,6 +46,7 @@ SOURCES = Version.cpp \
 	base/M3UParser.cpp \
 	base/ThreadBase.cpp \
 	base/TimeCounter.cpp \
+	base/XMLSaveSupport.cpp \
 	base/XMLSupport.cpp \
 	input/DeviceData.cpp \
 	input/Transformation.cpp \

@@ -21,6 +21,7 @@
 #define UPNP_SSDP_SSDP_SERVER_H_INCLUDE UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 
 #include <base/ThreadBase.h>
+#include <base/XMLSupport.h>
 #include <FwDecl.h>
 #include <socket/SocketAttr.h>
 #include <socket/SocketClient.h>
@@ -34,6 +35,7 @@ namespace ssdp {
 
 	/// SSDP Server
 	class Server :
+		public base::XMLSupport,
 		public base::ThreadBase,
 		public UdpSocket {
 		public:
@@ -42,10 +44,18 @@ namespace ssdp {
 			// -- Constructors and destructor ----------------------------------------
 			// =======================================================================
 
-			Server(const InterfaceAttr &interface,
-				Properties &properties);
+			Server(const InterfaceAttr &interface, Properties &properties);
 
 			virtual ~Server();
+
+			// =======================================================================
+			// -- base::XMLSupport ---------------------------------------------------
+			// =======================================================================
+
+		public:
+			virtual void addToXML(std::string &xml) const override;
+
+			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
@@ -57,11 +67,15 @@ namespace ssdp {
 			virtual void threadEntry();
 
 		private:
-			///
-			unsigned int readBootIDFromFile(const char *file);
 
 			///
 			bool sendByeBye(unsigned int bootId, const char *uuid);
+
+			///
+			void incrementBootID();
+
+			///
+			void incrementDeviceID();
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
@@ -73,6 +87,9 @@ namespace ssdp {
 			Properties &_properties;
 			SocketClient _udpMultiListen;
 			SocketClient _udpMultiSend;
+			std::size_t _announceTimeSec;
+			std::size_t _bootID;
+			std::size_t _deviceID;
 	};
 
 } // namespace ssdp

@@ -29,27 +29,27 @@
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
 
-#ifdef LIBDVBCSA
-	#include <decrypt/dvbapi/Client.h>
-#endif
+#include <iostream>
+#include <fstream>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstdlib>
-#include <fcntl.h>
-
-HttpServer::HttpServer(StreamManager &streamManager,
-                       const InterfaceAttr &interface,
-                       Properties &properties) :
+HttpServer::HttpServer(
+	base::XMLSupport &xml,
+	StreamManager &streamManager,
+	const InterfaceAttr &interface,
+	Properties &properties) :
 	ThreadBase("HttpServer"),
-	HttpcServer(20, "HTTP", properties.getHttpPort(), true, streamManager, interface),
-	_properties(properties) {
-	startThread();
-}
+	HttpcServer(20, "HTTP", streamManager, interface),
+	_properties(properties),
+	_xml(xml) {}
 
 HttpServer::~HttpServer() {
 	cancelThread();
 	joinThread();
+}
+
+void HttpServer::initialize(int port, bool nonblock) {
+	HttpcServer::initialize(port, nonblock);
+	startThread();
 }
 
 void HttpServer::threadEntry() {
@@ -61,25 +61,16 @@ void HttpServer::threadEntry() {
 	}
 }
 
-int HttpServer::readFile(const char *file, std::string &data) {
-	int file_size = 0;
-	int fd = open(file, O_RDONLY | O_NONBLOCK);
-	if (fd < 0) {
-		SI_LOG_ERROR("readFile %s", file);
-		PERROR("File not found");
-		return 0;
+std::size_t HttpServer::readFile(const char *filePath, std::string &data) const {
+	std::ifstream file;
+	file.open(filePath);
+	if (file.is_open()) {
+		data = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		file.close();
+		return data.size();
 	}
-	const off_t size = lseek(fd, 0, SEEK_END);
-	lseek(fd, 0, SEEK_SET);
-	char *buf = new char[size];
-	if (buf != nullptr) {
-		file_size = read(fd, buf, size);
-		data.assign(buf, file_size);
-		DELETE_ARRAY(buf);
-	}
-	CLOSE_FD(fd);
-//	SI_LOG_DEBUG("GET %s (size %d)", file, file_size);
-	return file_size;
+	SI_LOG_ERROR("Unable to read from File: %s", filePath);
+	return 0;
 }
 
 bool HttpServer::methodPost(SocketClient &client) {
@@ -87,16 +78,8 @@ bool HttpServer::methodPost(SocketClient &client) {
 	if (StringConverter::getContentFrom(client.getMessage(), content)) {
 		std::string file;
 		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-			if (file.compare("/data.xml") == 0) {
-				// not used yet
-			} else if (file.compare("/streams.xml") == 0) {
-				_streamManager.fromXML(content);
-			} else if (file.compare("/config.xml") == 0) {
-				_properties.fromXML(content);
-#ifdef LIBDVBCSA
-			} else if (file.compare("/dvbapi.xml") == 0) {
-				_streamManager.getDecrypt()->fromXML(content);
-#endif
+			if (file.compare("/SatPI.xml") == 0) {
+				_xml.fromXML(content);
 			}
 		}
 	}
@@ -139,8 +122,10 @@ bool HttpServer::methodGet(SocketClient &client) {
 		if (StringConverter::hasTransportParameters(client.getMessage())) {
 			processStreamingRequest(client);
 		} else if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-			// remove first '/'
-			file.erase(0, 1);
+			// remove first '/'?
+			if (file[0] == '/') {
+				file.erase(0, 1);
+			}
 
 			// Check if there is an '.eot?' in the URI as part of an IE fix?
 			const std::string::size_type found = file.find(".eot?");
@@ -149,28 +134,11 @@ bool HttpServer::methodGet(SocketClient &client) {
 			}
 
 			const std::string filePath = _properties.getWebPath() + "/" + file;
-			if (file.compare("data.xml") == 0) {
-				makeDataXML(docType);
+			if (file.compare("SatPI.xml") == 0) {
+				_xml.addToXML(docType);
 				docTypeSize = docType.size();
 
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare(_streamManager.getFileName()) == 0) {
-				_streamManager.addToXML(docType);
-				docTypeSize = docType.size();
-
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare(_properties.getFileName()) == 0) {
-				_properties.addToXML(docType);
-				docTypeSize = docType.size();
-
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-#ifdef LIBDVBCSA
-			} else if (file.compare(_streamManager.getDecrypt()->getFileName()) == 0) {
-				_streamManager.getDecrypt()->addToXML(docType);
-				docTypeSize = docType.size();
-
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-#endif
 			} else if (file.compare("log.xml") == 0) {
 				docType = Log::makeXml();
 				docTypeSize = docType.size();
@@ -251,21 +219,4 @@ bool HttpServer::methodGet(SocketClient &client) {
 		_properties.setExitApplication();
 	}
 	return false;
-}
-
-void HttpServer::makeDataXML(std::string &xml) {
-	// make data xml
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-
-	// application data
-	xml += "<appdata>";
-	StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", std::time(nullptr) - _properties.getApplicationStartTime());
-	StringConverter::addFormattedString(xml, "<appversion>%s</appversion>", _properties.getSoftwareVersion().c_str());
-	StringConverter::addFormattedString(xml, "<uuid>%s</uuid>", _properties.getUUID().c_str());
-	StringConverter::addFormattedString(xml, "<bootID>%d</bootID>", _properties.getBootID());
-	StringConverter::addFormattedString(xml, "<deviceID>%d</deviceID>", _properties.getDeviceID());
-	xml += "</appdata>";
-
-	xml += "</data>\r\n";
 }

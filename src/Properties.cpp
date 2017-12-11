@@ -22,97 +22,96 @@
 
 extern const char *satpi_version;
 
-Properties::Properties(const std::string &xmlFilePath, const std::string &uuid,
+Properties::Properties(const std::string &uuid,
                        const std::string &appdataPath, const std::string &webPath,
 					   const unsigned int httpPort, const unsigned int rtspPort) :
-	XMLSupport(xmlFilePath),
+	XMLSupport(),
 	_uuid(uuid),
 	_versionString(satpi_version),
 	_appdataPath(appdataPath),
 	_webPath(webPath),
 	_xSatipM3U("channellist.m3u"),
 	_xmlDeviceDescriptionFile("desc.xml"),
-	_bootID(1),
-	_deviceID(1),
-	_ssdpAnnounceTimeSec(60),
+	_httpPort(8875),
+	_httpPortExt(httpPort),
+	_rtspPort(554),
+	_rtspPortExt(rtspPort),
 	_appStartTime(std::time(nullptr)),
-	_exitApplication(false) {
-	restoreXML();
-	// Do we need to override these ports, with command args
-	if (_httpPort != httpPort) {
-		_httpPort = httpPort;
-	}
-	if (_rtspPort != rtspPort) {
-		_rtspPort = rtspPort;
-	}
-}
+	_exitApplication(false) {}
 
 Properties::~Properties() {}
 
 void Properties::fromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
+
 	std::string element;
-	if (findXMLElement(xml, "data.configdata.input1.value", element)) {
-		_ssdpAnnounceTimeSec = atoi(element.c_str());
-		SI_LOG_DEBUG("Setting SSDP annouce interval to: %d Sec", _ssdpAnnounceTimeSec);
-	}
-	if (findXMLElement(xml, "data.configdata.xsatipm3u.value", element)) {
+	if (findXMLElement(xml, "xsatipm3u.value", element)) {
 		_xSatipM3U = element;
 	}
-	if (findXMLElement(xml, "data.configdata.xmldesc.value", element)) {
+	if (findXMLElement(xml, "xmldesc.value", element)) {
 		_xmlDeviceDescriptionFile = element;
 	}
-	if (findXMLElement(xml, "data.configdata.httpport.value", element)) {
-		_httpPort = atoi(element.c_str());
-		SI_LOG_DEBUG("Setting HTTP Port to: %d", _httpPort);
+	if (findXMLElement(xml, "httpport.value", element)) {
+		const unsigned int httpPort = atoi(element.c_str());
+		if (_httpPortExt != 0) {
+			_httpPort = _httpPortExt;
+		} else {
+			_httpPort = httpPort;
+		}
+		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
 	}
-	if (findXMLElement(xml, "data.configdata.rtspport.value", element)) {
-		_rtspPort = atoi(element.c_str());
-		SI_LOG_DEBUG("Setting RTSP Port to: %d", _rtspPort);
+	if (findXMLElement(xml, "rtspport.value", element)) {
+		const unsigned int rtspPort = atoi(element.c_str());
+		if (_rtspPortExt != 0) {
+			_rtspPort = _rtspPortExt;
+		} else {
+			_rtspPort = rtspPort;
+		}
+		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
 	}
-	saveXML(xml);
+	if (findXMLElement(xml, "webPath.value", element)) {
+		_webPath = element;
+		SI_LOG_INFO("Setting WEB Path to: %s", _webPath.c_str());
+	}
+	if (findXMLElement(xml, "appDataPath.value", element)) {
+		_appdataPath = element;
+		SI_LOG_INFO("Setting App Data Path to: %s", _appdataPath.c_str());
+	}
 }
 
 void Properties::addToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
-
-	// make config xml
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-	xml += "<configdata>\r\n";
+	base::MutexLock lock(_xmlMutex);
 
 	ADD_CONFIG_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
 	ADD_CONFIG_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
-	ADD_CONFIG_NUMBER_INPUT(xml, "input1", _ssdpAnnounceTimeSec, 0, 1800);
 	ADD_CONFIG_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U.c_str());
 	ADD_CONFIG_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile.c_str());
-
-	xml += "</configdata>\r\n";
-	xml += "</data>\r\n";
+	ADD_CONFIG_TEXT_INPUT(xml, "webPath", _webPath.c_str());
+	ADD_CONFIG_TEXT_INPUT(xml, "appDataPath", _appdataPath.c_str());
 }
 
 std::string Properties::getSoftwareVersion() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _versionString;
 }
 
 std::string Properties::getUUID() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _uuid;
 }
 
 std::string Properties::getAppDataPath() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _appdataPath;
 }
 
 std::string Properties::getWebPath() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _webPath;
 }
 
 std::string Properties::getXSatipM3U() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	// Should we add a '/'
 	if (_xSatipM3U[0] != '/' && _xSatipM3U.find("http://") == std::string::npos) {
 		return "/" + _xSatipM3U;
@@ -122,71 +121,41 @@ std::string Properties::getXSatipM3U() const {
 }
 
 std::string Properties::getXMLDeviceDescriptionFile() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _xmlDeviceDescriptionFile;
 }
 
-void Properties::setBootID(const unsigned int bootID) {
-	base::MutexLock lock(_mutex);
-	_bootID = bootID;
-}
-
-unsigned int Properties::getBootID() const {
-	base::MutexLock lock(_mutex);
-	return _bootID;
-}
-
-void Properties::setDeviceID(const unsigned int deviceID) {
-	base::MutexLock lock(_mutex);
-	_deviceID = deviceID;
-}
-
-unsigned int Properties::getDeviceID() const {
-	base::MutexLock lock(_mutex);
-	return _deviceID;
-}
-
 void Properties::setHttpPort(const unsigned int httpPort) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	_httpPort = httpPort;
 }
 
 unsigned int Properties::getHttpPort() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _httpPort;
 }
 
 void Properties::setRtspPort(const unsigned int rtspPort) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	_rtspPort = rtspPort;
 }
 
 unsigned int Properties::getRtspPort() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _rtspPort;
 }
 
-void Properties::setSsdpAnnounceTimeSec(const unsigned int sec) {
-	base::MutexLock lock(_mutex);
-	_ssdpAnnounceTimeSec = sec;
-}
-
-unsigned int Properties::getSsdpAnnounceTimeSec() const {
-	base::MutexLock lock(_mutex);
-	return _ssdpAnnounceTimeSec;
-}
-
 std::time_t Properties::getApplicationStartTime() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _appStartTime;
 }
 
 bool Properties::exitApplication() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	return _exitApplication;
 }
 
 void Properties::setExitApplication() {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	_exitApplication = true;
 }

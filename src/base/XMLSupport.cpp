@@ -19,20 +19,12 @@
  */
 #include <base/XMLSupport.h>
 
-#include <StringConverter.h>
 #include <Log.h>
 
-#include <stdio.h>
-
 #include <cassert>
-#include <iostream>
-#include <fstream>
 
 namespace base {
 
-XMLSupport::XMLSupport(const std::string &filePath) : _filePath(filePath) {}
-
-XMLSupport::~XMLSupport() {}
 
 bool XMLSupport::findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element) {
 	std::string tag;
@@ -45,7 +37,7 @@ bool XMLSupport::findXMLElement(const std::string &xml, const std::string &eleme
 }
 
 bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
-                          std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement) {
+	std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement) {
 	enum class StateXML {
 		SEARCH_START_TAG,
 		COMMENT,
@@ -160,57 +152,12 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 	return true;
 }
 
-std::string XMLSupport::makeXMLString(const std::string &msg) {
-	std::string xml;
-	std::string::const_iterator it = msg.begin();
-	while (it != msg.end()) {
-		if (*it == '&') {
-			xml += "&amp;";
-		} else if (*it == '"') {
-			xml += "&quot;";
-		} else if (*it == '>') {
-			xml += "&gt;";
-		} else if (*it == '<') {
-			xml += "&lt;";
-		} else {
-			xml += *it;
-		}
-		++it;
+bool XMLSupport::notifyChanges() const {
+	if (_notifyChanges != nullptr) {
+		_notifyChanges();
+		return true;
 	}
-	return xml;
-}
-
-std::string XMLSupport::getFileName() const {
-	std::string file("");
-	if (!_filePath.empty()) {
-		std::string path;
-		StringConverter::splitPath(_filePath, path, file);
-	}
-	return file;
-}
-
-void XMLSupport::saveXML(const std::string &xml) const {
-	if (!_filePath.empty()) {
-		std::ofstream file;
-		file.open(_filePath);
-		if (file.is_open()) {
-			file << xml;
-			file.close();
-		}
-	}
-}
-
-bool XMLSupport::restoreXML() {
-	if (!_filePath.empty()) {
-		std::ifstream file;
-		file.open(_filePath);
-		if (file.is_open()) {
-			std::string xml((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-			file.close();
-			fromXML(xml);
-			return true;
-		}
-	}
+	SI_LOG_INFO("notifyChanges ignored!!");
 	return false;
 }
 

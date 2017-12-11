@@ -48,7 +48,7 @@ namespace dvbapi {
 			// -- Constructors and destructor ---------------------------------
 			// ================================================================
 
-			Client(const std::string &xmlFilePath, StreamManager &streamManager);
+			Client(StreamManager &streamManager);
 
 			virtual ~Client();
 

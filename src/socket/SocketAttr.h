@@ -64,7 +64,9 @@ FW_DECL_NS0(SocketClient);
 			bool bind();
 
 			/// Set listen for maxClients on this Socket
-			bool listen(std::size_t maxClients);
+			/// @param backlog defines the maximum length to which the queue
+			/// of pending connections for this server may grow
+			bool listen(std::size_t backlog);
 
 			/// Set connect on this Socket
 			bool connectTo();

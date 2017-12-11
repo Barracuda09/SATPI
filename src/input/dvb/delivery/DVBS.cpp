@@ -55,7 +55,7 @@ namespace delivery {
 
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
 			ADD_CONFIG_TEXT(xml, "inputtype", "selectionlist");
-			ADD_CONFIG_NUMBER(xml, "value", _diseqcType);
+			ADD_CONFIG_NUMBER(xml, "value", StringConverter::asInteger(_diseqcType));
 			ADD_XML_BEGIN_ELEMENT(xml, "list");
 			ADD_CONFIG_TEXT(xml, "option0", "DiSEqc Switch");
 			ADD_CONFIG_TEXT(xml, "option1", "Unicable (EN50494)");

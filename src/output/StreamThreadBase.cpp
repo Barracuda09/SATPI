@@ -139,7 +139,6 @@ namespace output {
 	}
 
 	void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
-
 		input::SpDevice inputDevice = _stream.getInputDevice();
 
 		size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));

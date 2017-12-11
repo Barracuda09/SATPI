@@ -30,102 +30,92 @@
 class Properties :
 	public base::XMLSupport  {
 	public:
-	// =======================================================================
-	// Constructors and destructor
-	// =======================================================================
-	Properties(
-			const std::string &xmlFilePath,
-			const std::string &uuid,
-			const std::string &appdataPath,
-			const std::string &webPath,
-			unsigned int httpPort,
-			unsigned int rtspPort);
+		// =======================================================================
+		// Constructors and destructor
+		// =======================================================================
+		Properties(const std::string &uuid,
+				const std::string &appdataPath,
+				const std::string &webPath,
+				unsigned int httpPort,
+				unsigned int rtspPort);
 
-	virtual ~Properties();
+		virtual ~Properties();
 
-	/// Add data to an XML for storing or web interface
-	virtual void addToXML(std::string &xml) const;
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
 
-	/// Get data from an XML for restoring or web interface
-	virtual void fromXML(const std::string &xml);
+	public:
 
-	///
-	std::string getSoftwareVersion() const;
+		/// Add data to an XML for storing or web interface
+		virtual void addToXML(std::string &xml) const;
 
-	///
-	std::string getUUID() const;
+		/// Get data from an XML for restoring or web interface
+		virtual void fromXML(const std::string &xml);
 
-	///
-	std::string getAppDataPath() const;
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
 
-	///
-	std::string getWebPath() const;
+	public:
 
-	///
-	std::string getXSatipM3U() const;
+		///
+		std::string getSoftwareVersion() const;
 
-	///
-	std::string getXMLDeviceDescriptionFile() const;
+		///
+		std::string getUUID() const;
 
-	/// Set BootID
-	void setBootID(unsigned int bootID);
+		///
+		std::string getAppDataPath() const;
 
-	/// Get BootID
-	unsigned int getBootID() const;
+		///
+		std::string getWebPath() const;
 
-	/// Set DeviceID
-	void setDeviceID(unsigned int deviceID);
+		///
+		std::string getXSatipM3U() const;
 
-	/// Get DeviceID
-	unsigned int getDeviceID() const;
+		///
+		std::string getXMLDeviceDescriptionFile() const;
 
-	/// Set HttpPort
-	void setHttpPort(unsigned int bootID);
+		/// Set HttpPort
+		void setHttpPort(unsigned int bootID);
 
-	/// Get HttpPort
-	unsigned int getHttpPort() const;
+		/// Get HttpPort
+		unsigned int getHttpPort() const;
 
-	/// Set RtspPort
-	void setRtspPort(unsigned int bootID);
+		/// Set RtspPort
+		void setRtspPort(unsigned int bootID);
 
-	/// Get RtspPort
-	unsigned int getRtspPort() const;
+		/// Get RtspPort
+		unsigned int getRtspPort() const;
 
-	/// Set SSDP Announce Time
-	void setSsdpAnnounceTimeSec(unsigned int sec);
+		/// Get application start time
+		std::time_t getApplicationStartTime() const;
 
-	/// Get SSDP Announce Time
-	unsigned int getSsdpAnnounceTimeSec() const;
+		/// Check do we need to exit the application
+		bool exitApplication() const;
 
-	/// Get application start time
-	std::time_t getApplicationStartTime() const;
-
-	/// Check do we need to exit the application
-	bool exitApplication() const;
-
-	/// Sets the exit application flag
-	void setExitApplication();
+		/// Sets the exit application flag
+		void setExitApplication();
 
 	protected:
 
 	private:
-	// =======================================================================
-	// Data members
-	// =======================================================================
-	base::Mutex _mutex;
-	std::string _uuid;
-	std::string _versionString;
-	std::string _appdataPath;
-	std::string _webPath;
-	std::string _xSatipM3U;
-	std::string _xmlDeviceDescriptionFile;
-	unsigned int _bootID;
-	unsigned int _deviceID;
-	unsigned int _ssdpAnnounceTimeSec;
-	unsigned int _httpPort;
-	unsigned int _rtspPort;
-	std::time_t _appStartTime;     // the application start time (EPOCH)
-	bool _exitApplication;
-}; // class Properties
+		// =======================================================================
+		// Data members
+		// =======================================================================
+		std::string _uuid;
+		std::string _versionString;
+		std::string _appdataPath;
+		std::string _webPath;
+		std::string _xSatipM3U;
+		std::string _xmlDeviceDescriptionFile;
+		unsigned int _httpPort;
+		unsigned int _httpPortExt;
+		unsigned int _rtspPort;
+		unsigned int _rtspPortExt;
+		std::time_t _appStartTime;     // the application start time (EPOCH)
+		bool _exitApplication;
+};
 
 #endif // PROPERTIES_H_INCLUDE

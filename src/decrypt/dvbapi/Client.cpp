@@ -74,9 +74,9 @@ namespace dvbapi {
 	#define LIST_ONLY              0x03
 	#define LIST_ONLY_UPDATE       0x05
 
-	Client::Client(const std::string &xmlFilePath, StreamManager &streamManager) :
+	Client::Client(StreamManager &streamManager) :
 		ThreadBase("DvbApiClient"),
-		XMLSupport(xmlFilePath),
+		XMLSupport(),
 		_connected(false),
 		_enabled(false),
 		_rewritePMT(false),
@@ -85,7 +85,6 @@ namespace dvbapi {
 		_serverIpAddr("127.0.0.1"),
 		_serverName("Not connected"),
 		_streamManager(streamManager) {
-		restoreXML();
 		startThread();
 	}
 
@@ -412,7 +411,7 @@ namespace dvbapi {
 						while (i < size) {
 							// get command
 							const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
-							SI_LOG_DEBUG("Stream: %d, Receive data total size %zu - cmd: 0x%X", buf[i + 4] - _adapterOffset, size, cmd);
+							SI_LOG_DEBUG("Stream: %d, Receive data total size %u - cmd: 0x%X", buf[i + 4] - _adapterOffset, size, cmd);
 
 							switch (cmd) {
 								case DVBAPI_SERVER_INFO: {
@@ -554,15 +553,10 @@ namespace dvbapi {
 		if (findXMLElement(xml, "RewritePMT.value", element)) {
 			_rewritePMT = (element == "true") ? true : false;
 		}
-		saveXML(xml);
 	}
 
 	void Client::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-
-		// make data xml
-		xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-		xml += "<data>\r\n";
 
 		ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 		ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
@@ -570,8 +564,6 @@ namespace dvbapi {
 		ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
 		ADD_CONFIG_NUMBER_INPUT(xml, "AdapterOffset", _adapterOffset.load(), 0, 128);
 		ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
-
-		xml += "</data>\r\n";
 	}
 
 } // namespace dvbapi

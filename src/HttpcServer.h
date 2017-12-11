@@ -57,11 +57,14 @@ class HttpcServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
-		HttpcServer(int maxClients, const std::string &protocol, int port, bool nonblock,
+		HttpcServer(int maxClients, const std::string &protocol,
 		            StreamManager &streamManager,
 		            const InterfaceAttr &interface);
 
 		virtual ~HttpcServer();
+
+		/// Call this to initialize, setup and start this server
+		virtual void initialize(int port, bool nonblock) override;
 
 	protected:
 

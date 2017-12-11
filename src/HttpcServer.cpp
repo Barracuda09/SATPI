@@ -33,22 +33,22 @@
 #include <fcntl.h>
 
 const char *HttpcServer::HTML_BODY_WITH_CONTENT =
-	"%s %s\r\n" \
+	"%1 %2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
-	"Location: %s\r\n" \
-	"CSeq: %zu\r\n" \
+	"Location: %3\r\n" \
+	"CSeq: %4\r\n" \
 	"cache-control: no-cache\r\n" \
-	"Content-Type: %s\r\n" \
-	"Content-Length: %d\r\n" \
+	"Content-Type: %5\r\n" \
+	"Content-Length: %6\r\n" \
 	"\r\n";
 
 const char *HttpcServer::HTML_BODY_NO_CONTENT =
-	"%s %s\r\n" \
+	"%1 %2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
-	"Location: %s\r\n" \
-	"CSeq: %zu\r\n" \
+	"Location: %3\r\n" \
+	"CSeq: %4\r\n" \
 	"cache-control: no-cache\r\n" \
-	"Content-Type: %s\r\n" \
+	"Content-Type: %5\r\n" \
 	"\r\n";
 
 const std::string HttpcServer::HTML_PROTOCOL_RTSP_VERSION = "RTSP/1.0";
@@ -68,14 +68,20 @@ const std::string HttpcServer::CONTENT_TYPE_PNG         = "image/png";
 const std::string HttpcServer::CONTENT_TYPE_ICO         = "image/x-icon";
 const std::string HttpcServer::CONTENT_TYPE_VIDEO       = "video/MP2T";
 
-HttpcServer::HttpcServer(int maxClients, const std::string &protocol, int port, bool nonblock,
-                         StreamManager &streamManager,
-                         const InterfaceAttr &interface) :
-		TcpSocket(maxClients, protocol, port, nonblock),
+HttpcServer::HttpcServer(
+		int maxClients,
+		const std::string &protocol,
+		StreamManager &streamManager,
+		const InterfaceAttr &interface) :
+		TcpSocket(maxClients, protocol),
 		_streamManager(streamManager),
 		_interface(interface) {}
 
 HttpcServer::~HttpcServer() {}
+
+void HttpcServer::initialize(int port, bool nonblock) {
+	TcpSocket::initialize(port, nonblock);
+}
 
 const std::string &HttpcServer::getProtocolVersionString() const {
 	if (getProtocolString() == "RTSP") {
@@ -87,14 +93,14 @@ const std::string &HttpcServer::getProtocolVersionString() const {
 
 void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody, const std::string &html,
 		const std::string &location, const std::string &contentType, std::size_t docTypeSize, std::size_t cseq) const {
-	StringConverter::addFormattedString(htmlBody, HTML_BODY_WITH_CONTENT, getProtocolVersionString().c_str(), html.c_str(),
-		location.c_str(), cseq, contentType.c_str(), docTypeSize);
+	htmlBody = StringConverter::stringFormat(HTML_BODY_WITH_CONTENT, getProtocolVersionString(), html,
+		location, cseq, contentType, docTypeSize);
 }
 
 void HttpcServer::getHtmlBodyNoContent(std::string &htmlBody, const std::string &html,
 		const std::string &location, const std::string &contentType, std::size_t cseq) const {
-	StringConverter::addFormattedString(htmlBody, HTML_BODY_NO_CONTENT, getProtocolVersionString().c_str(), html.c_str(),
-		location.c_str(), cseq, contentType.c_str());
+	htmlBody = StringConverter::stringFormat(HTML_BODY_NO_CONTENT, getProtocolVersionString(), html,
+		location, cseq, contentType);
 }
 
 bool HttpcServer::process(SocketClient &client) {

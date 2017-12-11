@@ -38,9 +38,7 @@ class SocketClient :
 			_sessionID("-1"),
 			_userAgent("None") {}
 
-		virtual ~SocketClient() {
-			closeFD();
-		}
+		virtual ~SocketClient() {}
 
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------

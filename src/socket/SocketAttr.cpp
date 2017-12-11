@@ -92,8 +92,8 @@
 		return true;
 	}
 
-	bool SocketAttr::listen(std::size_t maxClients) {
-		if (::listen(_fd, maxClients) == -1) {
+	bool SocketAttr::listen(std::size_t backlog) {
+		if (::listen(_fd, backlog) == -1) {
 			PERROR("listen");
 			return false;
 		}
