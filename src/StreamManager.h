@@ -44,7 +44,7 @@ class StreamManager :
 
 	public:
 
-		explicit StreamManager(const std::string &xmlFilePath);
+		explicit StreamManager();
 
 		virtual ~StreamManager();
 
@@ -64,7 +64,7 @@ class StreamManager :
 	public:
 
 		/// enumerate all available devices
-		void enumerateDevices();
+		void enumerateDevices(const std::string &appDataPath);
 
 		///
 		SpStream findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -102,7 +102,6 @@ class StreamManager :
 	private:
 
 		base::Mutex _mutex;
-		std::string _xmlFilePath;
 		decrypt::dvbapi::SpClient _decrypt;
 		StreamVector _stream;
 		SpStream _dummyStream;

@@ -37,13 +37,12 @@
 
 #include <assert.h>
 
-StreamManager::StreamManager(const std::string &xmlFilePath) :
-	XMLSupport(xmlFilePath + "/" + "streams.xml"),
-	_xmlFilePath(xmlFilePath),
+StreamManager::StreamManager() :
+	XMLSupport(),
 	_decrypt(nullptr),
 	_dummyStream(nullptr) {
 #ifdef LIBDVBCSA
-	_decrypt = std::make_shared<decrypt::dvbapi::Client>(xmlFilePath + "/" + "dvbapi.xml", *this);
+	_decrypt = std::make_shared<decrypt::dvbapi::Client>(*this);
 #endif
 }
 
@@ -59,7 +58,7 @@ StreamManager::~StreamManager() {}
 	}
 #endif
 
-void StreamManager::enumerateDevices() {
+void StreamManager::enumerateDevices(const std::string &appDataPath) {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -73,15 +72,12 @@ void StreamManager::enumerateDevices() {
 
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
-	input::file::TSReader::enumerate(_stream, _xmlFilePath.c_str());
+	input::file::TSReader::enumerate(_stream, appDataPath);
 	input::stream::Streamer::enumerate(_stream);
-
-	restoreXML();
 }
 
 std::string StreamManager::getXMLDeliveryString() const {
 	base::MutexLock lock(_mutex);
-	std::string delSysStr;
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
@@ -90,14 +86,36 @@ std::string StreamManager::getXMLDeliveryString() const {
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
-	StringConverter::addFormattedString(delSysStr, "DVBS2-%zu,DVBT-%zu,DVBT2-%zu,DVBC-%zu,DVBC2-%zu",
-		dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	std::vector<std::string> strArry;
+	if (dvb_s2 > 0) {
+		strArry.push_back(StringConverter::stringFormat("DVBS2-%1", dvb_s2));
+	}
+	if (dvb_t > 0) {
+		strArry.push_back(StringConverter::stringFormat("DVBT2-%1", dvb_t));
+	}
+	if (dvb_t2 > 0) {
+		strArry.push_back(StringConverter::stringFormat("DVBT2-%1", dvb_t2));
+	}
+	if (dvb_c > 0) {
+		strArry.push_back(StringConverter::stringFormat("DVBC-%1", dvb_c));
+	}
+	if (dvb_c2 > 0) {
+		strArry.push_back(StringConverter::stringFormat("DVBC2-%1", dvb_c2));
+	}
+
+	std::string delSysStr;
+	const std::size_t size = strArry.size();
+	for(std::size_t i = 0; i < size; ++i) {
+		delSysStr += strArry[i];
+		if (i < (size - 1) ) {
+			delSysStr += ',';
+		}
+	}
 	return delSysStr;
 }
 
 std::string StreamManager::getRTSPDescribeString() const {
 	base::MutexLock lock(_mutex);
-	std::string describeStr;
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
@@ -106,9 +124,7 @@ std::string StreamManager::getRTSPDescribeString() const {
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
 		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
-	StringConverter::addFormattedString(describeStr, "%zu,%zu,%zu",
-		dvb_s2, dvb_t, dvb_c);
-	return describeStr;
+	return StringConverter::stringFormat("%1,%2,%3", dvb_s2, dvb_t, dvb_c);
 }
 
 
@@ -229,31 +245,33 @@ void StreamManager::fromXML(const std::string &xml) {
 		SpStream stream = *it;
 		std::string find;
 		std::string element;
-		StringConverter::addFormattedString(find, "data.streams.stream%zu", i);
+		StringConverter::addFormattedString(find, "stream%u", i);
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
 	}
+#ifdef LIBDVBCSA
+	std::string element;
+	if (findXMLElement(xml, "decrypt", element)) {
+		_decrypt->fromXML(element);
+	}
+#endif
 }
 
 void StreamManager::addToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
 
-	xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	xml += "<data>\r\n";
-
 	std::size_t i = 0;
-	xml += "<streams>";
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
 		ScpStream stream = *it;
-		StringConverter::addFormattedString(xml, "<stream%zu>", i);
+		StringConverter::addFormattedString(xml, "<stream%u>", i);
 		stream->addToXML(xml);
-		StringConverter::addFormattedString(xml, "</stream%zu>", i);
+		StringConverter::addFormattedString(xml, "</stream%u>", i);
 	}
-	xml += "</streams>";
-
-	xml += "</data>\r\n";
-
-	saveXML(xml);
+#ifdef LIBDVBCSA
+	ADD_XML_BEGIN_ELEMENT(xml, "decrypt");
+	_decrypt->addToXML(xml);
+	ADD_XML_END_ELEMENT(xml, "decrypt");
+#endif
 }
