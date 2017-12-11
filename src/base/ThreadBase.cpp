@@ -41,13 +41,13 @@ namespace base {
 		_run(false),
 		_exit(false),
 		_name(name) {}
-	
+
 	ThreadBase::~ThreadBase() {}
 
 	// =========================================================================
 	// -- Static member functions ----------------------------------------------
 	// =========================================================================
-	
+
 	int ThreadBase::getNumberOfProcessorsOnline() {
 		return sysconf(_SC_NPROCESSORS_ONLN);
 	}
@@ -59,19 +59,11 @@ namespace base {
 	// =========================================================================
 	// -- Other member functions -----------------------------------------------
 	// =========================================================================
-	
+
 	bool ThreadBase::startThread() {
 		_run = true;
 		_exit = false;
-		const bool ok = (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
-		if (ok) {
-#ifdef HAS_NP_FUNCTIONS
-			pthread_setname_np(_thread, _name.c_str());
-#else
-			prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
-#endif
-		}
-		return ok;
+		return (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
 	}
 
 	void ThreadBase::stopThread() {
@@ -147,6 +139,11 @@ namespace base {
 	void ThreadBase::threadEntryBase() {
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+#ifdef HAS_NP_FUNCTIONS
+		pthread_setname_np(_thread, _name.c_str());
+#else
+		prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
+#endif
 		threadEntry();
 		_exit = true;
 	}
