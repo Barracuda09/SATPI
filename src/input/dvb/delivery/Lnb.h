@@ -21,7 +21,6 @@
 #define INPUT_DVB_DELIVERY_LNB_H_INCLUDE INPUT_DVB_DELIVERY_LNB_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 
 #include <stdint.h>
@@ -76,7 +75,6 @@ namespace delivery {
 				UserDefined
 			};
 
-			base::Mutex _mutex;
 			LNBType _type;
 			uint32_t _switchlof;
 			uint32_t _lofLow;

@@ -86,7 +86,7 @@ namespace dvb {
 	// =======================================================================
 	//  -- Static functions --------------------------------------------------
 	// =======================================================================
-
+	// Called recursive
 	static void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
 			const std::string &path, const std::string &startPath) {
 		const std::string ADAPTER = startPath + "/adapter%d";
@@ -127,7 +127,7 @@ namespace dvb {
 								int adapt_nr;
 								sscanf(path.c_str(), ADAPTER.c_str(), &adapt_nr);
 
-								// make new paths
+								// Make new paths
 								char fe_path[FE_PATH_LEN];
 								char dvr_path[FE_PATH_LEN];
 								char dmx_path[FE_PATH_LEN];
@@ -135,6 +135,7 @@ namespace dvb {
 								snprintf(dvr_path, FE_PATH_LEN, DVR.c_str(), adapt_nr, fe_nr);
 								snprintf(dmx_path, FE_PATH_LEN, DMX.c_str(), adapt_nr, fe_nr);
 
+								// Make new frontend here
 								const StreamVector::size_type size = streamVector.size();
 								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe_path, dvr_path, dmx_path);
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
@@ -176,43 +177,49 @@ namespace dvb {
 	// =======================================================================
 
 	void Frontend::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", _fe_info.name);
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _path_to_fe.c_str());
-		StringConverter::addFormattedString(xml, "<freq>%d Hz to %d Hz</freq>", _fe_info.frequency_min, _fe_info.frequency_max);
-		StringConverter::addFormattedString(xml, "<symbol>%d symbols/s to %d symbols/s</symbol>", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+		{
+			base::MutexLock lock(_xmlMutex);
+			ADD_XML_ELEMENT(xml, "frontendname", _fe_info.name);
+			ADD_XML_ELEMENT(xml, "pathname", _path_to_fe);
+			ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("%1 Hz to %2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
+			ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("%1 symbols/s to %2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
+
+			ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, DEFAULT_DVR_BUFFER_SIZE * 10);
+		}
 
 		// Channel
 		_frontendData.addToXML(xml);
 
 		// Monitor
-		StringConverter::addFormattedString(xml, "<status>%d</status>", _frontendData.getSignalStatus());
-		StringConverter::addFormattedString(xml, "<signal>%d</signal>", _frontendData.getSignalStrength());
-		StringConverter::addFormattedString(xml, "<snr>%d</snr>", _frontendData.getSignalToNoiseRatio());
-		StringConverter::addFormattedString(xml, "<ber>%d</ber>", _frontendData.getBitErrorRate());
-		StringConverter::addFormattedString(xml, "<unc>%d</unc>", _frontendData.getUncorrectedBlocks());
+		ADD_XML_ELEMENT(xml, "status", _frontendData.getSignalStatus());
+		ADD_XML_ELEMENT(xml, "signal", _frontendData.getSignalStrength());
+		ADD_XML_ELEMENT(xml, "snr", _frontendData.getSignalToNoiseRatio());
+		ADD_XML_ELEMENT(xml, "ber", _frontendData.getBitErrorRate());
+		ADD_XML_ELEMENT(xml, "unc", _frontendData.getUncorrectedBlocks());
 
-		ADD_CONFIG_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, DEFAULT_DVR_BUFFER_SIZE * 10);
+		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 
-		ADD_XML_BEGIN_ELEMENT(xml, "transformation");
-		_transform.addToXML(xml);
-		ADD_XML_END_ELEMENT(xml, "transformation");
-
-		ADD_XML_BEGIN_ELEMENT(xml, "deliverySystem");
-		_deliverySystem[0]->addToXML(xml);
-		ADD_XML_END_ELEMENT(xml, "deliverySystem");
+		for (size_t i = 0u; i < _deliverySystem.size(); ++i) {
+			ADD_XML_N_ELEMENT(xml, "deliverySystem", i, _deliverySystem[i]->toXML());
+		}
 	}
 
 	void Frontend::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
 		std::string element;
-		if (findXMLElement(xml, "deliverySystem", element)) {
-			_deliverySystem[0]->fromXML(element);
+		{
+			base::MutexLock lock(_xmlMutex);
+			if (findXMLElement(xml, "dvrbuffer.value", element)) {
+				const unsigned int newSize = atoi(element.c_str());
+				_dvrBufferSizeMB = (newSize < DEFAULT_DVR_BUFFER_SIZE * 5) ?
+					newSize : DEFAULT_DVR_BUFFER_SIZE;
+
+			}
 		}
-		if (findXMLElement(xml, "dvrbuffer.value", element)) {
-			const unsigned int newSize = atoi(element.c_str());
-			_dvrBufferSizeMB = (newSize < DEFAULT_DVR_BUFFER_SIZE * 5) ?
-				newSize : DEFAULT_DVR_BUFFER_SIZE;
+		for (size_t i = 0u; i < _deliverySystem.size(); ++i) {
+			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem%1", i);
+			if (findXMLElement(xml, deliverySystem, element)) {
+				_deliverySystem[i]->fromXML(element);
+			}
 		}
 		if (findXMLElement(xml, "transformation", element)) {
 			_transform.fromXML(element);
@@ -733,7 +740,8 @@ namespace dvb {
 					if (_frontendData.isPIDUsed(i)) {
 						// check if we have no DMX for this PID, then open one
 						if (_frontendData.getDMXFileDescriptor(i) == -1) {
-							_frontendData.setDMXFileDescriptor(i, open_dmx(_path_to_dmx));
+							const int fd = open_dmx(_path_to_dmx);
+							_frontendData.setDMXFileDescriptor(i, fd);
 							std::size_t timeout = 0;
 							while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
 								std::this_thread::sleep_for(std::chrono::milliseconds(350));

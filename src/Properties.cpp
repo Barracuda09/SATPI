@@ -82,12 +82,12 @@ void Properties::fromXML(const std::string &xml) {
 void Properties::addToXML(std::string &xml) const {
 	base::MutexLock lock(_xmlMutex);
 
-	ADD_CONFIG_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
-	ADD_CONFIG_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
-	ADD_CONFIG_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U.c_str());
-	ADD_CONFIG_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile.c_str());
-	ADD_CONFIG_TEXT_INPUT(xml, "webPath", _webPath.c_str());
-	ADD_CONFIG_TEXT_INPUT(xml, "appDataPath", _appdataPath.c_str());
+	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
+	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
+	ADD_XML_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U);
+	ADD_XML_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile);
+	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
+	ADD_XML_TEXT_INPUT(xml, "appDataPath", _appdataPath);
 }
 
 std::string Properties::getSoftwareVersion() const {

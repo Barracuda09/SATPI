@@ -65,6 +65,7 @@ class SatPI :
 		SatPI(bool ssdp,
 			const std::string &appdataPath,
 			const std::string &webPath,
+			const std::string &dvbPath,
 			unsigned int httpPort,
 			unsigned int rtspPort) :
 			XMLSaveSupport(appdataPath + "/" + "SatPI.xml"),
@@ -76,7 +77,7 @@ class SatPI :
 			_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			//
-			_streamManager.enumerateDevices(appdataPath);
+			_streamManager.enumerateDevices(appdataPath, dvbPath);
 			//
 			std::string xml;
 			if (restoreXML(xml)) {
@@ -116,23 +117,14 @@ class SatPI :
 				{
 					// application data
 					ADD_XML_BEGIN_ELEMENT(xml, "appdata");
-					StringConverter::addFormattedString(xml, "<uptime>%d</uptime>", std::time(nullptr) - _properties.getApplicationStartTime());
-					StringConverter::addFormattedString(xml, "<appversion>%s</appversion>", _properties.getSoftwareVersion().c_str());
-					StringConverter::addFormattedString(xml, "<uuid>%s</uuid>", _properties.getUUID().c_str());
+					ADD_XML_ELEMENT(xml, "uptime", std::time(nullptr) - _properties.getApplicationStartTime());
+					ADD_XML_ELEMENT(xml, "appversion", _properties.getSoftwareVersion());
+					ADD_XML_ELEMENT(xml, "uuid", _properties.getUUID());
 					ADD_XML_END_ELEMENT(xml, "appdata");
 				}
-
-				ADD_XML_BEGIN_ELEMENT(xml, "streams");
-				_streamManager.addToXML(xml);
-				ADD_XML_END_ELEMENT(xml, "streams");
-
-				ADD_XML_BEGIN_ELEMENT(xml, "configdata");
-				_properties.addToXML(xml);
-				ADD_XML_END_ELEMENT(xml, "configdata");
-
-				ADD_XML_BEGIN_ELEMENT(xml, "ssdp");
-				_ssdpServer.addToXML(xml);
-				ADD_XML_END_ELEMENT(xml, "ssdp");
+				ADD_XML_ELEMENT(xml, "streams", _streamManager.toXML());
+				ADD_XML_ELEMENT(xml, "configdata", _properties.toXML());
+				ADD_XML_ELEMENT(xml, "ssdp", _ssdpServer.toXML());
 
 			ADD_XML_END_ELEMENT(xml, "data");
 		}
@@ -322,7 +314,8 @@ static void printUsage(const char *prog_name) {
 	       "\t--help           show this help and exit\r\n" \
 	       "\t--version        show the version number\r\n" \
 	       "\t--user xx        run as user\r\n" \
-	       "\t--app-data-path  set path for application state data, like xml etc\r\n" \
+	       "\t--dvb-path       set path were to find dvb devices default /dev/dvb\r\n" \
+	       "\t--app-data-path  set path for application state data eg. xml files etc\r\n" \
 	       "\t--http-path      set root path of web/http pages\r\n" \
 	       "\t--http-port      set http port default 8875 (1024 - 65535)\r\n" \
 	       "\t--rtsp-port      set rtsp port default 554  ( 554 - 65535)\r\n" \
@@ -348,10 +341,13 @@ int main(int argc, char *argv[]) {
 	std::string currentPath;
 	std::string appdataPath;
 	std::string webPath;
+	std::string dvbPath;
 	std::string file;
+	//
 	StringConverter::splitPath(argv[0], currentPath, file);
 	appdataPath = currentPath;
 	webPath = currentPath + "/" + "web";
+	dvbPath = "/dev/dvb";
 
 	// Check options
 	for (i = 1; i < argc; ++i) {
@@ -362,11 +358,14 @@ int main(int argc, char *argv[]) {
 			++i; // because next was the user-name
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
 			daemon = false;
-		} else if (strcmp(argv[i], "--http-path") == 0) {
-			webPath = argv[i+1];
+		} else if (strcmp(argv[i], "--dvb-path") == 0) {
+			dvbPath = argv[i+1];
 			++i;
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
 			appdataPath = argv[i+1];
+			++i;
+		} else if (strcmp(argv[i], "--http-path") == 0) {
+			webPath = argv[i+1];
 			++i;
 		} else if (strcmp(argv[i], "--http-port") == 0) {
 			httpPort = atoi(argv[i+1]);
@@ -413,7 +412,7 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {
 		try {
-			SatPI satpi(ssdp, appdataPath, webPath, httpPort, rtspPort);
+			SatPI satpi(ssdp, appdataPath, webPath, dvbPath, httpPort, rtspPort);
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {

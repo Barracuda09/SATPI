@@ -128,27 +128,27 @@ std::string Stream::attributeDescribeString(bool &active) const {
 
 void Stream::addToXML(std::string &xml) const {
 	{
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
-		ADD_CONFIG_NUMBER(xml, "streamindex", _streamID);
+		ADD_XML_ELEMENT(xml, "streamindex", _streamID);
 
-		ADD_CONFIG_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
-		ADD_CONFIG_TEXT(xml, "attached", _streamInUse ? "yes" : "no");
-		ADD_CONFIG_TEXT(xml, "owner", _client[0].getIPAddress().c_str());
-		ADD_CONFIG_TEXT(xml, "ownerSessionID", _client[0].getSessionID().c_str());
-		ADD_CONFIG_TEXT(xml, "userAgent", _client[0].getUserAgent().c_str());
+		ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
+		ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
+		ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddress());
+		ADD_XML_ELEMENT(xml, "ownerSessionID", _client[0].getSessionID());
+		ADD_XML_ELEMENT(xml, "userAgent", _client[0].getUserAgent());
 
-		ADD_CONFIG_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
+		ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 
-		StringConverter::addFormattedString(xml, "<spc>%d</spc>", _spc.load());
-		StringConverter::addFormattedString(xml, "<payload>%.3f</payload>", _rtp_payload.load() / (1024.0 * 1024.0));
+		ADD_XML_ELEMENT(xml, "spc", _spc.load());
+		ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
 	}
 	_device->addToXML(xml);
 }
 
 void Stream::fromXML(const std::string &xml) {
 	{
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
 		std::string element;
 		if (findXMLElement(xml, "enable.value", element)) {
@@ -175,7 +175,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              const std::string sessionID,
                              const std::string &method,
                              int &clientID) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	const std::string &message = socketClient.getMessage();
 	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
@@ -235,13 +235,13 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 }
 
 void Stream::setSocketClient(SocketClient &socketClient) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	_client[0].setSocketClient(socketClient);
 }
 
 void Stream::checkForSessionTimeout() {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].sessionTimeout() || !_enabled) {
@@ -258,7 +258,7 @@ void Stream::checkForSessionTimeout() {
 }
 
 bool Stream::update(int clientID, bool start) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	const bool changed = _device->hasDeviceDataChanged();
 
@@ -315,7 +315,7 @@ bool Stream::update(int clientID, bool start) {
 }
 
 void Stream::close(int clientID) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	if (_client[clientID].sessionCanClose()) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
@@ -326,7 +326,7 @@ void Stream::close(int clientID) {
 }
 
 bool Stream::teardown(int clientID, bool gracefull) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _streamID, clientID, _client[clientID].getSessionID().c_str());
@@ -336,7 +336,7 @@ bool Stream::teardown(int clientID, bool gracefull) {
 }
 
 bool Stream::processStreamingRequest(const std::string &msg, int clientID, const std::string &method) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	if ((method == "OPTIONS" || method == "SETUP" ||
 	     method == "PLAY"    || method == "GET") &&

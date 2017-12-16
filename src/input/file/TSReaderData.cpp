@@ -43,7 +43,7 @@ namespace file {
 
 	void TSReaderData::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		ADD_CONFIG_TEXT(xml, "pathname", _filePath.c_str());
+		ADD_XML_ELEMENT(xml, "pathname", _filePath);
 	}
 
 	void TSReaderData::fromXML(const std::string &UNUSED(xml)) {}

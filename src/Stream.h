@@ -23,7 +23,6 @@
 #include <FwDecl.h>
 #include <StreamClient.h>
 #include <StreamInterface.h>
-#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/Device.h>
 
@@ -227,7 +226,6 @@ class Stream :
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
-		base::Mutex _mutex;               ///
 		int _streamID;                    ///
 
 		StreamingType     _streamingType; ///

@@ -40,7 +40,7 @@ namespace ssdp {
 #define UTIME_DEL 200000
 
 Server::Server(const InterfaceAttr &interface,
-               Properties &properties) :
+	const Properties &properties) :
 	XMLSupport(),
 	ThreadBase("SSDP Server"),
 	_interface(interface),
@@ -63,9 +63,9 @@ Server::~Server() {
 void Server::addToXML(std::string &xml) const {
 	base::MutexLock lock(_xmlMutex);
 
-	ADD_CONFIG_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
-	ADD_CONFIG_NUMBER(xml, "bootID", _bootID);
-	ADD_CONFIG_NUMBER(xml, "deviceID", _deviceID);
+	ADD_XML_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
+	ADD_XML_ELEMENT(xml, "bootID", _bootID);
+	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
 }
 
 void Server::fromXML(const std::string &xml) {
@@ -73,13 +73,13 @@ void Server::fromXML(const std::string &xml) {
 
 	std::string element;
 	if (findXMLElement(xml, "annouceTime.value", element)) {
-		_announceTimeSec = atoi(element.c_str());
+		_announceTimeSec = std::stoi(element.c_str());
 	}
 	if (findXMLElement(xml, "bootID", element)) {
-		_bootID = atoi(element.c_str());
+		_bootID = std::stoi(element.c_str());
 	}
 	if (findXMLElement(xml, "deviceID", element)) {
-		_deviceID = atoi(element.c_str());
+		_deviceID = std::stoi(element.c_str());
 	}
 }
 

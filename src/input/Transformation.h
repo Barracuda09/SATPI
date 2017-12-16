@@ -23,7 +23,6 @@
 #include <FwDecl.h>
 #include <base/M3UParser.h>
 #include <base/XMLSupport.h>
-#include <base/Mutex.h>
 #include <input/InputSystem.h>
 
 #include <string>
@@ -50,10 +49,9 @@ namespace input {
 			// =======================================================================
 
 		public:
-			///
+
 			virtual void addToXML(std::string &xml) const override;
 
-			///
 			virtual void fromXML(const std::string &xml) override;
 
 			// =======================================================================
@@ -91,7 +89,6 @@ namespace input {
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;
 
 			bool _enabled;
 			bool _transform;

@@ -32,11 +32,7 @@
 #include <mpegts/SDT.h>
 #include <input/dvb/FrontendDecryptInterface.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <cstring>
-#include <ctime>
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
@@ -529,17 +525,17 @@ namespace dvbapi {
 	// =======================================================================
 
 	void Client::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
 		std::string element;
 		if (findXMLElement(xml, "OSCamIP.value", element)) {
 			_serverIpAddr = element;
 		}
 		if (findXMLElement(xml, "OSCamPORT.value", element)) {
-			_serverPort = atoi(element.c_str());
+			_serverPort = std::stoi(element.c_str());
 		}
 		if (findXMLElement(xml, "AdapterOffset.value", element)) {
-			_adapterOffset = atoi(element.c_str());
+			_adapterOffset = std::stoi(element.c_str());
 		}
 		if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 			_enabled = (element == "true") ? true : false;
@@ -556,14 +552,14 @@ namespace dvbapi {
 	}
 
 	void Client::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
-		ADD_CONFIG_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
-		ADD_CONFIG_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
-		ADD_CONFIG_IP_INPUT(xml, "OSCamIP", _serverIpAddr.c_str());
-		ADD_CONFIG_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
-		ADD_CONFIG_NUMBER_INPUT(xml, "AdapterOffset", _adapterOffset.load(), 0, 128);
-		ADD_CONFIG_TEXT(xml, "OSCamServerName", _serverName.c_str());
+		ADD_XML_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
+		ADD_XML_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
+		ADD_XML_IP_INPUT(xml, "OSCamIP", _serverIpAddr);
+		ADD_XML_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
+		ADD_XML_NUMBER_INPUT(xml, "AdapterOffset", _adapterOffset.load(), 0, 128);
+		ADD_XML_ELEMENT(xml, "OSCamServerName", _serverName);
 	}
 
 } // namespace dvbapi

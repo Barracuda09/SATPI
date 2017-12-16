@@ -58,26 +58,28 @@ StreamManager::~StreamManager() {}
 	}
 #endif
 
-void StreamManager::enumerateDevices(const std::string &appDataPath) {
-	base::MutexLock lock(_mutex);
+void StreamManager::enumerateDevices(const std::string &appDataPath,
+	const std::string &dvbPath) {
+	base::MutexLock lock(_xmlMutex);
 
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_INFO("Enumerating all devices...");
 
 	// Make an dummy stream
 	input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(0);
 	_dummyStream = std::make_shared<Stream>(0, tsreader, _decrypt);
 
 	// enumerate streams (frontends)
-	input::dvb::Frontend::enumerate(_stream, _decrypt, "/dev/dvb");
+	input::dvb::Frontend::enumerate(_stream, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
 	input::stream::Streamer::enumerate(_stream);
 }
 
 std::string StreamManager::getXMLDeliveryString() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
@@ -115,7 +117,7 @@ std::string StreamManager::getXMLDeliveryString() const {
 }
 
 std::string StreamManager::getRTSPDescribeString() const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
@@ -129,7 +131,7 @@ std::string StreamManager::getRTSPDescribeString() const {
 
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	// Here we need to find the correct Stream and StreamClient
 	assert(!_stream.empty());
@@ -216,7 +218,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 }
 
 void StreamManager::checkForSessionTimeout() {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	assert(!_stream.empty());
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
@@ -228,7 +230,7 @@ void StreamManager::checkForSessionTimeout() {
 }
 
 std::string StreamManager::attributeDescribeString(const std::size_t stream, bool &active) const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 
 	assert(!_stream.empty());
 	return _stream[stream]->attributeDescribeString(active);
@@ -239,13 +241,12 @@ std::string StreamManager::attributeDescribeString(const std::size_t stream, boo
 // =======================================================================
 
 void StreamManager::fromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	std::size_t i = 0;
 	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
 		SpStream stream = *it;
-		std::string find;
 		std::string element;
-		StringConverter::addFormattedString(find, "stream%u", i);
+		const std::string find = StringConverter::stringFormat("stream%1", i);
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
@@ -259,19 +260,15 @@ void StreamManager::fromXML(const std::string &xml) {
 }
 
 void StreamManager::addToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_xmlMutex);
 	assert(!_stream.empty());
 
 	std::size_t i = 0;
 	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
 		ScpStream stream = *it;
-		StringConverter::addFormattedString(xml, "<stream%u>", i);
-		stream->addToXML(xml);
-		StringConverter::addFormattedString(xml, "</stream%u>", i);
+		ADD_XML_N_ELEMENT(xml, "stream", i, stream->toXML());
 	}
 #ifdef LIBDVBCSA
-	ADD_XML_BEGIN_ELEMENT(xml, "decrypt");
-	_decrypt->addToXML(xml);
-	ADD_XML_END_ELEMENT(xml, "decrypt");
+	ADD_XML_ELEMENT(xml, "decrypt", _decrypt->toXML());
 #endif
 }

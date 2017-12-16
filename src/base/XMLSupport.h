@@ -49,6 +49,13 @@ namespace base {
 			/// Add data to an XML for storing or web interface
 			virtual void addToXML(std::string &xml) const = 0;
 
+			/// Add data to an XML for storing or web interface
+			virtual std::string toXML() const {
+				std::string xml;
+				addToXML(xml);
+				return xml;
+			}
+
 			/// Get data from an XML for restoring or web interface
 			virtual void fromXML(const std::string &xml) = 0;
 
@@ -92,22 +99,22 @@ namespace base {
 #define ADD_XML_END_ELEMENT(XML, ELEMENTNAME) \
 	XML += StringConverter::stringFormat("</%1>", ELEMENTNAME)
 
-#define ADD_CONFIG_TEXT(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1>%2</%1>", VARNAME, VALUE)
+#define ADD_XML_ELEMENT(XML, ELEMENTNAME, CODE) \
+	XML += StringConverter::stringFormat("<%1>%2</%1>", ELEMENTNAME, CODE)
 
-#define ADD_CONFIG_NUMBER(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1>%2</%1>", VARNAME, VALUE)
+#define ADD_XML_N_ELEMENT(XML, ELEMENTNAME, N, CODE) \
+	XML += StringConverter::stringFormat("<%1%2>%3</%1%2>", ELEMENTNAME, N, CODE)
 
-#define ADD_CONFIG_CHECKBOX(XML, VARNAME, VALUE) \
+#define ADD_XML_CHECKBOX(XML, VARNAME, VALUE) \
 	XML += StringConverter::stringFormat("<%1><inputtype>checkbox</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
-#define ADD_CONFIG_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
+#define ADD_XML_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
 	XML += StringConverter::stringFormat("<%1><inputtype>number</inputtype><value>%2</value><minvalue>%3</minvalue><maxvalue>%4</maxvalue></%1>", VARNAME, VALUE, MIN, MAX)
 
-#define ADD_CONFIG_TEXT_INPUT(XML, VARNAME, VALUE) \
+#define ADD_XML_TEXT_INPUT(XML, VARNAME, VALUE) \
 	XML += StringConverter::stringFormat("<%1><inputtype>text</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
-#define ADD_CONFIG_IP_INPUT(XML, VARNAME, VALUE) \
+#define ADD_XML_IP_INPUT(XML, VARNAME, VALUE) \
 	XML += StringConverter::stringFormat("<%1><inputtype>ip</inputtype><value>%2</value></%1>", VARNAME, VALUE)
 
 #endif // BASE_XML_SUPPORT_H_INCLUDE

@@ -21,8 +21,6 @@
 #define DECRYPT_DVBAPI_CLIENT_H_INCLUDE DECRYPT_DVBAPI_CLIENT_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
-#include <base/Functor1Ret.h>
 #include <base/ThreadBase.h>
 #include <base/XMLSupport.h>
 #include <socket/SocketClient.h>
@@ -105,7 +103,6 @@ namespace dvbapi {
 		private:
 
 			SocketClient     _client;
-			base::Mutex      _mutex;
 			std::atomic_bool _connected;
 			std::atomic_bool _enabled;
 			std::atomic_bool _rewritePMT;

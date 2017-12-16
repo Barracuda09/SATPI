@@ -54,11 +54,8 @@ namespace file {
 
 	void TSReader::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		ADD_CONFIG_TEXT(xml, "frontendname", "TS Reader");
-
-		ADD_XML_BEGIN_ELEMENT(xml, "transformation");
-		_transform.addToXML(xml);
-		ADD_XML_END_ELEMENT(xml, "transformation");
+		ADD_XML_ELEMENT(xml, "frontendname", "TS Reader");
+		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 
 		_deviceData.addToXML(xml);
 	}

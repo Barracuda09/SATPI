@@ -21,11 +21,7 @@
 #define INPUT_DVB_DELIVERY_DVBT_H_INCLUDE INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/dvb/delivery/System.h>
-
-#include <stdlib.h>
-#include <stdint.h>
 
 FW_DECL_NS2(input, dvb, FrontendData);
 
@@ -84,7 +80,6 @@ namespace delivery {
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;   ///
 			unsigned int _lna;    ///
 
 	};

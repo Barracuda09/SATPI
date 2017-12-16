@@ -60,8 +60,8 @@ namespace stream {
 
 	void Streamer::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
-		StringConverter::addFormattedString(xml, "<frontendname>%s</frontendname>", "Streamer");
-		StringConverter::addFormattedString(xml, "<pathname>%s</pathname>", _uri.c_str());
+		ADD_XML_ELEMENT(xml, "frontendname", "Streamer");
+		ADD_XML_ELEMENT(xml, "pathname", _uri);
 	}
 
 	void Streamer::fromXML(const std::string &UNUSED(xml)) {

@@ -55,15 +55,15 @@ namespace delivery {
 	// =======================================================================
 
 	void Lnb::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		ADD_CONFIG_NUMBER(xml, "lnbtype", StringConverter::asInteger(_type));
-		ADD_CONFIG_NUMBER_INPUT(xml, "lofSwitch", _switchlof / 1000UL, 0, 20000);
-		ADD_CONFIG_NUMBER_INPUT(xml, "lofLow", _lofLow / 1000UL, 0, 20000);
-		ADD_CONFIG_NUMBER_INPUT(xml, "lofHigh", _lofHigh / 1000UL, 0, 20000);
+		base::MutexLock lock(_xmlMutex);
+		ADD_XML_ELEMENT(xml, "lnbtype", StringConverter::asInteger(_type));
+		ADD_XML_NUMBER_INPUT(xml, "lofSwitch", _switchlof / 1000UL, 0, 20000);
+		ADD_XML_NUMBER_INPUT(xml, "lofLow", _lofLow / 1000UL, 0, 20000);
+		ADD_XML_NUMBER_INPUT(xml, "lofHigh", _lofHigh / 1000UL, 0, 20000);
 	}
 
 	void Lnb::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		if (findXMLElement(xml, "lnbtype", element)) {
 			;

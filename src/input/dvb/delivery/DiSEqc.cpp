@@ -42,22 +42,19 @@ namespace delivery {
 	// =======================================================================
 
 	void DiSEqc::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			StringConverter::addFormattedString(xml, "<lnb%u>", i);
-			_lnb[i].addToXML(xml);
-			StringConverter::addFormattedString(xml, "</lnb%u>", i);
+			ADD_XML_N_ELEMENT(xml, "lnb", i, _lnb[i].toXML());
 		}
 
-		ADD_CONFIG_NUMBER_INPUT(xml, "diseqc_repeat", _diseqcRepeat, 1, 10);
+		ADD_XML_NUMBER_INPUT(xml, "diseqc_repeat", _diseqcRepeat, 1, 10);
 	}
 
 	void DiSEqc::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			std::string lnb;
-			StringConverter::addFormattedString(lnb, "lnb%u", i);
+			const std::string lnb = StringConverter::stringFormat("lnb%1", i);
 			if (findXMLElement(xml, lnb, element)) {
 				_lnb[i].fromXML(element);
 			}

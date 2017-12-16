@@ -49,14 +49,14 @@ namespace input {
 	// =======================================================================
 
 	void Transformation::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		ADD_CONFIG_CHECKBOX(xml, "transformEnable", (_enabled ? "true" : "false"));
-		ADD_CONFIG_CHECKBOX(xml, "advertiseAsDVBS2", (_advertiseAsDVBS2 ? "true" : "false"));
-		ADD_CONFIG_TEXT_INPUT(xml, "transformM3U", _transformFileM3U.c_str());
+		base::MutexLock lock(_xmlMutex);
+		ADD_XML_CHECKBOX(xml, "transformEnable", (_enabled ? "true" : "false"));
+		ADD_XML_CHECKBOX(xml, "advertiseAsDVBS2", (_advertiseAsDVBS2 ? "true" : "false"));
+		ADD_XML_TEXT_INPUT(xml, "transformM3U", _transformFileM3U);
 	}
 
 	void Transformation::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		if (findXMLElement(xml, "transformEnable.value", element)) {
 			_enabled = (element == "true") ? true : false;
@@ -75,23 +75,23 @@ namespace input {
 	// =======================================================================
 
 	bool Transformation::isEnabled() const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		return _enabled;
 	}
 
 	bool Transformation::advertiseAsDVBS2() const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		return _advertiseAsDVBS2;
 	}
 
 	void Transformation::resetTransformFlag() {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		_transform = false;
 	}
 
 	input::InputSystem Transformation::getTransformationSystemFor(
 			const double frequency) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		input::InputSystem system = input::InputSystem::UNDEFINED;
 		if (_enabled) {
 			std::string uri;
@@ -106,7 +106,7 @@ namespace input {
 			const int streamID,
 			const std::string &msg,
 			const std::string &method) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		std::string msgTrans = msg;
 		if (_enabled) {
 			std::string uriMain;
@@ -151,7 +151,7 @@ namespace input {
 
 	const DeviceData &Transformation::transformDeviceData(
 			const DeviceData &deviceData) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		if (_enabled) {
 			const fe_status_t status = deviceData.getSignalStatus();
 			const uint32_t ber = deviceData.getBitErrorRate();

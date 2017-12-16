@@ -42,26 +42,26 @@ namespace dvb {
 	// =======================================================================
 
 	void FrontendData::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
 		mpegts::SDT::Data sdtData;
 		_sdt.getSDTDataFor(_pmt.getProgramNumber(), sdtData);
 
-		StringConverter::addFormattedString(xml, "<channelname>%s</channelname>", sdtData.channelNameUTF8.c_str());
-		StringConverter::addFormattedString(xml, "<networkname>%s</networkname>", sdtData.networkNameUTF8.c_str());
-		StringConverter::addFormattedString(xml, "<delsys>%s</delsys>", StringConverter::delsys_to_string(_delsys));
-		StringConverter::addFormattedString(xml, "<tunefreq>%d</tunefreq>", _freq);
-		StringConverter::addFormattedString(xml, "<modulation>%s</modulation>", StringConverter::modtype_to_sting(_modtype));
-		StringConverter::addFormattedString(xml, "<fec>%s</fec>", StringConverter::fec_to_string(_fec));
-		StringConverter::addFormattedString(xml, "<tunesymbol>%d</tunesymbol>", _srate);
-		StringConverter::addFormattedString(xml, "<pidcsv>%s</pidcsv>", _pidTable.getPidCSV().c_str());
+		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
+		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
+		ADD_XML_ELEMENT(xml, "delsys", StringConverter::delsys_to_string(_delsys));
+		ADD_XML_ELEMENT(xml, "tunefreq", _freq);
+		ADD_XML_ELEMENT(xml, "modulation", StringConverter::modtype_to_sting(_modtype));
+		ADD_XML_ELEMENT(xml, "fec", StringConverter::fec_to_string(_fec));
+		ADD_XML_ELEMENT(xml, "tunesymbol", _srate);
+		ADD_XML_ELEMENT(xml, "pidcsv", _pidTable.getPidCSV());
 
 		switch (_delsys) {
 			case input::InputSystem::DVBS:
 			case input::InputSystem::DVBS2:
-		                StringConverter::addFormattedString(xml, "<rolloff>%s</rolloff>", StringConverter::rolloff_to_sting(_rolloff));
-		                StringConverter::addFormattedString(xml, "<src>%d</src>", _src);
-		                StringConverter::addFormattedString(xml, "<pol>%c</pol>", getPolarizationChar());
+				ADD_XML_ELEMENT(xml, "rolloff", StringConverter::rolloff_to_sting(_rolloff));
+				ADD_XML_ELEMENT(xml, "src", _src);
+				ADD_XML_ELEMENT(xml, "pol", getPolarizationChar());
 				break;
 			case input::InputSystem::DVBT:
 				// Empty

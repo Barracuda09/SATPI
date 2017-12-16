@@ -75,11 +75,11 @@ namespace mpegts {
 		} else {
 			for (size_t i = 0; i < MAX_PIDS; ++i) {
 				if (_data[i].used) {
-					StringConverter::addFormattedString(csv, "%d,", i);
+					csv += StringConverter::stringFormat("%1,", i);
 				}
 			}
 			if (csv.size() > 1) {
-				*(csv.end() - 1) = 0;
+				csv.erase(csv.end() - 1);
 			} else {
 				csv = " ";
 			}

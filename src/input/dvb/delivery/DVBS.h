@@ -83,8 +83,6 @@ namespace delivery {
 			// =======================================================================
 
 		private:
-			base::Mutex _mutex;   ///
-
 			enum class DiseqcType {
 				Switch,
 				EN50494,

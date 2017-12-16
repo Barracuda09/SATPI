@@ -44,7 +44,7 @@ namespace ssdp {
 			// -- Constructors and destructor ----------------------------------------
 			// =======================================================================
 
-			Server(const InterfaceAttr &interface, Properties &properties);
+			Server(const InterfaceAttr &interface, const Properties &properties);
 
 			virtual ~Server();
 
@@ -84,7 +84,7 @@ namespace ssdp {
 		private:
 
 			const InterfaceAttr &_interface;
-			Properties &_properties;
+			const Properties &_properties;
 			SocketClient _udpMultiListen;
 			SocketClient _udpMultiSend;
 			std::size_t _announceTimeSec;

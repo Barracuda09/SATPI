@@ -50,26 +50,30 @@ namespace delivery {
 	// =======================================================================
 
 	void DiSEqcEN50494::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		{
+			base::MutexLock lock(_xmlMutex);
+			ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
+			ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 7);
+			ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
+		}
 		DiSEqc::addToXML(xml);
-		ADD_CONFIG_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
-		ADD_CONFIG_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 7);
-		ADD_CONFIG_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
 	}
 
 	void DiSEqcEN50494::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		{
+			base::MutexLock lock(_xmlMutex);
+			std::string element;
+			if (findXMLElement(xml, "chFreq.value", element)) {
+				_chFreq = std::stoi(element);
+			}
+			if (findXMLElement(xml, "chSlot.value", element)) {
+				_chSlot = std::stoi(element);
+			}
+			if (findXMLElement(xml, "pin.value", element)) {
+				_pin = std::stoi(element);
+			}
+		}
 		DiSEqc::fromXML(xml);
-		std::string element;
-		if (findXMLElement(xml, "chFreq.value", element)) {
-			_chFreq = std::stoi(element);
-		}
-		if (findXMLElement(xml, "chSlot.value", element)) {
-			_chSlot = std::stoi(element);
-		}
-		if (findXMLElement(xml, "pin.value", element)) {
-			_pin = std::stoi(element);
-		}
 	}
 
 	// =======================================================================
@@ -87,7 +91,7 @@ namespace delivery {
 
 	bool DiSEqcEN50494::sendDiseqcUnicable(const int feFD, const int streamID, uint32_t &freq,
 		const int src, const int pol_v) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
 		dvb_diseqc_master_cmd cmd = {

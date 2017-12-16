@@ -46,12 +46,16 @@ namespace delivery {
 	// =======================================================================
 
 	void DiSEqcSwitch::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		{
+			base::MutexLock lock(_xmlMutex);
+		}
 		DiSEqc::addToXML(xml);
 	}
 
 	void DiSEqcSwitch::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		{
+			base::MutexLock lock(_xmlMutex);
+		}
 		DiSEqc::fromXML(xml);
 	}
 
@@ -114,7 +118,7 @@ namespace delivery {
 			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
 			cmd.msg[0] = 0xe1;
 
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			for (size_t i = 0; i < _diseqcRepeat; ++i) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {

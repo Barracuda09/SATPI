@@ -51,25 +51,25 @@ namespace delivery {
 	// =======================================================================
 
 	void DVBS::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
+
+		ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
 
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
-			ADD_CONFIG_TEXT(xml, "inputtype", "selectionlist");
-			ADD_CONFIG_NUMBER(xml, "value", StringConverter::asInteger(_diseqcType));
+			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
+			ADD_XML_ELEMENT(xml, "value", StringConverter::asInteger(_diseqcType));
 			ADD_XML_BEGIN_ELEMENT(xml, "list");
-			ADD_CONFIG_TEXT(xml, "option0", "DiSEqc Switch");
-			ADD_CONFIG_TEXT(xml, "option1", "Unicable (EN50494)");
-			ADD_CONFIG_TEXT(xml, "option2", "Jess/Unicable 2 (EN50607)");
+			ADD_XML_ELEMENT(xml, "option0", "DiSEqc Switch");
+			ADD_XML_ELEMENT(xml, "option1", "Unicable (EN50494)");
+			ADD_XML_ELEMENT(xml, "option2", "Jess/Unicable 2 (EN50607)");
 			ADD_XML_END_ELEMENT(xml, "list");
 		ADD_XML_END_ELEMENT(xml, "diseqcType");
 
-		ADD_XML_BEGIN_ELEMENT(xml, "diseqc");
-		_diseqc->addToXML(xml);
-		ADD_XML_END_ELEMENT(xml, "diseqc");
+		ADD_XML_ELEMENT(xml, "diseqc", _diseqc->toXML());
 	}
 
 	void DVBS::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		if (findXMLElement(xml, "diseqcType.value", element)) {
 			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
@@ -110,7 +110,7 @@ namespace delivery {
 
 		{
 			// send diseqc
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol_v)) {
 				return false;
 			}

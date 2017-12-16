@@ -66,7 +66,6 @@ namespace delivery {
 
 		protected:
 
-			base::Mutex _mutex;
 			unsigned int _diseqcRepeat;
 			Lnb _lnb[MAX_LNB];    // LNB properties
 

@@ -21,7 +21,6 @@
 #define STREAM_MANAGER_H_INCLUDE STREAM_MANAGER_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 
 #include <string>
@@ -64,7 +63,9 @@ class StreamManager :
 	public:
 
 		/// enumerate all available devices
-		void enumerateDevices(const std::string &appDataPath);
+		/// @param appDataPath specifies the path were to store application data
+		/// @param dvbPath specifies the path were to find dvb devices eg. /dev/dvb
+		void enumerateDevices(const std::string &appDataPath, const std::string &dvbPath);
 
 		///
 		SpStream findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
@@ -101,7 +102,6 @@ class StreamManager :
 		// =======================================================================
 	private:
 
-		base::Mutex _mutex;
 		decrypt::dvbapi::SpClient _decrypt;
 		StreamVector _stream;
 		SpStream _dummyStream;

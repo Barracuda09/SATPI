@@ -84,7 +84,6 @@ namespace dvb {
 			///
 			virtual void addToXML(std::string &xml) const override;
 
-			///
 			virtual void fromXML(const std::string &xml) override;
 
 #ifdef LIBDVBCSA
