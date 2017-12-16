@@ -122,7 +122,7 @@ class Stream :
 				std::size_t &dvbt2,
 				std::size_t &dvbc,
 				std::size_t &dvbc2) {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			if (_enabled) {
 				_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
 			}
@@ -140,19 +140,19 @@ class Stream :
 
 		/// Check is this stream used already
 		bool streamInUse() const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _streamInUse;
 		}
 
 		/// Check is this stream enabled, can we use it?
 		bool streamEnabled() const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _enabled;
 		}
 
 		/// Get the stream type of this stream
 		StreamingType getStreamingType() const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _streamingType;
 		}
 
@@ -181,37 +181,37 @@ class Stream :
 
 		///
 		int getCSeq(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getCSeq();
 		}
 
 		///
 		std::string getSessionID(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getSessionID();
 		}
 
 		///
 		unsigned int getSessionTimeout(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getSessionTimeout();
 		}
 
 		///
 		std::string getIPAddress(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getIPAddress();
 		}
 
 		///
 		int getRtpSocketPort(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getRtpSocketAttr().getSocketPort();
 		}
 
 		///
 		int getRtcpSocketPort(int clientID) const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _client[clientID].getRtcpSocketAttr().getSocketPort();
 		}
 

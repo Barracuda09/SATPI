@@ -81,7 +81,7 @@ class StreamManager :
 
 		///
 		std::size_t getMaxStreams() const {
-			base::MutexLock lock(_mutex);
+			base::MutexLock lock(_xmlMutex);
 			return _stream.size();
 		}
 
