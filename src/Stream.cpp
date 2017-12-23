@@ -260,8 +260,6 @@ void Stream::checkForSessionTimeout() {
 bool Stream::update(int clientID, bool start) {
 	base::MutexLock lock(_xmlMutex);
 
-	const bool changed = _device->hasDeviceDataChanged();
-
 	// first time streaming?
 	if (!_streaming && start) {
 		switch (_streamingType) {
@@ -293,11 +291,8 @@ bool Stream::update(int clientID, bool start) {
 			return false;
 		}
 	}
-
-	// Channel changed?.. stop/pause Stream
-	if (_streaming && changed) {
-		_streaming->pauseStreaming(clientID);
-	}
+	// Get changed flag, before device update, because it resets it
+	const bool changed = _device->hasDeviceDataChanged();
 
 	if (!_device->update()) {
 		return false;
@@ -343,6 +338,12 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 	    StringConverter::hasTransportParameters(msg)) {
 
 		_device->parseStreamString(msg, method);
+	}
+
+	// Channel changed?.. stop/pause Stream
+	const bool changed = _device->hasDeviceDataChanged();
+	if (_streaming && changed) {
+		_streaming->pauseStreaming(clientID);
 	}
 
 	// Get transport type from request, and maybe ports

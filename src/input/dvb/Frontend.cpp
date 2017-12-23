@@ -438,6 +438,7 @@ namespace dvb {
 		CLOSE_FD(_fd_fe);
 		CLOSE_FD(_fd_dvr);
 		_frontendData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
+		_frontendData.initialize();
 		_transform.resetTransformFlag();
 		return true;
 	}

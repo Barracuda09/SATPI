@@ -133,20 +133,23 @@ namespace dvb {
 		base::MutexLock lock(_mutex);
 		std::string strVal;
 
-		// Do this AT FIRST because of possible initializing of channel data !! else we will delete it again here !!
+		// Save freq FIRST because of possible initializing of channel data
 		const double oldFreq = _freq / 1000.0;
 		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		if (freq != -1) {
-			if (freq != oldFreq) {
-				// new frequency so initialize FrontendData and 'remove' all used PIDS
+		if (freq != -1.0) {
+			// New frequency or an SETUP, so initialize FrontendData and 'remove' all used PIDS
+			if (freq != oldFreq || method == "SETUP") {
+				if (freq != oldFreq) {
+					SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
+				} else {
+					SI_LOG_INFO("Stream: %d, SETUP method with query, clearing old channel data...", streamID);
+				}
 				initialize();
-				SI_LOG_INFO("Stream: %d, New frequency requested, clearing channel data...", streamID);
 				clearMPEGTables(streamID);
 			}
 			_freq = freq * 1000.0;
 			_changed = true;
 		}
-		// !!!!
 		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
 		if (sr != -1) {
 			_srate = sr * 1000;
