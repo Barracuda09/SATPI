@@ -406,7 +406,7 @@ namespace dvb {
 		if (_frontendData.hasDeviceDataChanged()) {
 			_frontendData.resetDeviceDataChanged();
 			_tuned = false;
-			CLOSE_FD(_fd_dvr);
+			closeDVR();
 		}
 
 		std::size_t timeout = 0;
@@ -424,19 +424,13 @@ namespace dvb {
 	}
 
 	bool Frontend::teardown() {
+		// Close active PIDs
 		for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
-			if (_frontendData.isPIDUsed(i)) {
-				SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-						_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
-				resetPid(i);
-			} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
-				SI_LOG_ERROR("Stream: %d, !! No PID %d but still open DMX !!", _streamID, i);
-				resetPid(i);
-			}
+			closePid(i);
 		}
 		_tuned = false;
-		CLOSE_FD(_fd_fe);
-		CLOSE_FD(_fd_dvr);
+		closeFE();
+		closeDVR();
 		_frontendData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 		_frontendData.initialize();
 		_transform.resetTransformFlag();
@@ -461,10 +455,10 @@ namespace dvb {
 		_fe_info.symbol_rate_max = 250000UL;
 #else
 		// open frontend in readonly mode
-		int fd_fe = open_fe(_path_to_fe, true);
+		int fd_fe = openFE(_path_to_fe, true);
 		if (fd_fe < 0) {
 			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
-			PERROR("open_fe");
+			PERROR("openFE");
 			return;
 		}
 
@@ -609,7 +603,7 @@ namespace dvb {
 		}
 	}
 
-	int Frontend::open_fe(const std::string &path, const bool readonly) const {
+	int Frontend::openFE(const std::string &path, const bool readonly) const {
 		const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
 			PERROR("FRONTEND DEVICE");
@@ -617,7 +611,14 @@ namespace dvb {
 		return fd;
 	}
 
-	int Frontend::open_dmx(const std::string &path) {
+	void Frontend::closeFE() {
+		if (_fd_fe != -1) {
+			SI_LOG_INFO("Stream: %d, Closing %s fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
+			CLOSE_FD(_fd_fe);
+		}
+	}
+
+	int Frontend::openDMX(const std::string &path) const {
 		const int fd = ::open(path.c_str(), O_RDWR | O_NONBLOCK);
 		if (fd < 0) {
 			PERROR("DMX DEVICE");
@@ -625,12 +626,19 @@ namespace dvb {
 		return fd;
 	}
 
-	int Frontend::open_dvr(const std::string &path) {
+	int Frontend::openDVR(const std::string &path) const {
 		const int fd = ::open(path.c_str(), O_RDONLY | O_NONBLOCK);
 		if (fd < 0) {
 			PERROR("DVR DEVICE");
 		}
 		return fd;
+	}
+
+	void Frontend::closeDVR() {
+		if (_fd_dvr != -1) {
+			SI_LOG_INFO("Stream: %d, Closing %s fd: %d", _streamID, _path_to_dvr.c_str(), _fd_dvr);
+			CLOSE_FD(_fd_dvr);
+		}
 	}
 
 	bool Frontend::set_demux_filter(const int fd, const uint16_t pid) {
@@ -665,7 +673,7 @@ namespace dvb {
 		if (!_tuned) {
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
-				_fd_fe = open_fe(_path_to_fe, false);
+				_fd_fe = openFE(_path_to_fe, false);
 				SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
 			}
 			// try tuning
@@ -702,7 +710,7 @@ namespace dvb {
 		if (_fd_dvr == -1 && _tuned) {
 			// try opening DVR, try again if fails
 			std::size_t timeout = 0;
-			while ((_fd_dvr = open_dvr(_path_to_dvr)) == -1) {
+			while ((_fd_dvr = openDVR(_path_to_dvr)) == -1) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 				++timeout;
 				if (timeout > 3) {
@@ -721,44 +729,53 @@ namespace dvb {
 		return (_fd_dvr != -1) && _tuned;
 	}
 
-	void Frontend::resetPid(const int pid) {
-		if (_frontendData.getDMXFileDescriptor(pid) != -1 &&
-			::ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
-			PERROR("DMX_STOP");
+	bool Frontend::openPid(const int pid) {
+		if (_frontendData.getDMXFileDescriptor(pid) == -1) {
+			const int fd = openDMX(_path_to_dmx);
+			_frontendData.setDMXFileDescriptor(pid, fd);
+			std::size_t timeout = 0;
+			while (set_demux_filter(_frontendData.getDMXFileDescriptor(pid), pid) != 1) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(350));
+				++timeout;
+				if (timeout > 3) {
+					return false;
+				}
+			}
+			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
+					_streamID, pid, _frontendData.getDMXFileDescriptor(pid),
+					_frontendData.isMarkedAsPMT(pid) ? " - PMT" : "");
 		}
-		_frontendData.closeDMXFileDescriptor(pid);
-		_frontendData.resetPidData(pid);
+		return true;
+	}
+
+	void Frontend::closePid(const int pid) {
+		if (_frontendData.getDMXFileDescriptor(pid) != -1) {
+			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
+					_streamID, pid, _frontendData.getDMXFileDescriptor(pid), _frontendData.getPacketCounter(pid));
+			if (::ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+				PERROR("DMX_STOP");
+			}
+			_frontendData.closeDMXFileDescriptor(pid);
+			_frontendData.resetPidData(pid);
+		}
 	}
 
 	bool Frontend::updatePIDFilters() {
 		base::MutexLock lock(_mutex);
 		if (_frontendData.hasPIDTableChanged()) {
-			_frontendData.resetPIDTableChanged();
 			if (isTuned()) {
+				_frontendData.resetPIDTableChanged();
 				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
 				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
 					// check if PID is used or removed
 					if (_frontendData.isPIDUsed(i)) {
 						// check if we have no DMX for this PID, then open one
-						if (_frontendData.getDMXFileDescriptor(i) == -1) {
-							const int fd = open_dmx(_path_to_dmx);
-							_frontendData.setDMXFileDescriptor(i, fd);
-							std::size_t timeout = 0;
-							while (set_demux_filter(_frontendData.getDMXFileDescriptor(i), i) != 1) {
-								std::this_thread::sleep_for(std::chrono::milliseconds(350));
-								++timeout;
-								if (timeout > 3) {
-									return false;
-								}
-							}
-							SI_LOG_DEBUG("Stream: %d, Set filter PID: %04zu - fd: %03d%s",
-									_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.isMarkedAsPMT(i) ? " - PMT" : "");
+						if (!openPid(i)) {
+							return false;
 						}
 					} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
 						// We have a DMX but no PID anymore, so reset it
-						SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-								_streamID, i, _frontendData.getDMXFileDescriptor(i), _frontendData.getPacketCounter(i));
-						resetPid(i);
+						closePid(i);
 					}
 				}
 			} else {

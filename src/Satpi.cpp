@@ -33,6 +33,7 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <iostream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -382,7 +383,7 @@ int main(int argc, char *argv[]) {
 				return EXIT_FAILURE;
 			}
 		} else if (strcmp(argv[i], "--version") == 0) {
-			printf("SatPI version: %s\r\n", satpi_version);
+			std::cout << "SatPI version: " << satpi_version << "\r\n";
 			return EXIT_SUCCESS;
 		} else if (strcmp(argv[i], "--help") == 0) {
 			printUsage(argv[0]);

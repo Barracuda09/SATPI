@@ -96,10 +96,7 @@ namespace dvb {
 		_rolloff = ROLLOFF_AUTO;
 		_inversion = INVERSION_AUTO;
 
-		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			_pidTable.resetPidData(i);
-		}
-		_pidTable.resetPIDTableChanged();
+		_pidTable.clear();
 
 		// =======================================================================
 		// DVB-S(2) Data members

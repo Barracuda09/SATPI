@@ -46,6 +46,9 @@ namespace mpegts {
 
 		public:
 
+			/// Clear all PID data
+			void clear();
+
 			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
 			void resetPidData(int pid);
 

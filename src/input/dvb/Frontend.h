@@ -181,13 +181,19 @@ namespace dvb {
 			void setupFrontend();
 
 			///
-			int open_fe(const std::string &path, bool readonly) const;
+			int openFE(const std::string &path, bool readonly) const;
 
 			///
-			int open_dvr(const std::string &path);
+			void closeFE();
 
 			///
-			int open_dmx(const std::string &path);
+			int openDVR(const std::string &path) const;
+
+			///
+			void closeDVR();
+
+			///
+			int openDMX(const std::string &path) const;
 
 			///
 			bool set_demux_filter(int fd, uint16_t pid);
@@ -206,7 +212,10 @@ namespace dvb {
 			bool setupAndTune();
 
 			///
-			void resetPid(int pid);
+			void closePid(int pid);
+
+			///
+			bool openPid(int pid);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

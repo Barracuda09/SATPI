@@ -52,7 +52,7 @@ namespace dvb {
 		return _frontendData.getKey(parity);
 	}
 
-	void Frontend::startOSCamFilterData(int pid, int demux, int filter,
+	void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
 		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
 			_streamID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);

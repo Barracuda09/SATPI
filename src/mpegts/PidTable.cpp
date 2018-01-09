@@ -35,6 +35,19 @@ namespace mpegts {
 
 	PidTable::~PidTable() {}
 
+	void PidTable::clear() {
+		_changed = false;
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			resetPidData(i);
+			// Check still open File Descriptor, then set changed flag
+			// to handle and close them later
+			// @todo or do we need close fd here?
+			if (getDMXFileDescriptor(i) != -1) {
+				_changed = true;
+			}
+		}
+	}
+
 	void PidTable::resetPidData(int pid) {
 		_data[pid].used     = false;
 		_data[pid].cc       = 0x80;
