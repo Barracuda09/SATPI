@@ -82,8 +82,8 @@ namespace mpegts {
 								subLength = ptr[j + i];
 								copyToUTF8(sdtData.channelNameUTF8, &ptr[j + i + 1u], subLength);
 								j += subLength + 1;
-								SI_LOG_INFO("Stream: %d,  serviceID: 0x%04X  EIT: 0x%02X  NetworkName: %s  ChannelName: %s",
-										streamID, serviceID, eit, sdtData.networkNameUTF8.c_str(), sdtData.channelNameUTF8.c_str());
+								SI_LOG_INFO("Stream: %d,  serviceID: 0x%04X - %05d  EIT: 0x%02X  NetworkName: %s  ChannelName: %s",
+										streamID, serviceID, serviceID, eit, sdtData.networkNameUTF8.c_str(), sdtData.channelNameUTF8.c_str());
 								_sdtTable[serviceID] = sdtData;
 								break;
 							}

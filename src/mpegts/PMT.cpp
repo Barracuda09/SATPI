@@ -79,7 +79,7 @@ namespace mpegts {
 				const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];
 				const std::size_t esInfoLength  = ((ptr[i + 3u] & 0x0F) << 8u) | ptr[i + 4u];
 
-				SI_LOG_INFO("Stream: %d, PMT - Stream Type: %d  ES PID: %04d  ES-Length: %d",
+				SI_LOG_INFO("Stream: %d, PMT - Stream Type: %02d  ES PID: %04d  ES-Length: %03d",
 							streamID, streamType, elementaryPID, esInfoLength);
 				for (std::size_t j = 0u; j < esInfoLength; ) {
 					const std::size_t subLength = ptr[j + i + 6u];
@@ -88,7 +88,7 @@ namespace mpegts {
 						const int caid   =  (ptr[j + i +  7u] << 8u) | ptr[j + i + 8u];
 						const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 						const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
-						SI_LOG_INFO("Stream: %d, ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %d",
+						SI_LOG_INFO("Stream: %d, ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %03d",
 									streamID, caid, ecmpid, provid, subLength);
 
 						_progInfo.append(&ptr[j + i + 5u], subLength + 2u);

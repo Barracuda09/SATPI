@@ -68,9 +68,9 @@ namespace mpegts {
 				const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
 				const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
 				if (prognr == 0u) {
-					SI_LOG_INFO("Stream: %d, PAT: Prog NR: %05d  NIT PID: %04d", streamID, prognr, pid);
+					SI_LOG_INFO("Stream: %d, PAT: Prog NR: 0x%04X - %05d  NIT PID: %04d", streamID, prognr, prognr, pid);
 				} else {
-					SI_LOG_INFO("Stream: %d, PAT: Prog NR: %05d  PMT PID: %04d", streamID, prognr, pid);
+					SI_LOG_INFO("Stream: %d, PAT: Prog NR: 0x%04X - %05d  PMT PID: %04d", streamID, prognr, prognr, pid);
 					_pmtPidTable[pid] = true;
 				}
 			}
