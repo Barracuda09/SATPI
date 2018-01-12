@@ -135,8 +135,8 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	static const char *RTSP_DESCRIBE_CONT1 =
 		"v=0\r\n" \
-		"o=- 2 3 IN IP4 %1\r\n" \
-		"s=SatIPServer:1 %2\r\n" \
+		"o=- %1 %2 IN IP4 %3\r\n" \
+		"s=SatIPServer:1 %4\r\n" \
 		"t=0 0\r\n";
 
 	static const char *RTSP_DESCRIBE_CONT2 =
@@ -150,6 +150,8 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	// Describe streams
 	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_CONT1,
+		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
+		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
 		_interface.getIPAddress(),
 		_streamManager.getRTSPDescribeString());
 
