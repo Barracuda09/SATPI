@@ -1,13 +1,17 @@
 # SatPI
 
-SATIP server for linux, suitable for running on an Raspberry Pi, BeagleBone or any other linux box.
-Currently supporting DVB-S, DVB-S2, DVB-T and DVB-C.
-Further it supports decrypting of channels via OSCam, therefore you need the dvbcsa library and an official subscription.
-(See wiki on how to build SatPI)
+An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, BeagleBone or any other linux box.
 
-- SatPI provides an web interface for monitoring and configuring various things (http port 8875)
+<a href="https://github.com/Barracuda09/SATPI/wiki/02.-(Cross)Build-SatPI">See wiki on how to build SatPI</a>
+
+Currently supporting:
+- DVB-S(2), DVB-T(2) and DVB-C
+- Transform for example DVB-S(2) requests to DVB-C
+- RTP/AVP over UDP and TCP
+- Decrypting of channels via DVB-API protocol implemented by OSCam, therefore you need the dvbcsa library and an official subscription
+- Web Interface for monitoring and configuring various things (http port 8875)
 	- http://ip.of.your.box:8875
-
+-------
 - The Description xml can be found like:
 	- http://ip.of.your.box:8875/desc.xml
 
