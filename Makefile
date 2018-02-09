@@ -160,10 +160,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 
 # Create debug versions
 debug:
-	@echo $(OLD_VER)
-	@echo $(NEW_VER)
-	@echo $(NEW_VERW)
-#	$(MAKE) "BUILD=debug"
+	$(MAKE) "BUILD=debug"
 
 debug1:
 	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
