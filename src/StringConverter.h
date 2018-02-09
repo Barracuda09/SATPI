@@ -89,6 +89,8 @@ class StringConverter  {
 			return line;
 		}
 
+		static std::string convertToHexASCIITable(const unsigned char *p, std::size_t length, std::size_t blockSize);
+
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c true if there is a line found @c false if none was found
 		static bool getline(const std::string &msg, std::string::size_type &begin, std::string &line, const char *line_delim);

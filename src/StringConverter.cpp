@@ -23,11 +23,15 @@
 #include <input/dvb/dvbfix.h>
 #include <base/Tokenizer.h>
 
+#include <iostream>
+#include <cctype>
+#include <sstream>
+#include <iomanip>
+#include <cstdarg>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <cstdarg>
 
 void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
 	std::string::size_type end = fullPath.find_last_of("/\\");
@@ -107,6 +111,41 @@ std::string StringConverter::getFormattedString(const char *fmt, ...) {
 	addFormattedStringBasic(str, fmt, arglist);
 	va_end(arglist);
 	return str;
+}
+
+std::string StringConverter::convertToHexASCIITable(const unsigned char *p, const std::size_t length, const std::size_t blockSize) {
+	std::stringstream hexString;
+	std::stringstream asciiString;
+	std::string out("");
+	const std::size_t lengthNew = (((length / blockSize) + (length %  blockSize > 0 ? 1 : 0)) * blockSize);
+
+	for (std::size_t i = 0; i < length; ++i) {
+		const unsigned char c = p[i];
+		const unsigned char ascii = std::isprint(c) ? c : '.';
+		hexString << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(c);
+		asciiString << ascii;
+		if (((i + 1) %  blockSize) == 0) {
+			out += hexString.str();
+			out += "  ";
+			out += asciiString.str();
+			out += "\r\n";
+			hexString.str("");
+			asciiString.str("");
+		} else {
+			hexString << " ";
+		}
+	}
+	// Is there remaining strings to add to out buffer
+	const int diff = lengthNew - length;
+	if (diff > 0) {
+		std::string space(diff * 3, ' ');
+		out += hexString.str();
+		out += space;
+		out += " ";
+		out += asciiString.str();
+		out += "\r\n";
+	}
+	return out;
 }
 
 bool StringConverter::isRootFile(const std::string &msg) {

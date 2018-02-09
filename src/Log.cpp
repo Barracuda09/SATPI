@@ -41,13 +41,7 @@ void Log::open_app_log() {}
 void Log::close_app_log() {}
 
 void Log::binlog(const int priority, const unsigned char *p, const int length, const char *fmt, ...) {
-	std::string strData;
-	for (int i = 1; i <= length; ++i) {
-		StringConverter::addFormattedString(strData, "%02X ", p[i-1]);
-		if ((i % 16) == 0) {
-			StringConverter::addFormattedString(strData, "\r\n");
-		}
-	}
+	const std::string strData = StringConverter::convertToHexASCIITable(p, length, 16);
 	char txt[4096];
 	va_list arglist;
 	va_start(arglist, fmt);
