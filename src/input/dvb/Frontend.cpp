@@ -591,6 +591,18 @@ namespace dvb {
 		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
 		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
+#if defined(DMX_SET_SOURCE) && defined(ENIGMA)
+		{
+			const int fdDMX = openDMX(_path_to_dmx);
+			int n = _streamID;
+			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
+				PERROR("DMX_SET_SOURCE");
+			}
+			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d", _streamID);
+			::close(fdDMX);
+		}
+#endif
+
 		// Set delivery systems
 		if (_dvbs2 > 0u) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBS(_streamID));

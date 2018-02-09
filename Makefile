@@ -90,13 +90,47 @@ ifeq ($(LIBDVBCSA),yes)
   SOURCES += input/dvb/Frontend_DecryptInterface.cpp
 endif
 
+# Has np functions
 ifeq ($(HAS_NP_FUNCTIONS),yes)
   CFLAGS  += -DHAS_NP_FUNCTIONS
+endif
+
+# Need to build for Enigma support
+ifeq ($(ENIGMA),yes)
+  CFLAGS += -DENIGMA
 endif
 
 # Sub dirs for project
 OBJ_DIR = obj
 SRC_DIR = src
+
+# Get Version from git describe
+ifneq ($(wildcard .git),)
+  VER1 = $(shell git describe --long --match "v*" 2> /dev/null)
+  ifeq ($(VER1),)
+    # Git describe failed. Adding "-unknown" postfix to mark this situation
+    VER1 = $(shell git describe --match "v*" 2> /dev/null)-unknown
+  endif
+  # Parse
+  VER = $(shell echo $(VER1) | sed "s/^v//" | sed "s/-\([0-9]*\)-\(g[0-9a-f]*\)/.\1~\2/")
+else
+  VER = "1.5.0~unknown"
+endif
+
+# Do we build for ENIGMA, then add it to version string
+FOUND_ENIGMA = $(findstring DENIGMA,$(CFLAGS))
+ifneq ($(FOUND_ENIGMA),)
+  VER += "Enigma"
+endif
+
+# Create/Update Version.cpp
+VER_FILE = "Version.cpp"
+NEW_VER = "const char *satpi_version = \"$(VER)\";"
+OLD_VER = $(shell cat $(SRC_DIR)/$(VER_FILE) 2> /dev/null | sed -n -e "/const / s/.*\= \"*//p" | sed -n -e "s/-*\";//p")
+#OLD_VER = $(shell cat $(SRC_DIR)/$(VER_FILE) 2> /dev/null)
+ifneq ($(NEW_VER), $(OLD_VER))
+  $(shell echo $(NEW_VER) > $(SRC_DIR)/$(VER_FILE))
+endif
 
 # Find all source (*.cpp) across the directories and make a list
 SOURCES_UNC = $(shell find $(SRC_DIR)/ -type f -name '*.cpp')
@@ -104,11 +138,11 @@ SOURCES_UNC = $(shell find $(SRC_DIR)/ -type f -name '*.cpp')
 # Find all headers (*.h) across the directories and make a list
 HEADERS = $(shell find $(SRC_DIR)/ -type f -name '*.h')
 
-#Objectlist is identical to Sourcelist except that all .cpp extensions need to be replaced by .o extension.
+# Objectlist is identical to Sourcelist except that all .cpp extensions need to be replaced by .o extension.
 # and add OBJ_DIR to path
 OBJECTS = $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 
-#Resulting Executable name
+# Resulting Executable name
 EXECUTABLE = satpi
 
 # First rule is also the default rule
@@ -124,18 +158,14 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) -c $(CFLAGS) $< -o $@
 
-# Create Version.cpp
-$(OBJ_DIR)/Version.o:
-	./version.sh $(SRC_DIR)/Version.cpp > /dev/null
-	@mkdir -p $(@D)
-	$(CXX) -c $(CFLAGS) $(SRC_DIR)/Version.cpp -o $@
-
 # Create debug versions
 debug:
-	$(MAKE) "BUILD=debug"
+	@echo $(OLD_VER)
+	@echo $(NEW_VER)
+	@echo $(NEW_VERW)
+#	$(MAKE) "BUILD=debug"
 
 debug1:
-	@echo $(CXX)
 	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
 
 # Create a 'simulation' version
@@ -180,6 +210,7 @@ help:
 	@echo "Help, use these command for building this project:"
 	@echo " - Make debug version                   :  make debug"
 	@echo " - Make debug version with DVBAPI       :  make debug LIBDVBCSA=yes"
+	@echo " - Make debug version for ENIGMA        :  make debug ENIGMA=yes"
 	@echo " - Make production version with DVBAPI  :  make LIBDVBCSA=yes"
 	@echo " - Make PlantUML graph                  :  make plantuml"
 	@echo " - Make Doxygen docmumentation          :  make docu"
