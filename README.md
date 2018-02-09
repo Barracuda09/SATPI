@@ -95,6 +95,10 @@ If you like to try DVBAPI (OSCam), use:
 
     make debug LIBDVBCSA=yes
 
+If you like to run it on an Enigma2 box, use:
+
+    make debug ENIGMA=yes
+
 For Cross Compiling, here are some tips you can try (I did not try this myself):
 
     export INCLUDES=--sysroot=dir         (get the sys root like headers and libraries for your device and copy it to dir)
