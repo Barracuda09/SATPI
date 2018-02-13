@@ -49,12 +49,13 @@ namespace mpegts {
 	}
 
 	void PidTable::resetPidData(int pid) {
-		_data[pid].used     = false;
-		_data[pid].cc       = 0x80;
-		_data[pid].cc_error = 0;
-		_data[pid].count    = 0;
-		_data[pid].pmt      = false;
-		_data[pid].parity   = -1;
+		_data[pid].used        = false;
+		_data[pid].shouldClose = false;
+		_data[pid].cc          = 0x80;
+		_data[pid].cc_error    = 0;
+		_data[pid].count       = 0;
+		_data[pid].pmt         = false;
+		_data[pid].parity      = -1;
 	}
 
 	uint32_t PidTable::getPacketCounter(int pid) const {
@@ -71,6 +72,9 @@ namespace mpegts {
 
 	void PidTable::closeDMXFileDescriptor(int pid) {
 		CLOSE_FD(_data[pid].fd_dmx);
+		const bool used = _data[pid].used;
+		resetPidData(pid);
+		_data[pid].used = used;
 	}
 
 	void PidTable::resetPIDTableChanged() {
@@ -118,18 +122,25 @@ namespace mpegts {
 		}
 	}
 
-	void PidTable::setPID(int pid, bool val) {
-		_data[pid].used = val;
+	void PidTable::setPID(int pid, bool use) {
+		_data[pid].used = use;
+		// Check PID not used anymore, so set "shouldClose" flag
+		if (!use && getDMXFileDescriptor(pid) != -1) {
+			_data[pid].shouldClose = true;
+		}
 		_changed = true;
+	}
+
+	bool PidTable::shouldPIDClose(int pid) const {
+		return _data[pid].shouldClose;
 	}
 
 	bool PidTable::isPIDUsed(int pid) const {
 		return _data[pid].used;
 	}
 
-	void PidTable::setAllPID(bool val) {
-		_data[ALL_PIDS].used = val;
-		_changed = true;
+	void PidTable::setAllPID(bool use) {
+		setPID(ALL_PIDS, use);
 	}
 
 	void PidTable::markAsPMT(int pid, bool set) {

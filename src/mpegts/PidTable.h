@@ -49,9 +49,6 @@ namespace mpegts {
 			/// Clear all PID data
 			void clear();
 
-			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
-			void resetPidData(int pid);
-
 			/// Reset that PID has changed
 			void resetPIDTableChanged();
 
@@ -64,7 +61,7 @@ namespace mpegts {
 			/// Get DMX file descriptor
 			int getDMXFileDescriptor(int pid) const;
 
-			/// Close DMX file descriptor
+			/// Close DMX file descriptor and reset data, but keep used flag
 			void closeDMXFileDescriptor(int pid);
 
 			/// Get the amount of packet that were received of this pid
@@ -77,13 +74,16 @@ namespace mpegts {
 			void addPIDData(int pid, uint8_t cc);
 
 			/// Set pid used or not
-			void setPID(int pid, bool val);
+			void setPID(int pid, bool use);
+
+			/// Check if this PID should be closed
+			bool shouldPIDClose(int pid) const;
 
 			/// Check if PID is used
 			bool isPIDUsed(int pid) const;
 
 			/// Set all PID
-			void setAllPID(bool val);
+			void setAllPID(bool use);
 
 			/// Set if pid is an PMT PID
 			void markAsPMT(int pid, bool set);
@@ -97,6 +97,11 @@ namespace mpegts {
 			///
 			int getKeyParity(int pid) const;
 
+		protected:
+
+			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
+			void resetPidData(int pid);
+
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
@@ -109,6 +114,7 @@ namespace mpegts {
 			typedef struct {
 				int fd_dmx;        /// used DMX file descriptor for PID
 				bool used;         /// used pid (0 = not used, 1 = in use)
+				bool shouldClose;  /// indicate that this PID should close
 				uint8_t cc;        /// continuity counter (0 - 15) of this PID
 				uint32_t cc_error; /// cc error count
 				uint32_t count;    /// the number of times this pid occurred

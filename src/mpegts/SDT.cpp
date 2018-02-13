@@ -100,7 +100,7 @@ namespace mpegts {
 		}
 	}
 
-	// UTF-8 U+0080 U+07FF      yxxx xxxx    yyyyy xxxxxx    110yyyyy 10xxxxxx => UTF-8
+	// UTF-8 U+0080 U+07FF      yyxx xxxx    yyyyy xxxxxx    110yyyyy 10xxxxxx => UTF-8
 	// Ext ASCII - E2       =>  1110 0010 => 00011 100010 => 11000011 10100010 => C3 A2
 	void SDT::copyToUTF8(std::string &str, const unsigned char *ptr, const std::size_t len) {
 		const std::size_t offset = (ptr[0] < 0x20) ? ((ptr[0] == 0x10) ? 2 : 1) : 0;

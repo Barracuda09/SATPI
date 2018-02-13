@@ -134,12 +134,12 @@ namespace dvb {
 		const double oldFreq = _freq / 1000.0;
 		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
 		if (freq != -1.0) {
-			// New frequency or an SETUP, so initialize FrontendData and 'remove' all used PIDS
-			if (freq != oldFreq || method == "SETUP") {
+			// New frequency or an SETUP/PLAY, so initialize FrontendData and 'remove' all used PIDS
+			if (freq != oldFreq || method == "SETUP" || method == "PLAY") {
 				if (freq != oldFreq) {
 					SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
 				} else {
-					SI_LOG_INFO("Stream: %d, SETUP method with query, clearing old channel data...", streamID);
+					SI_LOG_INFO("Stream: %d, %s method with query, clearing old channel data...", streamID, method.c_str());
 				}
 				initialize();
 				clearMPEGTables(streamID);
@@ -474,11 +474,6 @@ namespace dvb {
 		_pidTable.addPIDData(pid, cc);
 	}
 
-	void FrontendData::resetPidData(const int pid) {
-		base::MutexLock lock(_mutex);
-		_pidTable.resetPidData(pid);
-	}
-
 	void FrontendData::setDMXFileDescriptor(const int pid, const int fd) {
 		base::MutexLock lock(_mutex);
 		_pidTable.setDMXFileDescriptor(pid, fd);
@@ -497,6 +492,11 @@ namespace dvb {
 	void FrontendData::setPID(const int pid, const bool val) {
 		base::MutexLock lock(_mutex);
 		_pidTable.setPID(pid, val);
+	}
+
+	bool FrontendData::shouldPIDClose(int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.shouldPIDClose(pid);
 	}
 
 	void FrontendData::setAllPID(const bool val) {

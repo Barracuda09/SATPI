@@ -113,7 +113,7 @@ namespace dvb {
 			/// Get DMX file descriptor
 			int getDMXFileDescriptor(int pid) const;
 
-			/// Close DMX file descriptor
+			/// Close DMX file descriptor and reset data, but keep used flag
 			void closeDMXFileDescriptor(int pid);
 
 			///
@@ -121,9 +121,6 @@ namespace dvb {
 
 			///
 			int getKeyParity(int pid) const;
-
-			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
-			void resetPidData(int pid);
 
 			/// Reset 'PID has changed' flag
 			void resetPIDTableChanged();
@@ -142,6 +139,9 @@ namespace dvb {
 
 			/// Set pid used or not
 			void setPID(int pid, bool val);
+
+			/// Check if this pid should be closed
+			bool shouldPIDClose(int pid) const;
 
 			/// Check if PID is used
 			bool isPIDUsed(int pid) const;

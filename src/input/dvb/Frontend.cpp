@@ -406,7 +406,10 @@ namespace dvb {
 		if (_frontendData.hasDeviceDataChanged()) {
 			_frontendData.resetDeviceDataChanged();
 			_tuned = false;
+			closeFE();
 			closeDVR();
+			// After close wait a moment before opening it again
+			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 		}
 
 		std::size_t timeout = 0;
@@ -768,7 +771,6 @@ namespace dvb {
 				PERROR("DMX_STOP");
 			}
 			_frontendData.closeDMXFileDescriptor(pid);
-			_frontendData.resetPidData(pid);
 		}
 	}
 
@@ -778,16 +780,19 @@ namespace dvb {
 			if (isTuned()) {
 				_frontendData.resetPIDTableChanged();
 				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
+				// Check should we close PIDs first
 				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
-					// check if PID is used or removed
+					if (_frontendData.shouldPIDClose(i)) {
+						closePid(i);
+					}
+				}
+				// Check which PID should be openend (again)
+				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
 					if (_frontendData.isPIDUsed(i)) {
-						// check if we have no DMX for this PID, then open one
+						// Check if we have no DMX for this PID, then open one
 						if (!openPid(i)) {
 							return false;
 						}
-					} else if (_frontendData.getDMXFileDescriptor(i) != -1) {
-						// We have a DMX but no PID anymore, so reset it
-						closePid(i);
 					}
 				}
 			} else {

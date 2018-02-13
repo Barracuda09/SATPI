@@ -65,9 +65,7 @@ namespace dvb {
 	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
 		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
 		_frontendData.stopOSCamFilterData(demux, filter);
-		_frontendData.setPID(pid, false);
-		// now update frontend, PID list has changed
-		updatePIDFilters();
+		// Do not remove the PID!
 	}
 
 	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
