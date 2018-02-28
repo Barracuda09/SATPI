@@ -336,7 +336,7 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 	if ((method == "OPTIONS" || method == "SETUP" ||
 	     method == "PLAY"    || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
-
+		_device->clearMPEGFilters();
 		_device->parseStreamString(msg, method);
 	}
 
@@ -406,6 +406,7 @@ void Stream::processStopStream_L(int clientID, bool gracefull) {
 	// Stop streaming by deleting object
 	_streaming.reset(nullptr);
 
+	_device->clearMPEGFilters();
 	_device->teardown();
 
 	// as last, else sessionID and IP is reset

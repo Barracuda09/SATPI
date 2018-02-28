@@ -132,6 +132,7 @@ class StreamClient #aaaaff {
   cseq
 }
 
+class mpegts::Filter        #11ff11
 class mpegts::PacketBuffer  #11ff11
 class mpegts::TableData     #11ff11
 class mpegts::PidTable      #11ff11
@@ -167,6 +168,8 @@ TSReaderData --|> input::DeviceData
 
 input::Device <|-- input::dvb::Frontend
 class input::Device      #aaccaa {
+  Mutex
+  StreamID
   isDataAvailable() = 0
   readFullTSPacket(..) = 0
 }
@@ -182,6 +185,8 @@ class input::dvb::FrontendData             #ffccaa
 input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
 input::dvb::Frontend *-- input::dvb::FrontendData
 input::dvb::Frontend *-- input::Translation : " _translation "
+decrypt::dvbapi::ClientProperties --* input::dvb::Frontend : " dvbapiData - Only with LIBDVBCSA "
+
 
 class input::dvb::delivery::System #aacccc
 class DVBS                         #aacccc
@@ -214,18 +219,17 @@ decrypt::dvbapi::ClientProperties *-- Filter
 decrypt::dvbapi::ClientProperties *-- Keys
 
 input::DeviceData <|-- input::dvb::FrontendData
-mpegts::PidTable --* input::DeviceData
-
-
-input::dvb::FrontendData --|> decrypt::dvbapi::ClientProperties : " Only with LIBDVBCSA "
 
 mpegts::PAT --|> mpegts::TableData
 mpegts::PMT --|> mpegts::TableData
 mpegts::SDT --|> mpegts::TableData
 
-input::dvb::FrontendData *-- mpegts::PAT : " _pat "
-input::dvb::FrontendData *-- mpegts::PMT : " _pmt "
-input::dvb::FrontendData *-- mpegts::SDT : " _sdt "
+mpegts::Filter *-- mpegts::PAT : " _pat "
+mpegts::Filter *-- mpegts::PMT : " _pmt "
+mpegts::Filter *-- mpegts::SDT : " _sdt "
+mpegts::Filter --* input::Device : " _filter "
+
+input::dvb::FrontendData *-- mpegts::PidTable
 
 @enduml
 

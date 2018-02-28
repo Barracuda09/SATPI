@@ -21,12 +21,7 @@
 #define INPUT_DVB_FRONTEND_DATA_H_INCLUDE INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 
 #include <input/DeviceData.h>
-#include <mpegts/PAT.h>
-#include <mpegts/PMT.h>
-#include <mpegts/SDT.h>
-#ifdef LIBDVBCSA
-#include <decrypt/dvbapi/ClientProperties.h>
-#endif
+#include <mpegts/PidTable.h>
 
 #include <stdint.h>
 #include <string>
@@ -36,16 +31,18 @@ namespace dvb {
 
 	/// The class @c FrontendData carries all the data/information for tuning a frontend
 	class FrontendData :
-#ifdef LIBDVBCSA
-		public decrypt::dvbapi::ClientProperties,
-#endif
 		public DeviceData {
 		public:
 			// =======================================================================
 			// Constructors and destructor
 			// =======================================================================
 			FrontendData();
+
 			virtual ~FrontendData();
+
+			FrontendData(const FrontendData&) = delete;
+
+			FrontendData& operator=(const FrontendData&) = delete;
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -79,34 +76,6 @@ namespace dvb {
 
 		public:
 
-			///
-			void clearMPEGTables(int streamID);
-
-			///
-			mpegts::PAT &getPATData() {
-				return _pat;
-			}
-
-			///
-			mpegts::PMT &getPMTData() {
-				return _pmt;
-			}
-
-			///
-			const mpegts::PMT &getPMTData() const {
-				return _pmt;
-			}
-
-			///
-			mpegts::SDT &getSDTData() {
-				return _sdt;
-			}
-
-			///
-			const mpegts::SDT &getSDTData() const {
-				return _sdt;
-			}
-
 			/// Set DMX file descriptor
 			void setDMXFileDescriptor(int pid, int fd);
 
@@ -115,12 +84,6 @@ namespace dvb {
 
 			/// Close DMX file descriptor and reset data, but keep used flag
 			void closeDMXFileDescriptor(int pid);
-
-			///
-			void setKeyParity(int pid, int parity);
-
-			///
-			int getKeyParity(int pid) const;
 
 			/// Reset 'PID has changed' flag
 			void resetPIDTableChanged();
@@ -145,12 +108,6 @@ namespace dvb {
 
 			/// Check if PID is used
 			bool isPIDUsed(int pid) const;
-
-			/// Check if pid is an PMT PID
-			bool isMarkedAsPMT(int pid) const;
-
-			///
-			void markAsPMT(int pid, bool set);
 
 			/// Set all PID
 			void setAllPID(bool val);
@@ -245,11 +202,6 @@ namespace dvb {
 			int _plp_id;             // DVB-T2/C2
 			int _t2_system_id;       // DVB-T2
 			int _siso_miso;          // DVB-T2
-
-			mpegts::PMT _pmt;
-			mpegts::SDT _sdt;
-			mpegts::PAT _pat;
-
 	};
 
 } // namespace dvb

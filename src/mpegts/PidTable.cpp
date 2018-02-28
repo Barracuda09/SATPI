@@ -54,8 +54,6 @@ namespace mpegts {
 		_data[pid].cc          = 0x80;
 		_data[pid].cc_error    = 0;
 		_data[pid].count       = 0;
-		_data[pid].pmt         = false;
-		_data[pid].parity      = -1;
 	}
 
 	uint32_t PidTable::getPacketCounter(int pid) const {
@@ -141,22 +139,6 @@ namespace mpegts {
 
 	void PidTable::setAllPID(bool use) {
 		setPID(ALL_PIDS, use);
-	}
-
-	void PidTable::markAsPMT(int pid, bool set) {
-		_data[pid].pmt = set;
-	}
-
-	bool PidTable::isMarkedAsPMT(int pid) const {
-		return _data[pid].pmt;
-	}
-
-	void PidTable::setKeyParity(int pid, int parity) {
-		_data[pid].parity = parity;
-	}
-
-	int PidTable::getKeyParity(int pid) const {
-		return _data[pid].parity;
 	}
 
 } // namespace mpegts

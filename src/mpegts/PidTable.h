@@ -85,18 +85,6 @@ namespace mpegts {
 			/// Set all PID
 			void setAllPID(bool use);
 
-			/// Set if pid is an PMT PID
-			void markAsPMT(int pid, bool set);
-
-			/// Check if pid is an PMT PID
-			bool isMarkedAsPMT(int pid) const;
-
-			///
-			void setKeyParity(int pid, int parity);
-
-			///
-			int getKeyParity(int pid) const;
-
 		protected:
 
 			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
@@ -118,8 +106,6 @@ namespace mpegts {
 				uint8_t cc;        /// continuity counter (0 - 15) of this PID
 				uint32_t cc_error; /// cc error count
 				uint32_t count;    /// the number of times this pid occurred
-				bool pmt;          /// show if this is an PMT pid
-				int parity;        /// key parity
 			} PidData_t;
 
 			bool _changed;             /// if something changed to 'pid' array

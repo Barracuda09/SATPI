@@ -29,7 +29,6 @@ FW_DECL_NS1(mpegts, SDT);
 
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
-
 namespace input {
 namespace dvb {
 
@@ -69,6 +68,9 @@ namespace dvb {
 			virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
 
 			///
+			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
+
+			///
 			virtual void startOSCamFilterData(int pid, int demux, int filter,
 			           const unsigned char *filterData, const unsigned char *filterMask) = 0;
 
@@ -81,18 +83,6 @@ namespace dvb {
 
 			///
 			virtual void stopOSCamFilters(int streamID) = 0;
-
-			///
-			virtual bool isMarkedAsPMT(int pid) const = 0;
-
-			///
-			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
-
-			///
-			virtual void setKeyParity(int pid, int parity) = 0;
-
-			///
-			virtual int getKeyParity(int pid) const = 0;
 
 			///
 			virtual void setECMInfo(
@@ -108,7 +98,10 @@ namespace dvb {
 				int hops) = 0;
 
 			///
-			virtual mpegts::PMT &getPMTData() = 0;
+			virtual bool isMarkedAsPMT(int pid) const = 0;
+
+			///
+			virtual const mpegts::PMT &getPMTData() const = 0;
 	};
 
 } // namespace dvb

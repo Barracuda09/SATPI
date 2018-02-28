@@ -29,34 +29,38 @@ namespace dvb {
 	}
 
 	int Frontend::getBatchCount() const {
-		return _frontendData.getBatchCount();
+		return _dvbapiData.getBatchCount();
 	}
 
 	int Frontend::getBatchParity() const {
-		return _frontendData.getBatchParity();
+		return _dvbapiData.getBatchParity();
 	}
 
 	int Frontend::getMaximumBatchSize() const {
-		return _frontendData.getMaximumBatchSize();
+		return _dvbapiData.getMaximumBatchSize();
 	}
 
 	void Frontend::decryptBatch(bool final) {
-		return _frontendData.decryptBatch(final);
+		return _dvbapiData.decryptBatch(final);
 	}
 
 	void Frontend::setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
-		_frontendData.setBatchData(ptr, len, parity, originalPtr);
+		_dvbapiData.setBatchData(ptr, len, parity, originalPtr);
 	}
 
 	const dvbcsa_bs_key_s *Frontend::getKey(int parity) const {
-		return _frontendData.getKey(parity);
+		return _dvbapiData.getKey(parity);
+	}
+
+	void Frontend::setKey(const unsigned char *cw, int parity, int index) {
+		_dvbapiData.setKey(cw, parity, index);
 	}
 
 	void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
 		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
 			_streamID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
-		_frontendData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
+		_dvbapiData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 		_frontendData.setPID(pid, true);
 		// now update frontend, PID list has changed
 		updatePIDFilters();
@@ -64,46 +68,33 @@ namespace dvb {
 
 	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
 		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
-		_frontendData.stopOSCamFilterData(demux, filter);
+		_dvbapiData.stopOSCamFilterData(demux, filter);
 		// Do not remove the PID!
 	}
 
 	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
 		int &tableID, int &filter, int &demux, mpegts::TSData &filterData) {
-		return _frontendData.findOSCamFilterData(streamID, pid, tsPacket, tableID, filter, demux, filterData);
+		return _dvbapiData.findOSCamFilterData(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 	}
 
 	void Frontend::stopOSCamFilters(int streamID) {
-		_frontendData.stopOSCamFilters(streamID);
-		_frontendData.clearMPEGTables(streamID);
-	}
-
-	bool Frontend::isMarkedAsPMT(int pid) const {
-		return _frontendData.isMarkedAsPMT(pid);
-	}
-
-	void Frontend::setKey(const unsigned char *cw, int parity, int index) {
-		_frontendData.setKey(cw, parity, index);
-	}
-
-	void Frontend::setKeyParity(int pid, int parity) {
-		_frontendData.setKeyParity(pid, parity);
-	}
-
-	int Frontend::getKeyParity(int pid) const {
-		return _frontendData.getKeyParity(pid);
+		_dvbapiData.stopOSCamFilters(streamID);
 	}
 
 	void Frontend::setECMInfo(int pid, int serviceID, int caID, int provID, int emcTime,
 		const std::string &cardSystem, const std::string &readerName,
 		const std::string &sourceName, const std::string &protocolName,
 		int hops) {
-		_frontendData.setECMInfo(pid, serviceID, caID, provID, emcTime,
+		_dvbapiData.setECMInfo(pid, serviceID, caID, provID, emcTime,
 			cardSystem, readerName, sourceName, protocolName, hops);
 	}
 
-	mpegts::PMT &Frontend::getPMTData() {
-		return _frontendData.getPMTData();
+	bool Frontend::isMarkedAsPMT(int pid) const {
+		return getFilter().isMarkedAsPMT(pid);
+	}
+
+	const mpegts::PMT &Frontend::getPMTData() const {
+		return getFilter().getPMTData();
 	}
 
 } // namespace dvb

@@ -56,7 +56,7 @@ namespace dvbapi {
 		// free keys
 		_keys.freeKeys();
 		_batchCount = 0;
-		_filter.clear();
+		_oscamFilter.clear();
 	}
 
 	void ClientProperties::setBatchData(unsigned char *ptr, int len,

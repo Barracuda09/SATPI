@@ -31,7 +31,7 @@ namespace input {
 namespace stream {
 
 	Streamer::Streamer(int streamID) :
-		_streamID(streamID),
+		Device(streamID),
 		_uri("None"),
 		_multiAddr("None"),
 		_port(0),

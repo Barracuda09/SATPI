@@ -88,18 +88,18 @@ namespace dvbapi {
 			/// Start and add the requested filter
 			void startOSCamFilterData(int pid, int demux, int filter,
 				const unsigned char *filterData, const unsigned char *filterMask) {
-				_filter.start(pid, demux, filter, filterData, filterMask);
+				_oscamFilter.start(pid, demux, filter, filterData, filterMask);
 			}
 
 			/// Stop the requested filter
 			void stopOSCamFilterData(int demux, int filter) {
-				_filter.stop(demux, filter);
+				_oscamFilter.stop(demux, filter);
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
 			bool findOSCamFilterData(const int streamID, int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, mpegts::TSData &filterData) {
-				return _filter.find(streamID, pid, tsPacket, tableID, filter, demux, filterData);
+				return _oscamFilter.find(streamID, pid, tsPacket, tableID, filter, demux, filterData);
 			}
 
 			/// Clear all 'active' filters
@@ -130,7 +130,7 @@ namespace dvbapi {
 			int _batchCount;
 			int _parity;
 			Keys _keys;
-			Filter _filter;
+			Filter _oscamFilter;
 
 	};
 

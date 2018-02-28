@@ -53,7 +53,7 @@ StreamManager::~StreamManager() {}
 		return _decrypt;
 	}
 
-	input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(int streamID) {
+	input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const int streamID) {
 		return _stream[streamID]->getFrontendDecryptInterface();
 	}
 #endif

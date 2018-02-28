@@ -32,7 +32,7 @@ namespace input {
 namespace file {
 
 	TSReader::TSReader(int streamID) :
-		_streamID(streamID),
+		Device(streamID),
 		_transform(_transformDeviceData) {}
 
 	TSReader::~TSReader() {}
@@ -118,42 +118,13 @@ namespace file {
 
 					// Check is this the beginning of the TS and no Transport error indicator
 					if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
+						// Add data to Filter
+						getFilter().addData(_streamID, data);
+
 						// get PID from TS
-						const int pid = ((data[1] & 0x1f) << 8) | data[2];
-
-						if (pid == 0 && !_pat.isCollected()) {
-							// collect PAT data
-							_pat.collectData(_streamID, PAT_TABLE_ID, data, false);
-
-							// Did we finish collecting PAT
-							if (_pat.isCollected()) {
-								_pat.parse(_streamID);
-								// Check which PIDs are PMTs and mark them in frontend
-								for (size_t i = 0u; i < MAX_PIDS; ++i) {
-									if (_pat.isMarkedAsPMT(i)) {
-										_pmtPIDS[i] = true;
-									}
-								}
-							}
-						} else if (pid == 17 && !_sdt.isCollected()) {
-							// collect SDT data
-							_sdt.collectData(_streamID, SDT_TABLE_ID, data, false);
-
-							// Did we finish collecting SDT
-							if (_sdt.isCollected()) {
-								_sdt.parse(_streamID);
-							}
-						} else if (_pmtPIDS[pid] && !_pmt.isCollected()) {
-							// collect PMT data
-							_pmt.collectData(_streamID, PMT_TABLE_ID, data, false);
-
-							// Did we finish collecting PMT
-							if (_pmt.isCollected()) {
-								_pmt.parse(_streamID);
-								_pcrPID = _pmt.getPCRPid();
-								SI_LOG_INFO("Stream: %d, PMT Found: %04d with PCR: %04d", _streamID, pid, _pcrPID);
-							}
-						} else if (pid == _pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
+						const uint16_t pid = ((data[1] & 0x1f) << 8) | data[2];
+						const uint16_t pcrPID = getFilter().getPMTData().getPCRPid();
+						if (pid == pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
 							// Check for 'adaptation field flag' and 'PCR field present'
 
 							//        4           3          2          1          0
@@ -224,17 +195,10 @@ namespace file {
 			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
 			if (_file.is_open()) {
 				SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
-				_pcrPID = -1;
 				_pcrPrev = 0;
 				_pcrDelta = 0;
-				_pmt.clear();
-				_pat.clear();
-				_sdt.clear();
 				_t1 = std::chrono::steady_clock::now();
 				_t2 = _t1;
-				for (size_t i = 0; i < MAX_PIDS; ++i) {
-					_pmtPIDS[i] = false;
-				}
 			} else {
 				SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
 			}

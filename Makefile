@@ -63,12 +63,13 @@ SOURCES = Version.cpp \
 	input/file/TSReader.cpp \
 	input/file/TSReaderData.cpp \
 	input/stream/Streamer.cpp \
-	mpegts/PidTable.cpp \
+	mpegts/Filter.cpp \
 	mpegts/PacketBuffer.cpp \
-	mpegts/TableData.cpp \
 	mpegts/PAT.cpp \
+	mpegts/PidTable.cpp \
 	mpegts/PMT.cpp \
 	mpegts/SDT.cpp \
+	mpegts/TableData.cpp \
 	output/StreamThreadBase.cpp \
 	output/StreamThreadHttp.cpp \
 	output/StreamThreadRtp.cpp \
@@ -215,6 +216,7 @@ help:
 
 # Download PlantUML from http://plantuml.com/download.html
 # and put it into the root of the project directory
+# sudo apt-get install graphviz openjdk-7-jre
 plantuml:
 	java -jar plantuml.jar -tsvg SatPI.plantuml
 	java -jar plantuml.jar -tpng SatPI.plantuml

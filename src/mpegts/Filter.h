@@ -1,4 +1,4 @@
-/* PAT.h
+/* Filter.h
 
    Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,56 +17,85 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef MPEGTS_PAT_DATA_H_INCLUDE
-#define MPEGTS_PAT_DATA_H_INCLUDE MPEGTS_PAT_DATA_H_INCLUDE
+#ifndef MPEGTS_FILTER_H_INCLUDE
+#define MPEGTS_FILTER_H_INCLUDE MPEGTS_FILTER_H_INCLUDE
 
-#include <mpegts/TableData.h>
-
-#include <string>
-#include <map>
+#include <mpegts/PAT.h>
+#include <mpegts/PMT.h>
+#include <mpegts/SDT.h>
 
 namespace mpegts {
 
-	class PAT :
-		public TableData {
+	/// The class @c Filter carries the PID Tables
+	class Filter {
 		public:
 
 			// ================================================================
-			// -- Constructors and destructor ---------------------------------
+			//  -- Constructors and destructor --------------------------------
 			// ================================================================
+			Filter();
 
-			PAT();
-
-			virtual ~PAT();
-
-			// =======================================================================
-			// -- mpegts::TableData --------------------------------------------------
-			// =======================================================================
-
-		public:
-			virtual void clear() override;
+			virtual ~Filter();
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------
 			// ================================================================
 
-			void parse(int streamID);
-
-			bool isMarkedAsPMT(int pid) const;
-
 		public:
+
+			///
+			void addData(int streamID, const unsigned char *ptr);
+
+			///
+			void clear(int streamID);
+
+			///
+			bool isMarkedAsPMT(int pid) const {
+				return _pat.isMarkedAsPMT(pid);
+			}
+
+			///
+			mpegts::PMT &getPMTData() {
+				return _pmt;
+			}
+
+			///
+			const mpegts::PMT &getPMTData() const {
+				return _pmt;
+			}
+
+			///
+			mpegts::PAT &getPATData() {
+				return _pat;
+			}
+
+			///
+			mpegts::SDT &getSDTData() {
+				return _sdt;
+			}
+
+			///
+			const mpegts::SDT &getSDTData() const {
+				return _sdt;
+			}
+
+		protected:
+
 
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
 
+		protected:
+
 		private:
 
-			uint16_t _programNumber;
-			uint16_t _tid;
-			std::map<int, bool> _pmtPidTable;
+			mpegts::PMT _pmt;
+			mpegts::SDT _sdt;
+			mpegts::PAT _pat;
+
 	};
 
 } // namespace mpegts
 
-#endif // MPEGTS_PAT_DATA_H_INCLUDE
+#endif // MPEGTS_FILTER_H_INCLUDE

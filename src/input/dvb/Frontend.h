@@ -27,6 +27,7 @@
 #include <input/dvb/FrontendData.h>
 #ifdef LIBDVBCSA
 #include <input/dvb/FrontendDecryptInterface.h>
+#include <decrypt/dvbapi/ClientProperties.h>
 #endif
 
 #include <vector>
@@ -106,8 +107,10 @@ namespace dvb {
 
 			virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
 
+			virtual void setKey(const unsigned char *cw, int parity, int index) override;
+
 			virtual void startOSCamFilterData(int pid, int demux, int filter,
-			           const unsigned char *filterData, const unsigned char *filterMask) override;
+				const unsigned char *filterData, const unsigned char *filterMask) override;
 
 			virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
 
@@ -115,14 +118,6 @@ namespace dvb {
 				int &filter, int &demux, mpegts::TSData &filterData) override;
 
 			virtual void stopOSCamFilters(int streamID) override;
-
-			virtual bool isMarkedAsPMT(int pid) const override;
-
-			virtual void setKey(const unsigned char *cw, int parity, int index) override;
-
-			virtual void setKeyParity(int pid, int parity) override;
-
-			virtual int getKeyParity(int pid) const override;
 
 			virtual void setECMInfo(
 				int pid,
@@ -136,7 +131,9 @@ namespace dvb {
 				const std::string &protocolName,
 				int hops) override;
 
-			virtual mpegts::PMT &getPMTData() override;
+			virtual bool isMarkedAsPMT(int pid) const override;
+
+			virtual const mpegts::PMT &getPMTData() const override;
 #endif
 
 			// =======================================================================
@@ -222,7 +219,6 @@ namespace dvb {
 			// =======================================================================
 
 		private:
-			int _streamID;
 			bool _tuned;
 			int _fd_fe;
 			int _fd_dvr;
@@ -233,6 +229,9 @@ namespace dvb {
 
 			input::dvb::delivery::SystemVector _deliverySystem;
 			input::dvb::FrontendData _frontendData;
+#ifdef LIBDVBCSA
+			decrypt::dvbapi::ClientProperties _dvbapiData;
+#endif
 			input::dvb::FrontendData _transformFrontendData;
 			input::Transformation _transform;
 			std::size_t _dvbs2;

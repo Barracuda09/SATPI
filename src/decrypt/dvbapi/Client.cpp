@@ -26,7 +26,6 @@
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>
 #include <mpegts/TableData.h>
-#include <mpegts/PidTable.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PMT.h>
 #include <mpegts/SDT.h>
@@ -178,10 +177,10 @@ namespace dvbapi {
 ///////////////////////////////////////////////////////////////////
 
 						if (frontend->isMarkedAsPMT(pid)) {
-							sendPMT(frontend);
+							sendPMT(streamID, frontend->getPMTData());
 							// Do we need to clean PMT
 							if (_rewritePMT) {
-								cleanPMT(frontend, data);
+								cleanPMT(data);
 							}
 						}
 					}
@@ -205,8 +204,8 @@ namespace dvbapi {
 
 			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Stream: %d, Stop CA Decrypt with demux index %d", streamID, demuxIndex);
 
-			// cleaning tables etc.
-			input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(streamID);
+			// cleaning OSCam filters
+			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(streamID);
 			frontend->stopOSCamFilters(streamID);
 
 			if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
@@ -256,7 +255,7 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::cleanPMT(input::dvb::SpFrontendDecryptInterface UNUSED(frontend), unsigned char *data) {
+	void Client::cleanPMT(unsigned char *data) {
 		const unsigned char options = (data[1] & 0xE0);
 		if (options == 0x40 && data[5] == PMT_TABLE_ID) {
 //			const int streamID = frontend->getStreamID();
@@ -326,15 +325,13 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::sendPMT(input::dvb::SpFrontendDecryptInterface frontend) {
-		const mpegts::PMT &pmt = frontend->getPMTData();
+	void Client::sendPMT(const int streamID, const mpegts::PMT &pmt) {
 		// Did we send the collecting PMT already
 		if (pmt.isReadySend()) {
 			// Send it here !!
 			const mpegts::TSData &progInfo = pmt.getProgramInfo();
 			const int programNumber = pmt.getProgramNumber();
 
-			const int streamID = frontend->getStreamID();
 			const char demuxIndex = static_cast<char>(streamID + _adapterOffset);
 			const int cpyLength = progInfo.size();
 			const int piLenght  = cpyLength + 1 + 4;

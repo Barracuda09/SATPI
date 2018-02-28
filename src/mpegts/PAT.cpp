@@ -77,8 +77,8 @@ namespace mpegts {
 		}
 	}
 
-	bool PAT::isMarkedAsPMT(int pid) {
-		auto s = _pmtPidTable.find(pid);
+	bool PAT::isMarkedAsPMT(int pid) const {
+		const auto s = _pmtPidTable.find(pid);
 		if (s != _pmtPidTable.end() && s->second) {
 			return true;
 		}

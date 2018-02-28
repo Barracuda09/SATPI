@@ -116,7 +116,6 @@ namespace stream {
 			// =======================================================================
 
 		private:
-			int _streamID;
 			std::string _uri;
 			struct pollfd _pfd[1];
 			SocketClient _udpMultiListen;

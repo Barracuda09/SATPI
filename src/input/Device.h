@@ -24,6 +24,7 @@
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
 #include <base/Mutex.h>
+#include <mpegts/Filter.h>
 
 #include <string>
 
@@ -42,7 +43,7 @@ namespace input {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			Device() {}
+			Device(int streamID) : _streamID(streamID) {}
 
 			virtual ~Device() {}
 
@@ -100,6 +101,21 @@ namespace input {
 			///
 			virtual std::string attributeDescribeString() const = 0;
 
+			///
+			void clearMPEGFilters() {
+				_filter.clear(_streamID);
+			}
+
+			///
+			mpegts::Filter &getFilter() {
+				return _filter;
+			}
+
+			///
+			const mpegts::Filter &getFilter() const {
+				return _filter;
+			}
+
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
@@ -107,6 +123,11 @@ namespace input {
 		protected:
 
 			base::Mutex _mutex;
+
+			int _streamID;
+
+			mpegts::Filter _filter;
+
 	};
 
 } // namespace input

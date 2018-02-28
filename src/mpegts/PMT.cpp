@@ -67,6 +67,18 @@ namespace mpegts {
 			// To save the Program Info
 			if (_prgLength > 0) {
 				_progInfo.append(&data[17], _prgLength);
+				// Parse program info
+				for (std::size_t i = 0u; i < _prgLength; ) {
+					const std::size_t subLength = _progInfo[i + 1u];
+					// Check for Conditional access system and EMM/ECM PID
+					if (_progInfo[i + 0u] == 0x09 && subLength > 0) {
+						const int caid   =  (_progInfo[i + 2u] << 8u)         | _progInfo[i + 3u];
+						const int ecmpid = ((_progInfo[i + 4u] & 0x1F) << 8u) | _progInfo[i + 5u];
+						SI_LOG_INFO("Stream: %d, PMT - CAID: 0x%04X  ECM-PID: %04d  ES-Length: %03d",
+									streamID, caid, ecmpid, subLength);
+					}
+					i += subLength + 2u;
+				}
 			}
 
 			// 4 = CRC   9 = PMT Header from section length
@@ -88,7 +100,7 @@ namespace mpegts {
 						const int caid   =  (ptr[j + i +  7u] << 8u) | ptr[j + i + 8u];
 						const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 						const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
-						SI_LOG_INFO("Stream: %d, ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %03d",
+						SI_LOG_INFO("Stream: %d, PMT - ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %03d",
 									streamID, caid, ecmpid, provid, subLength);
 
 						_progInfo.append(&ptr[j + i + 5u], subLength + 2u);

@@ -30,6 +30,7 @@
 
 FW_DECL_NS0(StreamManager);
 FW_DECL_NS1(mpegts, PacketBuffer);
+FW_DECL_NS1(mpegts, PMT);
 
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
@@ -90,11 +91,10 @@ namespace dvbapi {
 			void sendClientInfo();
 
 			///
-			void sendPMT(input::dvb::SpFrontendDecryptInterface frontend);
+			void sendPMT(int streamID, const mpegts::PMT &pmt);
 
 			///
-			void cleanPMT(input::dvb::SpFrontendDecryptInterface frontend,
-				unsigned char *data);
+			void cleanPMT(unsigned char *data);
 
 			// =================================================================
 			// -- Data members -------------------------------------------------

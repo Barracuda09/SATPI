@@ -24,7 +24,6 @@
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
-#include <mpegts/PidTable.h>
 
 namespace input {
 
@@ -104,6 +103,7 @@ namespace input {
 			// =======================================================================
 
 		protected:
+
 			base::Mutex _mutex;
 
 			bool _changed;             ///

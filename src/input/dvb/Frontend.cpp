@@ -57,7 +57,7 @@ namespace dvb {
 		const std::string &fe,
 		const std::string &dvr,
 		const std::string &dmx) :
-		_streamID(streamID),
+		Device(streamID),
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dvr(-1),
@@ -189,6 +189,10 @@ namespace dvb {
 
 		// Channel
 		_frontendData.addToXML(xml);
+		mpegts::SDT::Data sdtData;
+		_filter.getSDTData().getSDTDataFor(_filter.getPMTData().getProgramNumber(), sdtData);
+		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
+		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 
 		// Monitor
 		ADD_XML_ELEMENT(xml, "status", _frontendData.getSignalStatus());
@@ -277,48 +281,7 @@ namespace dvb {
 						const uint8_t  cc  =   ptr[3] & 0x0f;
 						_frontendData.addPIDData(pid, cc);
 
-/////////////////////////////////////////////////////
-						if (pid == 0) {
-							mpegts::PAT &pat = _frontendData.getPATData();
-							if (!pat.isCollected()) {
-								// collect PAT data
-								pat.collectData(_streamID, PAT_TABLE_ID, ptr, false);
-
-								// Did we finish collecting PAT
-								if (pat.isCollected()) {
-									pat.parse(_streamID);
-									// Check which PIDs are PMTs and mark them in frontend
-									for (size_t i = 0u; i < MAX_PIDS; ++i) {
-										if (pat.isMarkedAsPMT(i)) {
-											_frontendData.markAsPMT(i, true);
-										}
-									}
-								}
-							}
-						} else if (_frontendData.isMarkedAsPMT(pid)) {
-							mpegts::PMT &pmt = _frontendData.getPMTData();
-							if (!pmt.isCollected()) {
-								// collect PMT data
-								pmt.collectData(_streamID, PMT_TABLE_ID, ptr, false);
-
-								// Did we finish collecting PMT
-								if (pmt.isCollected()) {
-									pmt.parse(_streamID);
-								}
-							}
-						} else if (pid == 17) {
-							mpegts::SDT &sdt = _frontendData.getSDTData();
-							if (!sdt.isCollected()) {
-								// collect SDT data
-								sdt.collectData(_streamID, SDT_TABLE_ID, ptr, false);
-
-								// Did we finish collecting SDT
-								if (sdt.isCollected()) {
-									sdt.parse(_streamID);
-								}
-							}
-						}
-/////////////////////////////////////////////////////
+						getFilter().addData(_streamID, ptr);
 					}
 				}
 			}
@@ -758,7 +721,7 @@ namespace dvb {
 			}
 			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
 					_streamID, pid, _frontendData.getDMXFileDescriptor(pid),
-					_frontendData.isMarkedAsPMT(pid) ? " - PMT" : "");
+					getFilter().isMarkedAsPMT(pid) ? " - PMT" : "");
 		}
 		return true;
 	}

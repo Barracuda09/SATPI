@@ -44,11 +44,6 @@ namespace dvb {
 	void FrontendData::addToXML(std::string &xml) const {
 		base::MutexLock lock(_xmlMutex);
 
-		mpegts::SDT::Data sdtData;
-		_sdt.getSDTDataFor(_pmt.getProgramNumber(), sdtData);
-
-		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
-		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 		ADD_XML_ELEMENT(xml, "delsys", StringConverter::delsys_to_string(_delsys));
 		ADD_XML_ELEMENT(xml, "tunefreq", _freq);
 		ADD_XML_ELEMENT(xml, "modulation", StringConverter::modtype_to_sting(_modtype));
@@ -142,7 +137,6 @@ namespace dvb {
 					SI_LOG_INFO("Stream: %d, %s method with query, clearing old channel data...", streamID, method.c_str());
 				}
 				initialize();
-				clearMPEGTables(streamID);
 			}
 			_freq = freq * 1000.0;
 			_changed = true;
@@ -411,13 +405,6 @@ namespace dvb {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void FrontendData::clearMPEGTables(int streamID) {
-		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT/SDT Tables...", streamID);
-		_pat.clear();
-		_pmt.clear();
-		_sdt.clear();
-	}
-
 	void FrontendData::parsePIDString(
 			const std::string &pids,
 			const bool clearPidsFirst,
@@ -459,16 +446,6 @@ namespace dvb {
 		}
 	}
 
-	void FrontendData::markAsPMT(const int pid, const bool set) {
-		base::MutexLock lock(_mutex);
-		_pidTable.markAsPMT(pid, set);
-	}
-
-	void FrontendData::setKeyParity(const int pid, const int parity) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setKeyParity(pid, parity);
-	}
-
 	void FrontendData::addPIDData(const int pid, const uint8_t cc) {
 		base::MutexLock lock(_mutex);
 		_pidTable.addPIDData(pid, cc);
@@ -502,16 +479,6 @@ namespace dvb {
 	void FrontendData::setAllPID(const bool val) {
 		base::MutexLock lock(_mutex);
 		_pidTable.setAllPID(val);
-	}
-
-	bool FrontendData::isMarkedAsPMT(const int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.isMarkedAsPMT(pid);
-	}
-
-	int FrontendData::getKeyParity(const int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getKeyParity(pid);
 	}
 
 	bool FrontendData::isPIDUsed(const int pid) const {

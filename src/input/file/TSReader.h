@@ -24,10 +24,6 @@
 #include <input/Device.h>
 #include <input/Transformation.h>
 #include <input/file/TSReaderData.h>
-#include <mpegts/TableData.h>
-#include <mpegts/PAT.h>
-#include <mpegts/PMT.h>
-#include <mpegts/SDT.h>
 
 #include <vector>
 #include <string>
@@ -43,7 +39,7 @@ namespace file {
 
 	/// The class @c TSReader is for reading from an TS files as input device
 	/// Some example for opening a TS file:
-	/// http://ip.of.your.box:8875:/?msys=file&uri=test.ts
+	/// http://ip.of.your.box:8875/?msys=file&uri=test.ts
 	class TSReader :
 		public input::Device {
 		public:
@@ -120,17 +116,11 @@ namespace file {
 			// =======================================================================
 
 		private:
-			int _streamID;
 			std::ifstream _file;
 			TSReaderData _deviceData;
 			TSReaderData _transformDeviceData;
 			input::Transformation _transform;
 
-			mpegts::PMT _pmt;
-			mpegts::PAT _pat;
-			mpegts::SDT _sdt;
-			bool _pmtPIDS[8193];
-			int _pcrPID;
 			uint64_t _pcrPrev;
 			int64_t _pcrDelta;
 			std::chrono::steady_clock::time_point _t1;
