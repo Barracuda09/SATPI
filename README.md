@@ -2,7 +2,7 @@
 
 An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, BeagleBone or any other linux box.
 
-<a href="https://github.com/Barracuda09/SATPI/wiki/02.-(Cross)Build-SatPI">See wiki on how to build SatPI</a>
+<a href="https://github.com/Barracuda09/SATPI/wiki/02.-Build-SatPI">See wiki on how to build SatPI</a>
 
 Currently supporting:
 - DVB-S(2), DVB-T(2) and DVB-C
