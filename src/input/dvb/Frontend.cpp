@@ -252,14 +252,14 @@ namespace dvb {
 		pfd[0].fd = _fd_dvr;
 		pfd[0].events = POLLIN;
 		pfd[0].revents = 0;
-		const int pollRet = ::poll(pfd, 1, 1000);
+		const int pollRet = ::poll(pfd, 1, 100);
 		if (pollRet < 0) {
 			PERROR("Error during polling frontend for data");
 			return false;
 		} else if (pollRet > 0) {
 			return pfd[0].revents & POLLIN;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Timeout during polling frontend for data", _streamID);
+//			SI_LOG_ERROR("Stream: %d, Timeout during polling frontend for data", _streamID);
 			return false;
 		}
 	}
