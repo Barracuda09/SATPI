@@ -70,7 +70,8 @@ class HttpcServer :
 
 		///
 		void getHtmlBodyWithContent(std::string &htmlBody, const std::string &html,
-			const std::string &location, const std::string &contentType, std::size_t docTypeSize, std::size_t cseq) const;
+			const std::string &location, const std::string &contentType,
+			std::size_t docTypeSize, std::size_t cseq, unsigned int rtspPort = 0) const;
 
 		///
 		void getHtmlBodyNoContent(std::string &htmlBody, const std::string &html,

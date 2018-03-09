@@ -78,13 +78,13 @@ class Properties :
 		std::string getXMLDeviceDescriptionFile() const;
 
 		/// Set HttpPort
-		void setHttpPort(unsigned int bootID);
+		void setHttpPort(unsigned int httpPort);
 
 		/// Get HttpPort
 		unsigned int getHttpPort() const;
 
 		/// Set RtspPort
-		void setRtspPort(unsigned int bootID);
+		void setRtspPort(unsigned int rtspPort);
 
 		/// Get RtspPort
 		unsigned int getRtspPort() const;

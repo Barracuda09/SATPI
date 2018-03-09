@@ -40,6 +40,7 @@ const char *HttpcServer::HTML_BODY_WITH_CONTENT =
 	"cache-control: no-cache\r\n" \
 	"Content-Type: %5\r\n" \
 	"Content-Length: %6\r\n" \
+	"%7" \
 	"\r\n";
 
 const char *HttpcServer::HTML_BODY_NO_CONTENT =
@@ -91,10 +92,17 @@ const std::string &HttpcServer::getProtocolVersionString() const {
 	}
 }
 
-void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody, const std::string &html,
-		const std::string &location, const std::string &contentType, std::size_t docTypeSize, std::size_t cseq) const {
-	htmlBody = StringConverter::stringFormat(HTML_BODY_WITH_CONTENT, getProtocolVersionString(), html,
-		location, cseq, contentType, docTypeSize);
+void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody,
+		const std::string &html, const std::string &location,
+		const std::string &contentType, std::size_t docTypeSize,
+		std::size_t cseq, const unsigned int rtspPort) const {
+	// Check do we need to add TvHeadend specific "X-SATIP-RTSP-Port"
+	const std::string satipRtspPort = (rtspPort == 0) ? "" :
+		StringConverter::stringFormat("X-SATIP-RTSP-Port: %1\r\n", rtspPort);
+
+	htmlBody = StringConverter::stringFormat(HTML_BODY_WITH_CONTENT,
+		getProtocolVersionString(), html, location, cseq, contentType,
+		docTypeSize, satipRtspPort);
 }
 
 void HttpcServer::getHtmlBodyNoContent(std::string &htmlBody, const std::string &html,
