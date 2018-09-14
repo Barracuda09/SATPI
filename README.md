@@ -1,3 +1,7 @@
+| Build Status | Coverity Scan | PayPal |
+|-------|-------|-------|
+| [![Build Status](https://travis-ci.org/Barracuda09/SATPI.svg)](https://travis-ci.org/Barracuda09/SATPI) | [![Coverity Scan](https://scan.coverity.com/projects/4842/badge.svg)](https://scan.coverity.com/projects/4842) | [![PayPal](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted) |
+
 # SatPI
 
 An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, BeagleBone or any other linux box.
