@@ -41,7 +41,7 @@ class StringConverter  {
 		/// Returns a copy of the string where all specified markers are replaced
 		/// with the specified arguments.<br>
 		/// <b>Example:</b> @c std::string s = StringConverter::stringFormat(
-		///   "Stream: %1, Close StreamClient[%2] with SessionID %3", 1, 0, "12345"
+		///   "Stream: %1, Close StreamClient[%2] with SessionID %3", 1, 0, "12345");
 		/// @return A copy of the string where all specified markers are replaced
 		/// with the specified arguments.
 		template <typename... Args>
@@ -52,7 +52,7 @@ class StringConverter  {
 			const int dummy[] = { 0, ((void) makeVectArgs(vectArgs, std::forward<Args>(args)), 0)... };
 			(void)dummy;
 
-			// Make as little reallocations as possible
+			// Make as little reallocations as possible, so calc size
 			std::string line;
 			std::size_t size = std::strlen(format);
 			for (std::size_t i = 1; i < vectArgs.size(); ++i) {
@@ -186,7 +186,9 @@ class StringConverter  {
 		/// Helper function for stringFormat
 		template <typename Type>
 		static void makeVectArgs(std::vector<std::string> &vec, Type t) {
-			std::stringstream stream;
+			std::ostringstream stream;
+			stream.setf(std::ios::fixed);
+			stream.precision(4);
 			stream << t;
 			vec.push_back(stream.str());
 		}
