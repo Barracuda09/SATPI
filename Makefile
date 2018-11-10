@@ -81,6 +81,12 @@ SOURCES = Version.cpp \
 	socket/UdpSocket.cpp \
 	upnp/ssdp/Server.cpp
 
+# Add gprof, use gprof-helper.c for multithreading profiling
+ifeq ($(GPROF),yes)
+  LDFLAGS += -pg
+  CFLAGS  += -pg
+endif
+
 # Add dvbcsa ?
 ifeq ($(LIBDVBCSA),yes)
   LDFLAGS += -ldvbcsa
@@ -89,6 +95,12 @@ ifeq ($(LIBDVBCSA),yes)
   SOURCES += decrypt/dvbapi/ClientProperties.cpp
   SOURCES += decrypt/dvbapi/Keys.cpp
   SOURCES += input/dvb/Frontend_DecryptInterface.cpp
+endif
+
+# Add dvbca ?
+ifeq ($(DVBCA),yes)
+  CFLAGS  += -DADDDVBCA
+  SOURCES += decrypt/dvbca/DVBCA.cpp
 endif
 
 # Has np functions

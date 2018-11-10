@@ -29,6 +29,9 @@
 #include <Utils.h>
 #include <StringConverter.h>
 #include <base/XMLSaveSupport.h>
+#ifdef ADDDVBCA
+#include <decrypt/dvbca/DVBCA.h>
+#endif
 
 #include <atomic>
 #include <chrono>
@@ -413,6 +416,10 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {
 		try {
+#ifdef ADDDVBCA
+			DVBCA dvbca;
+			dvbca.startThread();
+#endif
 			SatPI satpi(ssdp, appdataPath, webPath, dvbPath, httpPort, rtspPort);
 
 			// Loop

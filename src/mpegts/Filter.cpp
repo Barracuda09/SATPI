@@ -55,16 +55,16 @@ namespace mpegts {
 			}
 		} else if (_pat.isMarkedAsPMT(pid)) {
 			if (!_pmt.isCollected()) {
-
+#ifdef ADDDVBCA
 				{
-					char fileFIFO[] = "/tmp/fifo";
+					const char fileFIFO[] = "/tmp/fifo";
 					int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
 					if (fd > 0) {
 						::write(fd, ptr, 188);
 						::close(fd);
 					}
 				}
-
+#endif
 				// collect PMT data
 				_pmt.collectData(streamID, PMT_TABLE_ID, ptr, false);
 
@@ -84,14 +84,16 @@ namespace mpegts {
 				}
 			}
 		} else if (pid == 20) {
+#ifdef ADDDVBCA
 			{
-				char fileFIFO[] = "/tmp/fifo";
+				const char fileFIFO[] = "/tmp/fifo";
 				int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
 				if (fd > 0) {
 					::write(fd, ptr, 188);
 					::close(fd);
 				}
 			}
+#endif
 			const unsigned int tableID = ptr[5u];
 			const unsigned int mjd = (ptr[8u] << 8) | (ptr[9u]);
 			const unsigned int y1 = static_cast<unsigned int>((mjd - 15078.2) / 365.25);
@@ -106,8 +108,6 @@ namespace mpegts {
 
 			SI_LOG_INFO("Stream: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", streamID, tableID, y, m, d, h, mi, s, mjd);
 //			SI_LOG_BIN_DEBUG(ptr, 188, "Stream: %d, TDT - ", _streamID);
-
-
 		}
 	}
 
