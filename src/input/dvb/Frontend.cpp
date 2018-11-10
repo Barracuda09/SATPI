@@ -47,7 +47,8 @@
 namespace input {
 namespace dvb {
 
-	const unsigned long Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
+	const unsigned int Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
+	const unsigned int Frontend::MAX_DVR_BUFFER_SIZE     = 18 * 10;
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -184,7 +185,7 @@ namespace dvb {
 			ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("%1 Hz to %2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
 			ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("%1 symbols/s to %2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
 
-			ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 1, DEFAULT_DVR_BUFFER_SIZE * 10);
+			ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 		}
 
 		// Channel
@@ -214,7 +215,7 @@ namespace dvb {
 			base::MutexLock lock(_xmlMutex);
 			if (findXMLElement(xml, "dvrbuffer.value", element)) {
 				const unsigned int newSize = atoi(element.c_str());
-				_dvrBufferSizeMB = (newSize < DEFAULT_DVR_BUFFER_SIZE * 5) ?
+				_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
 					newSize : DEFAULT_DVR_BUFFER_SIZE;
 
 			}
@@ -259,7 +260,7 @@ namespace dvb {
 		} else if (pollRet > 0) {
 			return pfd[0].revents & POLLIN;
 		} else {
-//			SI_LOG_ERROR("Stream: %d, Timeout during polling frontend for data", _streamID);
+//			SI_LOG_DEBUG("Stream: %d, Timeout during polling frontend for data", _streamID);
 			return false;
 		}
 	}
@@ -619,7 +620,7 @@ namespace dvb {
 		}
 	}
 
-	bool Frontend::set_demux_filter(const int fd, const uint16_t pid) {
+	bool Frontend::setDMXFilter(const int fd, const uint16_t pid) {
 		struct dmx_pes_filter_params pesFilter;
 
 		pesFilter.pid      = pid;
@@ -699,8 +700,13 @@ namespace dvb {
 
 			{
 				base::MutexLock lock(_mutex);
-				if (::ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, _dvrBufferSizeMB * 1024 * 1024) == -1) {
-					PERROR("DMX_SET_BUFFER_SIZE failed");
+				if (_dvrBufferSizeMB > 0u) {
+					const unsigned int size = _dvrBufferSizeMB * 1024u * 1024u;
+					if (::ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) != 0) {
+						PERROR("DVR - DMX_SET_BUFFER_SIZE failed");
+					} else {
+						SI_LOG_INFO("Stream: %d, Set DVR buffer size to %d Bytes", _streamID, size);
+					}
 				}
 			}
 		}
@@ -712,7 +718,7 @@ namespace dvb {
 			const int fd = openDMX(_path_to_dmx);
 			_frontendData.setDMXFileDescriptor(pid, fd);
 			std::size_t timeout = 0;
-			while (set_demux_filter(_frontendData.getDMXFileDescriptor(pid), pid) != 1) {
+			while (setDMXFilter(_frontendData.getDMXFileDescriptor(pid), pid) != 1) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(350));
 				++timeout;
 				if (timeout > 3) {

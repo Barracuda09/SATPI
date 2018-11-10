@@ -314,11 +314,17 @@ namespace dvb {
 		if (sm != -1) {
 			_siso_miso = sm;
 		}
+		// Always request PID 0 - Program Association Table (PAT)
+		const std::string addPATPid = ",0";
+		// Add user defined PIDs
+		const std::string addUserPids = ",1,16,17,18";
 		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
-			parsePIDString(strVal, true, true);
+			const std::string pids = strVal + addPATPid + addUserPids;
+			parsePIDString(pids, true, true);
 		}
 		if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-			parsePIDString(strVal, false, true);
+			const std::string pids = strVal + addPATPid + addUserPids;
+			parsePIDString(pids, false, true);
 		}
 		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
 			parsePIDString(strVal, false, false);
@@ -409,7 +415,6 @@ namespace dvb {
 			const std::string &pids,
 			const bool clearPidsFirst,
 			const bool add) {
-		std::string::size_type begin = 0;
 		if (pids == "all" || pids == "none") {
 			// all/none pids requested then 'remove' all used PIDS
 			for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
@@ -424,6 +429,7 @@ namespace dvb {
 					setPID(i, false);
 				}
 			}
+			std::string::size_type begin = 0;
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
@@ -438,10 +444,6 @@ namespace dvb {
 					}
 					break;
 				}
-			}
-			// always request PID 0 - Program Association Table (PAT)
-			if (add && !isPIDUsed(0)) {
-				setPID(0, true);
 			}
 		}
 	}

@@ -55,7 +55,8 @@ namespace dvb {
 			// =======================================================================
 			// -- Static Data members ------------------------------------------------
 			// =======================================================================
-			static const unsigned long DEFAULT_DVR_BUFFER_SIZE;
+			static const unsigned int DEFAULT_DVR_BUFFER_SIZE;
+			static const unsigned int MAX_DVR_BUFFER_SIZE;
 
 
 			// =======================================================================
@@ -193,7 +194,7 @@ namespace dvb {
 			int openDMX(const std::string &path) const;
 
 			///
-			bool set_demux_filter(int fd, uint16_t pid);
+			bool setDMXFilter(int fd, uint16_t pid);
 
 			///
 			bool tune();
