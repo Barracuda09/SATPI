@@ -25,7 +25,7 @@
 
 namespace mpegts {
 
-	typedef std::basic_string<unsigned char> TSData;
+	using TSData = std::basic_string<unsigned char>;
 
 	class TableData {
 		public:

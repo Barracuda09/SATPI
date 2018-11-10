@@ -35,8 +35,8 @@ namespace dvbapi {
 	///
 	class Keys {
 		public:
-			typedef std::pair<long, dvbcsa_bs_key_s *> KeyPair;
-			typedef std::queue<KeyPair> KeyQueue;
+			using KeyPair = std::pair<long, dvbcsa_bs_key_s *>;
+			using KeyQueue = std::queue<KeyPair>;
 
 			// ================================================================
 			//  -- Constructors and destructor --------------------------------

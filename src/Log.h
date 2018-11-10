@@ -45,13 +45,13 @@
 
 		private:
 
-			typedef struct {
+			using LogElem_t = struct LogElem {
 				int priority;
 				std::string msg;
 				std::string timestamp;
-			} LogElem_t;
+			};
 
-			typedef std::deque<LogElem_t> LogBuffer_t;
+			using LogBuffer_t = std::deque<LogElem_t>;
 
 			static LogBuffer_t appLogBuffer;
 	};

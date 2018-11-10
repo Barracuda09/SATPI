@@ -31,7 +31,7 @@ namespace base {
 	/// The class @c M3UParser can be used to parse M3U files with 'satip-freq' extensions.
 	class M3UParser {
 		public:
-			typedef std::map<double, std::string> TransformationMap;
+			using TransformationMap = std::map<double, std::string>;
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------

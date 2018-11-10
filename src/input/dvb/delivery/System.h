@@ -34,7 +34,7 @@ namespace dvb {
 namespace delivery {
 
 	class System;
-	typedef std::vector<System *> SystemVector;
+	using SystemVector = std::vector<System *>;
 
 	/// The class @c System specifies the interface to an specific delivery system
 	class System :

@@ -99,14 +99,14 @@ namespace mpegts {
 		private:
 
 			// PID and DMX file descriptor
-			typedef struct {
+			using PidData_t = struct PidData {
 				int fd_dmx;        /// used DMX file descriptor for PID
 				bool used;         /// used pid (0 = not used, 1 = in use)
 				bool shouldClose;  /// indicate that this PID should close
 				uint8_t cc;        /// continuity counter (0 - 15) of this PID
 				uint32_t cc_error; /// cc error count
 				uint32_t count;    /// the number of times this pid occurred
-			} PidData_t;
+			};
 
 			bool _changed;             /// if something changed to 'pid' array
 			PidData_t _data[MAX_PIDS]; /// used pids

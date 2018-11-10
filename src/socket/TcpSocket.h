@@ -74,8 +74,8 @@ FW_DECL_NS0(SocketClient);
 			// ===================================================================
 
 		private:
-			typedef std::vector<pollfd> PollfdVector;
-			typedef std::vector<SocketClient> SocketClientVector;
+			using PollfdVector = std::vector<pollfd>;
+			using SocketClientVector =  std::vector<SocketClient>;
 			PollfdVector       _pfdVector;
 			SocketClientVector _socketClientVector;
 

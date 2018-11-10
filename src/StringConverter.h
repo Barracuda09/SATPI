@@ -34,7 +34,7 @@ class StringConverter  {
 
 		/// Convert an enum class to integer
 		template <typename Enumeration>
-		static int asInteger(Enumeration value) {
+		static constexpr int asInteger(Enumeration value) {
 			return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 		}
 

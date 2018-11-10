@@ -20,8 +20,7 @@
 #ifndef MPEGTS_PACKET_BUFFER_H_INCLUDE
 #define MPEGTS_PACKET_BUFFER_H_INCLUDE MPEGTS_PACKET_BUFFER_H_INCLUDE
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <cstddef>
 
 namespace mpegts {
@@ -31,10 +30,6 @@ namespace mpegts {
 	#define TS_PACKET_SIZE           188
 	#define NUMBER_OF_TS_PACKETS       7
 	#define MTU_MAX_TS_PACKET_SIZE  TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS
-
-	#if MTU < MTU_MAX_TS_PACKET_SIZE
-	#error MTU < MTU_MAX_TS_PACKET_SIZE
-	#endif
 
 	class PacketBuffer {
 		public:

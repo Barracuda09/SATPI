@@ -50,22 +50,22 @@ namespace NS3 { \
 
 #define FW_DECL_UP_NS0(CLASS) \
 	class CLASS; \
-	typedef std::unique_ptr<CLASS> Sp ## CLASS; \
-	typedef std::unique_ptr<const CLASS> Scp ## CLASS;
+	using   Sp ## CLASS = std::unique_ptr<CLASS>; \
+	using  Scp ## CLASS = std::unique_ptr<const CLASS>;
 
 #define FW_DECL_UP_NS1(NS1, CLASS) \
 namespace NS1 { \
 	class CLASS; \
-	typedef std::unique_ptr<CLASS> Up ## CLASS; \
-	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
+	using   Up ## CLASS = std::unique_ptr<CLASS>; \
+	using  Ucp ## CLASS = std::unique_ptr<const CLASS>; \
 }
 
 #define FW_DECL_UP_NS2(NS1, NS2, CLASS) \
 namespace NS1 { \
 namespace NS2 { \
 	class CLASS; \
-	typedef std::unique_ptr<CLASS> Up ## CLASS; \
-	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
+	using   Up ## CLASS = std::unique_ptr<CLASS>; \
+	using  Ucp ## CLASS = std::unique_ptr<const CLASS>; \
 } \
 }
 
@@ -74,8 +74,8 @@ namespace NS1 { \
 namespace NS2 { \
 namespace NS3 { \
 	class CLASS; \
-	typedef std::unique_ptr<CLASS> Up ## CLASS; \
-	typedef std::unique_ptr<const CLASS> Ucp ## CLASS; \
+	using   Up ## CLASS = std::unique_ptr<CLASS>; \
+	using  Ucp ## CLASS = std::unique_ptr<const CLASS>; \
 } \
 } \
 }
@@ -83,22 +83,22 @@ namespace NS3 { \
 
 #define FW_DECL_SP_NS0(CLASS) \
 	class CLASS; \
-	typedef std::shared_ptr<CLASS> Sp ## CLASS; \
-	typedef std::shared_ptr<const CLASS> Scp ## CLASS;
+	using   Sp ## CLASS = std::shared_ptr<CLASS>; \
+	using  Scp ## CLASS = std::shared_ptr<const CLASS>;
 
 #define FW_DECL_SP_NS1(NS1, CLASS) \
 namespace NS1 { \
 	class CLASS; \
-	typedef std::shared_ptr<CLASS> Sp ## CLASS; \
-	typedef std::shared_ptr<const CLASS> Scp ## CLASS; \
+	using   Sp ## CLASS = std::shared_ptr<CLASS>; \
+	using  Scp ## CLASS = std::shared_ptr<const CLASS>; \
 }
 
 #define FW_DECL_SP_NS2(NS1, NS2, CLASS) \
 namespace NS1 { \
 namespace NS2 { \
 	class CLASS; \
-	typedef std::shared_ptr<CLASS> Sp ## CLASS; \
-	typedef std::shared_ptr<const CLASS> Scp ## CLASS; \
+	using   Sp ## CLASS = std::shared_ptr<CLASS>; \
+	using  Scp ## CLASS = std::shared_ptr<const CLASS>; \
 } \
 }
 
@@ -107,8 +107,8 @@ namespace NS1 { \
 namespace NS2 { \
 namespace NS3 { \
 	class CLASS; \
-	typedef std::shared_ptr<CLASS> Sp ## CLASS; \
-	typedef std::shared_ptr<const CLASS> Scp ## CLASS; \
+	using   Sp ## CLASS = std::shared_ptr<CLASS>; \
+	using  Scp ## CLASS = std::shared_ptr<const CLASS>; \
 } \
 } \
 }
@@ -117,6 +117,6 @@ namespace NS3 { \
 
 #define FW_DECL_VECTOR_NS0(CLASS) \
 	FW_DECL_SP_NS0(CLASS); \
-	typedef std::vector<Sp ## CLASS> CLASS ## Vector;
+	using CLASS ## Vector = std::vector<Sp ## CLASS>;
 
 #endif // FW_DECL_H_INCLUDE

@@ -19,13 +19,14 @@
 */
 #include <mpegts/PacketBuffer.h>
 
-#include <assert.h>
-
+#include <cassert>
 #include <cstring>
+#include <climits>
 
 namespace mpegts {
 
 	static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
+	static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
 
 	PacketBuffer::PacketBuffer() :
 			_writeIndex(0),

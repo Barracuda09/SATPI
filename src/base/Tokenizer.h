@@ -103,7 +103,7 @@ namespace base {
 			STRING_TYPE _string;
 	};
 
-	typedef TokenizerTempl<std::string> StringTokenizer;
+	using StringTokenizer = TokenizerTempl<std::string>;
 
 } // namespace base
 

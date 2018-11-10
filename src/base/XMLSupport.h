@@ -59,7 +59,7 @@ namespace base {
 			/// Get data from an XML for restoring or web interface
 			virtual void fromXML(const std::string &xml) = 0;
 
-			typedef std::function<bool()> FunctionNotifyChanges;
+			using FunctionNotifyChanges = std::function<bool()>;
             void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
                 _notifyChanges = notifyChanges;
             }
