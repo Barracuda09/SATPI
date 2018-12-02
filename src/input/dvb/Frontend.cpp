@@ -507,10 +507,10 @@ namespace dvb {
 					SI_LOG_INFO("Frontend Type: DSS");
 					break;
 				case SYS_DVBS:
+					++_dvbs2;
 					SI_LOG_INFO("Frontend Type: Satellite (DVB-S)");
 					break;
 				case SYS_DVBS2:
-					// we only count DVB-S2
 					++_dvbs2;
 					SI_LOG_INFO("Frontend Type: Satellite (DVB-S2)");
 					break;
