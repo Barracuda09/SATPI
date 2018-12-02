@@ -81,8 +81,8 @@ namespace delivery {
 	// =======================================================================
 
 	bool DiSEqcEN50494::sendDiseqc(int feFD, int streamID, uint32_t &freq,
-                int src, int pol_v) {
-		return sendDiseqcUnicable(feFD, streamID, freq, src, pol_v);
+                int src, Lnb::Polarization pol) {
+		return sendDiseqcUnicable(feFD, streamID, freq, src, pol);
 	}
 
 	// =======================================================================
@@ -90,7 +90,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DiSEqcEN50494::sendDiseqcUnicable(const int feFD, const int streamID, uint32_t &freq,
-		const int src, const int pol_v) {
+		const int src, const Lnb::Polarization pol) {
 		base::MutexLock lock(_xmlMutex);
 
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
@@ -99,12 +99,13 @@ namespace delivery {
 		};
 
 		bool hiband = false;
-		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol == Lnb::Polarization::Vertical);
 		freq /= 1000;
 		const uint32_t t = round(((freq + _chFreq + 2) / 4) - 350);
 		freq = _chFreq * 1000;
 
-		cmd.msg[3] = ((_chSlot << 5) | ((pol_v == POL_V) ? 0 : 8) | (hiband ? 4 : 0) | ((t >> 8) & 0x03) );
+		cmd.msg[3] = ((_chSlot << 5) | ((pol == Lnb::Polarization::Vertical) ? 0 : 8) |
+		             (hiband ? 4 : 0) | ((t >> 8) & 0x03) );
 		cmd.msg[4] = (t & 0xff);
 
 		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {

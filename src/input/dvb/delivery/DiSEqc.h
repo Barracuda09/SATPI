@@ -57,12 +57,14 @@ namespace delivery {
 
 			///
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
-				int src, int pol_v) = 0;
+				int src, Lnb::Polarization pol) = 0;
 
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
+		public:
+			static constexpr size_t MAX_LNB = 4;
 
 		protected:
 

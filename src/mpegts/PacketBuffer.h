@@ -25,12 +25,6 @@
 
 namespace mpegts {
 
-	#define MTU                     1500
-	#define RTP_HEADER_LEN            12
-	#define TS_PACKET_SIZE           188
-	#define NUMBER_OF_TS_PACKETS       7
-	#define MTU_MAX_TS_PACKET_SIZE  TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS
-
 	class PacketBuffer {
 		public:
 			// =======================================================================
@@ -64,12 +58,12 @@ namespace mpegts {
 
 			/// This function will return the number of TS Packets that are
 			/// in this TS Packet
-			std::size_t getNumberOfTSPackets() const {
+			static constexpr std::size_t getNumberOfTSPackets() {
 				return NUMBER_OF_TS_PACKETS;
 			}
 
 			/// get the amount of data that can be written to this TS packet
-			std::size_t getBufferSize() const {
+			static constexpr std::size_t getBufferSize() {
 				return MTU_MAX_TS_PACKET_SIZE;
 			}
 
@@ -138,6 +132,13 @@ namespace mpegts {
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
+
+		public:
+			static constexpr size_t MTU                    = 1500;
+			static constexpr size_t RTP_HEADER_LEN         =   12;
+			static constexpr size_t TS_PACKET_SIZE         =  188;
+			static constexpr size_t NUMBER_OF_TS_PACKETS   =    7;
+			static constexpr size_t MTU_MAX_TS_PACKET_SIZE = TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS;
 
 		protected:
 			unsigned char _buffer[MTU];

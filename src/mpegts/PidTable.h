@@ -20,14 +20,10 @@
 #ifndef MPEGTS_PIDTABLE_H_INCLUDE
 #define MPEGTS_PIDTABLE_H_INCLUDE MPEGTS_PIDTABLE_H_INCLUDE
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 namespace mpegts {
-
-	#define MAX_PIDS 8193
-
-	#define ALL_PIDS 8192
 
 	/// The class @c PidTable carries all the PID and DMX information
 	class PidTable {
@@ -93,13 +89,17 @@ namespace mpegts {
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
+		public:
+
+			static constexpr size_t MAX_PIDS = 8193;
+			static constexpr size_t ALL_PIDS = 8192;
 
 		protected:
 
 		private:
 
 			// PID and DMX file descriptor
-			using PidData_t = struct PidData {
+			struct PidData {
 				int fd_dmx;        /// used DMX file descriptor for PID
 				bool used;         /// used pid (0 = not used, 1 = in use)
 				bool shouldClose;  /// indicate that this PID should close
@@ -108,8 +108,8 @@ namespace mpegts {
 				uint32_t count;    /// the number of times this pid occurred
 			};
 
-			bool _changed;             /// if something changed to 'pid' array
-			PidData_t _data[MAX_PIDS]; /// used pids
+			bool _changed;           /// if something changed to 'pid' array
+			PidData _data[MAX_PIDS]; /// used pids
 
 	};
 

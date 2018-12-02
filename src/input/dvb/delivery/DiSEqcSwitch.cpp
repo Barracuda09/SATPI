@@ -64,7 +64,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DiSEqcSwitch::sendDiseqc(const int feFD, const int streamID, uint32_t &freq,
-                const int src, const int pol_v) {
+                const int src, const Lnb::Polarization pol) {
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
 		struct dvb_diseqc_master_cmd cmd = {
 			{0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00}, 4
@@ -79,18 +79,18 @@ namespace delivery {
 		// size    0x04: send x bytes
 
 		bool hiband = false;
-		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol == Lnb::Polarization::Vertical);
 
 		// param: high nibble: reset bits
 		//        low nibble: set bits
 		// bits are: option, position, polarizaion, band
 		cmd.msg[3] =
-		  0xf0 | (((src << 2) & 0x0f) | ((pol_v == POL_V) ? 0 : 2) | (hiband ? 1 : 0));
+		  0xf0 | (((src << 2) & 0x0f) | ((pol == Lnb::Polarization::Vertical) ? 0 : 2) | (hiband ? 1 : 0));
 
 		SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x]", streamID, cmd.msg[0],
 				cmd.msg[1], cmd.msg[2], cmd.msg[3]);
 
-		return diseqcSwitch(feFD, (pol_v == POL_V) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
+		return diseqcSwitch(feFD, (pol == Lnb::Polarization::Vertical) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18,
 				cmd, hiband ? SEC_TONE_ON : SEC_TONE_OFF, (src % 2) ? SEC_MINI_B : SEC_MINI_A);
 	}
 

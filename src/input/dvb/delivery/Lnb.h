@@ -23,20 +23,23 @@
 #include <FwDecl.h>
 #include <base/XMLSupport.h>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace input {
 namespace dvb {
 namespace delivery {
 
-	#define MAX_LNB 4
-	#define POL_H   0
-	#define POL_V   1
-
 	/// The class @c Lnb specifies which type of LNB is connected
 	class Lnb :
 		public base::XMLSupport {
 		public:
+
+			enum class Polarization {
+				Horizontal = 0,
+				Vertical   = 1,
+				CircularLeft  = Horizontal,
+				CircularRight = Vertical
+			};
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
@@ -54,6 +57,14 @@ namespace delivery {
 
 			virtual void fromXML(const std::string &xml) override;
 
+			// =======================================================================
+			// -- Static member functions --------------------------------------------
+			// =======================================================================
+
+		public:
+
+			static char translatePolarizationToChar(Polarization pol);
+		
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
 			// =======================================================================

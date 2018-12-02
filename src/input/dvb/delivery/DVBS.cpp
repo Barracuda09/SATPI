@@ -21,6 +21,7 @@
 
 #include <Log.h>
 #include <StringConverter.h>
+#include <Utils.h>
 #include <input/dvb/FrontendData.h>
 #include <input/dvb/delivery/DiSEqcSwitch.h>
 #include <input/dvb/delivery/DiSEqcEN50494.h>
@@ -57,7 +58,7 @@ namespace delivery {
 
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
 			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
-			ADD_XML_ELEMENT(xml, "value", StringConverter::asInteger(_diseqcType));
+			ADD_XML_ELEMENT(xml, "value", asInteger(_diseqcType));
 			ADD_XML_BEGIN_ELEMENT(xml, "list");
 			ADD_XML_ELEMENT(xml, "option0", "DiSEqc Switch");
 			ADD_XML_ELEMENT(xml, "option1", "Unicable (EN50494)");
@@ -104,14 +105,14 @@ namespace delivery {
 		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-S(2)...", _streamID);
 
 		// DiSEqC switch position differs from src and adjust to MAX_LNB
-		const int src = (frontendData.getDiSEqcSource() - 1) % MAX_LNB;
-		const int pol_v = frontendData.getPolarization();
+		const int src = (frontendData.getDiSEqcSource() - 1) % DiSEqc::MAX_LNB;
+		const Lnb::Polarization pol = frontendData.getPolarization();
 		uint32_t freq = frontendData.getFrequency();
 
 		{
 			// send diseqc
 			base::MutexLock lock(_xmlMutex);
-			if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol_v)) {
+			if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol)) {
 				return false;
 			}
 

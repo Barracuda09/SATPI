@@ -103,12 +103,12 @@ namespace output {
 		rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
 		rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
 
-		const unsigned int bufSize = buffer.getBufferSize();
+		const size_t bufSize = buffer.getBufferSize();
 
 		// RTP packet octet count (Bytes)
 		_stream.addRtpData(bufSize, timestamp);
 
-		const unsigned int len = bufSize + RTP_HEADER_LEN;
+		const size_t len = bufSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 		unsigned char header[4];
 		header[0] = 0x24;

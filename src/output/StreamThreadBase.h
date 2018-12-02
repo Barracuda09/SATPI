@@ -27,8 +27,6 @@
 #include <atomic>
 #include <chrono>
 
-#define MAX_BUF 100
-
 FW_DECL_NS0(StreamClient);
 FW_DECL_NS0(StreamInterface);
 
@@ -101,6 +99,7 @@ namespace output {
 
 		private:
 
+			static constexpr size_t MAX_BUF = 100;
 			mpegts::PacketBuffer _tsBuffer[MAX_BUF];
 			size_t _writeIndex;
 			size_t _readIndex;

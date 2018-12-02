@@ -103,19 +103,20 @@ namespace mpegts {
 	}
 
 	void PidTable::addPIDData(int pid, uint8_t cc) {
-		++_data[pid].count;
-		if (_data[pid].cc == 0x80) {
-			_data[pid].cc = cc;
+		PidData &data = _data[pid];
+		++data.count;
+		if (data.cc == 0x80) {
+			data.cc = cc;
 		} else {
-			++_data[pid].cc;
-			_data[pid].cc %= 0x10;
-			if (_data[pid].cc != cc) {
-				int diff = cc - _data[pid].cc;
+			++data.cc;
+			data.cc %= 0x10;
+			if (data.cc != cc) {
+				int diff = cc - data.cc;
 				if (diff < 0) {
 					diff += 0x10;
 				}
-				_data[pid].cc = cc;
-				_data[pid].cc_error += diff;
+				data.cc = cc;
+				data.cc_error += diff;
 			}
 		}
 	}

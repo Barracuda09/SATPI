@@ -26,6 +26,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
+/// Convert an enum class to integer
+template <typename Enumeration>
+static constexpr int asInteger(Enumeration value) {
+	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+}
+
 #define ASSERT(EXPRESSION) assert(EXPRESSION)
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))

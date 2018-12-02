@@ -249,20 +249,19 @@ namespace dvb {
 	}
 
 	bool Frontend::isDataAvailable() {
-		struct pollfd pfd[1];
+		pollfd pfd[1];
 		pfd[0].fd = _fd_dvr;
 		pfd[0].events = POLLIN;
 		pfd[0].revents = 0;
-		const int pollRet = ::poll(pfd, 1, 100);
-		if (pollRet < 0) {
+		const int pollRet = ::poll(pfd, 1, 180);
+		if (pollRet > 0) {
+			return pfd[0].revents & POLLIN;
+		} else if (pollRet < 0) {
 			PERROR("Error during polling frontend for data");
 			return false;
-		} else if (pollRet > 0) {
-			return pfd[0].revents & POLLIN;
-		} else {
-//			SI_LOG_DEBUG("Stream: %d, Timeout during polling frontend for data", _streamID);
-			return false;
 		}
+//		SI_LOG_DEBUG("Stream: %d, Timeout during polling frontend for data", _streamID);
+		return false;
 	}
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
@@ -392,7 +391,7 @@ namespace dvb {
 
 	bool Frontend::teardown() {
 		// Close active PIDs
-		for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+		for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
 			closePid(i);
 		}
 		_tuned = false;
@@ -750,13 +749,13 @@ namespace dvb {
 				_frontendData.resetPIDTableChanged();
 				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
 				// Check should we close PIDs first
-				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
 					if (_frontendData.shouldPIDClose(i)) {
 						closePid(i);
 					}
 				}
 				// Check which PID should be openend (again)
-				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
 					if (_frontendData.isPIDUsed(i)) {
 						// Check if we have no DMX for this PID, then open one
 						if (!openPid(i)) {

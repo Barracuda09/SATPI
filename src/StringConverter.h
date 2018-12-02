@@ -32,12 +32,6 @@ class StringConverter  {
 
 	public:
 
-		/// Convert an enum class to integer
-		template <typename Enumeration>
-		static constexpr int asInteger(Enumeration value) {
-			return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-		}
-
 		/// Returns a copy of the string where all specified markers are replaced
 		/// with the specified arguments.<br>
 		/// <b>Example:</b> @c std::string s = StringConverter::stringFormat(

@@ -21,11 +21,13 @@
 
 #include <Log.h>
 #include <Unused.h>
+#include <Utils.h>
 #include <StringConverter.h>
-#include <input/dvb/delivery/Lnb.h>
 
 namespace input {
 namespace dvb {
+
+	using namespace input::dvb::delivery;
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -98,7 +100,7 @@ namespace dvb {
 		// =======================================================================
 		_pilot = PILOT_AUTO;
 		_src = 1;
-		_pol_v = 0;
+		_pol = Lnb::Polarization::Horizontal;
 
 		// =======================================================================
 		// DVB-C2 Data members
@@ -151,9 +153,9 @@ namespace dvb {
 		}
 		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
 			if (strVal == "h") {
-				_pol_v = POL_H;
+				_pol = Lnb::Polarization::Horizontal;
 			} else if (strVal == "v") {
-				_pol_v = POL_V;
+				_pol = Lnb::Polarization::Vertical;
 			}
 		}
 		const int src = StringConverter::getIntParameter(msg, method, "src=");
@@ -417,7 +419,7 @@ namespace dvb {
 			const bool add) {
 		if (pids == "all" || pids == "none") {
 			// all/none pids requested then 'remove' all used PIDS
-			for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+			for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
 				setPID(i, false);
 			}
 			if (pids == "all") {
@@ -425,7 +427,7 @@ namespace dvb {
 			}
 		} else {
 			if (clearPidsFirst) {
-				for (std::size_t i = 0u; i < MAX_PIDS; ++i) {
+				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
 					setPID(i, false);
 				}
 			}
@@ -518,14 +520,14 @@ namespace dvb {
 		return _src;
 	}
 
-	int FrontendData::getPolarization() const {
+	Lnb::Polarization FrontendData::getPolarization() const {
 		base::MutexLock lock(_mutex);
-		return _pol_v;
+		return _pol;
 	}
 
 	char FrontendData::getPolarizationChar() const {
 		base::MutexLock lock(_mutex);
-		return (_pol_v == POL_V) ? 'v' : 'h';
+		return Lnb::translatePolarizationToChar(_pol);
 	}
 
 	int FrontendData::getModulationType() const {

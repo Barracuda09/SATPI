@@ -21,6 +21,7 @@
 
 #include <Log.h>
 #include <StringConverter.h>
+#include <Utils.h>
 
 namespace input {
 namespace dvb {
@@ -56,7 +57,7 @@ namespace delivery {
 
 	void Lnb::addToXML(std::string &xml) const {
 		base::MutexLock lock(_xmlMutex);
-		ADD_XML_ELEMENT(xml, "lnbtype", StringConverter::asInteger(_type));
+		ADD_XML_ELEMENT(xml, "lnbtype", asInteger(_type));
 		ADD_XML_NUMBER_INPUT(xml, "lofSwitch", _switchlof / 1000UL, 0, 20000);
 		ADD_XML_NUMBER_INPUT(xml, "lofLow", _lofLow / 1000UL, 0, 20000);
 		ADD_XML_NUMBER_INPUT(xml, "lofHigh", _lofHigh / 1000UL, 0, 20000);
@@ -66,7 +67,7 @@ namespace delivery {
 		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		if (findXMLElement(xml, "lnbtype", element)) {
-			;
+			_type = static_cast<LNBType>(std::stoi(element));
 		}
 		if (findXMLElement(xml, "lofSwitch.value", element)) {
 			_switchlof = std::stoi(element) * 1000UL;
@@ -102,6 +103,20 @@ namespace delivery {
 			ifreq = abs(freq - _lofLow);
 		}
 		freq = ifreq;
+	}
+
+	char Lnb::translatePolarizationToChar(Polarization pol) {
+		if (pol == Polarization::Horizontal) {
+			return 'h';
+		} else if (pol == Polarization::Vertical) {
+			return 'v';
+		} else if (pol == Polarization::CircularLeft) {
+			return 'l';
+		} else if (pol == Polarization::CircularRight) {
+			return 'r';
+		} else {
+			return 'E';
+		}
 	}
 
 } // namespace delivery

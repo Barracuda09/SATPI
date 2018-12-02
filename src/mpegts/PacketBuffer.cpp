@@ -25,7 +25,7 @@
 
 namespace mpegts {
 
-	static_assert(MTU_MAX_TS_PACKET_SIZE < MTU, "TS Packet size bigger then MTU");
+	static_assert(PacketBuffer::MTU_MAX_TS_PACKET_SIZE < PacketBuffer::MTU, "TS Packet size bigger then MTU");
 	static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
 
 	PacketBuffer::PacketBuffer() :

@@ -109,14 +109,14 @@ namespace output {
 		rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
 		rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
 
-		const unsigned int size = buffer.getBufferSize();
+		const size_t size = buffer.getBufferSize();
 
 		// RTP packet octet count (Bytes)
 		_stream.addRtpData(size, timestamp);
 
 		// send the RTP/UDP packet
 		SocketAttr &rtp = client.getRtpSocketAttr();
-		if (!rtp.sendDataTo(rtpBuffer, size + RTP_HEADER_LEN, MSG_DONTWAIT)) {
+		if (!rtp.sendDataTo(rtpBuffer, size + mpegts::PacketBuffer::RTP_HEADER_LEN, MSG_DONTWAIT)) {
 			if (!client.isSelfDestructing()) {
 				SI_LOG_ERROR("Stream: %d, Error sending RTP/UDP data to %s:%d", _stream.getStreamID(),
 					rtp.getIPAddress().c_str(), rtp.getSocketPort());

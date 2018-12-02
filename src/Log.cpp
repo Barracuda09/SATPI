@@ -34,7 +34,7 @@
 int syslog_on = 1;
 static base::Mutex logMutex;
 
-Log::LogBuffer_t Log::appLogBuffer;
+Log::LogBuffer Log::appLogBuffer;
 
 void Log::open_app_log() {}
 
@@ -67,7 +67,7 @@ void Log::applog(const int priority, const char *fmt, ...) {
 	std::string::size_type index = 0;
 
 	while (StringConverter::getline(msg, index, line, "\r\n")) {
-		LogElem_t elem;
+		LogElem elem;
 
 		// set priority
 		elem.priority = priority;
@@ -109,8 +109,8 @@ std::string Log::makeXml() {
 	{
 		base::MutexLock lock(logMutex);
 		if (!appLogBuffer.empty()) {
-			for (LogBuffer_t::iterator it = appLogBuffer.begin(); it != appLogBuffer.end(); ++it) {
-				const LogElem_t elem = *it;
+			for (auto it = appLogBuffer.cbegin(); it != appLogBuffer.cend(); ++it) {
+				const LogElem elem = *it;
 				StringConverter::addFormattedString(log,
 					"<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
 					elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(),

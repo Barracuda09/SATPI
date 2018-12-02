@@ -28,9 +28,6 @@
 namespace decrypt {
 namespace dvbapi {
 
-	#define DEMUX_SIZE 25
-	#define FILTER_SIZE 25
-
 	/// The class @c Filter are all available filters for OSCam
 	class Filter {
 		public:
@@ -122,8 +119,8 @@ namespace dvbapi {
 			void clear() {
 				base::MutexLock lock(_mutex);
 				_collecting = false;
-				for (std::size_t demux = 0; demux < DEMUX_SIZE; ++demux) {
-					for (std::size_t filter = 0; filter < FILTER_SIZE; ++filter) {
+				for (int demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (int filter = 0; filter < FILTER_SIZE; ++filter) {
 						_filterData[demux][filter].clear();
 					}
 				}
@@ -134,6 +131,10 @@ namespace dvbapi {
 			// =======================================================================
 
 		protected:
+
+			static constexpr int DEMUX_SIZE  = 25;
+			static constexpr int FILTER_SIZE = 25;
+
 			base::Mutex _mutex;
 			FilterData _filterData[DEMUX_SIZE][FILTER_SIZE];
 			bool _collecting;

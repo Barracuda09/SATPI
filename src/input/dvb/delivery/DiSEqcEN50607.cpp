@@ -80,7 +80,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DiSEqcEN50607::sendDiseqc(int feFD, int streamID, uint32_t &freq,
-                int src, int pol_v) {
+                int src, Lnb::Polarization pol) {
 		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
 			PERROR("FE_SET_VOLTAGE failed");
 		}
@@ -89,7 +89,7 @@ namespace delivery {
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(900));
 
-		return sendDiseqcJess(feFD, streamID, freq, src, pol_v);
+		return sendDiseqcJess(feFD, streamID, freq, src, pol);
 	}
 
 	// =======================================================================
@@ -97,7 +97,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const int streamID, uint32_t &freq,
-		const int src, const int pol_v) {
+		const int src, const Lnb::Polarization pol) {
 		base::MutexLock lock(_xmlMutex);
 
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
@@ -106,14 +106,14 @@ namespace delivery {
 		};
 
 		bool hiband = false;
-		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol_v == POL_V);
+		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol == Lnb::Polarization::Vertical);
 		freq /= 1000;
 		const uint32_t t = freq - 100;
 		freq = _chFreq * 1000;
 
 		cmd.msg[1] = _chSlot << 3 | ((t >> 8) & 0x07);
 		cmd.msg[2] = (t & 0xff);
-		cmd.msg[3] = (((src << 2) & 0x0f) | ((pol_v == POL_V) ? 0 : 2) | (hiband ? 1 : 0));
+		cmd.msg[3] = (((src << 2) & 0x0f) | ((pol == Lnb::Polarization::Vertical) ? 0 : 2) | (hiband ? 1 : 0));
 
 		for (size_t i = 0; i < _diseqcRepeat; ++i) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(300));

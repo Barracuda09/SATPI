@@ -59,7 +59,7 @@ namespace delivery {
 
 			///
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
-				int src, int pol_v) override;
+				int src, Lnb::Polarization pol) override;
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
@@ -68,7 +68,7 @@ namespace delivery {
 		private:
 
 			bool sendDiseqcJess(int feFD, int streamID, uint32_t &freq,
-				int src, int pol_v);
+				int src, Lnb::Polarization pol);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

@@ -21,6 +21,7 @@
 #define INPUT_DVB_FRONTEND_DATA_H_INCLUDE INPUT_DVB_FRONTEND_DATA_H_INCLUDE
 
 #include <input/DeviceData.h>
+#include <input/dvb/delivery/Lnb.h>
 #include <mpegts/PidTable.h>
 
 #include <stdint.h>
@@ -134,7 +135,9 @@ namespace dvb {
 			int getPilotTones() const;
 
 			/// Get the LNB polarizaion
-			int getPolarization() const;
+			input::dvb::delivery::Lnb::Polarization getPolarization() const;
+
+			/// Get the LNB polarizaion as char
 			char getPolarizationChar() const;
 
 			/// Get the DiSEqc source
@@ -184,7 +187,7 @@ namespace dvb {
 			// =======================================================================
 			int _pilot;               // pilot tones (on/off)
 			int _src;                 // Source (1-4) => DiSEqC switch position (0-3)
-			int _pol_v;               // polarisation (1 = vertical/circular right, 0 = horizontal/circular left)
+			input::dvb::delivery::Lnb::Polarization _pol;
 
 			// =======================================================================
 			// -- DVB-C2 Data members ------------------------------------------------

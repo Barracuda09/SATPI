@@ -45,15 +45,15 @@
 
 		private:
 
-			using LogElem_t = struct LogElem {
+			struct LogElem {
 				int priority;
 				std::string msg;
 				std::string timestamp;
 			};
 
-			using LogBuffer_t = std::deque<LogElem_t>;
+			using LogBuffer = std::deque<LogElem>;
 
-			static LogBuffer_t appLogBuffer;
+			static LogBuffer appLogBuffer;
 	};
 
 
