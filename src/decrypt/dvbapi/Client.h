@@ -47,7 +47,7 @@ namespace dvbapi {
 			// -- Constructors and destructor ---------------------------------
 			// ================================================================
 
-			Client(StreamManager &streamManager);
+			explicit Client(StreamManager &streamManager);
 
 			virtual ~Client();
 

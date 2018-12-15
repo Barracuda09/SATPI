@@ -39,13 +39,13 @@ namespace output {
 		_stream(stream),
 		_protocol(protocol),
 		_state(State::Paused),
-		_writeIndex(0u),
-		_readIndex(0u),
-		_sendInterval(100u) {
+		_writeIndex(0),
+		_readIndex(0),
+		_sendInterval(100) {
 		// Initialize all TS packets
 		uint32_t ssrc = _stream.getSSRC();
 		long timestamp = _stream.getTimestamp();
-		for (size_t i = 0u; i < MAX_BUF; ++i) {
+		for (size_t i = 0; i < MAX_BUF; ++i) {
 			_tsBuffer[i].initialize(ssrc, timestamp);
 		}
 	}
@@ -64,8 +64,8 @@ namespace output {
 		const int clientID = 0;
 		const StreamClient &client = _stream.getStreamClient(clientID);
 
-		_writeIndex        = 0u;
-		_readIndex         = 0u;
+		_writeIndex = 0;
+		_readIndex = 0;
 		_tsBuffer[_writeIndex].reset();
 
 		if (!startThread()) {
@@ -92,8 +92,8 @@ namespace output {
 	bool StreamThreadBase::restartStreaming(int clientID) {
 		// Check if thread is running
 		if (running()) {
-			_writeIndex = 0u;
-			_readIndex  = 0u;
+			_writeIndex = 0;
+			_readIndex  = 0;
 			_tsBuffer[_writeIndex].reset();
 			_state = State::Running;
 			SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),

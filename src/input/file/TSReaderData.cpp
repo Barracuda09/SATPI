@@ -32,7 +32,7 @@ namespace file {
 
 	TSReaderData::TSReaderData() :
 		_filePath("None") {
-		initialize();
+		TSReaderData::initialize();
 	}
 
 	TSReaderData::~TSReaderData() {}

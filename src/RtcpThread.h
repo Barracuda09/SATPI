@@ -50,7 +50,7 @@ FW_DECL_NS0(StreamInterface);
 
 		protected:
 			/// Thread function
-			virtual void threadEntry();
+			virtual void threadEntry() override;
 
 		private:
 			///

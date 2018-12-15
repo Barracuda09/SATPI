@@ -39,7 +39,7 @@ namespace output {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			StreamThreadRtpTcp(StreamInterface &stream);
+			explicit StreamThreadRtpTcp(StreamInterface &stream);
 
 			virtual ~StreamThreadRtpTcp();
 
@@ -55,7 +55,8 @@ namespace output {
 
 			virtual void threadEntry() override;
 
-			virtual bool writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
+			virtual bool writeDataToOutputDevice(
+				mpegts::PacketBuffer &buffer,
 				StreamClient &client) override;
 
 			virtual int getStreamSocketPort(int clientID) const override;

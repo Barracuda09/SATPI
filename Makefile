@@ -239,7 +239,7 @@ uncrustify:
 	@echo uncrustify Done
 
 checkcpp:
-	../cppcheck/cppcheck -I ./src --enable=all --std=posix --std=c++11 ./src 1> cppcheck.log 2>&1
+	~/cppcheck/cppcheck -DENIGMA -DLIBDVBCSA -DDVB_API_VERSION=5 -DDVB_API_VERSION_MINOR=5 -I ./src --enable=all --std=posix --std=c++11 ./src 1> cppcheck.log 2>&1
 
 .PHONY:
 	clean

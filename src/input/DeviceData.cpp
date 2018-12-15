@@ -29,7 +29,7 @@ namespace input {
 	// =======================================================================
 
 	DeviceData::DeviceData() {
-		initialize();
+		DeviceData::initialize();
 		_changed = false;
 		_strength = 0u;
 		_snr = 0u;

@@ -68,7 +68,7 @@ namespace output {
 		protected:
 
 			/// @see ThreadBase
-			virtual void threadEntry() = 0;
+			virtual void threadEntry() override {}
 
 			/// This function will read data from the input device
 			/// @param client specifies were it should be sended to

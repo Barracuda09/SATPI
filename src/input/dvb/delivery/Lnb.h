@@ -37,8 +37,8 @@ namespace delivery {
 			enum class Polarization {
 				Horizontal = 0,
 				Vertical   = 1,
-				CircularLeft  = Horizontal,
-				CircularRight = Vertical
+				CircularLeft  = 2,
+				CircularRight = 3
 			};
 
 			// =======================================================================
@@ -72,7 +72,7 @@ namespace delivery {
 		public:
 
 			void getIntermediateFrequency(uint32_t &freq,
-				bool &hiband, bool verticalPolarization) const;
+				bool &hiband, Polarization pol) const;
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

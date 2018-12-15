@@ -114,9 +114,12 @@ std::string StringConverter::getFormattedString(const char *fmt, ...) {
 }
 
 std::string StringConverter::convertToHexASCIITable(const unsigned char *p, const std::size_t length, const std::size_t blockSize) {
+	std::string out("");
+	if (blockSize == 0) {
+		return out;
+	}
 	std::stringstream hexString;
 	std::stringstream asciiString;
-	std::string out("");
 	const std::size_t lengthNew = (((length / blockSize) + (length %  blockSize > 0 ? 1 : 0)) * blockSize);
 
 	for (std::size_t i = 0; i < length; ++i) {

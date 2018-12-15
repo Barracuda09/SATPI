@@ -85,7 +85,7 @@ namespace delivery {
 	// =======================================================================
 
 	void Lnb::getIntermediateFrequency(uint32_t &freq,
-			bool &hiband, const bool verticalPolarization) const {
+			bool &hiband, const Polarization pol) const {
 		uint32_t ifreq = 0;
 		if (_lofHigh > 0) {
 			if (_switchlof > 0) {
@@ -96,7 +96,7 @@ namespace delivery {
 				ifreq = abs(freq - (hiband ? _lofHigh : _lofLow));
 			} else {
 				// C-Band Multi-point LNB
-				ifreq = abs(freq - (verticalPolarization ? _lofLow : _lofHigh));
+				ifreq = abs(freq - (pol == Polarization::Vertical ? _lofLow : _lofHigh));
 			}
 		} else {
 			// Mono-point LNB without switch
@@ -106,17 +106,18 @@ namespace delivery {
 	}
 
 	char Lnb::translatePolarizationToChar(Polarization pol) {
-		if (pol == Polarization::Horizontal) {
-			return 'h';
-		} else if (pol == Polarization::Vertical) {
-			return 'v';
-		} else if (pol == Polarization::CircularLeft) {
-			return 'l';
-		} else if (pol == Polarization::CircularRight) {
-			return 'r';
-		} else {
-			return 'E';
-		}
+		switch (pol) {
+			case Polarization::Horizontal:
+				return 'h';
+			case Polarization::Vertical:
+				return 'v';
+			case Polarization::CircularLeft:
+				return 'l';
+			case Polarization::CircularRight:
+				return 'r';
+			default:
+				return 'E';
+		};
 	}
 
 } // namespace delivery

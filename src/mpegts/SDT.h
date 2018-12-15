@@ -49,7 +49,7 @@ namespace mpegts {
 
 		public:
 
-			virtual void clear();
+			virtual void clear() override;
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------

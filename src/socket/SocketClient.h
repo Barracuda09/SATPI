@@ -64,7 +64,7 @@ class SocketClient :
 
 		/// Set the User-Agent of this client
 		/// @param userAgent specifies the IP address of this client
-		void setUserAgent(const std::string userAgent) {
+		void setUserAgent(const std::string &userAgent) {
 			_userAgent = userAgent;
 		}
 
@@ -75,7 +75,7 @@ class SocketClient :
 
 		/// Set the IP address of this client
 		/// @param addr specifies the IP address of this client
-		void setIPAddress(const std::string addr) {
+		void setIPAddress(const std::string &addr) {
 			_ip_addr = addr;
 		}
 
@@ -86,7 +86,7 @@ class SocketClient :
 
 		/// Set the session ID for this client
 		/// @param specifies the the session ID to use
-		void setSessionID(const std::string sessionID) {
+		void setSessionID(const std::string &sessionID) {
 			_sessionID = sessionID;
 		}
 

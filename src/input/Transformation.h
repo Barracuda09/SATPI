@@ -40,7 +40,7 @@ namespace input {
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
-			Transformation(input::DeviceData &transformedDeviceData);
+			explicit Transformation(input::DeviceData &transformedDeviceData);
 
 			virtual ~Transformation();
 

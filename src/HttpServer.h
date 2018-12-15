@@ -56,13 +56,13 @@ class HttpServer :
 	protected:
 
 		/// Thread function
-		virtual void threadEntry();
+		virtual void threadEntry() override;
 
 		/// Method for getting the required files
-		virtual bool methodGet(SocketClient &client);
+		virtual bool methodGet(SocketClient &client) override;
 
 		/// Method for getting the required files
-		virtual bool methodPost(SocketClient &client);
+		virtual bool methodPost(SocketClient &client) override;
 
 		///
 		std::size_t readFile(const char *filePath, std::string &data) const;

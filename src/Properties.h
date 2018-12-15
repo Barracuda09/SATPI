@@ -48,10 +48,10 @@ class Properties :
 	public:
 
 		/// Add data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const;
+		virtual void addToXML(std::string &xml) const override;
 
 		/// Get data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml);
+		virtual void fromXML(const std::string &xml) override;
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------

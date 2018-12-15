@@ -46,24 +46,24 @@ class RtspServer :
 
 	protected:
 		/// Thread function
-		virtual void threadEntry();
+		virtual void threadEntry() override;
 
 	private:
 
 		///
-		virtual bool methodSetup(Stream &stream, int clientID, std::string &htmlBody);
+		virtual bool methodSetup(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodPlay(Stream &stream, int clientID, std::string &htmlBody);
+		virtual bool methodPlay(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodOptions(Stream &stream, int clientID, std::string &htmlBody);
+		virtual bool methodOptions(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodDescribe(Stream &stream, int clientID, std::string &htmlBody);
+		virtual bool methodDescribe(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodTeardown(Stream &stream, int clientID, std::string &htmlBody);
+		virtual bool methodTeardown(Stream &stream, int clientID, std::string &htmlBody) override;
 
 
 		// =======================================================================

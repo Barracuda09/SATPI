@@ -113,14 +113,14 @@ class HttpcServer :
 		}
 
 		/// Process the data received from @c SocketClient
-		virtual bool process(SocketClient &client);
-
-		/// Process the the Method HTTP/RTSP
-		void processStreamingRequest(SocketClient &client);
+		virtual bool process(SocketClient &client) override;
 
 		/// Is called when the connection is closed by the client and should
 		/// take appropriate action
-		virtual bool closeConnection(SocketClient &client);
+		virtual bool closeConnection(SocketClient &client) override;
+
+		/// Process the the Method HTTP/RTSP
+		void processStreamingRequest(SocketClient &client);
 
 	private:
 

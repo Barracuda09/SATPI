@@ -34,7 +34,7 @@ namespace dvb {
 	// =======================================================================
 
 	FrontendData::FrontendData() {
-		initialize();
+		FrontendData::initialize();
 	}
 
 	FrontendData::~FrontendData() {;}
