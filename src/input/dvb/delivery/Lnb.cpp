@@ -23,6 +23,8 @@
 #include <StringConverter.h>
 #include <Utils.h>
 
+#include <cmath>
+
 namespace input {
 namespace dvb {
 namespace delivery {
@@ -84,8 +86,10 @@ namespace delivery {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void Lnb::getIntermediateFrequency(uint32_t &freq,
-			bool &hiband, const Polarization pol) const {
+	void Lnb::getIntermediateFrequency(
+			uint32_t &freq,
+			bool &hiband,
+			const Polarization pol) const {
 		uint32_t ifreq = 0;
 		if (_lofHigh > 0) {
 			if (_switchlof > 0) {
@@ -93,14 +97,14 @@ namespace delivery {
 				if (freq >= _switchlof) {
 					hiband = true;
 				}
-				ifreq = abs(freq - (hiband ? _lofHigh : _lofLow));
+				ifreq = std::abs(static_cast<long>(freq) - static_cast<long>(hiband ? _lofHigh : _lofLow));
 			} else {
 				// C-Band Multi-point LNB
-				ifreq = abs(freq - (pol == Polarization::Vertical ? _lofLow : _lofHigh));
+				ifreq = std::abs(static_cast<long>(freq) - static_cast<long>(pol == Polarization::Vertical ? _lofLow : _lofHigh));
 			}
 		} else {
 			// Mono-point LNB without switch
-			ifreq = abs(freq - _lofLow);
+			ifreq = std::abs(static_cast<long>(freq) - static_cast<long>(_lofLow));
 		}
 		freq = ifreq;
 	}
