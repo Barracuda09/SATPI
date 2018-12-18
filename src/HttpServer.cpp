@@ -137,16 +137,13 @@ bool HttpServer::methodGet(SocketClient &client) {
 			if (file.compare("SatPI.xml") == 0) {
 				_xml.addToXML(docType);
 				docTypeSize = docType.size();
-
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("log.xml") == 0) {
-				docType = Log::makeXml();
+			} else if (file.compare("log.json") == 0) {
+				docType = Log::makeJSON();
 				docTypeSize = docType.size();
-
-				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
+				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_JSON, docTypeSize, 0);
 			} else if (file.compare("STOP") == 0) {
 				exitRequest = true;
-
 				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 			} else if ((docTypeSize = readFile(filePath.c_str(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
@@ -169,9 +166,10 @@ bool HttpServer::methodGet(SocketClient &client) {
 						}
 					}
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0, _properties.getRtspPort());
-
 				} else if (file.find(".html") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_HTML, docTypeSize, 0);
+				} else if (file.find(".json") != std::string::npos) {
+					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_JSON, docTypeSize, 0);
 				} else if (file.find(".js") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_JS, docTypeSize, 0);
 				} else if (file.find(".css") != std::string::npos) {

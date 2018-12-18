@@ -17,3 +17,23 @@ function loadXMLDoc(filename) {
 	xmlhttp.open("GET", filename, true);
 	xmlhttp.send();
 }
+
+function loadJSONDoc(filename) {
+	if (window.XMLHttpRequest) {
+		jsonhttp = new XMLHttpRequest();
+	} else if (window.ActiveXObject) {
+		jsonhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	} else {
+		throw new Error("Ajax is not supported by this browser");
+	}
+
+	// callback function
+	jsonhttp.onreadystatechange = function() {
+		if (jsonhttp.readyState == 4 && jsonhttp.status == 200) {
+			jsonloaded(jsonhttp.responseText);
+		}
+	}
+
+	jsonhttp.open("GET", filename, true);
+	jsonhttp.send();
+}

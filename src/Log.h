@@ -37,7 +37,7 @@
 
 			static void applog(int priority, const char *fmt, ...);
 
-			static std::string makeXml();
+			static std::string makeJSON();
 
 			static void open_app_log();
 

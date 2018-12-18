@@ -47,8 +47,9 @@ class HttpcServer :
 		static const std::string HTML_SERVICE_UNAVAILABLE;
 
 		static const std::string CONTENT_TYPE_XML;
-		static const std::string CONTENT_TYPE_HTML;
+		static const std::string CONTENT_TYPE_JSON;
 		static const std::string CONTENT_TYPE_JS;
+		static const std::string CONTENT_TYPE_HTML;
 		static const std::string CONTENT_TYPE_CSS;
 		static const std::string CONTENT_TYPE_PNG;
 		static const std::string CONTENT_TYPE_ICO;

@@ -61,9 +61,10 @@ const std::string HttpcServer::HTML_NOT_FOUND           = "404 Not Found";
 const std::string HttpcServer::HTML_MOVED_PERMA         = "301 Moved Permanently";
 const std::string HttpcServer::HTML_SERVICE_UNAVAILABLE = "503 Service Unavailable";
 
-const std::string HttpcServer::CONTENT_TYPE_XML         = "text/xml; charset=UTF-8";
+const std::string HttpcServer::CONTENT_TYPE_XML         = "application/xml; charset=UTF-8";
+const std::string HttpcServer::CONTENT_TYPE_JSON        = "application/json; charset=UTF-8";
+const std::string HttpcServer::CONTENT_TYPE_JS          = "application/javascript; charset=UTF-8";
 const std::string HttpcServer::CONTENT_TYPE_HTML        = "text/html; charset=UTF-8";
-const std::string HttpcServer::CONTENT_TYPE_JS          = "text/javascript; charset=UTF-8";
 const std::string HttpcServer::CONTENT_TYPE_CSS         = "text/css; charset=UTF-8";
 const std::string HttpcServer::CONTENT_TYPE_PNG         = "image/png";
 const std::string HttpcServer::CONTENT_TYPE_ICO         = "image/x-icon";

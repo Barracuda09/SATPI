@@ -14,35 +14,31 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script>
 	var stopScroll = 0;
-	function buildcontent(xmlDoc) {
+	function buildcontent(jsonString) {
+		var json = JSON.parse(jsonString);
 		var page = "";
-		var logdata = xmlDoc.getElementsByTagName("log");
 		if (stopScroll == 0) {
 			var textarea = document.getElementById('txt');
 			textarea.scrollTop = textarea.scrollHeight;
 		}
-		for (i = 0; i < logdata.length; i++) {
-			timestamp = logdata[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue;
-			msg = logdata[i].getElementsByTagName("msg")[0].childNodes[0].nodeValue;
-			prio = logdata[i].getElementsByTagName("prio")[0].childNodes[0].nodeValue;
-
+		for (i = 0; i < json.log.length; i++) {
 			page +=  i;
 			page += "&nbsp;&nbsp;";
-			page +=  timestamp;
+			page +=  json.log[i].timestamp;
 			page += "&nbsp;&nbsp;";
-			page +=  prio;
+			page +=  json.log[i].prio;
 			page += "&nbsp;&nbsp;";
-			page +=  msg;
+			page +=  json.log[i].msg;
 			page += "\n";
 		}
 		return page;
 	}
 	function updatePage() {
-		loadXMLDoc("log.xml");
+		loadJSONDoc("log.json");
 	}
-	// function called when xml is loaded
-	function xmlloaded(xml) {
-		document.getElementById("txt").innerHTML = buildcontent(xml);
+	// function called when JSON is loaded
+	function jsonloaded(jsonString) {
+		document.getElementById("txt").innerHTML = buildcontent(jsonString);
 	}
 	function scrollToBottom() {
 		$('#txt').scrollTop($('#txt')[0].scrollHeight);

@@ -104,20 +104,24 @@ void Log::applog(const int priority, const char *fmt, ...) {
 	}
 }
 
-std::string Log::makeXml() {
-	std::string log("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<loglist>\r\n");
+std::string Log::makeJSON() {
+	std::string log("{");
 	{
+		log += "\"log\":[";
 		base::MutexLock lock(logMutex);
 		if (!appLogBuffer.empty()) {
 			for (auto it = appLogBuffer.cbegin(); it != appLogBuffer.cend(); ++it) {
 				const LogElem elem = *it;
-				StringConverter::addFormattedString(log,
-					"<log><timestamp>%s</timestamp><msg>%s</msg><prio>%d</prio></log>\r\n",
-					elem.timestamp.c_str(), StringConverter::makeXMLString(elem.msg).c_str(),
-					elem.priority);
+				log += StringConverter::stringFormat(
+					"{\"timestamp\":\"%1\",\"msg\":\"%2\",\"prio\":\"%3\"},",
+					elem.timestamp, elem.msg, elem.priority);
+			}
+			if (log.back() == ',') {
+				log.pop_back();
 			}
 		}
+		log += "]";
 	}
-	log += "</loglist>";
+	log += "}";
 	return log;
 }
