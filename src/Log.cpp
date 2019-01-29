@@ -104,17 +104,31 @@ void Log::applog(const int priority, const char *fmt, ...) {
 	}
 }
 
+static std::string makeJSONString(const std::string &msg) {
+	std::string json;
+	std::string::const_iterator it = msg.begin();
+	while (it != msg.end()) {
+		if (*it == '"' || *it == '\\' || *it == '/' || *it == '\b' ||
+		    *it == '\f' || *it == '\n' || *it == '\r' || *it == '\t') {
+			json += '\\';
+		}
+		json += *it;
+		++it;
+	}
+	return json;
+}
+
 std::string Log::makeJSON() {
 	std::string log("{");
 	{
-		log += "\"log\":[";
+		log += "\"log\": [";
 		base::MutexLock lock(logMutex);
 		if (!appLogBuffer.empty()) {
 			for (auto it = appLogBuffer.cbegin(); it != appLogBuffer.cend(); ++it) {
 				const LogElem elem = *it;
 				log += StringConverter::stringFormat(
-					"{\"timestamp\":\"%1\",\"msg\":\"%2\",\"prio\":\"%3\"},",
-					elem.timestamp, elem.msg, elem.priority);
+					"{ \"timestamp\": \"%1\", \"msg\": \"%2\", \"prio\": \"%3\" },",
+					elem.timestamp, makeJSONString(elem.msg), elem.priority);
 			}
 			if (log.back() == ',') {
 				log.pop_back();
