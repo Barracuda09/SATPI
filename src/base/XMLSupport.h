@@ -1,6 +1,6 @@
 /* XMLSupport.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -43,7 +43,6 @@ namespace base {
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
-
 		public:
 
 			/// Add data to an XML for storing or web interface
@@ -60,13 +59,13 @@ namespace base {
 			virtual void fromXML(const std::string &xml) = 0;
 
 			using FunctionNotifyChanges = std::function<bool()>;
-            void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
-                _notifyChanges = notifyChanges;
-            }
+			void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
+				_notifyChanges = notifyChanges;
+			}
 
 		protected:
 
-            virtual bool notifyChanges() const;
+			virtual bool notifyChanges() const;
 
 			///
 			bool findXMLElement(const std::string &xml, const std::string &elementToFind,
@@ -78,10 +77,9 @@ namespace base {
 			bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
 						  std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
 
-			// =======================================================================
-			// Data members
-			// =======================================================================
-
+		// =======================================================================
+		// -- Data members ------------------------------------------------------
+		// =======================================================================
 		protected:
 
 			base::Mutex _xmlMutex;

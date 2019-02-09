@@ -1,6 +1,6 @@
 /* Log.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 
 #include <StringConverter.h>
 #include <base/Mutex.h>
+#include <base/JSONSerializer.h>
 
 #include <iostream>
 #include <ctime>
@@ -104,38 +105,23 @@ void Log::applog(const int priority, const char *fmt, ...) {
 	}
 }
 
-static std::string makeJSONString(const std::string &msg) {
-	std::string json;
-	std::string::const_iterator it = msg.begin();
-	while (it != msg.end()) {
-		if (*it == '"' || *it == '\\' || *it == '/' || *it == '\b' ||
-		    *it == '\f' || *it == '\n' || *it == '\r' || *it == '\t') {
-			json += '\\';
-		}
-		json += *it;
-		++it;
-	}
-	return json;
-}
-
 std::string Log::makeJSON() {
-	std::string log("{");
+	base::JSONSerializer json;
+	json.startObject();
 	{
-		log += "\"log\": [";
+		json.startArrayWithName("log");
 		base::MutexLock lock(logMutex);
 		if (!appLogBuffer.empty()) {
-			for (auto it = appLogBuffer.cbegin(); it != appLogBuffer.cend(); ++it) {
-				const LogElem elem = *it;
-				log += StringConverter::stringFormat(
-					"{ \"timestamp\": \"%1\", \"msg\": \"%2\", \"prio\": \"%3\" },",
-					elem.timestamp, makeJSONString(elem.msg), elem.priority);
-			}
-			if (log.back() == ',') {
-				log.pop_back();
+			for (const LogElem &elem : appLogBuffer) {
+				json.startObject();
+				json.addValueString("timestamp", elem.timestamp);
+				json.addValueString("msg", elem.msg);
+				json.addValueNumber("prio", StringConverter::stringFormat("%1", elem.priority));
+				json.endObject();
 			}
 		}
-		log += "]";
+		json.endArray();
 	}
-	log += "}";
-	return log;
+	json.endObject();
+	return json.getString();
 }
