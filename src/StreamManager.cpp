@@ -39,8 +39,7 @@
 
 StreamManager::StreamManager() :
 	XMLSupport(),
-	_decrypt(nullptr),
-	_dummyStream(nullptr) {
+	_decrypt(nullptr) {
 #ifdef LIBDVBCSA
 	_decrypt = std::make_shared<decrypt::dvbapi::Client>(*this);
 #endif
@@ -67,10 +66,6 @@ void StreamManager::enumerateDevices(const std::string &appDataPath,
 #endif
 	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 	SI_LOG_INFO("Enumerating all devices...");
-
-	// Make an dummy stream
-	input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(0);
-	_dummyStream = std::make_shared<Stream>(0, tsreader, _decrypt);
 
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, _decrypt, dvbPath);
@@ -165,11 +160,9 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			StringConverter::addFormattedString(sessionID, "%010d", std::lround(dist(gen)) % 0xffffffff);
 			newSession = true;
 		} else {
-			// None of the above.. so it is just an outside session give an temporary StreamClient
+			// None of the above.. so it is just an outside session
 			SI_LOG_DEBUG("Found message outside session");
-			socketClient.setSessionID("-1");
-			_dummyStream->setSocketClient(socketClient);
-			return _dummyStream;
+			return nullptr;
 		}
 	}
 

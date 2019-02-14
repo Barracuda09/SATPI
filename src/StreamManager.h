@@ -103,7 +103,6 @@ class StreamManager :
 
 		decrypt::dvbapi::SpClient _decrypt;
 		StreamVector _stream;
-		SpStream _dummyStream;
 };
 
 #endif // STREAM_MANAGER_H_INCLUDE
