@@ -80,8 +80,8 @@ std::string StreamManager::getXMLDeliveryString() const {
 	std::size_t dvb_t2 = 0u;
 	std::size_t dvb_c = 0u;
 	std::size_t dvb_c2 = 0u;
-	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	for (SpStream stream : _stream) {
+		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
 	std::vector<std::string> strArry;
 	if (dvb_s2 > 0) {
@@ -102,7 +102,7 @@ std::string StreamManager::getXMLDeliveryString() const {
 
 	std::string delSysStr;
 	const std::size_t size = strArry.size();
-	for(std::size_t i = 0; i < size; ++i) {
+	for (std::size_t i = 0; i < size; ++i) {
 		delSysStr += strArry[i];
 		if (i < (size - 1) ) {
 			delSysStr += ',';
@@ -118,8 +118,8 @@ std::string StreamManager::getRTSPDescribeString() const {
 	std::size_t dvb_t2 = 0u;
 	std::size_t dvb_c = 0u;
 	std::size_t dvb_c2 = 0u;
-	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		(*it)->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	for (SpStream stream : _stream) {
+		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
 	return StringConverter::stringFormat("%1,%2,%3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
@@ -170,8 +170,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	if (streamID == -1) {
 		if (foundSessionID) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
-			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				SpStream stream = *it;
+			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
 					return stream;
@@ -179,8 +178,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			}
 		} else {
 			SI_LOG_INFO("Found StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
-			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				SpStream stream = *it;
+			for (SpStream stream : _stream) {
 				if (!stream->streamInUse()) {
 					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 						socketClient.setSessionID(sessionID);
@@ -193,8 +191,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		SI_LOG_INFO("Found StreamID %d - SessionID %s", streamID, sessionID.c_str());
 		// Did we find the StreamClient? else try to search in other Streams
 		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-			for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-				SpStream stream = *it;
+			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					socketClient.setSessionID(sessionID);
 					return stream;
@@ -214,8 +211,7 @@ void StreamManager::checkForSessionTimeout() {
 	base::MutexLock lock(_xmlMutex);
 
 	assert(!_stream.empty());
-	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it) {
-		SpStream stream = *it;
+	for (SpStream stream : _stream) {
 		if (stream->streamInUse()) {
 			stream->checkForSessionTimeout();
 		}
@@ -236,8 +232,7 @@ std::string StreamManager::attributeDescribeString(const std::size_t stream, boo
 void StreamManager::fromXML(const std::string &xml) {
 	base::MutexLock lock(_xmlMutex);
 	std::size_t i = 0;
-	for (StreamVector::iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
-		SpStream stream = *it;
+	for (SpStream stream : _stream) {
 		std::string element;
 		const std::string find = StringConverter::stringFormat("stream%1", i);
 		if (findXMLElement(xml, find, element)) {
@@ -257,8 +252,7 @@ void StreamManager::addToXML(std::string &xml) const {
 	assert(!_stream.empty());
 
 	std::size_t i = 0;
-	for (StreamVector::const_iterator it = _stream.begin(); it != _stream.end(); ++it, ++i) {
-		ScpStream stream = *it;
+	for (ScpStream stream : _stream) {
 		ADD_XML_N_ELEMENT(xml, "stream", i, stream->toXML());
 	}
 #ifdef LIBDVBCSA
