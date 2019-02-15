@@ -88,7 +88,7 @@ std::string StreamManager::getXMLDeliveryString() const {
 		strArry.push_back(StringConverter::stringFormat("DVBS2-%1", dvb_s2));
 	}
 	if (dvb_t > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBT2-%1", dvb_t));
+		strArry.push_back(StringConverter::stringFormat("DVBT-%1", dvb_t));
 	}
 	if (dvb_t2 > 0) {
 		strArry.push_back(StringConverter::stringFormat("DVBT2-%1", dvb_t2));
