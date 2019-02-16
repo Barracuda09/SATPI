@@ -236,6 +236,7 @@ void StreamManager::fromXML(const std::string &xml) {
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
+		++i;
 	}
 #ifdef LIBDVBCSA
 	std::string element;
@@ -252,6 +253,7 @@ void StreamManager::addToXML(std::string &xml) const {
 	std::size_t i = 0;
 	for (ScpStream stream : _stream) {
 		ADD_XML_N_ELEMENT(xml, "stream", i, stream->toXML());
+		++i;
 	}
 #ifdef LIBDVBCSA
 	ADD_XML_ELEMENT(xml, "decrypt", _decrypt->toXML());
