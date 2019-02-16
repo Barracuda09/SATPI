@@ -74,7 +74,6 @@ void StreamManager::enumerateDevices(const std::string &appDataPath,
 }
 
 std::string StreamManager::getXMLDeliveryString() const {
-	base::MutexLock lock(_xmlMutex);
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
@@ -112,7 +111,6 @@ std::string StreamManager::getXMLDeliveryString() const {
 }
 
 std::string StreamManager::getRTSPDescribeString() const {
-	base::MutexLock lock(_xmlMutex);
 	std::size_t dvb_s2 = 0u;
 	std::size_t dvb_t = 0u;
 	std::size_t dvb_t2 = 0u;
