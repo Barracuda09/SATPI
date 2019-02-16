@@ -53,33 +53,76 @@ void RtspServer::threadEntry() {
 }
 
 bool RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody) {
-	if (stream.getStreamingType() == Stream::StreamingType::RTP_TCP) {
-		static const char *RTSP_SETUP_OK =
-			"RTSP/1.0 200 OK\r\n" \
-			"CSeq: %1\r\n" \
-			"Session: %2;timeout=%3\r\n" \
-			"Transport: RTP/AVP/TCP;unicast;client_ip=%4;interleaved=0-1\r\n" \
-			"com.ses.streamID: %5\r\n" \
-			"\r\n";
+	switch (stream.getStreamingType()) {
+		case Stream::StreamingType::RTP_TCP: {
+			static const char *RTSP_SETUP_OK =
+				"RTSP/1.0 200 OK\r\n" \
+				"CSeq: %1\r\n" \
+				"Session: %2;timeout=%3\r\n" \
+				"Transport: RTP/AVP/TCP;unicast;client_ip=%4;interleaved=0-1\r\n" \
+				"com.ses.streamID: %5\r\n" \
+				"\r\n";
 
-		// setup reply
-		htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID),
-			stream.getSessionTimeout(clientID), stream.getIPAddress(clientID), stream.getStreamID());
+			// setup reply
+			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
+				stream.getCSeq(clientID),
+				stream.getSessionID(clientID),
+				stream.getSessionTimeout(clientID),
+				stream.getIPAddress(clientID),
+				stream.getStreamID());
+			break;
+		}
+		case Stream::StreamingType::RTSP_UNICAST: {
+			static const char *RTSP_SETUP_OK =
+				"RTSP/1.0 200 OK\r\n" \
+				"CSeq: %1\r\n" \
+				"Session: %2;timeout=%3\r\n" \
+				"Transport: RTP/AVP;unicast;client_ip=%4;client_port=%5-%6\r\n" \
+				"com.ses.streamID: %7\r\n" \
+				"\r\n";
 
-	} else {
-		static const char *RTSP_SETUP_OK =
-			"RTSP/1.0 200 OK\r\n" \
-			"CSeq: %1\r\n" \
-			"Session: %2;timeout=%3\r\n" \
-			"Transport: RTP/AVP;unicast;client_ip=%4;client_port=%5-%6\r\n" \
-			"com.ses.streamID: %7\r\n" \
-			"\r\n";
+			// setup reply
+			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
+				stream.getCSeq(clientID),
+				stream.getSessionID(clientID),
+				stream.getSessionTimeout(clientID),
+				stream.getIPAddress(clientID),
+				stream.getRtpSocketPort(clientID),
+				stream.getRtcpSocketPort(clientID),
+				stream.getStreamID());
+			break;
+		}
+		case Stream::StreamingType::RTSP_MULTICAST: {
+			static const char *RTSP_SETUP_OK =
+				"RTSP/1.0 200 OK\r\n" \
+				"CSeq: %1\r\n" \
+				"Session: %2;timeout=%3\r\n" \
+				"Transport: RTP/AVP;multicast;destination=%4;port=%5-%6;ttl=5\r\n" \
+				"com.ses.streamID: %7\r\n" \
+				"\r\n";
 
-		// setup reply
-		htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK, stream.getCSeq(clientID), stream.getSessionID(clientID),
-			stream.getSessionTimeout(clientID), stream.getIPAddress(clientID),
-			stream.getRtpSocketPort(clientID), stream.getRtcpSocketPort(clientID), stream.getStreamID());
-	}
+			// setup reply
+			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
+				stream.getCSeq(clientID),
+				stream.getSessionID(clientID),
+				stream.getSessionTimeout(clientID),
+				stream.getIPAddress(clientID),
+				stream.getRtpSocketPort(clientID),
+				stream.getRtcpSocketPort(clientID),
+				stream.getStreamID());
+			break;
+		}
+		default:
+			static const char *RTSP_SETUP_REPLY =
+				"RTSP/1.0 461 Unsupported Transport\r\n" \
+				"CSeq: %1\r\n" \
+				"\r\n";
+
+			// setup reply
+			htmlBody = StringConverter::stringFormat(RTSP_SETUP_REPLY,
+				stream.getCSeq(clientID));
+			return false;
+	};
 
 // @TODO  check return of update();
 	stream.update(clientID, true);

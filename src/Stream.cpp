@@ -271,9 +271,12 @@ bool Stream::update(int clientID, bool start) {
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: HTTP", _streamID);
 				_streaming.reset(new output::StreamThreadHttp(*this));
 				break;
-			case StreamingType::RTSP:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP", _streamID);
+			case StreamingType::RTSP_UNICAST:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP Unicast", _streamID);
 				_streaming.reset(new output::StreamThreadRtp(*this));
+				break;
+			case StreamingType::RTSP_MULTICAST:
+				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP Multicast", _streamID);
 				break;
 			case StreamingType::RTP_TCP:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTP/TCP", _streamID);
@@ -357,7 +360,7 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
 				_streamingType = StreamingType::RTP_TCP;
 			} else if (transport.find("RTP/AVP") != std::string::npos) {
-				_streamingType = StreamingType::RTSP;
+				_streamingType = StreamingType::RTSP_UNICAST;
 			}
 		}
 	}
@@ -369,8 +372,16 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 				}
 			}
 			break;
-		case StreamingType::RTSP: {
+		case StreamingType::RTSP_UNICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
+				if (port != -1) {
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
+				}
+			}
+			break;
+		case StreamingType::RTSP_MULTICAST: {
+				const int port = StringConverter::getIntParameter(msg, "Transport:", "port=");
 				if (port != -1) {
 					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
 					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());

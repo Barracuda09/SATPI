@@ -52,7 +52,8 @@ class Stream :
 		enum class StreamingType {
 			NONE,
 			HTTP,
-			RTSP,
+			RTSP_UNICAST,
+			RTSP_MULTICAST,
 			RTP_TCP,
 			FILE
 		};
@@ -122,7 +123,6 @@ class Stream :
 				std::size_t &dvbt2,
 				std::size_t &dvbc,
 				std::size_t &dvbc2) {
-			base::MutexLock lock(_xmlMutex);
 			if (_enabled) {
 				_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
 			}
