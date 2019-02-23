@@ -1,6 +1,6 @@
 /* SocketAttr.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -30,102 +30,102 @@
 
 FW_DECL_NS0(SocketClient);
 
-	/// Socket attributes
-	class SocketAttr {
-		public:
-			// ===================================================================
-			//  -- Constructors and destructor -----------------------------------
-			// ===================================================================
-			SocketAttr();
+/// Socket attributes
+class SocketAttr {
+	public:
+		// ===================================================================
+		//  -- Constructors and destructor -----------------------------------
+		// ===================================================================
+		SocketAttr();
 
-			virtual ~SocketAttr();
+		virtual ~SocketAttr();
 
-			// ===================================================================
-			//  -- Other member functions ----------------------------------------
-			// ===================================================================
+		// ===================================================================
+		//  -- Other member functions ----------------------------------------
+		// ===================================================================
 
-		public:
+	public:
 
-			///
-			void setupSocketStructure(int port, const char *ip_addr);
+		///
+		void setupSocketStructure(int port, const char *ip_addr);
 
-			///
-			void setupSocketStructureWithAnyAddress(int port);
+		///
+		void setupSocketStructureWithAnyAddress(int port);
 
-			///
-			bool setupSocketHandle(int type, int protocol);
+		///
+		bool setupSocketHandle(int type, int protocol);
 
-			///
-			std::string getIPAddress() const {
-				return _ip_addr;
-			}
+		///
+		std::string getIPAddress() const {
+			return _ip_addr;
+		}
 
-			/// bind the socket to the port number
-			bool bind();
+		/// bind the socket to the port number
+		bool bind();
 
-			/// Set listen for maxClients on this Socket
-			/// @param backlog defines the maximum length to which the queue
-			/// of pending connections for this server may grow
-			bool listen(std::size_t backlog);
+		/// Set listen for maxClients on this Socket
+		/// @param backlog defines the maximum length to which the queue
+		/// of pending connections for this server may grow
+		bool listen(std::size_t backlog);
 
-			/// Set connect on this Socket
-			bool connectTo();
+		/// Set connect on this Socket
+		bool connectTo();
 
-			/// Accept an connection on this Socket and save client IP address etc.
-			/// in client
-			bool acceptConnection(SocketClient &client, bool showLogInfo);
+		/// Accept an connection on this Socket and save client IP address etc.
+		/// in client
+		bool acceptConnection(SocketClient &client, bool showLogInfo);
 
-			/// Get the port of this Socket
-			int getSocketPort() const;
+		/// Get the port of this Socket
+		int getSocketPort() const;
 
-			/// Use this function when the socket is in connected state
-			bool sendData(const void *buf, std::size_t len, int flags);
+		/// Use this function when the socket is in connected state
+		bool sendData(const void *buf, std::size_t len, int flags);
 
-			///
-			bool writeData(const struct iovec *iov, int iovcnt);
+		///
+		bool writeData(const iovec *iov, int iovcnt);
 
-			/// Use this function when the socket is on a
-			/// connection-mode (SOCK_STREAM)
-			bool sendDataTo(const void *buf, std::size_t len, int flags);
+		/// Use this function when the socket is on a
+		/// connection-mode (SOCK_STREAM)
+		bool sendDataTo(const void *buf, std::size_t len, int flags);
 
-			///
-			ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
+		///
+		ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
 
-			/// Get the file descriptor of this Socket
-			int getFD() const;
+		/// Get the file descriptor of this Socket
+		int getFD() const;
 
-			/// Set the file descriptor for this Socket
-			/// @param fd specifies the file descriptor to set
-			void setFD(int fd);
+		/// Set the file descriptor for this Socket
+		/// @param fd specifies the file descriptor to set
+		void setFD(int fd);
 
-			/// Close the file descriptor of this Socket
-			virtual void closeFD();
+		/// Close the file descriptor of this Socket
+		virtual void closeFD();
 
-			/// Set the Receive and Send timeout in Sec for this socket
-			void setSocketTimeoutInSec(unsigned int timeout);
+		/// Set the Receive and Send timeout in Sec for this socket
+		void setSocketTimeoutInSec(unsigned int timeout);
 
-			///
-			void setKeepAlive();
+		///
+		void setKeepAlive();
 
-			/// Get the network send buffer size for this Socket
-			int getNetworkSendBufferSize() const;
+		/// Get the network send buffer size for this Socket
+		int getNetworkSendBufferSize() const;
 
-			/// Set the network send buffer size for this Socket
-			bool setNetworkSendBufferSize(int size);
+		/// Set the network send buffer size for this Socket
+		bool setNetworkSendBufferSize(int size);
 
-			/// Set the network receive buffer size for this Socket
-			bool setNetworkReceiveBufferSize(int size);
+		/// Set the network receive buffer size for this Socket
+		bool setNetworkReceiveBufferSize(int size);
 
-			// ===================================================================
-			//  -- Data members --------------------------------------------------
-			// ===================================================================
+		// ===================================================================
+		//  -- Data members --------------------------------------------------
+		// ===================================================================
 
-		protected:
+	protected:
 
-			int _fd;
-			struct sockaddr_in _addr;
-			std::string _ip_addr;
+		int _fd;
+		struct sockaddr_in _addr;
+		std::string _ip_addr;
 
-	};
+};
 
 #endif // SOCKET_SOCKETATTR_H_INCLUDE

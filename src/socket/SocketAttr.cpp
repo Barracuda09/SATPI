@@ -1,6 +1,6 @@
 /* SocketAttr.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -85,7 +85,7 @@
 
 	bool SocketAttr::bind() {
 		// bind the socket to the port number
-		if (::bind(_fd, (struct sockaddr *) &_addr, sizeof(_addr)) == -1) {
+		if (::bind(_fd, reinterpret_cast<sockaddr *>(&_addr), sizeof(_addr)) == -1) {
 			PERROR("bind");
 			return false;
 		}
@@ -101,7 +101,7 @@
 	}
 
 	bool SocketAttr::connectTo() {
-		if (::connect(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) == -1) {
+		if (::connect(_fd, reinterpret_cast<sockaddr *>(&_addr), sizeof(_addr)) == -1) {
 			if (errno != ECONNREFUSED && errno != EINPROGRESS) {
 				PERROR("connect");
 			}
@@ -113,7 +113,7 @@
 	bool SocketAttr::acceptConnection(SocketClient &client, bool showLogInfo) {
 		// check if we have a client?
 		socklen_t addrlen = sizeof(client._addr);
-		const int fd_conn = ::accept(_fd, (struct sockaddr *) &client._addr, &addrlen);
+		const int fd_conn = ::accept(_fd, reinterpret_cast<sockaddr *>(&client._addr), &addrlen);
 		if (fd_conn > 0) {
 
 // @todo should 'client' handle this himself?
@@ -150,7 +150,7 @@
 		return true;
 	}
 
-	bool SocketAttr::writeData(const struct iovec *iov, const int iovcnt) {
+	bool SocketAttr::writeData(const iovec *iov, const int iovcnt) {
 		if (::writev(_fd, iov, iovcnt) == -1) {
 			if (errno != EBADF) {
 				PERROR("writev");
@@ -161,7 +161,7 @@
 	}
 
 	bool SocketAttr::sendDataTo(const void *buf, std::size_t len, int flags) {
-		if (::sendto(_fd, buf, len, flags, reinterpret_cast<struct sockaddr *>(&_addr),
+		if (::sendto(_fd, buf, len, flags, reinterpret_cast<sockaddr *>(&_addr),
 				   sizeof(_addr)) == -1) {
 			PERROR("sendto");
 			return false;
@@ -172,7 +172,7 @@
 	ssize_t SocketAttr::recvDatafrom(void *buf, std::size_t len, int flags) {
 		struct sockaddr_in si_other;
 		socklen_t addrlen = sizeof(si_other);
-		const ssize_t size = ::recvfrom(_fd, buf, len, flags, (struct sockaddr *)&si_other, &addrlen);
+		const ssize_t size = ::recvfrom(_fd, buf, len, flags, reinterpret_cast<sockaddr *>(&si_other), &addrlen);
 		return size;
 	}
 
