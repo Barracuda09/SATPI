@@ -1,6 +1,6 @@
 /* XMLSaveSupport.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -26,40 +26,49 @@
 
 namespace base {
 
-	/// The class @c XMLSaveSupport has some basic functions to handle XML files
-	class XMLSaveSupport {
-		public:
+/// The class @c XMLSaveSupport has some basic functions to handle XML files
+class XMLSaveSupport {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit XMLSaveSupport(const std::string &filePath = "");
-			virtual ~XMLSaveSupport();
+		explicit XMLSaveSupport(const std::string &filePath = "");
+		virtual ~XMLSaveSupport();
 
-            virtual bool notifyChanges() const {
-                return saveXML();
-            }
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
+	public:
 
-            virtual bool saveXML() const = 0;
+		virtual bool notifyChanges() const {
+			return saveXML();
+		}
 
-		protected:
+		virtual bool saveXML() const = 0;
 
-			/// Get the file name for this XML
-			std::string getFileName() const;
+	protected:
 
-			///
-			std::string makeXMLString(const std::string &msg);
+		/// Get the file name for this XML
+		std::string getFileName() const;
 
-			/// Save XML file
-			bool saveXML(const std::string &xml) const;
+		///
+		std::string makeXMLString(const std::string &msg);
 
-			/// Loads XML file
-			bool restoreXML(std::string &xml);
+		/// Save XML file
+		bool saveXML(const std::string &xml) const;
 
-		private:
+		/// Loads XML file
+		bool restoreXML(std::string &xml);
 
-			std::string _filePath;
-	};
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
+
+	private:
+
+		std::string _filePath;
+};
 
 } // namespace base
 
