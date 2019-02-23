@@ -1,6 +1,6 @@
 /* StreamThreadBase.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -79,9 +79,6 @@ namespace output {
 		// set begin timestamp
 		_t1 = std::chrono::steady_clock::now();
 
-		// Set affinity with CPU
-//		setAffinity(3);
-
 		_state = State::Running;
 		SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
 				client.getIPAddress().c_str(), getStreamSocketPort(clientID));
@@ -152,8 +149,6 @@ namespace output {
 				decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 				if (decrypt != nullptr) {
 					decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
-				} else {
-//					SI_LOG_DEBUG("Stream: %d, No decrypt device found", _stream.getStreamID());
 				}
 #endif
 				// goto next, so inc write index

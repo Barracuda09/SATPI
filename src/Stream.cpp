@@ -277,6 +277,7 @@ bool Stream::update(int clientID, bool start) {
 				break;
 			case StreamingType::RTSP_MULTICAST:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP Multicast", _streamID);
+				_streaming.reset(new output::StreamThreadRtp(*this));
 				break;
 			case StreamingType::RTP_TCP:
 				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTP/TCP", _streamID);

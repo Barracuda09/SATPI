@@ -26,7 +26,8 @@
 
 namespace base {
 
-	/// ThreadBase can be use to implement thread functionality
+	/// ThreadBase can be use to implement thread functionality by inheriting
+	/// this base class
 	class ThreadBase {
 		public:
 			enum class Priority {
@@ -106,7 +107,8 @@ namespace base {
 			bool setPriority(const Priority priority);
 
 		protected:
-			/// thread entry
+
+			/// thread entry, do not leave this function
 			virtual void threadEntry() = 0;
 
 		private:

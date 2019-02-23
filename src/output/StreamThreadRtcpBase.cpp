@@ -1,6 +1,6 @@
-/* RtcpThread.cpp
+/* StreamThreadRtcpBase.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -17,72 +17,24 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include <RtcpThread.h>
+#include <output/StreamThreadRtcpBase.h>
 
-#include <StreamClient.h>
 #include <Stream.h>
-#include <Log.h>
-#include <Utils.h>
 
-#include <chrono>
 #include <cstring>
-#include <thread>
 
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
+namespace output {
 
-
-RtcpThread::RtcpThread(StreamInterface &stream, bool tcp) :
-		ThreadBase("RtcpThread"),
+StreamThreadRtcpBase::StreamThreadRtcpBase(StreamInterface &stream) :
 		_clientID(0),
 		_stream(stream),
-		_tcpMode(tcp) {
-}
+ 		_thread(
+			"RtcpThread",
+			std::bind(&StreamThreadRtcpBase::threadExecuteFunction, this)) {}
 
-RtcpThread::~RtcpThread() {
-	terminateThread();
-	if (_tcpMode) {
-		const StreamClient &client = _stream.getStreamClient(_clientID);
-		SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddress().c_str(), client.getHttpSocketPort());
-	} else {
-		SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
-		SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-			rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
-		rtcp.closeFD();
-	}
-}
+StreamThreadRtcpBase::~StreamThreadRtcpBase() {}
 
-bool RtcpThread::startStreaming() {
-	if (_tcpMode) {
-		const StreamClient &client = _stream.getStreamClient(_clientID);
-		if (!startThread()) {
-			SI_LOG_ERROR("Stream: %d, Start RTCP/TCP stream  to %s:%d ERROR", _stream.getStreamID(),
-				client.getIPAddress().c_str(), client.getHttpSocketPort());
-			return false;
-		}
-		SI_LOG_INFO("Stream: %d, Start RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddress().c_str(), client.getHttpSocketPort());
-	} else {
-		SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
-
-		if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
-			SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
-		}
-
-		if (!startThread()) {
-			SI_LOG_ERROR("Stream: %d, Start RTCP/UDP stream to %s:%d ERROR", _stream.getStreamID(),
-						 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
-			return false;
-		}
-		SI_LOG_INFO("Stream: %d, Start RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-					rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
-	}
-	return true;
-}
-
-uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
+uint8_t *StreamThreadRtcpBase::get_app_packet(std::size_t *len) {
 	uint8_t app[1024 * 2];
 
 	uint32_t ssrc = _stream.getSSRC();
@@ -131,10 +83,7 @@ uint8_t *RtcpThread::get_app_packet(std::size_t *len) {
 	return appPtr;
 }
 
-/*
- *
- */
-uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
+uint8_t *StreamThreadRtcpBase::get_sr_packet(std::size_t *len) {
 	uint8_t sr[28];
 
 	long timestamp = _stream.getTimestamp();
@@ -190,10 +139,7 @@ uint8_t *RtcpThread::get_sr_packet(std::size_t *len) {
 	return srPtr;
 }
 
-/*
- *
- */
-uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
+uint8_t *StreamThreadRtcpBase::get_sdes_packet(std::size_t *len) {
 	uint8_t sdes[20];
 	uint32_t ssrc = _stream.getSSRC();
 
@@ -236,72 +182,4 @@ uint8_t *RtcpThread::get_sdes_packet(std::size_t *len) {
 	return sdesPtr;
 }
 
-void RtcpThread::threadEntry() {
-	StreamClient &client = _stream.getStreamClient(_clientID);
-	int mon_update = 0;
-
-	while (running()) {
-		// check do we need to update Device monitor signals
-		if (mon_update == 0) {
-			_stream.getInputDevice()->monitorSignal(false);
-
-			mon_update = _stream.getRtcpSignalUpdateFrequency();
-		} else {
-			--mon_update;
-		}
-		// RTCP compound packets must start with a SR, SDES then APP
-		std::size_t srlen   = 0;
-		std::size_t sdeslen = 0;
-		std::size_t applen  = 0;
-		uint8_t *sdes = get_sdes_packet(&sdeslen);
-		uint8_t *sr   = get_sr_packet(&srlen);
-		uint8_t *app  = get_app_packet(&applen);
-
-		if (sr && sdes && app) {
-			if (_tcpMode) {
-				const std::size_t len = srlen + sdeslen + applen;
-				unsigned char header[4];
-				header[0] = 0x24;
-				header[1] = 0x01;
-				header[2] = (len >> 8) & 0xFF;
-				header[3] = (len >> 0) & 0xFF;
-
-				iovec iov[4];
-				iov[0].iov_base = header;
-				iov[0].iov_len = 4;
-				iov[1].iov_base = sr;
-				iov[1].iov_len = srlen;
-				iov[2].iov_base = sdes;
-				iov[2].iov_len = sdeslen;
-				iov[3].iov_base = app;
-				iov[3].iov_len = applen;
-
-				// send the RTCP/TCP packet
-				if (!client.writeHttpData(iov, 4)) {
-					SI_LOG_ERROR("Stream: %d, Error sending RTCP/TCP Stream Data to %s", _stream.getStreamID(),
-						client.getIPAddress().c_str());
-				}
-			} else {
-				const std::size_t len = srlen + sdeslen + applen;
-				uint8_t data[len];
-
-				std::memcpy(data, sr, srlen);
-				std::memcpy(data + srlen, sdes, sdeslen);
-				std::memcpy(data + srlen + sdeslen, app, applen);
-
-				// send the RTCP/UDP packet
-				SocketAttr &rtcp = client.getRtcpSocketAttr();
-				if (!rtcp.sendDataTo(data, len, 0)) {
-					SI_LOG_ERROR("Stream: %d, Error sending RTCP/UDP data to %s:%d", _stream.getStreamID(),
-								 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
-				}
-			}
-		}
-		DELETE_ARRAY(sr);
-		DELETE_ARRAY(sdes);
-		DELETE_ARRAY(app);
-
-		// update 5 Hz
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	}
 }

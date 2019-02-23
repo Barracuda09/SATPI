@@ -1,4 +1,4 @@
-/* StreamThreadRtp.h
+/* StreamThreadRtcpBase.h
 
    Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,23 +17,20 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef OUTPUT_STREAMTHREADRTP_H_INCLUDE
-#define OUTPUT_STREAMTHREADRTP_H_INCLUDE OUTPUT_STREAMTHREADRTP_H_INCLUDE
+#ifndef OUTPUT_STREAMTHREADRTCPBASE_H_INCLUDE
+#define OUTPUT_STREAMTHREADRTCPBASE_H_INCLUDE OUTPUT_STREAMTHREADRTCPBASE_H_INCLUDE
 
 #include <FwDecl.h>
-#include <output/StreamThreadBase.h>
-#include <output/StreamThreadRtcp.h>
+#include <base/Thread.h>
 
-FW_DECL_NS0(StreamClient);
+#include <cstdint>
+
 FW_DECL_NS0(StreamInterface);
-
-FW_DECL_UP_NS1(output, StreamThreadRtp);
 
 namespace output {
 
-/// RTP Streaming thread
-class StreamThreadRtp :
-	public StreamThreadBase {
+/// The base class for RTCP Server
+class StreamThreadRtcpBase {
 
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
@@ -41,44 +38,51 @@ class StreamThreadRtp :
 
 	public:
 
-		explicit StreamThreadRtp(StreamInterface &stream);
+		StreamThreadRtcpBase(StreamInterface &stream);
 
-		virtual ~StreamThreadRtp();
+		virtual ~StreamThreadRtcpBase();
 
 		// =====================================================================
-		//  -- output::StreamThreadBase ----------------------------------------
+		//  -- Other member functions ------------------------------------------
 		// =====================================================================
 
 	public:
 
-		virtual bool startStreaming() override;
+		/// Start streaming
+		/// @return true if stream is started else false on error
+		virtual bool startStreaming() = 0;
 
-		virtual bool pauseStreaming(int clientID) override;
+		/// Pause streaming
+		/// @return true if stream is paused else false on error
+		virtual bool pauseStreaming(int clientID) = 0;
 
-		virtual bool restartStreaming(int clientID) override;
+		/// Restart streaming
+		/// @return true if stream is restarted else false on error
+		virtual bool restartStreaming(int clientID) = 0;
 
 	protected:
 
-		virtual void threadEntry() override;
+		/// Thread execute function
+		virtual bool threadExecuteFunction() = 0;
 
-		virtual bool writeDataToOutputDevice(
-			mpegts::PacketBuffer &buffer,
-			StreamClient &client) override;
-
-		virtual int getStreamSocketPort(int clientID) const override;
+		///
+		uint8_t *get_app_packet(std::size_t *len);
+		uint8_t *get_sdes_packet(std::size_t *len);
+		uint8_t *get_sr_packet(std::size_t *len);
 
 		// =====================================================================
-		// -- Data members -----------------------------------------------------
+		//  -- Data members ----------------------------------------------------
 		// =====================================================================
 
-	private:
+	protected:
 
 		int _clientID;
-		uint16_t _cseq;         /// RTP sequence number
-		StreamThreadRtcp _rtcp; ///
+		StreamInterface &_stream;
+		int _mon_update;
 
+		base::Thread _thread;
 };
 
-} // namespace output
+}
 
-#endif // OUTPUT_STREAMTHREADRTP_H_INCLUDE
+#endif // OUTPUT_STREAMTHREADRTCPBASE_H_INCLUDE

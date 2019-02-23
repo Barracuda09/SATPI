@@ -1,6 +1,6 @@
 /* StreamThreadRtp.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ namespace output {
 		StreamThreadBase("RTP/UDP", stream),
 		_clientID(0),
 		_cseq(0),
-		_rtcp(stream, false) {
+		_rtcp(stream) {
 	}
 
 	StreamThreadRtp::~StreamThreadRtp() {
@@ -64,8 +64,21 @@ namespace output {
 		_rtcp.startStreaming();
 
 		_cseq = 0x0000;
-		StreamThreadBase::startStreaming();
-		return true;
+		return StreamThreadBase::startStreaming();
+	}
+
+	bool StreamThreadRtp::pauseStreaming(int clientID) {
+		// RTCP
+		_rtcp.pauseStreaming(clientID);
+
+		return StreamThreadBase::pauseStreaming(clientID);
+	}
+
+	bool StreamThreadRtp::restartStreaming(int clientID) {
+		// RTCP
+		_rtcp.restartStreaming(clientID);
+
+		return StreamThreadBase::restartStreaming(clientID);
 	}
 
 	int StreamThreadRtp::getStreamSocketPort(int clientID) const {
@@ -76,20 +89,20 @@ namespace output {
 		StreamClient &client = _stream.getStreamClient(0);
 		while (running()) {
 			switch (_state) {
-			case State::Pause:
-				_state = State::Paused;
-				break;
-			case State::Paused:
-				// Do nothing here, just wait
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				break;
-			case State::Running:
-				readDataFromInputDevice(client);
-				break;
-			default:
-				PERROR("Wrong State");
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				break;
+				case State::Pause:
+					_state = State::Paused;
+					break;
+				case State::Paused:
+					// Do nothing here, just wait
+					std::this_thread::sleep_for(std::chrono::milliseconds(50));
+					break;
+				case State::Running:
+					readDataFromInputDevice(client);
+					break;
+				default:
+					PERROR("Wrong State");
+					std::this_thread::sleep_for(std::chrono::milliseconds(50));
+					break;
 			}
 		}
 	}

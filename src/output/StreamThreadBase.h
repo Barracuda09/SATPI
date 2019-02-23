@@ -1,6 +1,6 @@
 /* StreamThreadBase.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -50,8 +50,19 @@ namespace output {
 			virtual ~StreamThreadBase();
 
 			// =======================================================================
+			//  -- base::ThreadBase --------------------------------------------------
+			// =======================================================================
+
+		protected:
+
+			/// @see ThreadBase
+			virtual void threadEntry() override {}
+
+			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
+
+		public:
 
 			/// Start streaming
 			/// @return true if stream is started else false on error
@@ -66,9 +77,6 @@ namespace output {
 			virtual bool restartStreaming(int clientID);
 
 		protected:
-
-			/// @see ThreadBase
-			virtual void threadEntry() override {}
 
 			/// This function will read data from the input device
 			/// @param client specifies were it should be sended to

@@ -36,7 +36,6 @@ SOURCES = Version.cpp \
 	HttpcServer.cpp \
 	Log.cpp \
 	Properties.cpp \
-	RtcpThread.cpp \
 	RtspServer.cpp \
 	Satpi.cpp \
 	Stream.cpp \
@@ -44,6 +43,7 @@ SOURCES = Version.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
 	base/M3UParser.cpp \
+	base/Thread.cpp \
 	base/ThreadBase.cpp \
 	base/TimeCounter.cpp \
 	base/XMLSaveSupport.cpp \
@@ -72,6 +72,9 @@ SOURCES = Version.cpp \
 	mpegts/TableData.cpp \
 	output/StreamThreadBase.cpp \
 	output/StreamThreadHttp.cpp \
+	output/StreamThreadRtcpBase.cpp \
+	output/StreamThreadRtcp.cpp \
+	output/StreamThreadRtcpTcp.cpp \
 	output/StreamThreadRtp.cpp \
 	output/StreamThreadRtpTcp.cpp \
 	output/StreamThreadTSWriter.cpp \
