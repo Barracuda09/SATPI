@@ -88,57 +88,55 @@ namespace dvb {
 	//  -- Static functions --------------------------------------------------
 	// =======================================================================
 	// Called recursive
-	static void getAttachedFrontends(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
-			const std::string &path, const std::string &startPath) {
-		const std::string ADAPTER = startPath + "/adapter%d";
-		const std::string DMX = ADAPTER + "/demux%d";
-		const std::string DVR = ADAPTER + "/dvr%d";
-		const std::string FRONTEND = ADAPTER + "/frontend%d";
-#define FE_PATH_LEN 255
+	static void getAttachedFrontends(
+			StreamVector &streamVector,
+			decrypt::dvbapi::SpClient decrypt,
+			const std::string &path,
+			const std::string &startPath) {
+		const std::string ADAPTER = startPath + "/adapter%1";
+		const std::string DMX = ADAPTER + "/demux%2";
+		const std::string DVR = ADAPTER + "/dvr%2";
+		const std::string FRONTEND = ADAPTER + "/frontend%2";
 #if SIMU
 		// unused var
 		(void)path;
-		char fe_path[FE_PATH_LEN];
-		char dvr_path[FE_PATH_LEN];
-		char dmx_path[FE_PATH_LEN];
-		snprintf(fe_path,  FE_PATH_LEN, FRONTEND.c_str(), 0, 0);
-		snprintf(dvr_path, FE_PATH_LEN, DVR.c_str(), 0, 0);
-		snprintf(dmx_path, FE_PATH_LEN, DMX.c_str(), 0, 0);
-		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, fe_path, dvr_path, dmx_path);
+
+		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 0, 0);
+		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 0, 0);
+		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 0, 0);
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, fe.c_str(), dvr.c_str(), dmx.c_str());
 		streamVector.push_back(std::make_shared<Stream>(0, frontend0, decrypt));
-		snprintf(fe_path,  FE_PATH_LEN, FRONTEND.c_str(), 1, 0);
-		snprintf(dvr_path, FE_PATH_LEN, DVR.c_str(), 1, 0);
-		snprintf(dmx_path, FE_PATH_LEN, DMX.c_str(), 1, 0);
-		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, fe_path, dvr_path, dmx_path);
+
+		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
+		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 1, 0);
+		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 1, 0);
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, fe.c_str(), dvr.c_str(), dmx.c_str());
 		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
 #else
-		struct dirent **file_list;
+		dirent **file_list;
 		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
 		if (n > 0) {
 			for (int i = 0; i < n; ++i) {
-				char full_path[FE_PATH_LEN];
-				snprintf(full_path, FE_PATH_LEN, "%s/%s", path.c_str(), file_list[i]->d_name);
+				const std::string full_path = StringConverter::stringFormat("%1/%2", path, file_list[i]->d_name);
 				struct stat stat_buf;
-				if (stat(full_path, &stat_buf) == 0) {
+				if (stat(full_path.c_str(), &stat_buf) == 0) {
 					switch (stat_buf.st_mode & S_IFMT) {
 						case S_IFCHR: // character device
 							if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
 								int fe_nr;
 								sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
 								int adapt_nr;
-								sscanf(path.c_str(), ADAPTER.c_str(), &adapt_nr);
+								const std::string ADAPTER_TMP = startPath + "/adapter%d";
+								sscanf(path.c_str(), ADAPTER_TMP.c_str(), &adapt_nr);
 
 								// Make new paths
-								char fe_path[FE_PATH_LEN];
-								char dvr_path[FE_PATH_LEN];
-								char dmx_path[FE_PATH_LEN];
-								snprintf(fe_path,  FE_PATH_LEN, FRONTEND.c_str(), adapt_nr, fe_nr);
-								snprintf(dvr_path, FE_PATH_LEN, DVR.c_str(), adapt_nr, fe_nr);
-								snprintf(dmx_path, FE_PATH_LEN, DMX.c_str(), adapt_nr, fe_nr);
+								const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), adapt_nr, fe_nr);
+								const std::string dvr = StringConverter::stringFormat(DVR.c_str(), adapt_nr, fe_nr);
+								const std::string dmx = StringConverter::stringFormat(DMX.c_str(), adapt_nr, fe_nr);
 
 								// Make new frontend here
 								const StreamVector::size_type size = streamVector.size();
-								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe_path, dvr_path, dmx_path);
+								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe.c_str(), dvr.c_str(), dmx.c_str());
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
 							}
 							break;
@@ -157,7 +155,6 @@ namespace dvb {
 			}
 		}
 #endif
-#undef FE_PATH_LEN
 	}
 
 	// =======================================================================
