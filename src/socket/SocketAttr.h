@@ -22,11 +22,11 @@
 
 #include <FwDecl.h>
 
+#include <string>
+
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-
-#include <string>
 
 FW_DECL_NS0(SocketClient);
 
@@ -47,7 +47,7 @@ class SocketAttr {
 	public:
 
 		///
-		void setupSocketStructure(int port, const char *ip_addr);
+		void setupSocketStructure(const std::string &ipAddr, int port);
 
 		///
 		void setupSocketStructureWithAnyAddress(int port);
@@ -57,7 +57,7 @@ class SocketAttr {
 
 		///
 		std::string getIPAddress() const {
-			return _ip_addr;
+			return _ipAddr;
 		}
 
 		/// bind the socket to the port number
@@ -124,7 +124,7 @@ class SocketAttr {
 
 		int _fd;
 		struct sockaddr_in _addr;
-		std::string _ip_addr;
+		std::string _ipAddr;
 
 };
 

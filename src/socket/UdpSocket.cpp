@@ -1,6 +1,6 @@
 /* UdpSocket.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -18,12 +18,9 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
 #include <socket/UdpSocket.h>
-#include <Log.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <socket/SocketClient.h>
+#include <Log.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -34,9 +31,12 @@ UdpSocket::UdpSocket() {}
 
 UdpSocket::~UdpSocket() {}
 
-bool UdpSocket::initUDPSocket(SocketClient &server, int port, const char *ip_addr) {
+bool UdpSocket::initUDPSocket(
+		SocketClient &server,
+		const std::string &ipAddr,
+		int port) {
 	// fill in the socket structure with host information
-	server.setupSocketStructure(port, ip_addr);
+	server.setupSocketStructure(ipAddr, port);
 
 	if (!server.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
 		SI_LOG_ERROR("UDP Server handle failed");
@@ -45,10 +45,11 @@ bool UdpSocket::initUDPSocket(SocketClient &server, int port, const char *ip_add
 	return true;
 }
 
-bool UdpSocket::initMutlicastUDPSocket(SocketClient &server,
-		const char *multicastIPAddr,
-		int port,
-		const char *interfaceIPaddr) {
+bool UdpSocket::initMutlicastUDPSocket(
+		SocketClient &server,
+		const std::string &multicastIPAddr,
+		const std::string &interfaceIPaddr,
+		int port) {
 	// fill in the socket structure with host information
 	server.setupSocketStructureWithAnyAddress(port);
 
@@ -65,8 +66,8 @@ bool UdpSocket::initMutlicastUDPSocket(SocketClient &server,
 
 	// request that the kernel joins a multicast group
 	struct ip_mreq mreq;
-	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr);
-	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr);
+	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr.c_str());
+	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr.c_str());
 	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
 		PERROR("IP_ADD_MEMBERSHIP");
 		return false;

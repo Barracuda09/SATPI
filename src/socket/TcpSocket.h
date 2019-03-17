@@ -1,6 +1,6 @@
 /* TcpSocket.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -30,62 +30,77 @@
 
 FW_DECL_NS0(SocketClient);
 
-	/// TCP Socket
-	class TcpSocket :
-		public HttpcSocket {
-		public:
-			// ===================================================================
-			// -- Constructors and destructor ------------------------------------
-			// ===================================================================
-			TcpSocket(int maxClients, const std::string &protocol);
+/// TCP Socket
+class TcpSocket :
+	public HttpcSocket {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
 
-			virtual ~TcpSocket();
+	public:
 
-			/// Call this to initialize and setup this socket(s)
-			virtual void initialize(int port, bool nonblock);
+		TcpSocket(int maxClients, const std::string &protocol);
 
-			/// Call this function periodically to check for messages
-			/// @param timeout specifies the timeout 'poll' should use
-			int poll(int timeout);
+		virtual ~TcpSocket();
 
-		protected:
-			/// Callback function if an messages was received
-			/// @param client specifies the client that sended the message etc.
-			virtual bool process(SocketClient &client) = 0;
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-			/// Callback when an connection is closed
-			/// @param client specifies the client that closed the connection
-			virtual bool closeConnection(SocketClient &client) = 0;
+	public:
 
-			/// Get the protocol string
-			const std::string &getProtocolString() const {
-				return _protocolString;
-			}
+		/// Call this function periodically to check for messages
+		/// @param timeout specifies the timeout 'poll' should use
+		int poll(int timeout);
 
-		private:
-			///
-			bool initServerSocket(int maxClients, int port, bool nonblock);
+	protected:
 
-			/// Accept an connection and save client IP address etc.
-			bool acceptConnection(SocketClient &client, bool showLogInfo);
+		/// Call this to initialize and setup this socket(s)
+		virtual void initialize(const std::string &ipAddr, int port, bool nonblock);
 
-			// ===================================================================
-			// -- Data members ---------------------------------------------------
-			// ===================================================================
+		/// Callback function if an messages was received
+		/// @param client specifies the client that sended the message etc.
+		virtual bool process(SocketClient &client) = 0;
 
-		private:
-			using PollfdVector = std::vector<pollfd>;
-			using SocketClientVector =  std::vector<SocketClient>;
-			PollfdVector       _pfdVector;
-			SocketClientVector _socketClientVector;
+		/// Callback when an connection is closed
+		/// @param client specifies the client that closed the connection
+		virtual bool closeConnection(SocketClient &client) = 0;
 
-			std::size_t        _MAX_CLIENTS;   //
-			std::size_t        _MAX_POLL;      //
-			struct pollfd     *_pfd;           //
-			SocketAttr         _server;        //
-			SocketClient      *_client;        //
-			const std::string  _protocolString;//
+		/// Get the protocol string
+		const std::string &getProtocolString() const {
+			return _protocolString;
+		}
 
-	}; // class TcpSocket
+	private:
+
+		///
+		bool initServerSocket(
+			const std::string &ipAddr,
+			int port,
+			int maxClients,
+			bool nonblock);
+
+		/// Accept an connection and save client IP address etc.
+		bool acceptConnection(SocketClient &client, bool showLogInfo);
+
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
+
+	private:
+
+		using PollfdVector = std::vector<pollfd>;
+		using SocketClientVector =  std::vector<SocketClient>;
+		PollfdVector       _pfdVector;
+		SocketClientVector _socketClientVector;
+
+		std::size_t        _MAX_CLIENTS;   //
+		std::size_t        _MAX_POLL;      //
+		struct pollfd     *_pfd;           //
+		SocketAttr         _server;        //
+		SocketClient      *_client;        //
+		const std::string  _protocolString;//
+
+};
 
 #endif // SOCKET_TCPSOCKET_H_INCLUDE

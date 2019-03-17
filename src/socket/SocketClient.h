@@ -1,6 +1,6 @@
 /* SocketClient.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,11 +27,12 @@
 ///
 class SocketClient :
 	public SocketAttr {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+
 	public:
 
-		// =======================================================================
-		// -- Constructors and destructor ----------------------------------------
-		// =======================================================================
 		SocketClient() :
 			_msg(""),
 			_protocolString("None"),
@@ -40,9 +41,23 @@ class SocketClient :
 
 		virtual ~SocketClient() {}
 
-		// =======================================================================
-		//  -- Other member functions --------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- socket::SocketAttr -----------------------------------------------
+		// =====================================================================
+
+	public:
+
+		/// Close the file descriptor of this Socket
+		virtual void closeFD() override {
+			SocketAttr::closeFD();
+			_sessionID = "-1";
+			_userAgent = "None";
+			_msg.clear();
+		}
+
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
 	public:
 
@@ -75,13 +90,13 @@ class SocketClient :
 
 		/// Set the IP address of this client
 		/// @param addr specifies the IP address of this client
-		void setIPAddress(const std::string &addr) {
-			_ip_addr = addr;
+		void setIPAddress(const std::string &ipAddr) {
+			_ipAddr = ipAddr;
 		}
 
 		/// Get the IP address of this client
 		const std::string &getIPAddress() const {
-			return _ip_addr;
+			return _ipAddr;
 		}
 
 		/// Set the session ID for this client
@@ -106,17 +121,9 @@ class SocketClient :
 			return _protocolString;
 		}
 
-		/// Close the file descriptor of this Socket
-		virtual void closeFD() override {
-			SocketAttr::closeFD();
-			_sessionID = "-1";
-			_userAgent = "None";
-			_msg.clear();
-		}
-
-		// =======================================================================
-		// -- Data members -------------------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
 	private:
 

@@ -376,16 +376,16 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 		case StreamingType::RTSP_UNICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
 				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port + 1);
 				}
 			}
 			break;
 		case StreamingType::RTSP_MULTICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "port=");
 				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(port, _client[clientID].getIPAddress().c_str());
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(port + 1, _client[clientID].getIPAddress().c_str());
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port + 1);
 				}
 			}
 			break;

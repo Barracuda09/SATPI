@@ -1,6 +1,6 @@
 /* HttpcServer.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -19,7 +19,6 @@
 */
 #include <HttpcServer.h>
 
-#include <InterfaceAttr.h>
 #include <Log.h>
 #include <Properties.h>
 #include <Stream.h>
@@ -75,15 +74,17 @@ HttpcServer::HttpcServer(
 		int maxClients,
 		const std::string &protocol,
 		StreamManager &streamManager,
-		const InterfaceAttr &interface) :
+		const std::string &bindIPAddress) :
 		TcpSocket(maxClients, protocol),
 		_streamManager(streamManager),
-		_interface(interface) {}
+		_bindIPAddress(bindIPAddress) {}
 
 HttpcServer::~HttpcServer() {}
 
-void HttpcServer::initialize(int port, bool nonblock) {
-	TcpSocket::initialize(port, nonblock);
+void HttpcServer::initialize(
+		int port,
+		bool nonblock) {
+	TcpSocket::initialize(_bindIPAddress, port, nonblock);
 }
 
 const std::string &HttpcServer::getProtocolVersionString() const {

@@ -30,8 +30,9 @@
 namespace input {
 namespace stream {
 
-	Streamer::Streamer(int streamID) :
+	Streamer::Streamer(int streamID, const std::string &bindIPAddress) :
 		Device(streamID),
+		_bindIPAddress(bindIPAddress),
 		_uri("None"),
 		_multiAddr("None"),
 		_port(0),
@@ -47,10 +48,12 @@ namespace stream {
 	//  -- Static member functions -------------------------------------------
 	// =======================================================================
 
-	void Streamer::enumerate(StreamVector &streamVector) {
+	void Streamer::enumerate(
+			StreamVector &streamVector,
+			const std::string &bindIPAddress) {
 		SI_LOG_INFO("Setting up TS Streamer");
 		const StreamVector::size_type size = streamVector.size();
-		const input::stream::SpStreamer streamer = std::make_shared<input::stream::Streamer>(size);
+		const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress);
 		streamVector.push_back(std::make_shared<Stream>(size, streamer, nullptr));
 	}
 
@@ -149,7 +152,7 @@ namespace stream {
 					_port = std::stoi(_uri.substr(begin, end - begin));
 
 					//  Open mutlicast stream
-					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr.c_str(), _port, "0.0.0.0")) {
+					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr, _bindIPAddress, _port)) {
 						SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID, _multiAddr.c_str(), _port, _udpMultiListen.getFD());
 						// set receive buffer to 8MB
 						const int bufferSize =  1024 * 1024 * 8;

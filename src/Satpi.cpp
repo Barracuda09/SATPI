@@ -1,6 +1,6 @@
 /* satpi.c
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -67,21 +67,23 @@ class SatPI :
 		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
 		SatPI(bool ssdp,
+			const std::string &ifaceName,
 			const std::string &appdataPath,
 			const std::string &webPath,
 			const std::string &dvbPath,
 			unsigned int httpPort,
 			unsigned int rtspPort) :
 			XMLSaveSupport(appdataPath + "/" + "SatPI.xml"),
+			_interface(ifaceName),
 			_streamManager(),
 			_properties(_interface.getUUID(), appdataPath, webPath, httpPort, rtspPort),
-			_httpServer(*this, _streamManager, _interface, _properties),
-			_rtspServer(_streamManager, _interface),
-			_ssdpServer(_interface, _properties) {
+			_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
+			_rtspServer(_streamManager, _interface.getIPAddress()),
+			_ssdpServer(_interface.getIPAddress(), _properties) {
 			_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			//
-			_streamManager.enumerateDevices(appdataPath, dvbPath);
+			_streamManager.enumerateDevices(_interface.getIPAddress(), appdataPath, dvbPath);
 			//
 			std::string xml;
 			if (restoreXML(xml)) {
@@ -320,6 +322,7 @@ static void printUsage(const char *prog_name) {
 	       "\t--user xx        run as user\r\n" \
 	       "\t--dvb-path       set path were to find dvb devices default /dev/dvb\r\n" \
 	       "\t--app-data-path  set path for application state data eg. xml files etc\r\n" \
+	       "\t--iface-name     set the network interface to bind to (eg. eth0)\r\n" \
 	       "\t--http-path      set root path of web/http pages\r\n" \
 	       "\t--http-port      set http port default 8875 (1024 - 65535)\r\n" \
 	       "\t--rtsp-port      set rtsp port default 554  ( 554 - 65535)\r\n" \
@@ -342,6 +345,8 @@ int main(int argc, char *argv[]) {
 	// Defaults in Properties
 	unsigned int httpPort = 0;
 	unsigned int rtspPort = 0;
+
+	std::string ifaceName;
 	std::string currentPath;
 	std::string appdataPath;
 	std::string webPath;
@@ -358,30 +363,68 @@ int main(int argc, char *argv[]) {
 		if (strcmp(argv[i], "--no-ssdp") == 0) {
 			ssdp = false;
 		} else if (strcmp(argv[i], "--user") == 0) {
-			user = argv[i+1];
-			++i; // because next was the user-name
+			if (i + 1 < argc) {
+				++i;
+				user = argv[i];
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--no-daemon") == 0) {
 			daemon = false;
 		} else if (strcmp(argv[i], "--dvb-path") == 0) {
-			dvbPath = argv[i+1];
-			++i;
+			if (i + 1 < argc) {
+				++i;
+				dvbPath = argv[i];
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
-			appdataPath = argv[i+1];
-			++i;
+			if (i + 1 < argc) {
+				++i;
+				appdataPath = argv[i];
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
+		} else if (strcmp(argv[i], "--iface-name") == 0) {
+			if (i + 1 < argc) {
+				++i;
+				ifaceName = argv[i];
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--http-path") == 0) {
-			webPath = argv[i+1];
-			++i;
+			if (i + 1 < argc) {
+				++i;
+				webPath = argv[i];
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--http-port") == 0) {
-			httpPort = atoi(argv[i+1]);
-			++i;
-			if (httpPort < 1024 || httpPort > 65535) {
+			if (i + 1 < argc) {
+				++i;
+				httpPort = atoi(argv[i]);
+				if (httpPort < 1024 || httpPort > 65535) {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
 			}
 		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
-			rtspPort = atoi(argv[i+1]);
-			++i;
-			if (rtspPort <  554 || rtspPort > 65535) {
+			if (i + 1 < argc) {
+				++i;
+				rtspPort = atoi(argv[i]);
+				if (rtspPort <  554 || rtspPort > 65535) {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
 			}
@@ -420,7 +463,7 @@ int main(int argc, char *argv[]) {
 			DVBCA dvbca;
 			dvbca.startThread();
 #endif
-			SatPI satpi(ssdp, appdataPath, webPath, dvbPath, httpPort, rtspPort);
+			SatPI satpi(ssdp, ifaceName, appdataPath, webPath, dvbPath, httpPort, rtspPort);
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {

@@ -1,6 +1,6 @@
 /* InterfaceAttr.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,58 +20,57 @@
 #ifndef INTERFACEATTR_H_INCLUDE
 #define INTERFACEATTR_H_INCLUDE INTERFACEATTR_H_INCLUDE
 
-#include <stdio.h>
-
 #include <string>
 
-	/// Socket attributes
-	class InterfaceAttr {
-		public:
-			// ===================================================================
-			//  -- Constructors and destructor -----------------------------------
-			// ===================================================================
-			InterfaceAttr();
+/// Interface attributes
+class InterfaceAttr {
+	public:
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 
-			virtual ~InterfaceAttr();
+		///
+		/// @param bindInterfaceName specifies the network interface name to bind to
+		explicit InterfaceAttr(const std::string &bindInterfaceName);
 
-			void get_interface_properties();
+		virtual ~InterfaceAttr();
 
-			// ===================================================================
-			//  -- Static member functions ---------------------------------------
-			// ===================================================================
+		// =====================================================================
+		//  -- Static member functions -----------------------------------------
+		// =====================================================================
 
-		public:
+	public:
 
-			static int getNetworkUDPBufferSize();
+		/// Get the default netowrk buffer size for UDP packets
+		static int getNetworkUDPBufferSize();
 
-			// ===================================================================
-			//  -- Other member functions ----------------------------------------
-			// ===================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-		public:
+	public:
 
-			const std::string &getIPAddress() const {
-				return _ip_addr;
-			}
+		/// Get the default netowrk buffer size for UDP packets
+		void bindToInterfaceName(const std::string &ifaceName);
 
-			std::string getUUID() const {
-				char uuid[50];
-				snprintf(uuid, sizeof(uuid), "50c958a8-e839-4b96-b7ae-%s",
-					_mac_addr.c_str());
-				return uuid;
-			}
+		/// Get the IP address of the used interface
+		const std::string &getIPAddress() const {
+			return _ipAddr;
+		}
 
-			// ===================================================================
-			//  -- Data members --------------------------------------------------
-			// ===================================================================
+		/// Get the UUID of this device
+		std::string getUUID() const;
 
-		protected:
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
 
-			std::string _ip_addr;            /// ip address of the used interface
-			std::string _mac_addr_decorated; /// mac address of the used interface
-			std::string _mac_addr;           /// mac address of the used interface
-			std::string _iface_name;         /// used interface name i.e. eth0
+	protected:
 
-	};
+		std::string _ipAddr;           /// ip address of the used interface
+		std::string _macAddrDecorated; /// mac address of the used interface
+		std::string _macAddr;          /// mac address of the used interface
+		std::string _ifaceName;        /// used interface name i.e. eth0
+};
 
 #endif // INTERFACEATTR_H_INCLUDE

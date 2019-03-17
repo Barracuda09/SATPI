@@ -1,6 +1,6 @@
 /* HttpcServer.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -26,7 +26,6 @@
 
 FW_DECL_NS0(Stream);
 FW_DECL_NS0(StreamManager);
-FW_DECL_NS0(InterfaceAttr);
 
 /// HTTP Client Server
 class HttpcServer :
@@ -59,13 +58,15 @@ class HttpcServer :
 		// Constructors and destructor
 		// =======================================================================
 		HttpcServer(int maxClients, const std::string &protocol,
-		            StreamManager &streamManager,
-		            const InterfaceAttr &interface);
+			StreamManager &streamManager,
+			const std::string &bindIPAddress);
 
 		virtual ~HttpcServer();
 
 		/// Call this to initialize, setup and start this server
-		virtual void initialize(int port, bool nonblock) override;
+		virtual void initialize(
+			int port,
+			bool nonblock);
 
 	protected:
 
@@ -133,7 +134,7 @@ class HttpcServer :
 		// =======================================================================
 	protected:
 		StreamManager &_streamManager;
-		const InterfaceAttr &_interface;
+		std::string _bindIPAddress;
 
 };
 

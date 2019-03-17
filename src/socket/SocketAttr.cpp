@@ -36,8 +36,8 @@
 	// ===================================================================
 	SocketAttr::SocketAttr() :
 		_fd(-1),
-		_ip_addr("0.0.0.0") {
-		memset(&_addr, 0, sizeof(_addr));
+		_ipAddr("0.0.0.0") {
+		std::memset(&_addr, 0, sizeof(_addr));
 	}
 
 	SocketAttr::~SocketAttr() {
@@ -48,14 +48,14 @@
 	//  -- Other member functions ----------------------------------------
 	// ===================================================================
 
-	void SocketAttr::setupSocketStructure(int port, const char *ip_addr) {
+	void SocketAttr::setupSocketStructure(const std::string &ipAddr, int port) {
 		// fill in the socket structure with host information
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family      = AF_INET;
-		_addr.sin_addr.s_addr = inet_addr(ip_addr);
+		_addr.sin_addr.s_addr = inet_addr(ipAddr.c_str());
 		_addr.sin_port        = htons(port);
 
-		_ip_addr = ip_addr;
+		_ipAddr = ipAddr;
 	}
 
 	void SocketAttr::setupSocketStructureWithAnyAddress(int port) {
@@ -186,7 +186,7 @@
 
 	void SocketAttr::closeFD() {
 		CLOSE_FD(_fd);
-		_ip_addr = "0.0.0.0";
+		_ipAddr = "0.0.0.0";
 	}
 
 	void SocketAttr::setSocketTimeoutInSec(unsigned int timeout) {

@@ -1,6 +1,6 @@
 /* RtspServer.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,23 +20,24 @@
 #include <RtspServer.h>
 
 #include <Log.h>
-#include <InterfaceAttr.h>
 #include <Stream.h>
 #include <StreamManager.h>
 #include <socket/SocketClient.h>
 #include <StreamClient.h>
 #include <StringConverter.h>
 
-RtspServer::RtspServer(StreamManager &streamManager, const InterfaceAttr &interface) :
+RtspServer::RtspServer(StreamManager &streamManager, const std::string &bindIPAddress) :
 		ThreadBase("RtspServer"),
-		HttpcServer(20, "RTSP", streamManager, interface) {}
+		HttpcServer(20, "RTSP", streamManager, bindIPAddress) {}
 
 RtspServer::~RtspServer() {
 	cancelThread();
 	joinThread();
 }
 
-void RtspServer::initialize(int port, bool nonblock) {
+void RtspServer::initialize(
+		int port,
+		bool nonblock) {
 	HttpcServer::initialize(port, nonblock);
 	startThread();
 }
@@ -142,7 +143,7 @@ bool RtspServer::methodPlay(Stream &stream, int clientID, std::string &htmlBody)
 // @TODO  check return of update();
 	stream.update(clientID, true);
 
-	htmlBody = StringConverter::stringFormat(RTSP_PLAY_OK, _interface.getIPAddress(),
+	htmlBody = StringConverter::stringFormat(RTSP_PLAY_OK, _bindIPAddress,
 		stream.getStreamID(), stream.getCSeq(clientID), stream.getSessionID(clientID));
 
 	return true;
@@ -195,7 +196,7 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_CONT1,
 		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
 		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
-		_interface.getIPAddress(),
+		_bindIPAddress,
 		_streamManager.getRTSPDescribeString());
 
 	for (auto i = 0u; i < _streamManager.getMaxStreams(); ++i) {
@@ -214,10 +215,10 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	// Are there any streams setup already
 	if (streams_setup != 0) {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 200 OK\r\n",
-			stream.getCSeq(clientID), _interface.getIPAddress(), desc.size(), sessionID, desc);
+			stream.getCSeq(clientID), _bindIPAddress, desc.size(), sessionID, desc);
 	} else {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 404 Not Found\r\n",
-			stream.getCSeq(clientID), _interface.getIPAddress(), 0, sessionID, "");
+			stream.getCSeq(clientID), _bindIPAddress, 0, sessionID, "");
 	}
 	return true;
 }

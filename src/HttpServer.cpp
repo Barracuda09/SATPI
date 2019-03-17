@@ -1,6 +1,6 @@
 /* HttpServer.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@
 #include <HttpServer.h>
 
 #include <base/XMLSupport.h>
-#include <InterfaceAttr.h>
 #include <Log.h>
 #include <Utils.h>
 #include <Properties.h>
@@ -35,10 +34,10 @@
 HttpServer::HttpServer(
 	base::XMLSupport &xml,
 	StreamManager &streamManager,
-	const InterfaceAttr &interface,
+	const std::string &bindIPAddress,
 	Properties &properties) :
 	ThreadBase("HttpServer"),
-	HttpcServer(20, "HTTP", streamManager, interface),
+	HttpcServer(20, "HTTP", streamManager, bindIPAddress),
 	_properties(properties),
 	_xml(xml) {}
 
@@ -47,7 +46,9 @@ HttpServer::~HttpServer() {
 	joinThread();
 }
 
-void HttpServer::initialize(int port, bool nonblock) {
+void HttpServer::initialize(
+		int port,
+		bool nonblock) {
 	HttpcServer::initialize(port, nonblock);
 	startThread();
 }
@@ -113,7 +114,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 		                               "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
 		                               "</body>\r\n"                           \
 		                               "</html>";
-		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _interface.getIPAddress().c_str(), _properties.getHttpPort(), "/index.html");
+		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _bindIPAddress.c_str(), _properties.getHttpPort(), "/index.html");
 		docTypeSize = docType.size();
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
@@ -155,7 +156,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 						if (docType.find("%1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
 							const std::string presentationURL = StringConverter::stringFormat("http://%1:%2/",
-									_interface.getIPAddress().c_str(),
+									_bindIPAddress,
 									std::to_string(_properties.getHttpPort()));
 
 							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
@@ -179,7 +180,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 					if (docType.find("%1") != std::string::npos) {
 						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddress().c_str(), file.c_str());
 						const std::string newDocType = StringConverter::stringFormat(
-								docType.c_str(), _interface.getIPAddress());
+								docType.c_str(), _bindIPAddress);
 						docType = newDocType;
 						docTypeSize = docType.size();
 					}

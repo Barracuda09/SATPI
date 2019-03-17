@@ -77,7 +77,7 @@ namespace dvbapi {
 		_rewritePMT(false),
 		_serverPort(15011),
 		_adapterOffset(0),
-		_serverIpAddr("127.0.0.1"),
+		_serverIPAddr("127.0.0.1"),
 		_serverName("Not connected"),
 		_streamManager(streamManager) {
 		startThread();
@@ -216,9 +216,9 @@ namespace dvbapi {
 		return true;
 	}
 
-	bool Client::initClientSocket(SocketClient &client, int port, const char *ip_addr) {
+	bool Client::initClientSocket(SocketClient &client, const std::string &ipAddr, int port) {
 
-		client.setupSocketStructure(port, ip_addr);
+		client.setupSocketStructure(ipAddr, port);
 
 		if (!client.setupSocketHandle(SOCK_STREAM /*| SOCK_NONBLOCK*/, 0)) {
 			SI_LOG_ERROR("OSCam Server handle failed");
@@ -382,7 +382,7 @@ namespace dvbapi {
 				if (_enabled) {
 					const std::time_t currTime = std::time(nullptr);
 					if (retryTime < currTime) {
-						if (initClientSocket(_client, _serverPort, _serverIpAddr.c_str())) {
+						if (initClientSocket(_client, _serverIPAddr, _serverPort)) {
 							sendClientInfo();
 							pfd[0].fd = _client.getFD();
 						} else {
@@ -526,7 +526,7 @@ namespace dvbapi {
 
 		std::string element;
 		if (findXMLElement(xml, "OSCamIP.value", element)) {
-			_serverIpAddr = element;
+			_serverIPAddr = element;
 		}
 		if (findXMLElement(xml, "OSCamPORT.value", element)) {
 			_serverPort = std::stoi(element.c_str());
@@ -553,7 +553,7 @@ namespace dvbapi {
 
 		ADD_XML_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 		ADD_XML_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
-		ADD_XML_IP_INPUT(xml, "OSCamIP", _serverIpAddr);
+		ADD_XML_IP_INPUT(xml, "OSCamIP", _serverIPAddr);
 		ADD_XML_NUMBER_INPUT(xml, "OSCamPORT", _serverPort.load(), 0, 65535);
 		ADD_XML_NUMBER_INPUT(xml, "AdapterOffset", _adapterOffset.load(), 0, 128);
 		ADD_XML_ELEMENT(xml, "OSCamServerName", _serverName);

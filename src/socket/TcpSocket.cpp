@@ -1,6 +1,6 @@
 /* TcpSocket.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -45,8 +45,8 @@ TcpSocket::~TcpSocket() {
 	_server.closeFD();
 }
 
-void TcpSocket::initialize(int port, bool nonblock) {
-	if (initServerSocket(_MAX_CLIENTS, port, nonblock)) {
+void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
+	if (initServerSocket(ipAddr, port, _MAX_CLIENTS, nonblock)) {
 		_pfd[0].fd = _server.getFD();
 		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 		_pfd[0].revents = 0;
@@ -165,9 +165,13 @@ int TcpSocket::poll(int timeout) {
 	return 1;
 }
 
-bool TcpSocket::initServerSocket(int maxClients, int port, bool nonblock) {
+bool TcpSocket::initServerSocket(
+		const std::string &ipAddr,
+		int port,
+		int maxClients,
+		bool nonblock) {
 	// fill in the socket structure with host information
-	_server.setupSocketStructureWithAnyAddress(port);
+	_server.setupSocketStructure(ipAddr, port);
 
 	if (!_server.setupSocketHandle(SOCK_STREAM | ((nonblock) ? SOCK_NONBLOCK : 0), 0)) {
 		SI_LOG_ERROR("TCP Server handle failed");

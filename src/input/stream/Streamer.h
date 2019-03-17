@@ -28,6 +28,8 @@
 #include <vector>
 #include <string>
 
+#include <poll.h>
+
 FW_DECL_NS1(input, DeviceData);
 
 FW_DECL_SP_NS2(input, stream, Streamer);
@@ -37,92 +39,96 @@ FW_DECL_VECTOR_NS0(Stream);
 namespace input {
 namespace stream {
 
-	/// The class @c Streamer is for reading from an TS stream as input device.
-	/// Stream can be an Multicast UDP e.g.
-	/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://224.0.1.3:1234
-	class Streamer :
-		public input::Device,
-		public UdpSocket {
-		public:
+/// The class @c Streamer is for reading from an TS stream as input device.
+/// Stream can be an Multicast UDP e.g.
+/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://224.0.1.3:1234
+class Streamer :
+	public input::Device,
+	public UdpSocket {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit Streamer(int streamID);
-			virtual ~Streamer();
+	public:
 
-			// =======================================================================
-			//  -- Static member functions -------------------------------------------
-			// =======================================================================
+		Streamer(int streamID, const std::string &bindIPAddress);
 
-		public:
+		virtual ~Streamer();
 
-			static void enumerate(
-				StreamVector &streamVector);
+		// =====================================================================
+		//  -- Static member functions -----------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+	public:
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+		static void enumerate(
+			StreamVector &streamVector,
+			const std::string &bindIPAddress);
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
+
+	public:
+		///
+		virtual void addToXML(std::string &xml) const override;
+
+		///
+		virtual void fromXML(const std::string &xml) override;
 
 
-			// =======================================================================
-			//  -- input::Device------------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- input::Device----------------------------------------------------
+		// =====================================================================
 
-		public:
+	public:
 
-			virtual void addDeliverySystemCount(
-				std::size_t &dvbs2,
-				std::size_t &dvbt,
-				std::size_t &dvbt2,
-				std::size_t &dvbc,
-				std::size_t &dvbc2) override;
+		virtual void addDeliverySystemCount(
+			std::size_t &dvbs2,
+			std::size_t &dvbt,
+			std::size_t &dvbt2,
+			std::size_t &dvbc,
+			std::size_t &dvbc2) override;
 
-			virtual bool isDataAvailable() override;
+		virtual bool isDataAvailable() override;
 
-			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
+		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
 
-			virtual bool capableOf(input::InputSystem msys) const override;
+		virtual bool capableOf(input::InputSystem msys) const override;
 
-			virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
+		virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
 
-			virtual void monitorSignal(bool showStatus) override;
+		virtual void monitorSignal(bool showStatus) override;
 
-			virtual bool hasDeviceDataChanged() const override;
+		virtual bool hasDeviceDataChanged() const override;
 
-			virtual void parseStreamString(const std::string &msg, const std::string &method) override;
+		virtual void parseStreamString(const std::string &msg, const std::string &method) override;
 
-			virtual bool update() override;
+		virtual bool update() override;
 
-			virtual bool teardown() override;
+		virtual bool teardown() override;
 
-			virtual std::string attributeDescribeString() const override;
+		virtual std::string attributeDescribeString() const override;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-		protected:
+	protected:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
-		private:
-			std::string _uri;
-			struct pollfd _pfd[1];
-			SocketClient _udpMultiListen;
-			std::string _multiAddr;
-			int _port;
-			bool _udp;
-	};
+	private:
+		std::string _bindIPAddress;
+		std::string _uri;
+		pollfd _pfd[1];
+		SocketClient _udpMultiListen;
+		std::string _multiAddr;
+		int _port;
+		bool _udp;
+};
 
 } // namespace stream
 } // namespace input

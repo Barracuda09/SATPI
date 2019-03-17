@@ -1,6 +1,6 @@
 /* HttpcSocket.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -23,51 +23,49 @@
 #include <FwDecl.h>
 #include <socket/SocketAttr.h>
 
-#include <poll.h>
-#include <netinet/in.h>
-
-#define SSDP_PORT 1900
+#include <sys/socket.h>
 
 FW_DECL_NS0(SocketClient);
 
-	/// HTTPC Socket related functions
-	class HttpcSocket  {
-		public:
-			static const int HTTPC_TIMEOUT;
+/// HTTPC Socket related functions
+class HttpcSocket  {
+	public:
 
-			// ===================================================================
-			//  -- Constructors and destructor -----------------------------------
-			// ===================================================================
-			HttpcSocket();
+		static const int HTTPC_TIMEOUT;
 
-			virtual ~HttpcSocket();
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
+		HttpcSocket();
 
-			// ===================================================================
-			//  -- Other member functions ----------------------------------------
-			// ===================================================================
+		virtual ~HttpcSocket();
 
-		protected:
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-			/// Receive an HTTP message from client
-			/// @param client
-			/// @param recv_flags
-			/// @return the amount of bytes red
-			ssize_t recvHttpcMessage(SocketClient &client, int recv_flags);
+	protected:
 
-			/// Receive an HTTP message from client
-			/// @param client
-			/// @param recv_flags
-			/// @param si_other
-			/// @param addrlen
-			/// @return the amount of bytes red
-			ssize_t recvfromHttpcMessage(SocketClient &client, int recv_flags,
-				struct sockaddr_in *si_other, socklen_t *addrlen);
+		/// Receive an HTTP message from client
+		/// @param client
+		/// @param recv_flags
+		/// @return the amount of bytes red
+		ssize_t recvHttpcMessage(SocketClient &client, int recv_flags);
 
-		private:
-			/// Main receive HTTP message from client
-			ssize_t recv_recvfrom_httpc_message(SocketClient &client, int recv_flags,
-				struct sockaddr_in *si_other, socklen_t *addrlen);
+		/// Receive an HTTP message from client
+		/// @param client
+		/// @param recv_flags
+		/// @param si_other
+		/// @param addrlen
+		/// @return the amount of bytes red
+		ssize_t recvfromHttpcMessage(SocketClient &client, int recv_flags,
+			struct sockaddr_in *si_other, socklen_t *addrlen);
 
-	};
+	private:
+		/// Main receive HTTP message from client
+		ssize_t recv_recvfrom_httpc_message(SocketClient &client, int recv_flags,
+			struct sockaddr_in *si_other, socklen_t *addrlen);
+
+};
 
 #endif // HTTPC_SOCKET_H_INCLUDE

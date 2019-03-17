@@ -1,6 +1,6 @@
 /* StreamManager.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -57,8 +57,10 @@ StreamManager::~StreamManager() {}
 	}
 #endif
 
-void StreamManager::enumerateDevices(const std::string &appDataPath,
-	const std::string &dvbPath) {
+void StreamManager::enumerateDevices(
+		const std::string &bindIPAddress,
+		const std::string &appDataPath,
+		const std::string &dvbPath) {
 	base::MutexLock lock(_xmlMutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -70,7 +72,7 @@ void StreamManager::enumerateDevices(const std::string &appDataPath,
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
-	input::stream::Streamer::enumerate(_stream);
+	input::stream::Streamer::enumerate(_stream, bindIPAddress);
 }
 
 std::string StreamManager::getXMLDeliveryString() const {

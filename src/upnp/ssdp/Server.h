@@ -1,6 +1,6 @@
 /* Server.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,77 +20,109 @@
 #ifndef UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 #define UPNP_SSDP_SSDP_SERVER_H_INCLUDE UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 
+#include <FwDecl.h>
 #include <base/ThreadBase.h>
 #include <base/XMLSupport.h>
-#include <FwDecl.h>
-#include <socket/SocketAttr.h>
 #include <socket/SocketClient.h>
 #include <socket/UdpSocket.h>
 
-FW_DECL_NS0(InterfaceAttr);
 FW_DECL_NS0(Properties);
 
 namespace upnp {
 namespace ssdp {
 
-	/// SSDP Server
-	class Server :
-		public base::XMLSupport,
-		public base::ThreadBase,
-		public UdpSocket {
-		public:
+/// SSDP Server
+class Server :
+	public base::XMLSupport,
+	public base::ThreadBase,
+	public UdpSocket {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			// -- Constructors and destructor ----------------------------------------
-			// =======================================================================
+	public:
 
-			Server(const InterfaceAttr &interface, const Properties &properties);
+		Server(const std::string &bindIPAddress, const Properties &properties);
 
-			virtual ~Server();
+		virtual ~Server();
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
 
-		public:
-			virtual void addToXML(std::string &xml) const override;
+	public:
 
-			virtual void fromXML(const std::string &xml) override;
+		virtual void addToXML(std::string &xml) const override;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		virtual void fromXML(const std::string &xml) override;
 
-		protected:
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-			/// Thread function
-			virtual void threadEntry();
+	protected:
 
-		private:
+		/// Thread function
+		virtual void threadEntry();
 
-			///
-			bool sendByeBye(unsigned int bootId, const char *uuid);
+	private:
 
-			///
-			void incrementBootID();
+		///
+		void sendSATIPClientDiscoverResponse(
+			struct sockaddr_in &si_other,
+			const std::string &ip_addr);
 
-			///
-			void incrementDeviceID();
+		///
+		void sendRootDeviceDiscoverResponse(
+			struct sockaddr_in &si_other,
+			const std::string &ip_addr);
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		///
+		void sendDiscoverResponse(
+			const std::string &searchTarget,
+			struct sockaddr_in &si_other);
 
-		private:
+		///
+		void checkDefendDeviceID(
+			unsigned int otherDeviceID,
+			const std::string &ip_addr);
 
-			const InterfaceAttr &_interface;
-			const Properties &_properties;
-			SocketClient _udpMultiListen;
-			SocketClient _udpMultiSend;
-			std::size_t _announceTimeSec;
-			std::size_t _bootID;
-			std::size_t _deviceID;
-	};
+		///
+		void sendGiveUpDeviceID(
+			struct sockaddr_in &si_other,
+			const std::string &ip_addr);
+
+		///
+		void sendAnnounce();
+
+		///
+		bool sendByeBye(unsigned int bootId, const char *uuid);
+
+		///
+		void incrementBootID();
+
+		///
+		void incrementDeviceID();
+
+		///
+		void constructLocation();
+
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+
+	private:
+
+		const Properties &_properties;
+		std::string _bindIPAddress;
+		SocketClient _udpMultiListen;
+		SocketClient _udpMultiSend;
+		std::string _xmlDeviceDescriptionFile;
+		std::string _location;
+		std::size_t _announceTimeSec;
+		std::size_t _bootID;
+		std::size_t _deviceID;
+};
 
 } // namespace ssdp
 } // namespace upnp

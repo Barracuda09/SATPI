@@ -1,6 +1,6 @@
 /* RtspServer.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -22,7 +22,6 @@
 
 #include <FwDecl.h>
 #include <HttpcServer.h>
-#include <Properties.h>
 #include <base/ThreadBase.h>
 
 FW_DECL_NS0(Stream);
@@ -31,18 +30,22 @@ FW_DECL_NS0(StreamClient);
 
 /// RTSP Server
 class RtspServer :
-		public base::ThreadBase,
-		public HttpcServer {
+	public base::ThreadBase,
+	public HttpcServer {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+
 	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		RtspServer(StreamManager &streamManager, const InterfaceAttr &interface);
+
+		RtspServer(StreamManager &streamManager, const std::string &bindIPAddress);
 
 		virtual ~RtspServer();
 
 		/// Call this to initialize, setup and start this server
-		virtual void initialize(int port, bool nonblock) override;
+		virtual void initialize(
+			int port,
+			bool nonblock);
 
 	protected:
 		/// Thread function
@@ -66,10 +69,10 @@ class RtspServer :
 		virtual bool methodTeardown(Stream &stream, int clientID, std::string &htmlBody) override;
 
 
-		// =======================================================================
-		// Data members
-		// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
-}; // class RtspServer
+};
 
 #endif // RTSP_SERVER_H_INCLUDE

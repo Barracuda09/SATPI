@@ -1,6 +1,6 @@
 /* HttpServer.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -24,7 +24,6 @@
 #include <base/ThreadBase.h>
 #include <HttpcServer.h>
 
-FW_DECL_NS0(InterfaceAttr);
 FW_DECL_NS0(Properties);
 FW_DECL_NS0(StreamManager);
 FW_DECL_NS1(base, XMLSupport);
@@ -41,7 +40,7 @@ class HttpServer :
 		HttpServer(
 			base::XMLSupport &xml,
 			StreamManager &streamManager,
-			const InterfaceAttr &interface,
+			const std::string &bindIPAddress,
 			Properties &properties);
 
 		virtual ~HttpServer();
@@ -51,7 +50,9 @@ class HttpServer :
 		// =======================================================================
 
 		/// Call this to initialize, setup and start this server
-		virtual void initialize(int port, bool nonblock) override;
+		virtual void initialize(
+			int port,
+			bool nonblock);
 
 	protected:
 

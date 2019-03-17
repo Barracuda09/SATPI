@@ -1,6 +1,6 @@
 /* Client.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -38,81 +38,83 @@ FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 namespace decrypt {
 namespace dvbapi {
 
-	/// The class @c Client is for decrypting streams
-	class Client :
-		public base::ThreadBase,
-		public base::XMLSupport {
-		public:
-			// ================================================================
-			// -- Constructors and destructor ---------------------------------
-			// ================================================================
+/// The class @c Client is for decrypting streams
+class Client :
+	public base::ThreadBase,
+	public base::XMLSupport {
+	public:
+		// ================================================================
+		// -- Constructors and destructor ---------------------------------
+		// ================================================================
 
-			explicit Client(StreamManager &streamManager);
+		explicit Client(StreamManager &streamManager);
 
-			virtual ~Client();
+		virtual ~Client();
 
-			// ================================================================
-			//  -- base::ThreadBase -------------------------------------------
-			// ================================================================
+		// ================================================================
+		//  -- base::ThreadBase -------------------------------------------
+		// ================================================================
 
-		protected:
+	protected:
 
-			virtual void threadEntry() override;
+		virtual void threadEntry() override;
 
-			// ================================================================
-			//  -- base::XMLSupport -------------------------------------------
-			// ================================================================
+		// ================================================================
+		//  -- base::XMLSupport -------------------------------------------
+		// ================================================================
 
-		public:
+	public:
 
-			virtual void addToXML(std::string &xml) const override;
+		virtual void addToXML(std::string &xml) const override;
 
-			virtual void fromXML(const std::string &xml) override;
+		virtual void fromXML(const std::string &xml) override;
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// ================================================================
+		//  -- Other member functions -------------------------------------
+		// ================================================================
 
-		public:
+	public:
 
-			///
-			void decrypt(int streamID, mpegts::PacketBuffer &buffer);
+		///
+		void decrypt(int streamID, mpegts::PacketBuffer &buffer);
 
-			///
-			bool stopDecrypt(int streamID);
+		///
+		bool stopDecrypt(int streamID);
 
-		private:
+	private:
 
-			///
-			bool initClientSocket(SocketClient &client, int port,
-				const char *ip_addr);
+		///
+		bool initClientSocket(
+			SocketClient &client,
+			const std::string &ipAddr,
+			int port);
 
-			///
-			void sendClientInfo();
+		///
+		void sendClientInfo();
 
-			///
-			void sendPMT(int streamID, const mpegts::PMT &pmt);
+		///
+		void sendPMT(int streamID, const mpegts::PMT &pmt);
 
-			///
-			void cleanPMT(unsigned char *data);
+		///
+		void cleanPMT(unsigned char *data);
 
-			// =================================================================
-			// -- Data members -------------------------------------------------
-			// =================================================================
+		// =================================================================
+		// -- Data members -------------------------------------------------
+		// =================================================================
 
-		private:
+	private:
 
-			SocketClient     _client;
-			std::atomic_bool _connected;
-			std::atomic_bool _enabled;
-			std::atomic_bool _rewritePMT;
-			std::atomic<int> _serverPort;
-			std::atomic<int> _adapterOffset;
-			std::string      _serverIpAddr;
-			std::string      _serverName;
+		SocketClient     _client;
+		std::atomic_bool _connected;
+		std::atomic_bool _enabled;
+		std::atomic_bool _rewritePMT;
+		std::atomic<int> _serverPort;
+		std::atomic<int> _adapterOffset;
+		std::string      _serverIPAddr;
+		std::string      _serverName;
 
-			StreamManager &_streamManager;
-	};
+		StreamManager &_streamManager;
+};
 
 } // namespace dvbapi
 } // namespace decrypt

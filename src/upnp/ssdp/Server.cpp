@@ -1,6 +1,6 @@
 /* Server.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -38,13 +38,22 @@ namespace upnp {
 namespace ssdp {
 
 #define UTIME_DEL 200000
+#define SSDP_PORT 1900
 
-Server::Server(const InterfaceAttr &interface,
-	const Properties &properties) :
+
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
+Server::Server(
+		const std::string &bindIPAddress,
+		const Properties &properties) :
 	XMLSupport(),
 	ThreadBase("SSDP Server"),
-	_interface(interface),
 	_properties(properties),
+	_bindIPAddress(bindIPAddress),
+	_xmlDeviceDescriptionFile("Not Set"),
+	_location("Not Set"),
 	_announceTimeSec(60),
 	_bootID(0),
 	_deviceID(1) {}
@@ -56,9 +65,9 @@ Server::~Server() {
 	sendByeBye(_deviceID, _properties.getUUID().c_str());
 }
 
-// ============================================================================
-//  -- base::XMLSupport -------------------------------------------------------
-// ============================================================================
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
 
 void Server::addToXML(std::string &xml) const {
 	base::MutexLock lock(_xmlMutex);
@@ -83,24 +92,19 @@ void Server::fromXML(const std::string &xml) {
 	}
 }
 
-// ============================================================================
-// -- Other member functions --------------------------------------------------
-// ============================================================================
+// =============================================================================
+// -- Other member functions ---------------------------------------------------
+// =============================================================================
 
 void Server::threadEntry() {
 	incrementBootID();
 	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d  annouce interval: %d Sec", _bootID, _announceTimeSec);
 
 	// Get file and constuct new location
-	std::string location;
-	std::string xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
-	location = StringConverter::stringFormat("http://%1:%2/%3",
-		_interface.getIPAddress(),
-		_properties.getHttpPort(),
-		xmlDeviceDescriptionFile);
+	constructLocation();
 
-	initUDPSocket(_udpMultiSend, SSDP_PORT, "239.255.255.250");
-	initMutlicastUDPSocket(_udpMultiListen, "239.255.255.250", SSDP_PORT, _interface.getIPAddress().c_str());
+	initUDPSocket(_udpMultiSend, "239.255.255.250", SSDP_PORT);
+	initMutlicastUDPSocket(_udpMultiListen, "239.255.255.250", _bindIPAddress, SSDP_PORT);
 
 	std::time_t repeat_time = 0;
 	struct pollfd pfd[1];
@@ -111,124 +115,44 @@ void Server::threadEntry() {
 	for (;; ) {
 		// call poll with a timeout of 500 ms
 		const int pollRet = poll(pfd, 1, 500);
-		if (pollRet > 0) {
-			if (pfd[0].revents != 0) {
-				struct sockaddr_in si_other;
-				socklen_t addrlen = sizeof(si_other);
-				const ssize_t size = recvfromHttpcMessage(_udpMultiListen, MSG_DONTWAIT, &si_other, &addrlen);
+		if (pollRet > 0 && pfd[0].revents != 0) {
+			sockaddr_in si_other;
+			socklen_t addrlen = sizeof(si_other);
+			const ssize_t size = recvfromHttpcMessage(_udpMultiListen, MSG_DONTWAIT, &si_other, &addrlen);
 
-				if (size > 0) {
-					char ip_addr[25];
-					// save client ip address
-					strcpy(ip_addr, (char *)inet_ntoa(si_other.sin_addr));
+			if (size > 0) {
+				// save client ip address
+				const std::string ip_addr = inet_ntoa(si_other.sin_addr);
 
-					// @TODO we should probably listen to only one message
-					// check do we hear our echo, same UUID
-					std::string usn("None");
-					StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "USN:", usn);
-					if (!(usn.size() > 5 && usn.compare(5, _properties.getUUID().size(), _properties.getUUID()) == 0)) {
-						// get method from message
-						std::string method;
-						if (StringConverter::getMethod(_udpMultiListen.getMessage(), method)) {
-							if (method.compare("NOTIFY") == 0) {
-								std::string param;
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param) &&
-								    usn.find("SatIPServer:1") != std::string::npos) {
-									// get device id of other
-									const unsigned int otherDeviceID = atoi(param.c_str());
-
-									// check server found with clashing DEVICEID? we should defend it!!
-									if (_deviceID == otherDeviceID) {
-										SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d defending", ip_addr, otherDeviceID);
-										SocketClient udpSend;
-										initUDPSocket(udpSend, SSDP_PORT, ip_addr);
-										// send message back
-										const char *UPNP_M_SEARCH =
-										        "M-SEARCH * HTTP/1.1\r\n" \
-										        "HOST: %1:%2\r\n" \
-										        "MAN: \"ssdp:discover\"\r\n" \
-										        "ST: urn:ses-com:device:SatIPServer:1\r\n" \
-										        "USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-										        "DEVICEID.SES.COM: %4\r\n" \
-										        "\r\n";
-										base::MutexLock lock(_xmlMutex);
-										const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
-											_interface.getIPAddress(),
-											SSDP_PORT,
-											_properties.getSoftwareVersion(),
-											_deviceID);
-										if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-											SI_LOG_ERROR("SSDP M_SEARCH data send failed");
-										}
-									} else {
-										SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr, otherDeviceID);
-									}
-								}
-							} else if (method.compare("M-SEARCH") == 0) {
-								std::string param;
-								if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
-									// someone contacted us, so this should mean we have the same DEVICEID
-									SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr, _deviceID);
-									// send message back
-									const char *UPNP_M_SEARCH_OK =
-											"HTTP/1.1 200 OK\r\n" \
-											"CACHE-CONTROL: max-age=%1\r\n" \
-											"EXT:\r\n" \
-											"LOCATION: %2\r\n" \
-											"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-											"ST: urn:ses-com:device:SatIPServer:1\r\n" \
-											"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-											"BOOTID.UPNP.ORG: %5\r\n" \
-											"CONFIGID.UPNP.ORG: 0\r\n" \
-											"DEVICEID.SES.COM: %6\r\n" \
-											"\r\n";
-									base::MutexLock lock(_xmlMutex);
-									const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
-										_announceTimeSec,
-										location,
-										_properties.getSoftwareVersion(),
-										_properties.getUUID(),
-										_bootID,
-										_deviceID);
-									if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
-										PERROR("send");
-									}
-									// we should increment DEVICEID and send bye bye
-									incrementDeviceID();
-									sendByeBye(_deviceID, _properties.getUUID().c_str());
-
-									// now increment bootID
-									incrementBootID();
-
-									// reset repeat time to annouce new DEVICEID
-									repeat_time =  std::time(nullptr) + 5;
-								} else if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", param)) {
-									if (param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
-										// client is sending a discover
-										SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr);
-										// send message back
-										const char *UPNP_M_SEARCH_OK =
-												"HTTP/1.1 200 OK\r\n" \
-												"CACHE-CONTROL: max-age=%1\r\n" \
-												"EXT:\r\n" \
-												"LOCATION: %2\r\n" \
-												"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-												"ST: urn:ses-com:device:SatIPServer:1\r\n" \
-												"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-												"BOOTID.UPNP.ORG: %5\r\n" \
-												"CONFIGID.UPNP.ORG: 0\r\n" \
-												"\r\n";
-										base::MutexLock lock(_xmlMutex);
-										const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
-											_announceTimeSec,
-											location,
-											_properties.getSoftwareVersion(),
-											_properties.getUUID(),
-											_bootID);
-										if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0, (struct sockaddr *)&si_other, sizeof(si_other)) == -1) {
-											PERROR("send");
-										}
-									}
+				// @TODO we should probably listen to only one message
+				// check do we hear our echo, same UUID
+				std::string usn("None");
+				StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "USN:", usn);
+				if (!(usn.size() > 5 && usn.compare(5, _properties.getUUID().size(), _properties.getUUID()) == 0)) {
+					// get method from message
+					std::string method;
+					if (StringConverter::getMethod(_udpMultiListen.getMessage(), method)) {
+						if (method.compare("NOTIFY") == 0) {
+							std::string param;
+							if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param) &&
+								usn.find("SatIPServer:1") != std::string::npos) {
+								// check server found with clashing DEVICEID? we should defend it!!
+								// get device id of other
+								const unsigned int otherDeviceID = atoi(param.c_str());
+								checkDefendDeviceID(otherDeviceID, ip_addr) ;
+							}
+						} else if (method.compare("M-SEARCH") == 0) {
+							std::string param;
+							if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
+								// someone contacted us, so this should mean we have the same DEVICEID
+								sendGiveUpDeviceID(si_other, ip_addr);
+								// reset repeat time to annouce new DEVICEID
+								repeat_time =  std::time(nullptr) + 5;
+							} else if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", param)) {
+								if (param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
+									sendSATIPClientDiscoverResponse(si_other, ip_addr);
+								} else if (param.compare("upnp:rootdevice") == 0 ) {
+									sendRootDeviceDiscoverResponse(si_other, ip_addr);
 								}
 							}
 						}
@@ -238,19 +162,12 @@ void Server::threadEntry() {
 		}
 
 		// Did the Device Description File change?
-		if (xmlDeviceDescriptionFile != _properties.getXMLDeviceDescriptionFile()) {
+		if (_xmlDeviceDescriptionFile != _properties.getXMLDeviceDescriptionFile()) {
 			// Get new file and constuct new location
-			xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
-			location = StringConverter::stringFormat("http://%1:%2/%3",
-				_interface.getIPAddress(),
-				_properties.getHttpPort(),
-				xmlDeviceDescriptionFile);
+			constructLocation();
 
 			// we should send bye bye
-			{
-				base::MutexLock lock(_xmlMutex);
-				sendByeBye(_deviceID, _properties.getUUID().c_str());
-			}
+			sendByeBye(_deviceID, _properties.getUUID().c_str());
 
 			// now increment bootID
 			incrementBootID();
@@ -264,144 +181,268 @@ void Server::threadEntry() {
 		if (repeat_time < curr_time) {
 			// set next announce time
 			repeat_time = _announceTimeSec + curr_time;
-			{
-				// broadcast message
-				const char *UPNP_ROOTDEVICE =
-						"NOTIFY * HTTP/1.1\r\n" \
-						"HOST: 239.255.255.250:1900\r\n" \
-						"CACHE-CONTROL: max-age=%1\r\n" \
-						"LOCATION: %2\r\n" \
-						"NT: upnp:rootdevice\r\n" \
-						"NTS: ssdp:alive\r\n" \
-						"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-						"USN: uuid:%4::upnp:rootdevice\r\n" \
-						"BOOTID.UPNP.ORG: %5\r\n" \
-						"CONFIGID.UPNP.ORG: 0\r\n" \
-						"DEVICEID.SES.COM: %6\r\n" \
-						"\r\n";
-				const std::string msg = StringConverter::stringFormat(UPNP_ROOTDEVICE,
-					_announceTimeSec,
-					location,
-					_properties.getSoftwareVersion(),
-					_properties.getUUID(),
-					_bootID,
-					_deviceID);
-				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-					SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE data send failed");
-				}
-			}
-			std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
-			{
-				// broadcast message
-				const char *UPNP_ALIVE =
-						"NOTIFY * HTTP/1.1\r\n" \
-						"HOST: 239.255.255.250:1900\r\n" \
-						"CACHE-CONTROL: max-age=%1\r\n" \
-						"LOCATION: %2\r\n" \
-						"NT: uuid:%3\r\n" \
-						"NTS: ssdp:alive\r\n" \
-						"SERVER: Linux/1.0 UPnP/1.1 SatPI/%4\r\n" \
-						"USN: uuid:%3\r\n" \
-						"BOOTID.UPNP.ORG: %5\r\n" \
-						"CONFIGID.UPNP.ORG: 0\r\n" \
-						"DEVICEID.SES.COM: %6\r\n" \
-						"\r\n";
-				const std::string msg = StringConverter::stringFormat(UPNP_ALIVE,
-					_announceTimeSec,
-					location,
-					_properties.getUUID(),
-					_properties.getSoftwareVersion(),
-					_bootID,
-					_deviceID);
-				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-					SI_LOG_ERROR("SSDP UPNP_ALIVE data send failed");
-				}
-			}
-			std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
-			{
-				// broadcast message
-				const char *UPNP_DEVICE =
-						"NOTIFY * HTTP/1.1\r\n" \
-						"HOST: 239.255.255.250:1900\r\n" \
-						"CACHE-CONTROL: max-age=%1\r\n" \
-						"LOCATION: %2\r\n" \
-						"NT: urn:ses-com:device:SatIPServer:1\r\n" \
-						"NTS: ssdp:alive\r\n" \
-						"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-						"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-						"BOOTID.UPNP.ORG: %5\r\n" \
-						"CONFIGID.UPNP.ORG: 0\r\n" \
-						"DEVICEID.SES.COM: %6\r\n" \
-						"\r\n";
-				const std::string msg = StringConverter::stringFormat(UPNP_DEVICE,
-					_announceTimeSec,
-					location,
-					_properties.getSoftwareVersion(),
-					_properties.getUUID(),
-					_bootID,
-					_deviceID);
-				if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-					SI_LOG_ERROR("SSDP UPNP_DEVICE data send failed");
-				}
-			}
+
+			sendAnnounce();
 		}
 	}
 }
 
-bool Server::sendByeBye(unsigned int bootId, const char *uuid) {
-	{
-		// broadcast message
-		const char *UPNP_ROOTDEVICE_BB =
-				"NOTIFY * HTTP/1.1\r\n" \
-				"HOST: 239.255.255.250:1900\r\n" \
-				"NT: upnp:rootdevice\r\n" \
-				"NTS: ssdp:byebye\r\n" \
-				"USN: uuid:%1::upnp:rootdevice\r\n" \
-				"BOOTID.UPNP.ORG: %2\r\n" \
-				"CONFIGID.UPNP.ORG: 0\r\n" \
+void Server::checkDefendDeviceID(
+		unsigned int otherDeviceID,
+		const std::string &ip_addr) {
+	// check server found with clashing DEVICEID? we should defend it!!
+	if (_deviceID == otherDeviceID) {
+		SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d defending", ip_addr.c_str(), otherDeviceID);
+		SocketClient udpSend;
+		initUDPSocket(udpSend, ip_addr, SSDP_PORT);
+		// send message back
+		const char *UPNP_M_SEARCH =
+				"M-SEARCH * HTTP/1.1\r\n" \
+				"HOST: %1:%2\r\n" \
+				"MAN: \"ssdp:discover\"\r\n" \
+				"ST: urn:ses-com:device:SatIPServer:1\r\n" \
+				"USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+				"DEVICEID.SES.COM: %4\r\n" \
 				"\r\n";
-		const std::string msg = StringConverter::stringFormat(UPNP_ROOTDEVICE_BB, uuid, bootId);
-		if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-			SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE_BB data send failed");
-			return false;
+		base::MutexLock lock(_xmlMutex);
+		const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
+			_bindIPAddress,
+			SSDP_PORT,
+			_properties.getSoftwareVersion(),
+			_deviceID);
+		if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
+			SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 		}
+	} else {
+		SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr.c_str(), otherDeviceID);
 	}
+}
+
+void Server::sendGiveUpDeviceID(
+		sockaddr_in &si_other,
+		const std::string &ip_addr) {
+	SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr.c_str(), _deviceID);
+
+	// send message back
+	const char *UPNP_M_SEARCH_OK =
+			"HTTP/1.1 200 OK\r\n" \
+			"CACHE-CONTROL: max-age=%1\r\n" \
+			"EXT:\r\n" \
+			"LOCATION: %2\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+			"ST: urn:ses-com:device:SatIPServer:1\r\n" \
+			"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: %5\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"DEVICEID.SES.COM: %6\r\n" \
+			"\r\n";
+
+	base::MutexLock lock(_xmlMutex);
+	const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
+		_announceTimeSec,
+		_location,
+		_properties.getSoftwareVersion(),
+		_properties.getUUID(),
+		_bootID,
+		_deviceID);
+
+	if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
+		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
+		PERROR("send");
+	}
+	// we should increment DEVICEID and send bye bye
+	incrementDeviceID();
+	sendByeBye(_deviceID, _properties.getUUID().c_str());
+
+	// now increment bootID
+	incrementBootID();
+}
+
+void Server::sendSATIPClientDiscoverResponse(
+		sockaddr_in &si_other,
+		const std::string &ip_addr) {
+	SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr.c_str());
+
+	sendDiscoverResponse("urn:ses-com:device:SatIPServer:1", si_other);
+}
+
+void Server::sendRootDeviceDiscoverResponse(
+		sockaddr_in &si_other,
+		const std::string &ip_addr) {
+	SI_LOG_INFO("Root Device Client %s : tries to discover the network, sending reply back", ip_addr.c_str());
+
+	sendDiscoverResponse("upnp:rootdevice", si_other);
+}
+
+void Server::sendDiscoverResponse(
+		const std::string &searchTarget,
+		struct sockaddr_in &si_other) {
+	// send message back
+	const char *UPNP_M_SEARCH_OK =
+			"HTTP/1.1 200 OK\r\n" \
+			"CACHE-CONTROL: max-age=%1\r\n" \
+			"EXT:\r\n" \
+			"LOCATION: %2\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+			"ST: %4\r\n" \
+			"USN: uuid:%5::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: %6\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"\r\n";
+
+	base::MutexLock lock(_xmlMutex);
+	const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
+		_announceTimeSec,
+		_location,
+		_properties.getSoftwareVersion(),
+		searchTarget,
+		_properties.getUUID(),
+		_bootID);
+
+	if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
+		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
+		PERROR("send");
+	}
+}
+
+void Server::sendAnnounce() {
+
+	// broadcast message
+	const char *UPNP_ROOTDEVICE =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"CACHE-CONTROL: max-age=%1\r\n" \
+			"LOCATION: %2\r\n" \
+			"NT: upnp:rootdevice\r\n" \
+			"NTS: ssdp:alive\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+			"USN: uuid:%4::upnp:rootdevice\r\n" \
+			"BOOTID.UPNP.ORG: %5\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"DEVICEID.SES.COM: %6\r\n" \
+			"\r\n";
+	const std::string msgRoot = StringConverter::stringFormat(UPNP_ROOTDEVICE,
+		_announceTimeSec,
+		_location,
+		_properties.getSoftwareVersion(),
+		_properties.getUUID(),
+		_bootID,
+		_deviceID);
+	if (!_udpMultiSend.sendDataTo(msgRoot.c_str(), msgRoot.size(), 0)) {
+		SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE data send failed");
+	}
+
 	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
-	{
-		// broadcast message
-		const char *UPNP_BYEBYE =
-				"NOTIFY * HTTP/1.1\r\n" \
-				"HOST: 239.255.255.250:1900\r\n" \
-				"NT: uuid:%1\r\n" \
-				"NTS: ssdp:byebye\r\n" \
-				"USN: uuid:%1\r\n" \
-				"BOOTID.UPNP.ORG: %2\r\n" \
-				"CONFIGID.UPNP.ORG: 0\r\n" \
-				"\r\n";
-		const std::string msg = StringConverter::stringFormat(UPNP_BYEBYE, uuid, bootId);
-		if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-			SI_LOG_ERROR("SSDP BYEBYE data send failed");
-			return false;
-		}
+
+	// broadcast message
+	const char *UPNP_ALIVE =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"CACHE-CONTROL: max-age=%1\r\n" \
+			"LOCATION: %2\r\n" \
+			"NT: uuid:%3\r\n" \
+			"NTS: ssdp:alive\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%4\r\n" \
+			"USN: uuid:%3\r\n" \
+			"BOOTID.UPNP.ORG: %5\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"DEVICEID.SES.COM: %6\r\n" \
+			"\r\n";
+	const std::string msgAlive = StringConverter::stringFormat(UPNP_ALIVE,
+		_announceTimeSec,
+		_location,
+		_properties.getUUID(),
+		_properties.getSoftwareVersion(),
+		_bootID,
+		_deviceID);
+	if (!_udpMultiSend.sendDataTo(msgAlive.c_str(), msgAlive.size(), 0)) {
+		SI_LOG_ERROR("SSDP UPNP_ALIVE data send failed");
 	}
+
 	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
-	{
-		// broadcast message
-		const char *UPNP_DEVICE_BB =
-				"NOTIFY * HTTP/1.1\r\n" \
-				"HOST: 239.255.255.250:1900\r\n" \
-				"NT: urn:ses-com:device:SatIPServer:1\r\n" \
-				"NTS: ssdp:byebye\r\n" \
-				"USN: uuid:%1::urn:ses-com:device:SatIPServer:1\r\n" \
-				"BOOTID.UPNP.ORG: %2\r\n" \
-				"CONFIGID.UPNP.ORG: 0\r\n" \
-				"\r\n";
-		const std::string msg = StringConverter::stringFormat(UPNP_DEVICE_BB, uuid, bootId);
-		if (!_udpMultiSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
-			SI_LOG_ERROR("SSDP UPNP_DEVICE_BB data send failed");
-			return false;
-		}
+
+	// broadcast message
+	const char *UPNP_DEVICE =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"CACHE-CONTROL: max-age=%1\r\n" \
+			"LOCATION: %2\r\n" \
+			"NT: urn:ses-com:device:SatIPServer:1\r\n" \
+			"NTS: ssdp:alive\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+			"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: %5\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"DEVICEID.SES.COM: %6\r\n" \
+			"\r\n";
+	const std::string msgDevice = StringConverter::stringFormat(UPNP_DEVICE,
+		_announceTimeSec,
+		_location,
+		_properties.getSoftwareVersion(),
+		_properties.getUUID(),
+		_bootID,
+		_deviceID);
+	if (!_udpMultiSend.sendDataTo(msgDevice.c_str(), msgDevice.size(), 0)) {
+		SI_LOG_ERROR("SSDP UPNP_DEVICE data send failed");
 	}
+
+}
+
+bool Server::sendByeBye(
+		unsigned int bootId,
+		const char *uuid) {
+	// broadcast message
+	const char *UPNP_ROOTDEVICE_BB =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"NT: upnp:rootdevice\r\n" \
+			"NTS: ssdp:byebye\r\n" \
+			"USN: uuid:%1::upnp:rootdevice\r\n" \
+			"BOOTID.UPNP.ORG: %2\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"\r\n";
+	const std::string msgRoot = StringConverter::stringFormat(UPNP_ROOTDEVICE_BB, uuid, bootId);
+	if (!_udpMultiSend.sendDataTo(msgRoot.c_str(), msgRoot.size(), 0)) {
+		SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE_BB data send failed");
+		return false;
+	}
+
+	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
+
+	// broadcast message
+	const char *UPNP_BYEBYE =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"NT: uuid:%1\r\n" \
+			"NTS: ssdp:byebye\r\n" \
+			"USN: uuid:%1\r\n" \
+			"BOOTID.UPNP.ORG: %2\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"\r\n";
+	const std::string msgByeBye = StringConverter::stringFormat(UPNP_BYEBYE, uuid, bootId);
+	if (!_udpMultiSend.sendDataTo(msgByeBye.c_str(), msgByeBye.size(), 0)) {
+		SI_LOG_ERROR("SSDP BYEBYE data send failed");
+		return false;
+	}
+
+	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
+
+	// broadcast message
+	const char *UPNP_DEVICE_BB =
+			"NOTIFY * HTTP/1.1\r\n" \
+			"HOST: 239.255.255.250:1900\r\n" \
+			"NT: urn:ses-com:device:SatIPServer:1\r\n" \
+			"NTS: ssdp:byebye\r\n" \
+			"USN: uuid:%1::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: %2\r\n" \
+			"CONFIGID.UPNP.ORG: 0\r\n" \
+			"\r\n";
+	const std::string msgDevice = StringConverter::stringFormat(UPNP_DEVICE_BB, uuid, bootId);
+	if (!_udpMultiSend.sendDataTo(msgDevice.c_str(), msgDevice.size(), 0)) {
+		SI_LOG_ERROR("SSDP UPNP_DEVICE_BB data send failed");
+		return false;
+	}
+
 	std::this_thread::sleep_for(std::chrono::microseconds(UTIME_DEL));
 	return true;
 }
@@ -416,6 +457,14 @@ void Server::incrementBootID() {
 	base::MutexLock lock(_xmlMutex);
 	++_bootID;
 	notifyChanges();
+}
+
+void Server::constructLocation() {
+	_xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
+	_location = StringConverter::stringFormat("http://%1:%2/%3",
+		_bindIPAddress,
+		_properties.getHttpPort(),
+		_xmlDeviceDescriptionFile);
 }
 
 } // namespace ssdp

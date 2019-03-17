@@ -1,6 +1,6 @@
 /* StreamManager.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -37,9 +37,9 @@ FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 /// The class @c StreamManager manages all the available/open streams
 class StreamManager :
 	public base::XMLSupport {
-		// =======================================================================
-		// -- Constructors and destructor ----------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
 
 	public:
 
@@ -47,28 +47,34 @@ class StreamManager :
 
 		virtual ~StreamManager();
 
-		// =======================================================================
-		// -- base::XMLSupport ---------------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
 
 	public:
 		virtual void addToXML(std::string &xml) const override;
 
 		virtual void fromXML(const std::string &xml) override;
 
-		// =======================================================================
-		// -- Other member functions ---------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
 
 	public:
 
 		/// enumerate all available devices
+		/// @param bindIPAddress specifies the IP address to bind to
 		/// @param appDataPath specifies the path were to store application data
 		/// @param dvbPath specifies the path were to find dvb devices eg. /dev/dvb
-		void enumerateDevices(const std::string &appDataPath, const std::string &dvbPath);
+		void enumerateDevices(
+			const std::string &bindIPAddress,
+			const std::string &appDataPath,
+			const std::string &dvbPath);
 
 		///
-		SpStream findStreamAndClientIDFor(SocketClient &socketClient, int &clientID);
+		SpStream findStreamAndClientIDFor(
+			SocketClient &socketClient,
+			int &clientID);
 
 		///
 		void checkForSessionTimeout();
@@ -86,19 +92,22 @@ class StreamManager :
 		}
 
 		///
-		std::string attributeDescribeString(std::size_t stream, bool &active) const;
+		std::string attributeDescribeString(
+			std::size_t stream,
+			bool &active) const;
 
 #ifdef LIBDVBCSA
 		///
-		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(int streamID);
+		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(
+			int streamID);
 
 		///
 		decrypt::dvbapi::SpClient getDecrypt() const;
 #endif
 
-		// =======================================================================
-		// -- Data members -------------------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 	private:
 
 		decrypt::dvbapi::SpClient _decrypt;

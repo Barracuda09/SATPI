@@ -1,6 +1,6 @@
 /* UdpSocket.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -22,26 +22,26 @@
 
 #include <FwDecl.h>
 #include <socket/HttpcSocket.h>
-#include <socket/SocketClient.h>
-#include <socket/SocketAttr.h>
 
 FW_DECL_NS0(SocketAttr);
+FW_DECL_NS0(SocketClient);
 
 /// UDP Socket
 class UdpSocket :
 	public HttpcSocket {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+
 	public:
 
-		// =======================================================================
-		// -- Constructors and destructor ----------------------------------------
-		// =======================================================================
 		UdpSocket();
 
 		virtual ~UdpSocket();
 
-		// =======================================================================
-		//  -- Other member functions --------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
 	public:
 
@@ -49,7 +49,10 @@ class UdpSocket :
 		/// @param server
 		/// @param port
 		/// @param s_addr
-		bool initUDPSocket(SocketClient &server, int port, const char *ip_addr);
+		bool initUDPSocket(
+			SocketClient &server,
+			const std::string &ipAddr,
+			int port);
 
 		/// Initialize an Multicast UDP socket
 		/// @param server
@@ -58,13 +61,13 @@ class UdpSocket :
 		/// @param interfaceIPaddr
 		bool initMutlicastUDPSocket(
 			SocketClient &server,
-			const char *multicastIPAddr,
-			int port,
-			const char *interfaceIPaddr);
+			const std::string &multicastIPAddr,
+			const std::string &interfaceIPaddr,
+			int port);
 
-		// =======================================================================
-		// -- Data members -------------------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
 	private:
 
