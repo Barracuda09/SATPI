@@ -68,22 +68,23 @@ class SatPI :
 		// =======================================================================
 		SatPI(bool ssdp,
 			const std::string &ifaceName,
+			const std::string &currentPath,
 			const std::string &appdataPath,
 			const std::string &webPath,
 			const std::string &dvbPath,
 			unsigned int httpPort,
 			unsigned int rtspPort) :
-			XMLSaveSupport(appdataPath + "/" + "SatPI.xml"),
+			XMLSaveSupport((appdataPath.empty() ? currentPath : appdataPath) + "/" + "SatPI.xml"),
 			_interface(ifaceName),
 			_streamManager(),
-			_properties(_interface.getUUID(), appdataPath, webPath, httpPort, rtspPort),
+			_properties(_interface.getUUID(), currentPath, appdataPath, webPath, httpPort, rtspPort),
 			_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
 			_rtspServer(_streamManager, _interface.getIPAddress()),
 			_ssdpServer(_interface.getIPAddress(), _properties) {
 			_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			//
-			_streamManager.enumerateDevices(_interface.getIPAddress(), appdataPath, dvbPath);
+			_streamManager.enumerateDevices(_interface.getIPAddress(), _properties.getAppDataPath(), dvbPath);
 			//
 			std::string xml;
 			if (restoreXML(xml)) {
@@ -354,8 +355,6 @@ int main(int argc, char *argv[]) {
 	std::string file;
 	//
 	StringConverter::splitPath(argv[0], currentPath, file);
-	appdataPath = currentPath;
-	webPath = currentPath + "/" + "web";
 	dvbPath = "/dev/dvb";
 
 	// Check options
@@ -463,7 +462,8 @@ int main(int argc, char *argv[]) {
 			DVBCA dvbca;
 			dvbca.startThread();
 #endif
-			SatPI satpi(ssdp, ifaceName, appdataPath, webPath, dvbPath, httpPort, rtspPort);
+			SatPI satpi(ssdp, ifaceName, currentPath, appdataPath,
+					webPath, dvbPath, httpPort, rtspPort);
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {

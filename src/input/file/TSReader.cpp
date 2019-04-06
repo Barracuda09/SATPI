@@ -1,6 +1,6 @@
 /* TSReader.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -31,26 +31,33 @@
 namespace input {
 namespace file {
 
-	TSReader::TSReader(int streamID) :
-		Device(streamID),
-		_transform(_transformDeviceData) {}
+	// =========================================================================
+	//  -- Constructors and destructor -----------------------------------------
+	// =========================================================================
+	TSReader::TSReader(
+			int streamID,
+			const std::string &appDataPath) :
+			Device(streamID),
+			_transform(appDataPath, _transformDeviceData) {}
 
 	TSReader::~TSReader() {}
 
-	// =======================================================================
-	//  -- Static member functions -------------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- Static member functions ---------------------------------------------
+	// =========================================================================
 
-	void TSReader::enumerate(StreamVector &streamVector, const std::string &path) {
-		SI_LOG_INFO("Setting up TS Reader using path: %s", path.c_str());
+	void TSReader::enumerate(
+			StreamVector &streamVector,
+			const std::string &appDataPath) {
+		SI_LOG_INFO("Setting up TS Reader using path: %s", appDataPath.c_str());
 		const StreamVector::size_type size = streamVector.size();
-		const input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size);
+		const input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size, appDataPath);
 		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
 	}
 
-	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- base::XMLSupport ----------------------------------------------------
+	// =========================================================================
 
 	void TSReader::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
@@ -69,16 +76,16 @@ namespace file {
 		_deviceData.fromXML(xml);
 	}
 
-	// =======================================================================
-	//  -- input::Device -----------------------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- input::Device -------------------------------------------------------
+	// =========================================================================
 
 	void TSReader::addDeliverySystemCount(
-		std::size_t &dvbs2,
-		std::size_t &dvbt,
-		std::size_t &dvbt2,
-		std::size_t &dvbc,
-		std::size_t &dvbc2) {
+			std::size_t &dvbs2,
+			std::size_t &dvbt,
+			std::size_t &dvbt2,
+			std::size_t &dvbc,
+			std::size_t &dvbc2) {
 		dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
 		dvbt  += 0;
 		dvbt2 += 0;
@@ -218,9 +225,9 @@ namespace file {
 		return data.attributeDescribeString(_streamID);
 	}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- Other member functions ----------------------------------------------
+	// =========================================================================
 
 } // namespace file
 } // namespace input

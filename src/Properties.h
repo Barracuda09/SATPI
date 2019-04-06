@@ -1,6 +1,6 @@
 /* Properties.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -29,21 +29,25 @@
 /// The class @c Properties carries all the available/open Properties
 class Properties :
 	public base::XMLSupport  {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+
 	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		Properties(const std::string &uuid,
-				const std::string &appdataPath,
-				const std::string &webPath,
-				unsigned int httpPort,
-				unsigned int rtspPort);
+
+		Properties(
+			const std::string &uuid,
+			const std::string &currentPathOpt,
+			const std::string &appdataPathOpt,
+			const std::string &webPathOpt,
+			unsigned int httpPortOpt,
+			unsigned int rtspPortOpt);
 
 		virtual ~Properties();
 
-		// =======================================================================
-		// -- base::XMLSupport ---------------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
 
 	public:
 
@@ -53,9 +57,9 @@ class Properties :
 		/// Get data from an XML for restoring or web interface
 		virtual void fromXML(const std::string &xml) override;
 
-		// =======================================================================
-		// -- Other member functions ---------------------------------------------
-		// =======================================================================
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
 
 	public:
 
@@ -100,20 +104,23 @@ class Properties :
 
 	protected:
 
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+
 		std::string _uuid;
 		std::string _versionString;
-		std::string _appdataPath;
-		std::string _webPath;
 		std::string _xSatipM3U;
 		std::string _xmlDeviceDescriptionFile;
+		std::string _webPath;
+		std::string _appdataPath;
 		unsigned int _httpPort;
-		unsigned int _httpPortExt;
 		unsigned int _rtspPort;
-		unsigned int _rtspPortExt;
+		std::string _webPathOpt;
+		std::string _appdataPathOpt;
+		unsigned int _httpPortOpt;
+		unsigned int _rtspPortOpt;
 		std::time_t _appStartTime;     // the application start time (EPOCH)
 		bool _exitApplication;
 };

@@ -1,6 +1,6 @@
 /* Frontend.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -44,205 +44,214 @@ FW_DECL_VECTOR_NS0(Stream);
 namespace input {
 namespace dvb {
 
-	/// The class @c Frontend carries all the data/information of an frontend
-	/// and to tune it
-	class Frontend :
+/// The class @c Frontend carries all the data/information of an frontend
+/// and to tune it
+class Frontend :
 #ifdef LIBDVBCSA
-		public input::dvb::FrontendDecryptInterface,
+	public input::dvb::FrontendDecryptInterface,
 #endif
-		public input::Device {
-		public:
-			// =======================================================================
-			// -- Static Data members ------------------------------------------------
-			// =======================================================================
-			static const unsigned int DEFAULT_DVR_BUFFER_SIZE;
-			static const unsigned int MAX_DVR_BUFFER_SIZE;
+	public input::Device {
+		// =======================================================================
+		// -- Static Data members ------------------------------------------------
+		// =======================================================================
 
+	public:
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			Frontend(int streamID, const std::string &fe,
-				const std::string &dvr,	const std::string &dmx);
+		static const unsigned int DEFAULT_DVR_BUFFER_SIZE;
+		static const unsigned int MAX_DVR_BUFFER_SIZE;
 
-			virtual ~Frontend();
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
 
-			// =======================================================================
-			//  -- Static member functions -------------------------------------------
-			// =======================================================================
+	public:
 
-		public:
+		Frontend(
+			int streamID,
+			const std::string &appDataPath,
+			const std::string &fe,
+			const std::string &dvr,
+			const std::string &dmx);
 
-			static void enumerate(
-				StreamVector &streamVector,
-				decrypt::dvbapi::SpClient decrypt,
-				const std::string &path);
+		virtual ~Frontend();
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		//  -- Static member functions -------------------------------------------
+		// =======================================================================
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+	public:
 
-			virtual void fromXML(const std::string &xml) override;
+		static void enumerate(
+			StreamVector &streamVector,
+			const std::string &appDataPath,
+			decrypt::dvbapi::SpClient decrypt,
+			const std::string &dvbAdapterpath);
+
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+
+	public:
+		///
+		virtual void addToXML(std::string &xml) const override;
+
+		virtual void fromXML(const std::string &xml) override;
 
 #ifdef LIBDVBCSA
-			// =======================================================================
-			// -- FrontendDecryptInterface -------------------------------------------
-			// =======================================================================
-		public:
+		// =======================================================================
+		// -- FrontendDecryptInterface -------------------------------------------
+		// =======================================================================
+	public:
 
-			virtual int getStreamID() const override;
+		virtual int getStreamID() const override;
 
-			virtual int getBatchCount() const override;
+		virtual int getBatchCount() const override;
 
-			virtual int getBatchParity() const override;
+		virtual int getBatchParity() const override;
 
-			virtual int getMaximumBatchSize() const override;
+		virtual int getMaximumBatchSize() const override;
 
-			virtual void decryptBatch(bool final) override;
+		virtual void decryptBatch(bool final) override;
 
-			virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) override;
+		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) override;
 
-			virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
+		virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
 
-			virtual void setKey(const unsigned char *cw, int parity, int index) override;
+		virtual void setKey(const unsigned char *cw, int parity, int index) override;
 
-			virtual void startOSCamFilterData(int pid, int demux, int filter,
-				const unsigned char *filterData, const unsigned char *filterMask) override;
+		virtual void startOSCamFilterData(int pid, int demux, int filter,
+			const unsigned char *filterData, const unsigned char *filterMask) override;
 
-			virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
+		virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
 
-			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, mpegts::TSData &filterData) override;
+		virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
+			int &filter, int &demux, mpegts::TSData &filterData) override;
 
-			virtual void stopOSCamFilters(int streamID) override;
+		virtual void stopOSCamFilters(int streamID) override;
 
-			virtual void setECMInfo(
-				int pid,
-				int serviceID,
-				int caID,
-				int provID,
-				int emcTime,
-				const std::string &cardSystem,
-				const std::string &readerName,
-				const std::string &sourceName,
-				const std::string &protocolName,
-				int hops) override;
+		virtual void setECMInfo(
+			int pid,
+			int serviceID,
+			int caID,
+			int provID,
+			int emcTime,
+			const std::string &cardSystem,
+			const std::string &readerName,
+			const std::string &sourceName,
+			const std::string &protocolName,
+			int hops) override;
 
-			virtual bool isMarkedAsPMT(int pid) const override;
+		virtual bool isMarkedAsPMT(int pid) const override;
 
-			virtual const mpegts::PMT &getPMTData() const override;
+		virtual const mpegts::PMT &getPMTData() const override;
 #endif
 
-			// =======================================================================
-			//  -- input::Device------------------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		//  -- input::Device------------------------------------------------------
+		// =======================================================================
 
-		public:
+	public:
 
-			virtual void addDeliverySystemCount(
-				std::size_t &dvbs2,
-				std::size_t &dvbt,
-				std::size_t &dvbt2,
-				std::size_t &dvbc,
-				std::size_t &dvbc2) override;
+		virtual void addDeliverySystemCount(
+			std::size_t &dvbs2,
+			std::size_t &dvbt,
+			std::size_t &dvbt2,
+			std::size_t &dvbc,
+			std::size_t &dvbc2) override;
 
-			virtual bool isDataAvailable() override;
+		virtual bool isDataAvailable() override;
 
-			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
+		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
 
-			virtual bool capableOf(InputSystem system) const override;
+		virtual bool capableOf(InputSystem system) const override;
 
-			virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
+		virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
 
-			virtual void monitorSignal(bool showStatus) override;
+		virtual void monitorSignal(bool showStatus) override;
 
-			virtual bool hasDeviceDataChanged() const override;
+		virtual bool hasDeviceDataChanged() const override;
 
-			virtual void parseStreamString(const std::string &msg, const std::string &method) override;
+		virtual void parseStreamString(const std::string &msg, const std::string &method) override;
 
-			virtual bool update() override;
+		virtual bool update() override;
 
-			virtual bool teardown() override;
+		virtual bool teardown() override;
 
-			virtual std::string attributeDescribeString() const override;
+		virtual std::string attributeDescribeString() const override;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
 
-		protected:
+	protected:
 
-			void setupFrontend();
+		void setupFrontend();
 
-			///
-			int openFE(const std::string &path, bool readonly) const;
+		///
+		int openFE(const std::string &path, bool readonly) const;
 
-			///
-			void closeFE();
+		///
+		void closeFE();
 
-			///
-			int openDVR(const std::string &path) const;
+		///
+		int openDVR(const std::string &path) const;
 
-			///
-			void closeDVR();
+		///
+		void closeDVR();
 
-			///
-			int openDMX(const std::string &path) const;
+		///
+		int openDMX(const std::string &path) const;
 
-			///
-			bool setDMXFilter(int fd, uint16_t pid);
+		///
+		bool setDMXFilter(int fd, uint16_t pid);
 
-			///
-			bool tune();
+		///
+		bool tune();
 
-			///
-			bool isTuned() const {
-				return (_fd_dvr != -1) && _tuned;
-			}
+		///
+		bool isTuned() const {
+			return (_fd_dvr != -1) && _tuned;
+		}
 
-			bool updatePIDFilters();
+		bool updatePIDFilters();
 
-			///
-			bool setupAndTune();
+		///
+		bool setupAndTune();
 
-			///
-			void closePid(int pid);
+		///
+		void closePid(int pid);
 
-			///
-			bool openPid(int pid);
+		///
+		bool openPid(int pid);
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
 
-		private:
-			bool _tuned;
-			int _fd_fe;
-			int _fd_dvr;
-			std::string _path_to_fe;
-			std::string _path_to_dvr;
-			std::string _path_to_dmx;
-			struct dvb_frontend_info _fe_info;
+	private:
+		bool _tuned;
+		int _fd_fe;
+		int _fd_dvr;
+		std::string _path_to_fe;
+		std::string _path_to_dvr;
+		std::string _path_to_dmx;
+		struct dvb_frontend_info _fe_info;
 
-			input::dvb::delivery::SystemVector _deliverySystem;
-			input::dvb::FrontendData _frontendData;
+		input::dvb::delivery::SystemVector _deliverySystem;
+		input::dvb::FrontendData _frontendData;
 #ifdef LIBDVBCSA
-			decrypt::dvbapi::ClientProperties _dvbapiData;
+		decrypt::dvbapi::ClientProperties _dvbapiData;
 #endif
-			input::dvb::FrontendData _transformFrontendData;
-			input::Transformation _transform;
-			std::size_t _dvbs2;
-			std::size_t _dvbt;
-			std::size_t _dvbt2;
-			std::size_t _dvbc;
-			std::size_t _dvbc2;
+		input::dvb::FrontendData _transformFrontendData;
+		input::Transformation _transform;
+		std::size_t _dvbs2;
+		std::size_t _dvbt;
+		std::size_t _dvbt2;
+		std::size_t _dvbc;
+		std::size_t _dvbc2;
 
-			unsigned long _dvrBufferSizeMB;
-	};
+		unsigned long _dvrBufferSizeMB;
+};
 
 } // namespace dvb
 } // namespace input

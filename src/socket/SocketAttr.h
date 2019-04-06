@@ -46,6 +46,9 @@ class SocketAttr {
 
 	public:
 
+		/// Close the file descriptor of this Socket
+		virtual void closeFD();
+
 		///
 		void setupSocketStructure(const std::string &ipAddr, int port);
 
@@ -97,9 +100,6 @@ class SocketAttr {
 		/// Set the file descriptor for this Socket
 		/// @param fd specifies the file descriptor to set
 		void setFD(int fd);
-
-		/// Close the file descriptor of this Socket
-		virtual void closeFD();
 
 		/// Set the Receive and Send timeout in Sec for this socket
 		void setSocketTimeoutInSec(unsigned int timeout);

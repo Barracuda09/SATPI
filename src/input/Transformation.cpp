@@ -1,6 +1,6 @@
 /* Transformation.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -33,10 +33,12 @@ namespace input {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	Transformation::Transformation(input::DeviceData &transformedDeviceData) :
+	Transformation::Transformation(
+			const std::string &appDataPath,
+			input::DeviceData &transformedDeviceData) :
 			_transform(false),
 			_advertiseAsDVBS2(false),
-			_transformFileM3U("mapping.m3u"),
+			_transformFileM3U(appDataPath + "/" + "mapping.m3u"),
 			_transformedDeviceData(transformedDeviceData) {
 		_enabled = _m3u.parse(_transformFileM3U);
 		_transformedDeviceData.initialize();

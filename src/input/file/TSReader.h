@@ -1,6 +1,6 @@
 /* TSReader.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -37,95 +37,100 @@ FW_DECL_VECTOR_NS0(Stream);
 namespace input {
 namespace file {
 
-	/// The class @c TSReader is for reading from an TS files as input device
-	/// Some example for opening a TS file:
-	/// http://ip.of.your.box:8875/?msys=file&uri=test.ts
-	class TSReader :
-		public input::Device {
-		public:
+/// The class @c TSReader is for reading from an TS files as input device
+/// Some example for opening a TS file:
+/// http://ip.of.your.box:8875/?msys=file&uri=test.ts
+class TSReader :
+	public input::Device {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit TSReader(int streamID);
-			virtual ~TSReader();
+	public:
 
-			// =======================================================================
-			//  -- Static member functions -------------------------------------------
-			// =======================================================================
+		TSReader(
+			int streamID,
+			const std::string &appDataPath);
 
-		public:
+		virtual ~TSReader();
 
-			static void enumerate(
-				StreamVector &streamVector,
-				const std::string &path);
+		// =====================================================================
+		//  -- Static member functions -----------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+	public:
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+		///
+		static void enumerate(
+			StreamVector &streamVector,
+			const std::string &appDataPath);
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
+
+	public:
+		///
+		virtual void addToXML(std::string &xml) const override;
+
+		///
+		virtual void fromXML(const std::string &xml) override;
 
 
-			// =======================================================================
-			//  -- input::Device------------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- input::Device----------------------------------------------------
+		// =====================================================================
 
-		public:
+	public:
 
-			virtual void addDeliverySystemCount(
-				std::size_t &dvbs2,
-				std::size_t &dvbt,
-				std::size_t &dvbt2,
-				std::size_t &dvbc,
-				std::size_t &dvbc2) override;
+		virtual void addDeliverySystemCount(
+			std::size_t &dvbs2,
+			std::size_t &dvbt,
+			std::size_t &dvbt2,
+			std::size_t &dvbc,
+			std::size_t &dvbc2) override;
 
-			virtual bool isDataAvailable() override;
+		virtual bool isDataAvailable() override;
 
-			virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
+		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
 
-			virtual bool capableOf(input::InputSystem msys) const override;
+		virtual bool capableOf(input::InputSystem msys) const override;
 
-			virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
+		virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
 
-			virtual void monitorSignal(bool showStatus) override;
+		virtual void monitorSignal(bool showStatus) override;
 
-			virtual bool hasDeviceDataChanged() const override;
+		virtual bool hasDeviceDataChanged() const override;
 
-			virtual void parseStreamString(const std::string &msg, const std::string &method) override;
+		virtual void parseStreamString(const std::string &msg, const std::string &method) override;
 
-			virtual bool update() override;
+		virtual bool update() override;
 
-			virtual bool teardown() override;
+		virtual bool teardown() override;
 
-			virtual std::string attributeDescribeString() const override;
+		virtual std::string attributeDescribeString() const override;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-		protected:
+	protected:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
-		private:
-			std::ifstream _file;
-			TSReaderData _deviceData;
-			TSReaderData _transformDeviceData;
-			input::Transformation _transform;
+	private:
+		std::ifstream _file;
+		TSReaderData _deviceData;
+		TSReaderData _transformDeviceData;
+		input::Transformation _transform;
 
-			uint64_t _pcrPrev;
-			int64_t _pcrDelta;
-			std::chrono::steady_clock::time_point _t1;
-			std::chrono::steady_clock::time_point _t2;
-	};
+		uint64_t _pcrPrev;
+		int64_t _pcrDelta;
+		std::chrono::steady_clock::time_point _t1;
+		std::chrono::steady_clock::time_point _t2;
+};
 
 } // namespace file
 } // namespace input

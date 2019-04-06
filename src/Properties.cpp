@@ -1,6 +1,6 @@
 /* Properties.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -22,24 +22,41 @@
 
 extern const char *satpi_version;
 
-Properties::Properties(const std::string &uuid,
-                       const std::string &appdataPath, const std::string &webPath,
-					   const unsigned int httpPort, const unsigned int rtspPort) :
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
+Properties::Properties(
+		const std::string &uuid,
+		const std::string &currentPathOpt,
+		const std::string &appdataPathOpt,
+		const std::string &webPathOpt,
+		const unsigned int httpPortOpt,
+		const unsigned int rtspPortOpt) :
 	XMLSupport(),
 	_uuid(uuid),
 	_versionString(satpi_version),
-	_appdataPath(appdataPath),
-	_webPath(webPath),
 	_xSatipM3U("channellist.m3u"),
 	_xmlDeviceDescriptionFile("desc.xml"),
-	_httpPort(8875),
-	_httpPortExt(httpPort),
-	_rtspPort(554),
-	_rtspPortExt(rtspPort),
 	_appStartTime(std::time(nullptr)),
-	_exitApplication(false) {}
+	_exitApplication(false) {
+
+	_httpPort = httpPortOpt == 0 ? 8875 : httpPortOpt;
+	_rtspPort = rtspPortOpt == 0 ? 554 : rtspPortOpt;
+	_httpPortOpt = httpPortOpt;
+	_rtspPortOpt = rtspPortOpt;
+
+	_webPath = webPathOpt.empty() ? (currentPathOpt + "/" + "web") : webPathOpt;
+	_appdataPath = appdataPathOpt.empty() ? currentPathOpt : appdataPathOpt;
+	_webPathOpt = webPathOpt;
+	_appdataPathOpt = appdataPathOpt;
+}
 
 Properties::~Properties() {}
+
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
 
 void Properties::fromXML(const std::string &xml) {
 	base::MutexLock lock(_xmlMutex);
@@ -53,28 +70,20 @@ void Properties::fromXML(const std::string &xml) {
 	}
 	if (findXMLElement(xml, "httpport.value", element)) {
 		const unsigned int httpPort = atoi(element.c_str());
-		if (_httpPortExt != 0) {
-			_httpPort = _httpPortExt;
-		} else {
-			_httpPort = httpPort;
-		}
+		_httpPort = _httpPortOpt != 0 ? _httpPortOpt : httpPort;
 		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
 	}
 	if (findXMLElement(xml, "rtspport.value", element)) {
 		const unsigned int rtspPort = atoi(element.c_str());
-		if (_rtspPortExt != 0) {
-			_rtspPort = _rtspPortExt;
-		} else {
-			_rtspPort = rtspPort;
-		}
+		_rtspPort = _rtspPortOpt != 0 ? _rtspPortOpt : rtspPort;
 		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
 	}
 	if (findXMLElement(xml, "webPath.value", element)) {
-		_webPath = element;
+		_webPath = _webPathOpt.empty() ? element : _webPathOpt;
 		SI_LOG_INFO("Setting WEB Path to: %s", _webPath.c_str());
 	}
 	if (findXMLElement(xml, "appDataPath.value", element)) {
-		_appdataPath = element;
+		_appdataPath = _appdataPathOpt.empty() ? element : _appdataPathOpt;
 		SI_LOG_INFO("Setting App Data Path to: %s", _appdataPath.c_str());
 	}
 }
@@ -89,6 +98,10 @@ void Properties::addToXML(std::string &xml) const {
 	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
 	ADD_XML_TEXT_INPUT(xml, "appDataPath", _appdataPath);
 }
+
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
 std::string Properties::getSoftwareVersion() const {
 	base::MutexLock lock(_xmlMutex);

@@ -48,6 +48,11 @@
 	//  -- Other member functions ----------------------------------------
 	// ===================================================================
 
+	void SocketAttr::closeFD() {
+		CLOSE_FD(_fd);
+		_ipAddr = "0.0.0.0";
+	}
+
 	void SocketAttr::setupSocketStructure(const std::string &ipAddr, int port) {
 		// fill in the socket structure with host information
 		memset(&_addr, 0, sizeof(_addr));
@@ -182,11 +187,6 @@
 
 	void SocketAttr::setFD(int fd) {
 		_fd = fd;
-	}
-
-	void SocketAttr::closeFD() {
-		CLOSE_FD(_fd);
-		_ipAddr = "0.0.0.0";
 	}
 
 	void SocketAttr::setSocketTimeoutInSec(unsigned int timeout) {

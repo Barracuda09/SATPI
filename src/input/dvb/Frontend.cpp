@@ -1,6 +1,6 @@
 /* Frontend.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -54,10 +54,12 @@ namespace dvb {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	Frontend::Frontend(int streamID,
-		const std::string &fe,
-		const std::string &dvr,
-		const std::string &dmx) :
+	Frontend::Frontend(
+			int streamID,
+			const std::string &appDataPath,
+			const std::string &fe,
+			const std::string &dvr,
+			const std::string &dmx) :
 		Device(streamID),
 		_tuned(false),
 		_fd_fe(-1),
@@ -65,7 +67,7 @@ namespace dvb {
 		_path_to_fe(fe),
 		_path_to_dvr(dvr),
 		_path_to_dmx(dmx),
-		_transform(_transformFrontendData),
+		_transform(appDataPath, _transformFrontendData),
 		_dvbs2(0),
 		_dvbt(0),
 		_dvbt2(0),
@@ -90,6 +92,7 @@ namespace dvb {
 	// Called recursive
 	static void getAttachedFrontends(
 			StreamVector &streamVector,
+			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &path,
 			const std::string &startPath) {
@@ -104,13 +107,13 @@ namespace dvb {
 		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 0, 0);
 		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 0, 0);
 		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 0, 0);
-		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, fe.c_str(), dvr.c_str(), dmx.c_str());
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe, dvr, dmx);
 		streamVector.push_back(std::make_shared<Stream>(0, frontend0, decrypt));
 
 		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
 		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 1, 0);
 		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 1, 0);
-		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, fe.c_str(), dvr.c_str(), dmx.c_str());
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe, dvr, dmx);
 		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
 #else
 		dirent **file_list;
@@ -136,14 +139,14 @@ namespace dvb {
 
 								// Make new frontend here
 								const StreamVector::size_type size = streamVector.size();
-								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, fe.c_str(), dvr.c_str(), dmx.c_str());
+								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
 							}
 							break;
 						case S_IFDIR:
 							// do not use dir '.' an '..'
 							if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-								getAttachedFrontends(streamVector, decrypt, full_path, startPath);
+								getAttachedFrontends(streamVector, appDataPath, decrypt, full_path, startPath);
 							}
 							break;
 						default:
@@ -161,11 +164,14 @@ namespace dvb {
 	//  -- Static member functions -------------------------------------------
 	// =======================================================================
 
-	void Frontend::enumerate(StreamVector &streamVector, decrypt::dvbapi::SpClient decrypt,
-		const std::string &path) {
+	void Frontend::enumerate(
+			StreamVector &streamVector,
+			const std::string &appDataPath,
+			decrypt::dvbapi::SpClient decrypt,
+			const std::string &dvbAdapterpath) {
 		const StreamVector::size_type beginSize = streamVector.size();
-		SI_LOG_INFO("Detecting frontends in: %s", path.c_str());
-		getAttachedFrontends(streamVector, decrypt, path, path);
+		SI_LOG_INFO("Detecting frontends in: %s", dvbAdapterpath.c_str());
+		getAttachedFrontends(streamVector, appDataPath, decrypt, dvbAdapterpath, dvbAdapterpath);
 		const StreamVector::size_type endSize = streamVector.size();
 		SI_LOG_INFO("Frontends found: %u", endSize - beginSize);
 	}
@@ -233,11 +239,11 @@ namespace dvb {
 	// ========================================================================
 
 	void Frontend::addDeliverySystemCount(
-		std::size_t &dvbs2,
-		std::size_t &dvbt,
-		std::size_t &dvbt2,
-		std::size_t &dvbc,
-		std::size_t &dvbc2) {
+			std::size_t &dvbs2,
+			std::size_t &dvbt,
+			std::size_t &dvbt2,
+			std::size_t &dvbc,
+			std::size_t &dvbc2) {
 		dvbs2 += _transform.advertiseAsDVBS2() ? _dvbc : _dvbs2;
 		dvbt  += _dvbt;
 		dvbt2 += _dvbt2;

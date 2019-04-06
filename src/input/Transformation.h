@@ -1,6 +1,6 @@
 /* Transformation.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -31,72 +31,75 @@ FW_DECL_NS1(input, DeviceData);
 
 namespace input {
 
-	/// The class @c Transformation is an interface for transform
-	/// an input request to an different request red from an M3U file.
-	class Transformation :
-		public base::XMLSupport  {
-		public:
+/// The class @c Transformation is an interface for transform
+/// an input request to an different request red from an M3U file.
+class Transformation :
+	public base::XMLSupport  {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit Transformation(input::DeviceData &transformedDeviceData);
+	public:
 
-			virtual ~Transformation();
+		Transformation(
+			const std::string &appDataPath,
+			input::DeviceData &transformedDeviceData);
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		virtual ~Transformation();
 
-		public:
+		// =====================================================================
+		// -- base::XMLSupport -------------------------------------------------
+		// =====================================================================
 
-			virtual void addToXML(std::string &xml) const override;
+	public:
 
-			virtual void fromXML(const std::string &xml) override;
+		virtual void addToXML(std::string &xml) const override;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		virtual void fromXML(const std::string &xml) override;
 
-		public:
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
 
-			/// Check if transformation is enabled
-			bool isEnabled() const;
+	public:
 
-			///
-			bool advertiseAsDVBS2() const;
+		/// Check if transformation is enabled
+		bool isEnabled() const;
 
-			///
-			void resetTransformFlag();
+		///
+		bool advertiseAsDVBS2() const;
 
-			/// This function may return the input system for the
-			/// requested input frequency.
-			input::InputSystem getTransformationSystemFor(double frequency) const;
+		///
+		void resetTransformFlag();
 
-			/// This function may return the transformed input message
-			std::string transformStreamString(int streamID,
-				const std::string &msg,
-				const std::string &method);
+		/// This function may return the input system for the
+		/// requested input frequency.
+		input::InputSystem getTransformationSystemFor(double frequency) const;
 
-			/// This function may return the transformed Device Data
-			const DeviceData &transformDeviceData(
-				const DeviceData &deviceData) const;
+		/// This function may return the transformed input message
+		std::string transformStreamString(int streamID,
+			const std::string &msg,
+			const std::string &method);
 
-		private:
+		/// This function may return the transformed Device Data
+		const DeviceData &transformDeviceData(
+			const DeviceData &deviceData) const;
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+	private:
 
-		private:
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 
-			bool _enabled;
-			bool _transform;
-			bool _advertiseAsDVBS2;
-			base::M3UParser _m3u;
-			std::string _transformFileM3U;
-			input::DeviceData &_transformedDeviceData;
-	};
+	private:
+
+		bool _enabled;
+		bool _transform;
+		bool _advertiseAsDVBS2;
+		base::M3UParser _m3u;
+		std::string _transformFileM3U;
+		input::DeviceData &_transformedDeviceData;
+};
 
 } // namespace input
 

@@ -70,7 +70,7 @@ void StreamManager::enumerateDevices(
 	SI_LOG_INFO("Enumerating all devices...");
 
 	// enumerate streams (frontends)
-	input::dvb::Frontend::enumerate(_stream, _decrypt, dvbPath);
+	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
 	input::stream::Streamer::enumerate(_stream, bindIPAddress);
 }
