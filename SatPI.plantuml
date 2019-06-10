@@ -32,6 +32,7 @@ class socket::SocketClient {
   std::string _protocolString
   std::string _sessionID
   std::string _userAgent
+  int _cseq
 }
 
 class socket::SocketAttr {
@@ -129,7 +130,6 @@ class StreamClient #aaaaff {
   SocketClient *_httpc
   watchdog
   canClose
-  cseq
 }
 
 class mpegts::Filter        #11ff11
