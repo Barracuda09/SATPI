@@ -102,7 +102,7 @@ namespace base {
 			void checkAddComma() {
 				const char c = _json.back();
 				if (c == '\"' || c == '}' || c == ']' || std::isdigit(c)) {
-					_json += ',';
+					_json += ", ";
 				}
 			}
 
