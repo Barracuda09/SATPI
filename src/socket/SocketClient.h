@@ -37,7 +37,8 @@ class SocketClient :
 			_msg(""),
 			_protocolString("None"),
 			_sessionID("-1"),
-			_userAgent("None") {}
+			_userAgent("None"),
+			_cseq(0) {}
 
 		virtual ~SocketClient() {}
 
@@ -52,6 +53,7 @@ class SocketClient :
 			SocketAttr::closeFD();
 			_sessionID = "-1";
 			_userAgent = "None";
+			_cseq = 0;
 			_msg.clear();
 		}
 
@@ -110,6 +112,16 @@ class SocketClient :
 			return _sessionID;
 		}
 
+		///
+		void setCSeq(int cseq) {
+			_cseq = cseq;
+		}
+
+		///
+		int getCSeq() const {
+			return _cseq;
+		}
+
 		/// Set protocol string
 		/// @param protocol specifies the protocol this client is using
 		void setProtocol(const std::string &protocol) {
@@ -131,6 +143,7 @@ class SocketClient :
 		std::string _protocolString;
 		std::string _sessionID;
 		std::string _userAgent;
+		int         _cseq;            /// RTSP sequence number
 
 };
 

@@ -53,7 +53,7 @@ void RtspServer::threadEntry() {
 	}
 }
 
-bool RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody) {
+void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody) {
 	switch (stream.getStreamingType()) {
 		case Stream::StreamingType::RTP_TCP: {
 			static const char *RTSP_SETUP_OK =
@@ -122,16 +122,14 @@ bool RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 			// setup reply
 			htmlBody = StringConverter::stringFormat(RTSP_SETUP_REPLY,
 				stream.getCSeq(clientID));
-			return false;
+			return;
 	};
 
 // @TODO  check return of update();
 	stream.update(clientID, true);
-
-	return true;
 }
 
-bool RtspServer::methodPlay(Stream &stream, int clientID, std::string &htmlBody) {
+void RtspServer::methodPlay(const SocketClient &client, int streamID, std::string &htmlBody) {
 	static const char *RTSP_PLAY_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"RTP-Info: url=rtsp://%1/stream=%2\r\n" \
@@ -140,16 +138,21 @@ bool RtspServer::methodPlay(Stream &stream, int clientID, std::string &htmlBody)
 		"Range: npt=0.000-\r\n" \
 		"\r\n";
 
-// @TODO  check return of update();
-	stream.update(clientID, true);
-
 	htmlBody = StringConverter::stringFormat(RTSP_PLAY_OK, _bindIPAddress,
-		stream.getStreamID(), stream.getCSeq(clientID), stream.getSessionID(clientID));
-
-	return true;
+		streamID, client.getCSeq(), client.getSessionID());
 }
 
-bool RtspServer::methodOptions(Stream &stream, int clientID, std::string &htmlBody) {
+void RtspServer::methodTeardown(const SocketClient &client, std::string &htmlBody) {
+	static const char *RTSP_TEARDOWN_OK =
+		"RTSP/1.0 200 OK\r\n" \
+		"CSeq: %1\r\n" \
+		"Session: %2\r\n" \
+		"\r\n";
+
+	htmlBody = StringConverter::stringFormat(RTSP_TEARDOWN_OK, client.getCSeq(), client.getSessionID());
+}
+
+void RtspServer::methodOptions(const SocketClient &client, std::string &htmlBody) {
 	static const char *RTSP_OPTIONS_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"CSeq: %1\r\n" \
@@ -158,15 +161,13 @@ bool RtspServer::methodOptions(Stream &stream, int clientID, std::string &htmlBo
 		"\r\n";
 
 	// check if we are in session, then we need to send the Session ID
-	const std::string sessionID = (stream.getSessionID(clientID).size() > 2) ?
-		StringConverter::stringFormat("Session: %1\r\n", stream.getSessionID(clientID)) : "";
+	const std::string sessionID = (client.getSessionID().size() > 2) ?
+		StringConverter::stringFormat("Session: %1\r\n", client.getSessionID()) : "";
 
-	htmlBody = StringConverter::stringFormat(RTSP_OPTIONS_OK, stream.getCSeq(clientID), sessionID);
-
-	return true;
+	htmlBody = StringConverter::stringFormat(RTSP_OPTIONS_OK, client.getCSeq(), sessionID);
 }
 
-bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlBody) {
+void RtspServer::methodDescribe(const SocketClient &client, std::string &htmlBody) {
 	static const char *RTSP_DESCRIBE  =
 		"%1" \
 		"CSeq: %2\r\n" \
@@ -194,8 +195,8 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 
 	// Describe streams
 	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_CONT1,
-		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
-		(stream.getSessionID(clientID).size() > 2) ? stream.getSessionID(clientID) : "0",
+		(client.getSessionID().size() > 2) ? client.getSessionID() : "0",
+		(client.getSessionID().size() > 2) ? client.getSessionID() : "0",
 		_bindIPAddress,
 		_streamManager.getRTSPDescribeString());
 
@@ -209,31 +210,16 @@ bool RtspServer::methodDescribe(Stream &stream, int clientID, std::string &htmlB
 	}
 
 	// check if we are in session, then we need to send the Session ID
-	const std::string sessionID = (stream.getSessionID(clientID).size() > 2) ?
-		StringConverter::stringFormat("Session: %1\r\n", stream.getSessionID(clientID)) : "";
+	const std::string sessionID = (client.getSessionID().size() > 2) ?
+		StringConverter::stringFormat("Session: %1\r\n", client.getSessionID()) : "";
 
 	// Are there any streams setup already
 	if (streams_setup != 0) {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 200 OK\r\n",
-			stream.getCSeq(clientID), _bindIPAddress, desc.size(), sessionID, desc);
+			client.getCSeq(), _bindIPAddress, desc.size(), sessionID, desc);
 	} else {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 404 Not Found\r\n",
-			stream.getCSeq(clientID), _bindIPAddress, 0, sessionID, "");
+			client.getCSeq(), _bindIPAddress, 0, sessionID, "");
 	}
-	return true;
 }
 
-bool RtspServer::methodTeardown(Stream &stream, int clientID, std::string &htmlBody) {
-	static const char *RTSP_TEARDOWN_OK =
-		"RTSP/1.0 200 OK\r\n" \
-		"CSeq: %1\r\n" \
-		"Session: %2\r\n" \
-		"\r\n";
-
-	htmlBody = StringConverter::stringFormat(RTSP_TEARDOWN_OK, stream.getCSeq(clientID), stream.getSessionID(clientID));
-
-	// after setting up reply, else sessionID is reset
-	stream.teardown(clientID, true);
-
-	return true;
-}

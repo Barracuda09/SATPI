@@ -159,10 +159,8 @@ class Stream :
 		/// Close the stream client with clientID
 		void close(int clientID);
 
-		/// Teardown the stream client with clientID can be graceful or not
-		/// graceful means it is just closed by the client itself else a time-out
-		/// probably occurred.
-		bool teardown(int clientID, bool gracefull);
+		/// Teardown the stream client with clientID
+		bool teardown(int clientID);
 
 		/// Check if there are any stream clients with a session time-out
 		/// that should be closed
@@ -218,10 +216,6 @@ class Stream :
 	protected:
 
 	private:
-
-		///
-		void processStopStream_L(int clientID, bool gracefull);
-
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

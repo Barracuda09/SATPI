@@ -108,8 +108,9 @@ void Log::applog(const int priority, const char *fmt, ...) {
 std::string Log::makeJSON() {
 	base::JSONSerializer json;
 	json.startObject();
+
+	json.startArrayWithName("log");
 	{
-		json.startArrayWithName("log");
 		base::MutexLock lock(logMutex);
 		if (!appLogBuffer.empty()) {
 			for (const LogElem &elem : appLogBuffer) {
@@ -120,8 +121,9 @@ std::string Log::makeJSON() {
 				json.endObject();
 			}
 		}
-		json.endArray();
 	}
+	json.endArray();
+
 	json.endObject();
 	return json.getString();
 }

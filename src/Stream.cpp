@@ -218,7 +218,6 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 				            _streamID, i, sessionID.c_str());
 			}
 			_client[i].setSocketClient(socketClient);
-			_client[i].setSessionID(sessionID);
 			_streamInUse = true;
 			clientID = i;
 			return true;
@@ -252,7 +251,7 @@ void Stream::checkForSessionTimeout() {
 				SI_LOG_INFO("Stream: %d, Reclaiming StreamClient[%d] with SessionID %s",
 							_streamID, i, _client[i].getSessionID().c_str());
 			}
-			teardown(i, false);
+			teardown(i);
 		}
 	}
 }
@@ -320,25 +319,48 @@ void Stream::close(int clientID) {
 		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
 		            _streamID, clientID, _client[clientID].getSessionID().c_str());
 
-		processStopStream_L(clientID, false);
+		_client[clientID].close();
+
+		// @TODO Are all other StreamClients stopped??
+		if (clientID == 0) {
+			for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
+				_client[i].close();
+			}
+			_streamActive = false;
+			_streamInUse = false;
+			_streamingType = StreamingType::NONE;
+		}
 	}
 }
 
-bool Stream::teardown(int clientID, bool gracefull) {
+bool Stream::teardown(int clientID) {
 	base::MutexLock lock(_xmlMutex);
 
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _streamID, clientID, _client[clientID].getSessionID().c_str());
 
-	processStopStream_L(clientID, gracefull);
+	// Stop streaming by deleting object
+	_streaming.reset(nullptr);
+
+	_device->clearMPEGFilters();
+	_device->teardown();
+
+	// as last, else sessionID and IP is reset
+	_client[clientID].teardown();
+
+	// @TODO Are all other StreamClients stopped??
+	if (clientID == 0) {
+		for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
+			_client[i].teardown();
+		}
+	}
 	return true;
 }
 
 bool Stream::processStreamingRequest(const std::string &msg, int clientID, const std::string &method) {
 	base::MutexLock lock(_xmlMutex);
 
-	if ((method == "OPTIONS" || method == "SETUP" ||
-	     method == "PLAY"    || method == "GET") &&
+	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
 		_device->clearMPEGFilters();
 		_device->parseStreamString(msg, method);
@@ -394,11 +416,6 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 			break;
 	};
 
-	std::string cseq("0");
-	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
-		_client[clientID].setCSeq(atoi(cseq.c_str()));
-	}
-
 	bool sessionCanClose = false;
 	if (method != "SETUP") {
 		std::string sessionID;
@@ -410,28 +427,4 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 
 	_client[clientID].restartWatchDog();
 	return true;
-}
-
-/// private NO Locking
-void Stream::processStopStream_L(int clientID, bool gracefull) {
-
-	// Stop streaming by deleting object
-	_streaming.reset(nullptr);
-
-	_device->clearMPEGFilters();
-	_device->teardown();
-
-	// as last, else sessionID and IP is reset
-	_client[clientID].teardown(gracefull);
-
-	// @TODO Are all other StreamClients stopped??
-	if (clientID == 0) {
-		for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
-			// Not gracefully teardown for other clients
-			_client[i].teardown(false);
-		}
-		_streamActive = false;
-		_streamInUse = false;
-		_streamingType = StreamingType::NONE;
-	}
 }

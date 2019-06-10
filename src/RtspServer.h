@@ -24,9 +24,9 @@
 #include <HttpcServer.h>
 #include <base/ThreadBase.h>
 
+FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(Stream);
 FW_DECL_NS0(StreamManager);
-FW_DECL_NS0(StreamClient);
 
 /// RTSP Server
 class RtspServer :
@@ -54,20 +54,19 @@ class RtspServer :
 	private:
 
 		///
-		virtual bool methodSetup(Stream &stream, int clientID, std::string &htmlBody) override;
+		virtual void methodSetup(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodPlay(Stream &stream, int clientID, std::string &htmlBody) override;
+		virtual void methodPlay(const SocketClient &client, int streamID, std::string &htmlBody) override;
 
 		///
-		virtual bool methodOptions(Stream &stream, int clientID, std::string &htmlBody) override;
+		virtual void methodTeardown(const SocketClient &client, std::string &htmlBody) override;
 
 		///
-		virtual bool methodDescribe(Stream &stream, int clientID, std::string &htmlBody) override;
+		virtual void methodOptions(const SocketClient &client, std::string &htmlBody) override;
 
 		///
-		virtual bool methodTeardown(Stream &stream, int clientID, std::string &htmlBody) override;
-
+		virtual void methodDescribe(const SocketClient &client, std::string &htmlBody) override;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

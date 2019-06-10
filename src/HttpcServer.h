@@ -90,29 +90,19 @@ class HttpcServer :
 		}
 
 		/// RTSP Method
-		virtual bool methodSetup(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
-			return false;
-		}
+		virtual void methodSetup(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual bool methodPlay(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
-			return false;
-		}
+		virtual void methodPlay(const SocketClient &UNUSED(client), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual bool methodOptions(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
-			return false;
-		}
+		virtual void methodTeardown(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual bool methodDescribe(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
-			return false;
-		}
+		virtual void methodOptions(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual bool methodTeardown(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {
-			return false;
-		}
+		virtual void methodDescribe(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client) override;

@@ -160,6 +160,13 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	if (StringConverter::getHeaderFieldParameter(msg, "User-Agent:", userAgent)) {
 		client.setUserAgent(userAgent);
 	}
+
+	// Save clients seq number
+	std::string cseq("0");
+	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
+		client.setCSeq(atoi(cseq.c_str()));
+	}
+
 #ifdef DEBUG
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		client.getUserAgent().c_str(), client.getIPAddress().c_str(), client.getSocketPort(), msg.c_str());
@@ -169,38 +176,45 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 #endif
 
 	std::string httpc;
-	int clientID;
-	SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
-	if (stream != nullptr) {
-		std::string method;
-		if (StringConverter::getMethod(msg, method)) {
-			stream->processStreamingRequest(msg, clientID, method);
+	std::string method;
+	if (StringConverter::getMethod(msg, method)) {
+		if (method == "OPTIONS") {
+			methodOptions(client, httpc);
+		} else if (method == "DESCRIBE") {
+			methodDescribe(client, httpc);
+		} else {
+			int clientID;
+			SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
+			if (stream != nullptr) {
+				stream->processStreamingRequest(msg, clientID, method);
 
-			// Check the Method
-			if (method == "GET") {
-				stream->update(clientID, true);
-				getHtmlBodyNoContent(httpc, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
-			} else if (method == "SETUP") {
-				methodSetup(*stream, clientID, httpc);
-			} else if (method == "PLAY") {
-				methodPlay(*stream, clientID, httpc);
-			} else if (method == "OPTIONS") {
-				methodOptions(*stream, clientID, httpc);
-			} else if (method == "DESCRIBE") {
-				methodDescribe(*stream, clientID, httpc);
-			} else if (method == "TEARDOWN") {
-				methodTeardown(*stream, clientID, httpc);
+				// Check the Method
+				if (method == "GET") {
+					stream->update(clientID, true);
+					getHtmlBodyNoContent(httpc, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
+				} else if (method == "SETUP") {
+					methodSetup(*stream, clientID, httpc);
+				} else if (method == "PLAY") {
+					methodPlay(client, stream->getStreamID(), httpc);
+
+					// @TODO  check return of update();
+					stream->update(clientID, true);
+
+				} else if (method == "TEARDOWN") {
+					methodTeardown(client, httpc);
+
+					// after setting up reply, else sessionID is reset
+					stream->teardown(clientID);
+
+				} else {
+					// method not supported
+					SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
+				}
 			} else {
-				// method not supported
-				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
+				// something wrong here... send 503 error
+				getHtmlBodyNoContent(httpc, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, client.getCSeq());
 			}
 		}
-	} else {
-		std::string cseq("0");
-		StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq);
-
-		// something wrong here... send 503 error
-		getHtmlBodyNoContent(httpc, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, atoi(cseq.c_str()));
 	}
 
 	SI_LOG_DEBUG("%s", httpc.c_str());

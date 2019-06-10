@@ -33,10 +33,8 @@
 			_httpc(nullptr),
 			_streamID(-1),
 			_clientID(-1),
-			_sessionID("-1"),
 			_watchdog(0),
 			_sessionTimeout(60),
-			_cseq(0),
 			_canClose(false) {}
 
 	StreamClient::~StreamClient() {}
@@ -48,15 +46,18 @@
 		_canClose = close;
 	}
 
-	void StreamClient::teardown(bool gracefull) {
+	void StreamClient::close() {
+		base::MutexLock lock(_mutex);
+
+		// Do not delete
+		_httpc = nullptr;
+	}
+
+	void StreamClient::teardown() {
 		base::MutexLock lock(_mutex);
 
 		_watchdog = 0;
 		_canClose = true;
-		if (!gracefull) {
-			_sessionID = "-1";
-		}
-		_httpc = nullptr;
 	}
 
 	void StreamClient::restartWatchDog() {

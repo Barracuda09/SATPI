@@ -50,7 +50,10 @@ class StreamClient {
 		}
 
 		///
-		void teardown(bool gracefull);
+		void close();
+
+		///
+		void teardown();
 
 		/// Call this if the stream should stop because of some error
 		void selfDestruct();
@@ -94,13 +97,13 @@ class StreamClient {
 		///
 		std::string getSessionID() const {
 			base::MutexLock lock(_mutex);
-			return _sessionID;
+			return (_httpc == nullptr) ? "-1" : _httpc->getSessionID();
 		}
 
 		///
-		void setSessionID(const std::string &sessionID) {
+		int getCSeq() const {
 			base::MutexLock lock(_mutex);
-			_sessionID = sessionID;
+			return (_httpc == nullptr) ? 0 : _httpc->getCSeq();
 		}
 
 		///
@@ -116,18 +119,6 @@ class StreamClient {
 		bool sessionCanClose() const  {
 			base::MutexLock lock(_mutex);
 			return _canClose;
-		}
-
-		///
-		void setCSeq(int cseq) {
-			base::MutexLock lock(_mutex);
-			_cseq = cseq;
-		}
-
-		///
-		int getCSeq() const {
-			base::MutexLock lock(_mutex);
-			return _cseq;
 		}
 
 		// =======================================================================
@@ -160,10 +151,8 @@ class StreamClient {
 		                               /// reply to and checking connections
 		int          _streamID;        ///
 		int          _clientID;
-		std::string  _sessionID;       ///
 		std::time_t  _watchdog;        /// watchdog
 		unsigned int _sessionTimeout;
-		int          _cseq;            /// RTSP sequence number
 		bool         _canClose;
 		SocketAttr   _rtp;
 		SocketAttr   _rtcp;
