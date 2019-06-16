@@ -252,6 +252,7 @@ void Stream::checkForSessionTimeout() {
 							_streamID, i, _client[i].getSessionID().c_str());
 			}
 			teardown(i);
+			close(i);
 		}
 	}
 }
@@ -340,7 +341,9 @@ bool Stream::teardown(int clientID) {
 	            _streamID, clientID, _client[clientID].getSessionID().c_str());
 
 	// Stop streaming by deleting object
-	_streaming.reset(nullptr);
+	if (_streaming) {
+		_streaming.reset(nullptr);
+	}
 
 	_device->clearMPEGFilters();
 	_device->teardown();

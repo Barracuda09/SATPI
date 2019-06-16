@@ -116,6 +116,7 @@ class Thread {
 	private:
 
 		enum class State {
+			Unknown,
 			Stopping,
 			Stopped,
 			Starting,

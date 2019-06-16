@@ -20,6 +20,7 @@
 #include <base/Thread.h>
 
 #include <Log.h>
+#include <Unused.h>
 
 #include <chrono>
 #include <thread>
@@ -39,7 +40,7 @@ namespace base {
 	Thread::Thread(
 			const std::string &name,
 			FunctionThreadExecute threadExecuteFunction) :
-		_state(State::Stopped),
+		_state(State::Unknown),
 		_thread(0u),
 		_name(name),
 		_threadExecuteFunction(threadExecuteFunction) {}
@@ -52,13 +53,20 @@ namespace base {
 
 	bool Thread::startThread() {
 		if (_threadExecuteFunction != nullptr) {
-			_state = State::Starting;
-			return (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
+			_state = State::Unknown;
+			const int threadCreate = pthread_create(&_thread, nullptr, threadEntryFunc, this);
+			if (threadCreate == 0) {
+				_state = State::Starting;
+				return true;
+			}
 		}
 		return false;
 	}
 
 	void Thread::stopThread() {
+		if (_state == State::Unknown) {
+			return;
+		}
 		_state = State::Stopping;
 		size_t timeout = 0u;
 		while (_state != State::Stopped) {
@@ -86,15 +94,21 @@ namespace base {
 	}
 
 	void Thread::cancelThread() {
+		if (_state == State::Unknown) {
+			return;
+		}
 		pthread_cancel(_thread);
-		_state = State::Stopped;
+		_state = State::Unknown;
 	}
 
 	void Thread::joinThread() {
+		if (_state == State::Unknown) {
+			return;
+		}
 		(void) pthread_join(_thread, nullptr);
 	}
 
-	void Thread::setAffinity(int cpu) {
+	void Thread::setAffinity(int UNUSED(cpu)) {
 //		if (cpu > 0 && cpu < getNumberOfProcessorsOnline()) {
 //			cpu_set_t cpus;
 //			CPU_ZERO(&cpus);
