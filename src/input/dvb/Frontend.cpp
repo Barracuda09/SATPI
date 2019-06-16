@@ -104,16 +104,16 @@ namespace dvb {
 		// unused var
 		(void)path;
 
-		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 0, 0);
-		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 0, 0);
-		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 0, 0);
-		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe, dvr, dmx);
+		const std::string fe0 = StringConverter::stringFormat(FRONTEND.c_str(), 0, 0);
+		const std::string dvr0 = StringConverter::stringFormat(DVR.c_str(), 0, 0);
+		const std::string dmx0 = StringConverter::stringFormat(DMX.c_str(), 0, 0);
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe0, dvr0, dmx0);
 		streamVector.push_back(std::make_shared<Stream>(0, frontend0, decrypt));
 
-		const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
-		const std::string dvr = StringConverter::stringFormat(DVR.c_str(), 1, 0);
-		const std::string dmx = StringConverter::stringFormat(DMX.c_str(), 1, 0);
-		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe, dvr, dmx);
+		const std::string fe1 = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
+		const std::string dvr1 = StringConverter::stringFormat(DVR.c_str(), 1, 0);
+		const std::string dmx1 = StringConverter::stringFormat(DMX.c_str(), 1, 0);
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe1, dvr1, dmx1);
 		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
 #else
 		dirent **file_list;
@@ -314,6 +314,9 @@ namespace dvb {
 	}
 
 	void Frontend::monitorSignal(const bool showStatus) {
+#if SIMU
+		_frontendData.setMonitorData(0, 0, 0, 0, 0);
+#else
 		fe_status_t status;
 		uint16_t strength;
 		uint16_t snr;
@@ -348,6 +351,7 @@ namespace dvb {
 		} else {
 			PERROR("FE_READ_STATUS failed");
 		}
+#endif
 	}
 
 	bool Frontend::hasDeviceDataChanged() const {
