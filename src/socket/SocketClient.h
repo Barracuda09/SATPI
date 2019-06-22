@@ -35,10 +35,7 @@ class SocketClient :
 
 		SocketClient() :
 			_msg(""),
-			_protocolString("None"),
-			_sessionID("-1"),
-			_userAgent("None"),
-			_cseq(0) {}
+			_protocolString("None") {}
 
 		virtual ~SocketClient() {}
 
@@ -51,9 +48,6 @@ class SocketClient :
 		/// Close the file descriptor of this Socket
 		virtual void closeFD() override {
 			SocketAttr::closeFD();
-			_sessionID = "-1";
-			_userAgent = "None";
-			_cseq = 0;
 			_msg.clear();
 		}
 
@@ -79,49 +73,6 @@ class SocketClient :
 			return _msg;
 		}
 
-		/// Set the User-Agent of this client
-		/// @param userAgent specifies the IP address of this client
-		void setUserAgent(const std::string &userAgent) {
-			_userAgent = userAgent;
-		}
-
-		/// Get the User-Agent of this client
-		const std::string &getUserAgent() const {
-			return _userAgent;
-		}
-
-		/// Set the IP address of this client
-		/// @param addr specifies the IP address of this client
-		void setIPAddress(const std::string &ipAddr) {
-			_ipAddr = ipAddr;
-		}
-
-		/// Get the IP address of this client
-		const std::string &getIPAddress() const {
-			return _ipAddr;
-		}
-
-		/// Set the session ID for this client
-		/// @param specifies the the session ID to use
-		void setSessionID(const std::string &sessionID) {
-			_sessionID = sessionID;
-		}
-
-		/// Get the session ID for this client
-		const std::string &getSessionID() const {
-			return _sessionID;
-		}
-
-		///
-		void setCSeq(int cseq) {
-			_cseq = cseq;
-		}
-
-		///
-		int getCSeq() const {
-			return _cseq;
-		}
-
 		/// Set protocol string
 		/// @param protocol specifies the protocol this client is using
 		void setProtocol(const std::string &protocol) {
@@ -140,11 +91,7 @@ class SocketClient :
 	private:
 
 		std::string _msg;
-		std::string _protocolString;
-		std::string _sessionID;
-		std::string _userAgent;
-		int         _cseq;            /// RTSP sequence number
-
+		std::string  _protocolString;
 };
 
 #endif // SOCKET_SOCKETCLIENT_H_INCLUDE

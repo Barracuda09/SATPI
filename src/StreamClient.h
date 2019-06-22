@@ -50,9 +50,6 @@ class StreamClient {
 		}
 
 		///
-		void close();
-
-		///
 		void teardown();
 
 		/// Call this if the stream should stop because of some error
@@ -76,49 +73,60 @@ class StreamClient {
 		///
 		SocketAttr &getRtcpSocketAttr();
 
-		///
-		std::string getMessage() const {
+		/// Set the IP address of this client
+		/// @param ipAddress specifies the IP address of this client
+		void setIPAddressOfStream(const std::string &ipAddress) {
 			base::MutexLock lock(_mutex);
-			return (_httpc == nullptr) ? "" : _httpc->getMessage();
+			_ipAddress = ipAddress;
 		}
 
-		///
-		std::string getIPAddress() const {
+		/// Get the IP address of this client
+		std::string getIPAddressOfStream() const {
 			base::MutexLock lock(_mutex);
-			return (_httpc == nullptr) ? "0.0.0.0" : _httpc->getIPAddress();
+			return _ipAddress;
+		}
+
+		/// Set the User-Agent of this client
+		void setUserAgent(const std::string &userAgent) {
+			base::MutexLock lock(_mutex);
+			_userAgent = userAgent;
 		}
 
 		/// Get the User-Agent of this client
 		std::string getUserAgent() const {
 			base::MutexLock lock(_mutex);
-			return (_httpc == nullptr) ? "None" : _httpc->getUserAgent();
+			return _userAgent;
+		}
+
+		/// Set the session ID for this client
+		/// @param specifies the the session ID to use
+		void setSessionID(const std::string &sessionID) {
+			base::MutexLock lock(_mutex);
+			_sessionID = sessionID;
 		}
 
 		///
 		std::string getSessionID() const {
 			base::MutexLock lock(_mutex);
-			return (_httpc == nullptr) ? "-1" : _httpc->getSessionID();
+			return _sessionID;
+		}
+
+		///
+		void setCSeq(int cseq) {
+			base::MutexLock lock(_mutex);
+			_cseq = cseq;
 		}
 
 		///
 		int getCSeq() const {
 			base::MutexLock lock(_mutex);
-			return (_httpc == nullptr) ? 0 : _httpc->getCSeq();
+			return _cseq;
 		}
 
 		///
 		unsigned int getSessionTimeout() const {
 			base::MutexLock lock(_mutex);
 			return _sessionTimeout;
-		}
-
-		///
-		void setSessionCanClose(bool close);
-
-		///
-		bool sessionCanClose() const  {
-			base::MutexLock lock(_mutex);
-			return _canClose;
 		}
 
 		// =======================================================================
@@ -147,13 +155,15 @@ class StreamClient {
 	private:
 
 		base::Mutex  _mutex;           ///
-		SocketClient *_httpc;          /// Client of this stream. Used for sending
-		                               /// reply to and checking connections
+		SocketClient *_httpStream;     /// for HTTP stream
 		int          _streamID;        ///
 		int          _clientID;
+		std::string  _ipAddress;
 		std::time_t  _watchdog;        /// watchdog
 		unsigned int _sessionTimeout;
-		bool         _canClose;
+		std::string  _sessionID;
+		std::string  _userAgent;
+		int          _cseq;            /// RTSP sequence number
 		SocketAttr   _rtp;
 		SocketAttr   _rtcp;
 };

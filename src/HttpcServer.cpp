@@ -143,45 +143,33 @@ bool HttpcServer::process(SocketClient &client) {
 	return true;
 }
 
-bool HttpcServer::closeConnection(SocketClient &socketclient) {
-	int clientID;
-	SpStream stream = _streamManager.findStreamAndClientIDFor(socketclient, clientID);
-	if (stream != nullptr) {
-		stream->close(clientID);
-	}
-	return true;
-}
-
 void HttpcServer::processStreamingRequest(SocketClient &client) {
 	std::string msg = client.getMessage();
 
-	// Save clients User-Agent
-	std::string userAgent;
-	if (StringConverter::getHeaderFieldParameter(msg, "User-Agent:", userAgent)) {
-		client.setUserAgent(userAgent);
-	}
-
 	// Save clients seq number
-	std::string cseq("0");
-	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
-		client.setCSeq(atoi(cseq.c_str()));
-	}
+	std::string fieldCSeq("0");
+	const int cseq = StringConverter::getHeaderFieldParameter(msg, "CSeq:", fieldCSeq) ?
+		std::stoi(fieldCSeq) : 0;
+
+	// Save sessionID
+	std::string sessionID("-1");
+	const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
 
 #ifdef DEBUG
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
-		client.getUserAgent().c_str(), client.getIPAddress().c_str(), client.getSocketPort(), msg.c_str());
+		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
 #else
 	SI_LOG_INFO("%s Stream data from client %s with IP %s on Port %d", client.getProtocolString().c_str(),
-		client.getUserAgent().c_str(), client.getIPAddress().c_str(), client.getSocketPort());
+		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort());
 #endif
 
-	std::string httpc;
+	std::string httpcReply;
 	std::string method;
 	if (StringConverter::getMethod(msg, method)) {
-		if (method == "OPTIONS") {
-			methodOptions(client, httpc);
-		} else if (method == "DESCRIBE") {
-			methodDescribe(client, httpc);
+		if (!foundSessionID && method == "OPTIONS") {
+			methodOptions(sessionID, cseq, httpcReply);
+		} else if (!foundSessionID && method == "DESCRIBE") {
+			methodDescribe(sessionID, cseq, httpcReply);
 		} else {
 			int clientID;
 			SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
@@ -191,36 +179,40 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				// Check the Method
 				if (method == "GET") {
 					stream->update(clientID, true);
-					getHtmlBodyNoContent(httpc, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
+					getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
+
 				} else if (method == "SETUP") {
-					methodSetup(*stream, clientID, httpc);
+					methodSetup(*stream, clientID, httpcReply);
+
 				} else if (method == "PLAY") {
-					methodPlay(client, stream->getStreamID(), httpc);
+					methodPlay(sessionID, cseq, stream->getStreamID(), httpcReply);
 
 					// @TODO  check return of update();
 					stream->update(clientID, true);
 
 				} else if (method == "TEARDOWN") {
-					methodTeardown(client, httpc);
+					methodTeardown(sessionID, cseq, httpcReply);
 
-					// after setting up reply, else sessionID is reset
 					stream->teardown(clientID);
-
+				} else if (method == "OPTIONS") {
+					methodOptions(sessionID, cseq, httpcReply);
+				} else if (method == "DESCRIBE") {
+					methodDescribe(sessionID, cseq, httpcReply);
 				} else {
 					// method not supported
 					SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
 				}
 			} else {
 				// something wrong here... send 503 error
-				getHtmlBodyNoContent(httpc, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, client.getCSeq());
+				getHtmlBodyNoContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, cseq);
 			}
 		}
 	}
 
-	SI_LOG_DEBUG("%s", httpc.c_str());
+	SI_LOG_DEBUG("%s", httpcReply.c_str());
 
 	// send reply to client
-	if (!client.sendData(httpc.c_str(), httpc.size(), MSG_NOSIGNAL)) {
+	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
 		SI_LOG_ERROR("Send Streaming reply failed");
 	}
 }

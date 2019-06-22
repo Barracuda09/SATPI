@@ -58,10 +58,47 @@ class SocketAttr {
 		///
 		bool setupSocketHandle(int type, int protocol);
 
-		///
-		std::string getIPAddress() const {
+		/// Set the IP address of this client
+		/// @param addr specifies the IP address of this client
+		void setIPAddressOfSocket(const std::string &ipAddr) {
+			_ipAddr = ipAddr;
+		}
+
+		/// Get the IP address of this client
+		const std::string &getIPAddressOfSocket() const {
 			return _ipAddr;
 		}
+
+		///
+		bool writeData(const iovec *iov, int iovcnt);
+
+		/// Use this function when the socket is in connected state
+		bool sendData(const void *buf, std::size_t len, int flags);
+
+		/// Use this function when the socket is on a
+		/// connection-mode (SOCK_STREAM)
+		bool sendDataTo(const void *buf, std::size_t len, int flags);
+
+		/// Get the port of this Socket
+		int getSocketPort() const;
+
+		/// Get the network send buffer size for this Socket
+		int getNetworkSendBufferSize() const;
+
+		/// Set the network send buffer size for this Socket
+		bool setNetworkSendBufferSize(int size);
+
+		/// Set the network receive buffer size for this Socket
+		bool setNetworkReceiveBufferSize(int size);
+
+		/// Set the Receive and Send timeout in Sec for this socket
+		void setSocketTimeoutInSec(unsigned int timeout);
+
+		/// Get the file descriptor of this Socket
+		int getFD() const;
+
+		///
+		ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
 
 		/// bind the socket to the port number
 		bool bind();
@@ -78,43 +115,14 @@ class SocketAttr {
 		/// in client
 		bool acceptConnection(SocketClient &client, bool showLogInfo);
 
-		/// Get the port of this Socket
-		int getSocketPort() const;
-
-		/// Use this function when the socket is in connected state
-		bool sendData(const void *buf, std::size_t len, int flags);
-
-		///
-		bool writeData(const iovec *iov, int iovcnt);
-
-		/// Use this function when the socket is on a
-		/// connection-mode (SOCK_STREAM)
-		bool sendDataTo(const void *buf, std::size_t len, int flags);
-
-		///
-		ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
-
-		/// Get the file descriptor of this Socket
-		int getFD() const;
+	protected:
 
 		/// Set the file descriptor for this Socket
 		/// @param fd specifies the file descriptor to set
 		void setFD(int fd);
 
-		/// Set the Receive and Send timeout in Sec for this socket
-		void setSocketTimeoutInSec(unsigned int timeout);
-
 		///
 		void setKeepAlive();
-
-		/// Get the network send buffer size for this Socket
-		int getNetworkSendBufferSize() const;
-
-		/// Set the network send buffer size for this Socket
-		bool setNetworkSendBufferSize(int size);
-
-		/// Set the network receive buffer size for this Socket
-		bool setNetworkReceiveBufferSize(int size);
 
 		// ===================================================================
 		//  -- Data members --------------------------------------------------

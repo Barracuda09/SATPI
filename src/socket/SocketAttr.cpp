@@ -118,25 +118,25 @@
 	bool SocketAttr::acceptConnection(SocketClient &client, bool showLogInfo) {
 		// check if we have a client?
 		socklen_t addrlen = sizeof(client._addr);
-		const int fd_conn = ::accept(_fd, reinterpret_cast<sockaddr *>(&client._addr), &addrlen);
-		if (fd_conn > 0) {
+		const int fdAccept = ::accept(_fd, reinterpret_cast<sockaddr *>(&client._addr), &addrlen);
+		if (fdAccept >= 0) {
 
 // @todo should 'client' handle this himself?
 
 			// save connected file descriptor
-			client.setFD(fd_conn);
+			client.setFD(fdAccept);
 
 			client.setSocketTimeoutInSec(2);
 
 			client.setKeepAlive();
 
 			// save client ip address
-			client.setIPAddress(inet_ntoa(client._addr.sin_addr));
+			client.setIPAddressOfSocket(inet_ntoa(client._addr.sin_addr));
 
 			// Show who is connected
 			if (showLogInfo) {
-				SI_LOG_INFO("%s Connection from %s Port %d (fd: %d)", client.getProtocolString().c_str(),
-							client.getIPAddress().c_str(), ntohs(client._addr.sin_port), fd_conn);
+				SI_LOG_INFO("%s Connection from %s Port %d with fd: %d", client.getProtocolString().c_str(),
+							client.getIPAddressOfSocket().c_str(), ntohs(client._addr.sin_port), fdAccept);
 			}
 			return true;
 		}

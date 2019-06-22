@@ -70,7 +70,7 @@ namespace output {
 
 		if (!startThread()) {
 			SI_LOG_ERROR("Stream: %d, Start %s Start stream to %s:%d ERROR", streamID, _protocol.c_str(),
-					client.getIPAddress().c_str(), getStreamSocketPort(clientID));
+					client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 			return false;
 		}
 		// Set priority above normal for this Thread
@@ -81,7 +81,7 @@ namespace output {
 
 		_state = State::Running;
 		SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
-				client.getIPAddress().c_str(), getStreamSocketPort(clientID));
+				client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 
 		return true;
 	}
@@ -94,7 +94,7 @@ namespace output {
 			_tsBuffer[_writeIndex].reset();
 			_state = State::Running;
 			SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
-					_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddress().c_str(),
+					_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddressOfStream().c_str(),
 					getStreamSocketPort(clientID));
 		}
 		return true;
@@ -114,7 +114,7 @@ namespace output {
 				++timeout;
 				if (timeout > 50) {
 					SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
-							_stream.getStreamID(), _protocol.c_str(), client.getIPAddress().c_str(),
+							_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
 							getStreamSocketPort(clientID), payload);
 					paused = false;
 					break;
@@ -122,7 +122,7 @@ namespace output {
 			}
 			if (paused) {
 				SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
-						_stream.getStreamID(), _protocol.c_str(), client.getIPAddress().c_str(),
+						_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
 						getStreamSocketPort(clientID), payload);
 			}
 #ifdef LIBDVBCSA

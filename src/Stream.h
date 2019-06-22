@@ -81,7 +81,7 @@ class Stream :
 
 		virtual int  getStreamID() const override;
 
-		virtual StreamClient &getStreamClient(std::size_t clientNr) const override;
+		virtual StreamClient &getStreamClient(int clientID) const override;
 
 		virtual input::SpDevice getInputDevice() const override;
 
@@ -135,9 +135,6 @@ class Stream :
 		                     const std::string &method,
 		                     int &clientID);
 
-		/// Copy the connected  client data to this stream
-		void setSocketClient(SocketClient &socketClient);
-
 		/// Check is this stream used already
 		bool streamInUse() const {
 			base::MutexLock lock(_xmlMutex);
@@ -156,9 +153,6 @@ class Stream :
 			return _streamingType;
 		}
 
-		/// Close the stream client with clientID
-		void close(int clientID);
-
 		/// Teardown the stream client with clientID
 		bool teardown(int clientID);
 
@@ -176,42 +170,6 @@ class Stream :
 
 		///
 		bool update(int clientID, bool start);
-
-		///
-		int getCSeq(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getCSeq();
-		}
-
-		///
-		std::string getSessionID(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getSessionID();
-		}
-
-		///
-		unsigned int getSessionTimeout(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getSessionTimeout();
-		}
-
-		///
-		std::string getIPAddress(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getIPAddress();
-		}
-
-		///
-		int getRtpSocketPort(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getRtpSocketAttr().getSocketPort();
-		}
-
-		///
-		int getRtcpSocketPort(int clientID) const {
-			base::MutexLock lock(_xmlMutex);
-			return _client[clientID].getRtcpSocketAttr().getSocketPort();
-		}
 
 	protected:
 

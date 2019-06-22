@@ -38,7 +38,7 @@ StreamThreadRtcp::~StreamThreadRtcp() {
 
 	SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
 	SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-		rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+		rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 	rtcp.closeFD();
 }
 
@@ -51,11 +51,11 @@ bool StreamThreadRtcp::startStreaming() {
 
 	if (!_thread.startThread()) {
 		SI_LOG_ERROR("Stream: %d, Start RTCP/UDP stream to %s:%d ERROR", _stream.getStreamID(),
-					 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+					 rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 		return false;
 	}
 	SI_LOG_INFO("Stream: %d, Start RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-				rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+				rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 
 	_mon_update = 0;
 	return true;
@@ -66,7 +66,7 @@ bool StreamThreadRtcp::pauseStreaming(int clientID) {
 
 	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
 	SI_LOG_INFO("Stream: %d, Pause RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-			rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+			rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 	return true;
 }
 
@@ -75,7 +75,7 @@ bool StreamThreadRtcp::restartStreaming(int clientID) {
 
 	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
 	SI_LOG_INFO("Stream: %d, Restart RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-			rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+			rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 	return true;
 }
 
@@ -111,7 +111,7 @@ bool StreamThreadRtcp::threadExecuteFunction() {
 		SocketAttr &rtcp = client.getRtcpSocketAttr();
 		if (!rtcp.sendDataTo(data, len, 0)) {
 			SI_LOG_ERROR("Stream: %d, Error sending RTCP/UDP data to %s:%d", _stream.getStreamID(),
-						 rtcp.getIPAddress().c_str(), rtcp.getSocketPort());
+						 rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
 		}
 	}
 	DELETE_ARRAY(sr);

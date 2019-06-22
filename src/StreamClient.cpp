@@ -30,34 +30,28 @@
 #include <ctime>
 
 	StreamClient::StreamClient() :
-			_httpc(nullptr),
+			_httpStream(nullptr),
 			_streamID(-1),
 			_clientID(-1),
+			_ipAddress("0.0.0.0"),
 			_watchdog(0),
 			_sessionTimeout(60),
-			_canClose(false) {}
+			_sessionID("-1"),
+			_userAgent("None"),
+			_cseq(0) {}
 
 	StreamClient::~StreamClient() {}
-
-	void StreamClient::setSessionCanClose(bool close) {
-		base::MutexLock lock(_mutex);
-
-		SI_LOG_DEBUG("Stream: %d, Session can close: %d", _streamID, close);
-		_canClose = close;
-	}
-
-	void StreamClient::close() {
-		base::MutexLock lock(_mutex);
-
-		// Do not delete
-		_httpc = nullptr;
-	}
 
 	void StreamClient::teardown() {
 		base::MutexLock lock(_mutex);
 
 		_watchdog = 0;
-		_canClose = true;
+		_sessionID = "-1";
+		_ipAddress = "0.0.0.0";
+		_userAgent = "None";
+
+		// Do not delete
+		_httpStream = nullptr;
 	}
 
 	void StreamClient::restartWatchDog() {
@@ -80,14 +74,14 @@
 	bool StreamClient::sessionTimeout() const {
 		base::MutexLock lock(_mutex);
 
-		return (((_httpc == nullptr) ? -1 : _httpc->getFD()) == -1) &&
+		return (((_httpStream == nullptr) ? -1 : _httpStream->getFD()) == -1) &&
 			   (_watchdog != 0) &&
 			   (_watchdog < std::time(nullptr));
 	}
 
 	void StreamClient::setSocketClient(SocketClient &socket) {
 		base::MutexLock lock(_mutex);
-		_httpc = &socket;
+		_httpStream = &socket;
 	}
 
 	SocketAttr &StreamClient::getRtpSocketAttr() {
@@ -104,25 +98,25 @@
 
 	bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? false : _httpc->sendData(buf, len, flags);
+		return (_httpStream == nullptr) ? false : _httpStream->sendData(buf, len, flags);
 	}
 
 	bool StreamClient::writeHttpData(const struct iovec *iov, int iovcnt) {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? false : _httpc->writeData(iov, iovcnt);
+		return (_httpStream == nullptr) ? false : _httpStream->writeData(iov, iovcnt);
 	}
 
 	int StreamClient::getHttpSocketPort() const {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? 0 : _httpc->getSocketPort();
+		return (_httpStream == nullptr) ? 0 : _httpStream->getSocketPort();
 	}
 
 	int StreamClient::getHttpNetworkSendBufferSize() const {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? 0 : _httpc->getNetworkSendBufferSize();
+		return (_httpStream == nullptr) ? 0 : _httpStream->getNetworkSendBufferSize();
 	}
 
 	bool StreamClient::setHttpNetworkSendBufferSize(int size) {
 		base::MutexLock lock(_mutex);
-		return (_httpc == nullptr) ? false : _httpc->setNetworkSendBufferSize(size);
+		return (_httpStream == nullptr) ? false : _httpStream->setNetworkSendBufferSize(size);
 	}

@@ -42,7 +42,7 @@ namespace output {
 		const int streamID = _stream.getStreamID();
 		StreamClient &client = _stream.getStreamClient(_clientID);
 		SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
-			client.getIPAddress().c_str(), getStreamSocketPort(_clientID));
+			client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 		client.getRtpSocketAttr().closeFD();
 	}
 
@@ -132,7 +132,7 @@ namespace output {
 		if (!rtp.sendDataTo(rtpBuffer, size + mpegts::PacketBuffer::RTP_HEADER_LEN, MSG_DONTWAIT)) {
 			if (!client.isSelfDestructing()) {
 				SI_LOG_ERROR("Stream: %d, Error sending RTP/UDP data to %s:%d", _stream.getStreamID(),
-					rtp.getIPAddress().c_str(), rtp.getSocketPort());
+					rtp.getIPAddressOfSocket().c_str(), rtp.getSocketPort());
 				client.selfDestruct();
 			}
 		}

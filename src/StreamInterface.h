@@ -44,7 +44,7 @@ class StreamInterface {
 		virtual int getStreamID() const = 0;
 
 		///
-		virtual StreamClient &getStreamClient(std::size_t clientNr) const = 0;
+		virtual StreamClient &getStreamClient(int clientID) const = 0;
 
 		///
 		virtual input::SpDevice getInputDevice() const = 0;

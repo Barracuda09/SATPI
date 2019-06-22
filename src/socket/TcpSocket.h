@@ -62,10 +62,6 @@ class TcpSocket :
 		/// @param client specifies the client that sended the message etc.
 		virtual bool process(SocketClient &client) = 0;
 
-		/// Callback when an connection is closed
-		/// @param client specifies the client that closed the connection
-		virtual bool closeConnection(SocketClient &client) = 0;
-
 		/// Get the protocol string
 		const std::string &getProtocolString() const {
 			return _protocolString;
@@ -88,11 +84,6 @@ class TcpSocket :
 		// =====================================================================
 
 	private:
-
-		using PollfdVector = std::vector<pollfd>;
-		using SocketClientVector =  std::vector<SocketClient>;
-		PollfdVector       _pfdVector;
-		SocketClientVector _socketClientVector;
 
 		std::size_t        _MAX_CLIENTS;   //
 		std::size_t        _MAX_POLL;      //

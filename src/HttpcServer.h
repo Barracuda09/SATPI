@@ -93,23 +93,19 @@ class HttpcServer :
 		virtual void methodSetup(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodPlay(const SocketClient &UNUSED(client), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
+		virtual void methodPlay(const std::string &UNUSED(sessionID), int UNUSED(cseq), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodTeardown(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
+		virtual void methodTeardown(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodOptions(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
+		virtual void methodOptions(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodDescribe(const SocketClient &UNUSED(client), std::string &UNUSED(htmlBody)) {}
+		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client) override;
-
-		/// Is called when the connection is closed by the client and should
-		/// take appropriate action
-		virtual bool closeConnection(SocketClient &client) override;
 
 		/// Process the the Method HTTP/RTSP
 		void processStreamingRequest(SocketClient &client);

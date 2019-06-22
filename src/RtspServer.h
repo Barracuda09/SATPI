@@ -57,16 +57,16 @@ class RtspServer :
 		virtual void methodSetup(Stream &stream, int clientID, std::string &htmlBody) override;
 
 		///
-		virtual void methodPlay(const SocketClient &client, int streamID, std::string &htmlBody) override;
+		virtual void methodPlay(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) override;
 
 		///
-		virtual void methodTeardown(const SocketClient &client, std::string &htmlBody) override;
+		virtual void methodTeardown(const std::string &sessionID, int cseq, std::string &htmlBody) override;
 
 		///
-		virtual void methodOptions(const SocketClient &client, std::string &htmlBody) override;
+		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) override;
 
 		///
-		virtual void methodDescribe(const SocketClient &client, std::string &htmlBody) override;
+		virtual void methodDescribe(const std::string &sessionID, int cseq, std::string &htmlBody) override;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

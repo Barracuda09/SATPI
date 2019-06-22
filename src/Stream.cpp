@@ -71,8 +71,8 @@ int Stream::getStreamID() const {
 	return _streamID;
 }
 
-StreamClient &Stream::getStreamClient(std::size_t clientNr) const {
-	return _client[clientNr];
+StreamClient &Stream::getStreamClient(int clientID) const {
+	return _client[clientID];
 }
 
 input::SpDevice Stream::getInputDevice() const {
@@ -134,7 +134,7 @@ void Stream::addToXML(std::string &xml) const {
 
 		ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 		ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
-		ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddress());
+		ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddressOfStream());
 		ADD_XML_ELEMENT(xml, "ownerSessionID", _client[0].getSessionID());
 		ADD_XML_ELEMENT(xml, "userAgent", _client[0].getUserAgent());
 
@@ -155,7 +155,7 @@ void Stream::fromXML(const std::string &xml) {
 			_enabled = (element == "true") ? true : false;
 		}
 		if (findXMLElement(xml, "rtcpSignalUpdate.value", element)) {
-			_rtcpSignalUpdate = atoi(element.c_str());
+			_rtcpSignalUpdate = std::stoi(element);
 		}
 	}
 	_device->fromXML(xml);
@@ -217,6 +217,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s",
 				            _streamID, i, sessionID.c_str());
 			}
+			_client[i].setIPAddressOfStream(socketClient.getIPAddressOfSocket());
 			_client[i].setSocketClient(socketClient);
 			_streamInUse = true;
 			clientID = i;
@@ -231,12 +232,6 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		            _streamID, sessionID.c_str());
 	}
 	return false;
-}
-
-void Stream::setSocketClient(SocketClient &socketClient) {
-	base::MutexLock lock(_xmlMutex);
-
-	_client[0].setSocketClient(socketClient);
 }
 
 void Stream::checkForSessionTimeout() {
@@ -313,27 +308,6 @@ bool Stream::update(int clientID, bool start) {
 	return true;
 }
 
-void Stream::close(int clientID) {
-	base::MutexLock lock(_xmlMutex);
-
-	if (_client[clientID].sessionCanClose()) {
-		SI_LOG_INFO("Stream: %d, Close StreamClient[%d] with SessionID %s",
-		            _streamID, clientID, _client[clientID].getSessionID().c_str());
-
-		_client[clientID].close();
-
-		// @TODO Are all other StreamClients stopped??
-		if (clientID == 0) {
-			for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
-				_client[i].close();
-			}
-			_streamActive = false;
-			_streamInUse = false;
-			_streamingType = StreamingType::NONE;
-		}
-	}
-}
-
 bool Stream::teardown(int clientID) {
 	base::MutexLock lock(_xmlMutex);
 
@@ -356,12 +330,27 @@ bool Stream::teardown(int clientID) {
 		for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
 			_client[i].teardown();
 		}
+		_streamActive = false;
+		_streamInUse = false;
+		_streamingType = StreamingType::NONE;
 	}
 	return true;
 }
 
-bool Stream::processStreamingRequest(const std::string &msg, int clientID, const std::string &method) {
+bool Stream::processStreamingRequest(const std::string &msg, const int clientID, const std::string &method) {
 	base::MutexLock lock(_xmlMutex);
+
+	// Save clients seq number
+	std::string cseq("0");
+	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
+		_client[clientID].setCSeq(std::stoi(cseq));
+	}
+
+	// Save clients User-Agent
+	std::string userAgent;
+	if (StringConverter::getHeaderFieldParameter(msg, "User-Agent:", userAgent)) {
+		_client[clientID].setUserAgent(userAgent);
+	}
 
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
@@ -401,16 +390,16 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 		case StreamingType::RTSP_UNICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
 				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port + 1);
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1);
 				}
 			}
 			break;
 		case StreamingType::RTSP_MULTICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "port=");
 				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddress(), port + 1);
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1);
 				}
 			}
 			break;
@@ -418,15 +407,6 @@ bool Stream::processStreamingRequest(const std::string &msg, int clientID, const
 			// Do nothing here
 			break;
 	};
-
-	bool sessionCanClose = false;
-	if (method != "SETUP") {
-		std::string sessionID;
-		const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
-		const bool teardown = (method == "TEARDOWN");
-		sessionCanClose = teardown || !foundSessionID;
-	}
-	_client[clientID].setSessionCanClose(sessionCanClose);
 
 	_client[clientID].restartWatchDog();
 	return true;

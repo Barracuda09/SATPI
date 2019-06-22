@@ -42,18 +42,18 @@ StreamThreadRtcpTcp::~StreamThreadRtcpTcp() {
 	_thread.terminateThread();
 	const StreamClient &client = _stream.getStreamClient(_clientID);
 	SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-		client.getIPAddress().c_str(), client.getHttpSocketPort());
+		client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 }
 
 bool StreamThreadRtcpTcp::startStreaming() {
 	const StreamClient &client = _stream.getStreamClient(_clientID);
 	if (!_thread.startThread()) {
 		SI_LOG_ERROR("Stream: %d, Start RTCP/TCP stream  to %s:%d ERROR", _stream.getStreamID(),
-			client.getIPAddress().c_str(), client.getHttpSocketPort());
+			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 		return false;
 	}
 	SI_LOG_INFO("Stream: %d, Start RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-		client.getIPAddress().c_str(), client.getHttpSocketPort());
+		client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 
 	_mon_update = 0;
 	return true;
@@ -64,7 +64,7 @@ bool StreamThreadRtcpTcp::pauseStreaming(int UNUSED(clientID)) {
 
 	const StreamClient &client = _stream.getStreamClient(_clientID);
 	SI_LOG_INFO("Stream: %d, Pause RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddress().c_str(), client.getHttpSocketPort());
+			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 	return true;
 }
 
@@ -73,7 +73,7 @@ bool StreamThreadRtcpTcp::restartStreaming(int UNUSED(clientID)) {
 
 	const StreamClient &client = _stream.getStreamClient(_clientID);
 	SI_LOG_INFO("Stream: %d, Restart RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddress().c_str(), client.getHttpSocketPort());
+			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 	return true;
 }
 
@@ -118,7 +118,7 @@ bool StreamThreadRtcpTcp::threadExecuteFunction() {
 		// send the RTCP/TCP packet
 		if (!client.writeHttpData(iov, 4)) {
 			SI_LOG_ERROR("Stream: %d, Error sending RTCP/TCP Stream Data to %s", _stream.getStreamID(),
-				client.getIPAddress().c_str());
+				client.getIPAddressOfStream().c_str());
 		}
 	}
 	DELETE_ARRAY(sr);

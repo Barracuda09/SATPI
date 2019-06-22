@@ -55,7 +55,6 @@ void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
 		pfdNew.fd = _server.getFD();
 		pfdNew.events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 		pfdNew.revents = 0;
-		_pfdVector.push_back(pfdNew);
 
 		for (std::size_t i = 1; i < _MAX_POLL; ++i) {
 			_pfd[i].fd = -1;
@@ -69,60 +68,6 @@ void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
 }
 
 int TcpSocket::poll(int timeout) {
-/*
-	if (::poll(&_pfdVector[0], _pfdVector.size(), timeout) > 0) {
-		for (auto pfdIt = _pfdVector.begin(); pfdIt != _pfdVector.end(); ++pfdIt) {
-			pollfd &pfd = (*pfdIt);
-			if (pfd.revents != 0) {
-				if (pfd.fd == _pfdVector[0].fd) {
-					SocketClient client;
-					client.setProtocol(_protocolString);
-					if (acceptConnection(client, true)) {
-						// Save client data
-						_socketClientVector.push_back(client);
-
-						// Setup polling
-						struct pollfd pfdNew;
-						pfdNew.fd = client.getFD();
-						pfdNew.events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-						pfdNew.revents = 0;
-						_pfdVector.push_back(pfdNew);
-
-						// vector changed, so restart
-						pfdIt = _pfdVector.begin();
-					}
-				} else {
-					// Try to find the client that requested something
-					for (auto clientIt = _socketClientVector.begin(); clientIt != _socketClientVector.end(); ++clientIt) {
-						SocketClient &client = (*clientIt);
-						if (client.getFD() == pfd.fd) {
-							// receive httpc messages
-							const auto dataSize = recvHttpcMessage(client, MSG_DONTWAIT);
-							if (dataSize > 0) {
-								process(client);
-							} else {
-								// Close the requested client
-								SI_LOG_DEBUG("%s Client %s:%d Connection closed with fd: %d", client.getProtocolString().c_str(),
-								             client.getIPAddress().c_str(), client.getSocketPort(), client.getFD());
-								closeConnection(client);
-//								client.closeFD();
-								_socketClientVector.erase(clientIt);
-								_pfdVector.erase(pfdIt);
-
-								// vectors changed, so restart
-								clientIt = _socketClientVector.begin();
-								pfdIt = _pfdVector.begin();
-
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return 1;
-*/
 	if (::poll(_pfd, _MAX_POLL, timeout) > 0) {
 		// Check who is sending data, so iterate over pfd
 		for (std::size_t i = 0; i < _MAX_POLL; ++i) {
@@ -130,12 +75,12 @@ int TcpSocket::poll(int timeout) {
 				if (i == 0) {
 					// Try to find a free poll entry
 					for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
-						if (_pfd[j+1].fd == -1) {
+						if (_pfd[j + 1].fd == -1) {
 							if (acceptConnection(_client[j], true)) {
 								// setup polling
-								_pfd[j+1].fd = _client[j].getFD();
-								_pfd[j+1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-								_pfd[j+1].revents = 0;
+								_pfd[j + 1].fd = _client[j].getFD();
+								_pfd[j + 1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+								_pfd[j + 1].revents = 0;
 								break;
 							}
 						}
@@ -144,14 +89,13 @@ int TcpSocket::poll(int timeout) {
 					// receive httpc messages
 					const auto dataSize = recvHttpcMessage(_client[i-1], MSG_DONTWAIT);
 					if (dataSize > 0) {
-						process(_client[i-1]);
+						process(_client[i - 1]);
 					} else {
 						// Try to find the client that requested to close
 						for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
 							if (_client[j].getFD() == _pfd[i].fd) {
-								SI_LOG_DEBUG("%s Client %s:%d Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
-								             _client[j].getIPAddress().c_str(), _client[j].getSocketPort(), _client[j].getFD());
-								closeConnection(_client[j]);
+								SI_LOG_INFO("%s Client %s:%d Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
+								             _client[j].getIPAddressOfSocket().c_str(), _client[j].getSocketPort(), _client[j].getFD());
 								_client[j].closeFD();
 								break;
 							}

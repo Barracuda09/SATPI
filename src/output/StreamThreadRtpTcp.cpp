@@ -42,7 +42,7 @@ namespace output {
 		const int streamID = _stream.getStreamID();
 		StreamClient &client = _stream.getStreamClient(_clientID);
 		SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
-			client.getIPAddress().c_str(), getStreamSocketPort(_clientID));
+			client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 	}
 
 	bool StreamThreadRtpTcp::startStreaming() {
@@ -140,7 +140,7 @@ namespace output {
 		if (!client.writeHttpData(iov, 2)) {
 			if (!client.isSelfDestructing()) {
 				SI_LOG_ERROR("Stream: %d, Error sending RTP/TCP Stream Data to %s", _stream.getStreamID(),
-					client.getIPAddress().c_str());
+					client.getIPAddressOfStream().c_str());
 				client.selfDestruct();
 			}
 		}

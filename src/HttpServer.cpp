@@ -151,7 +151,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID,
 					// XSatipM3U, presentationURL and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
-						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddress().c_str(), file.c_str());
+						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
 						// check did we get our desc.xml (we assume there are some %1 in there)
 						if (docType.find("%1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
@@ -178,7 +178,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 				} else if (file.find(".m3u") != std::string::npos) {
 					// check did we get our *.m3u (we assume there are some %1 in there, we should fill in IP Address)
 					if (docType.find("%1") != std::string::npos) {
-						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddress().c_str(), file.c_str());
+						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
 						const std::string newDocType = StringConverter::stringFormat(
 								docType.c_str(), _bindIPAddress);
 						docType = newDocType;

@@ -141,18 +141,13 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	}
 
 	std::string sessionID;
-	bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
+	const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
 	bool newSession = false;
 	clientID = 0;
 
 	// if no sessionID, then try to find it.
 	if (!foundSessionID) {
-		// Does the SocketClient have an sessionID
-		if (socketClient.getSessionID().size() > 2) {
-			foundSessionID = true;
-			sessionID = socketClient.getSessionID();
-			SI_LOG_INFO("Found SessionID %s by SocketClient", sessionID.c_str());
-		} else if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
+		if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
 			// Do we need to make a new sessionID (only if there are transport parameters)
 			std::random_device rd;
 			std::mt19937 gen(rd());
@@ -172,7 +167,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
 			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-					socketClient.setSessionID(sessionID);
+					stream->getStreamClient(clientID).setSessionID(sessionID);
 					return stream;
 				}
 			}
@@ -181,7 +176,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			for (SpStream stream : _stream) {
 				if (!stream->streamInUse()) {
 					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-						socketClient.setSessionID(sessionID);
+						stream->getStreamClient(clientID).setSessionID(sessionID);
 						return stream;
 					}
 				}
@@ -193,12 +188,12 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-					socketClient.setSessionID(sessionID);
+					stream->getStreamClient(clientID).setSessionID(sessionID);
 					return stream;
 				}
 			}
 		} else {
-			socketClient.setSessionID(sessionID);
+			_stream[streamID]->getStreamClient(clientID).setSessionID(sessionID);
 			return _stream[streamID];
 		}
 	}
