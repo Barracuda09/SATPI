@@ -19,6 +19,8 @@
  */
 #include <base/M3UParser.h>
 
+#include <algorithm>
+
 namespace base {
 
 	// =======================================================================
@@ -42,37 +44,39 @@ namespace base {
 			if (std::getline(file, line) && line.find("#EXTM3U") != std::string::npos) {
 				// seems we are dealing with an M3U file
 				while (std::getline(file, line)) {
-					if (!line.empty()) {
-						// try to split line into track info an title
-						base::StringTokenizer tokenizerTrackInfo(line, ",");
-						std::string info;
-						// parse info part
-						if (tokenizerTrackInfo.isNextToken(info) && !info.empty()) {
-							base::StringTokenizer tokenizerInfo(info, ": ");
-							std::string token;
-							// first token should be '#EXTINF'
-							if (tokenizerInfo.isNextToken(token) && token.find("#EXTINF") != std::string::npos) {
-								// now find 'satip-freq'
-								const std::string satipFreq("satip-freq=\"");
-								while (tokenizerInfo.isNextToken(token)) {
-									std::string::size_type begin = token.find(satipFreq);
-									if (begin != std::string::npos && begin == 0) {
-										begin += satipFreq.size();
-										std::string::size_type end = token.find_first_of("\"", begin);
-										if (end != std::string::npos && begin != end) {
-											const std::string freqStr = token.substr(begin, end - begin);
-											const double freq = std::atof(freqStr.c_str());
-											// next line should be
-											if (std::getline(file, line) && !line.empty()) {
-												if (exist(freq)) {
-													SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
-												} else {
-													_transformationMap[freq] = line;
-												}
+					if (line.empty()) {
+						continue;
+					}
+					// try to split line into track info an title
+					base::StringTokenizer tokenizerTrackInfo(line, ",");
+					std::string info;
+					// parse info part
+					if (tokenizerTrackInfo.isNextToken(info) && !info.empty()) {
+						base::StringTokenizer tokenizerInfo(info, ": ");
+						std::string token;
+						// first token should be '#EXTINF'
+						if (tokenizerInfo.isNextToken(token) && token.find("#EXTINF") != std::string::npos) {
+							// now find 'satip-freq'
+							const std::string satipFreq("satip-freq=\"");
+							while (tokenizerInfo.isNextToken(token)) {
+								std::string::size_type begin = token.find(satipFreq);
+								if (begin != std::string::npos && begin == 0) {
+									begin += satipFreq.size();
+									std::string::size_type end = token.find_first_of("\"", begin);
+									if (end != std::string::npos && begin != end) {
+										const std::string freqStr = token.substr(begin, end - begin);
+										const double freq = std::atof(freqStr.c_str());
+										// next line should be
+										if (std::getline(file, line) && !line.empty()) {
+											if (exist(freq)) {
+												SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
+											} else {
+												line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());												
+												_transformationMap[freq] = line;
 											}
-											// do next one
-											break;
 										}
+										// do next one
+										break;
 									}
 								}
 							}
