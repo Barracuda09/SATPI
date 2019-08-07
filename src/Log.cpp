@@ -82,7 +82,9 @@ void Log::applog(const int priority, const char *fmt, ...) {
 		// cut line to insert nsec '.000000000'
 		ascTime[19] = 0;
 		char time[150];
-		snprintf(time, sizeof(time), "%s.%04lu %s", &ascTime[0], time_stamp.tv_nsec/100000, &ascTime[20]);
+		if (snprintf(time, sizeof(time), "%s.%04lu %s", &ascTime[0], time_stamp.tv_nsec/100000, &ascTime[20]) < 0) {
+			continue;
+		};
 		elem.timestamp = time;
 
 		// set message
