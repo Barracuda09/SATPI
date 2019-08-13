@@ -51,11 +51,6 @@ void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
 		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 		_pfd[0].revents = 0;
 
-		struct pollfd pfdNew;
-		pfdNew.fd = _server.getFD();
-		pfdNew.events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-		pfdNew.revents = 0;
-
 		for (std::size_t i = 1; i < _MAX_POLL; ++i) {
 			_pfd[i].fd = -1;
 			_pfd[i].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
