@@ -20,9 +20,12 @@
 #ifndef MPEGTS_PMT_DATA_H_INCLUDE
 #define MPEGTS_PMT_DATA_H_INCLUDE MPEGTS_PMT_DATA_H_INCLUDE
 
+#include <FwDecl.h>
 #include <mpegts/TableData.h>
 
 #include <string>
+
+FW_DECL_SP_NS1(mpegts, PMT);
 
 namespace mpegts {
 
@@ -51,7 +54,7 @@ namespace mpegts {
 
 			void parse(int streamID);
 
-			const mpegts::TSData &getProgramInfo() const {
+			mpegts::TSData getProgramInfo() const {
 				return _progInfo;
 			}
 

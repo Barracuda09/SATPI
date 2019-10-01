@@ -106,16 +106,6 @@ namespace input {
 				_filter.clear(_streamID);
 			}
 
-			///
-			mpegts::Filter &getFilter() {
-				return _filter;
-			}
-
-			///
-			const mpegts::Filter &getFilter() const {
-				return _filter;
-			}
-
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================

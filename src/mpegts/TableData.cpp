@@ -94,7 +94,7 @@ namespace mpegts {
 
 	uint32_t TableData::calculateCRC32(const unsigned char *data, const std::size_t len) {
 		uint32_t crc = 0xffffffff;
-		for(size_t i = 0u; i < len; ++i) {
+		for(size_t i = 0; i < len; ++i) {
 			crc = (crc << 8) ^ crc32Table[((crc >> 24) ^ (data[i] & 0xff)) & 0xff];
 		}
 		return crc;
@@ -106,7 +106,8 @@ namespace mpegts {
 
 	TableData::TableData() :
 		_numberOfSections(0),
-		_currentSectionNumber(0) {}
+		_currentSectionNumber(0),
+		_collectingFinished(false) {}
 
 	TableData::~TableData() {}
 
@@ -117,6 +118,7 @@ namespace mpegts {
 	void TableData::clear() {
 		_numberOfSections = 0;
 		_currentSectionNumber = 0;
+		_collectingFinished = false;
 		_dataTable.clear();
 	}
 
@@ -263,31 +265,34 @@ namespace mpegts {
 		return false;
 	}
 
-	void TableData::getData(const size_t secNr, TSData &data) const {
+	TSData TableData::getData(const size_t secNr) const {
 		TableData::Data tableData;
 		if (getDataForSectionNumber(secNr, tableData)) {
-			data = tableData.data;
+			return tableData.data;
 		}
+		return TSData();
 	}
 
 	bool TableData::isCollected() const {
-		bool collected = false;
+		if (_collectingFinished) {
+			return true;
+		}
 		for (std::size_t i = 0; i < _numberOfSections; ++i) {
 			TableData::Data tableData;
 			if (getDataForSectionNumber(i, tableData) && tableData.collected) {
-				collected = true;
+				_collectingFinished = true;
 			} else {
-				collected = false;
+				_collectingFinished = false;
 				break;
 			}
 		}
-		return collected;
+		return _collectingFinished;
 	}
 
 	void TableData::setCollected() {
 		_dataTable[_currentSectionNumber].collected = true;
 		// Do we need to read more sections, then increment
-		if (_currentSectionNumber < (_numberOfSections - 1u)) {
+		if (_currentSectionNumber < (_numberOfSections - 1)) {
 			++_currentSectionNumber;
 		}
 	}

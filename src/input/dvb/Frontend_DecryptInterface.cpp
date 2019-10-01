@@ -90,11 +90,11 @@ namespace dvb {
 	}
 
 	bool Frontend::isMarkedAsPMT(int pid) const {
-		return getFilter().isMarkedAsPMT(pid);
+		return _filter.isMarkedAsPMT(pid);
 	}
 
-	const mpegts::PMT &Frontend::getPMTData() const {
-		return getFilter().getPMTData();
+	mpegts::SpPMT Frontend::getPMTData() const {
+		return _filter.getPMTData();
 	}
 
 } // namespace dvb

@@ -23,10 +23,8 @@
 #include <FwDecl.h>
 
 FW_DECL_NS0(dvbcsa_bs_key_s);
-FW_DECL_NS1(mpegts, PAT);
-FW_DECL_NS1(mpegts, PMT);
-FW_DECL_NS1(mpegts, SDT);
 
+FW_DECL_SP_NS1(mpegts, PMT);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
 namespace input {
@@ -101,7 +99,7 @@ namespace dvb {
 			virtual bool isMarkedAsPMT(int pid) const = 0;
 
 			///
-			virtual const mpegts::PMT &getPMTData() const = 0;
+			virtual mpegts::SpPMT getPMTData() const = 0;
 	};
 
 } // namespace dvb

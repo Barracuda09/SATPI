@@ -143,7 +143,7 @@ class Frontend :
 
 		virtual bool isMarkedAsPMT(int pid) const override;
 
-		virtual const mpegts::PMT &getPMTData() const override;
+		virtual mpegts::SpPMT getPMTData() const override;
 #endif
 
 		// =======================================================================

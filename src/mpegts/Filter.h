@@ -20,6 +20,7 @@
 #ifndef MPEGTS_FILTER_H_INCLUDE
 #define MPEGTS_FILTER_H_INCLUDE MPEGTS_FILTER_H_INCLUDE
 
+#include <base/Mutex.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PMT.h>
 #include <mpegts/SDT.h>
@@ -51,31 +52,25 @@ namespace mpegts {
 
 			///
 			bool isMarkedAsPMT(int pid) const {
-				return _pat.isMarkedAsPMT(pid);
+				base::MutexLock lock(_mutex);
+				return _pat->isMarkedAsPMT(pid);
 			}
 
 			///
-			mpegts::PMT &getPMTData() {
+			mpegts::SpPMT getPMTData() const {
+				base::MutexLock lock(_mutex);
 				return _pmt;
 			}
 
 			///
-			const mpegts::PMT &getPMTData() const {
-				return _pmt;
-			}
-
-			///
-			mpegts::PAT &getPATData() {
+			mpegts::SpPAT getPATData() const {
+				base::MutexLock lock(_mutex);
 				return _pat;
 			}
 
 			///
-			mpegts::SDT &getSDTData() {
-				return _sdt;
-			}
-
-			///
-			const mpegts::SDT &getSDTData() const {
+			mpegts::SpSDT getSDTData() const {
+				base::MutexLock lock(_mutex);
 				return _sdt;
 			}
 
@@ -89,10 +84,11 @@ namespace mpegts {
 		protected:
 
 		private:
+			mutable base::Mutex _mutex;
 
-			mpegts::PMT _pmt;
-			mpegts::SDT _sdt;
-			mpegts::PAT _pat;
+			mpegts::SpPMT _pmt;
+			mpegts::SpSDT _sdt;
+			mpegts::SpPAT _pat;
 
 	};
 

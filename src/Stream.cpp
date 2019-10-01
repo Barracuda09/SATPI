@@ -354,14 +354,15 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
-		_device->clearMPEGFilters();
 		_device->parseStreamString(msg, method);
 	}
 
 	// Channel changed?.. stop/pause Stream
-	const bool changed = _device->hasDeviceDataChanged();
-	if (_streaming && changed) {
-		_streaming->pauseStreaming(clientID);
+	if (_device->hasDeviceDataChanged()) {
+		_device->clearMPEGFilters();
+		if (_streaming) {
+			_streaming->pauseStreaming(clientID);
+		}
 	}
 
 	// Get transport type from request, and maybe ports

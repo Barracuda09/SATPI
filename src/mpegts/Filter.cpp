@@ -30,31 +30,37 @@
 
 namespace mpegts {
 
-	Filter::Filter() {}
+	Filter::Filter() {
+		_pat = std::make_shared<PAT>();
+		_pmt = std::make_shared<PMT>();
+		_sdt = std::make_shared<SDT>();
+	}
 
 	Filter::~Filter() {}
 
 	void Filter::clear(int streamID) {
+		base::MutexLock lock(_mutex);
 		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT/SDT Tables...", streamID);
-		_pat.clear();
-		_pmt.clear();
-		_sdt.clear();
+		_pat = std::make_shared<PAT>();
+		_pmt = std::make_shared<PMT>();
+		_sdt = std::make_shared<SDT>();
 	}
 
 	void Filter::addData(const int streamID, const unsigned char *ptr) {
+		base::MutexLock lock(_mutex);
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 		if (pid == 0) {
-			if (!_pat.isCollected()) {
+			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat.collectData(streamID, PAT_TABLE_ID, ptr, false);
+				_pat->collectData(streamID, PAT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting PAT
-				if (_pat.isCollected()) {
-					_pat.parse(streamID);
+				if (_pat->isCollected()) {
+					_pat->parse(streamID);
 				}
 			}
-		} else if (_pat.isMarkedAsPMT(pid)) {
-			if (!_pmt.isCollected()) {
+		} else if (_pat->isMarkedAsPMT(pid)) {
+			if (!_pmt->isCollected()) {
 #ifdef ADDDVBCA
 				{
 					const char fileFIFO[] = "/tmp/fifo";
@@ -66,21 +72,21 @@ namespace mpegts {
 				}
 #endif
 				// collect PMT data
-				_pmt.collectData(streamID, PMT_TABLE_ID, ptr, false);
+				_pmt->collectData(streamID, PMT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting PMT
-				if (_pmt.isCollected()) {
-					_pmt.parse(streamID);
+				if (_pmt->isCollected()) {
+					_pmt->parse(streamID);
 				}
 			}
 		} else if (pid == 17) {
-			if (!_sdt.isCollected()) {
+			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt.collectData(streamID, SDT_TABLE_ID, ptr, false);
+				_sdt->collectData(streamID, SDT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting SDT
-				if (_sdt.isCollected()) {
-					_sdt.parse(streamID);
+				if (_sdt->isCollected()) {
+					_sdt->parse(streamID);
 				}
 			}
 		} else if (pid == 20) {
@@ -94,17 +100,17 @@ namespace mpegts {
 				}
 			}
 #endif
-			const unsigned int tableID = ptr[5u];
-			const unsigned int mjd = (ptr[8u] << 8) | (ptr[9u]);
+			const unsigned int tableID = ptr[5];
+			const unsigned int mjd = (ptr[8] << 8) | (ptr[9]);
 			const unsigned int y1 = static_cast<unsigned int>((mjd - 15078.2) / 365.25);
 			const unsigned int m1 = static_cast<unsigned int>((mjd - 14956.1 - static_cast<unsigned int>(y1 * 365.25)) / 30.6001);
 			const unsigned int d = static_cast<unsigned int>(mjd - 14956.0 - static_cast<unsigned int>(y1 * 365.25) - static_cast<unsigned int>(m1 * 30.6001 ));
 			const unsigned int k = (m1 == 14 || m1 ==15) ? 1 : 0;
 			const unsigned int y = y1 + k + 1900;
 			const unsigned int m = m1 - 1 - (k * 12);
-			const unsigned int h = ptr[10u];
-			const unsigned int mi = ptr[11u];
-			const unsigned int s = ptr[12u];
+			const unsigned int h = ptr[10];
+			const unsigned int mi = ptr[11];
+			const unsigned int s = ptr[12];
 
 			SI_LOG_INFO("Stream: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", streamID, tableID, y, m, d, h, mi, s, mjd);
 //			SI_LOG_BIN_DEBUG(ptr, 188, "Stream: %d, TDT - ", _streamID);

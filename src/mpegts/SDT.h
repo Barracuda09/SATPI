@@ -20,10 +20,13 @@
 #ifndef MPEGTS_SDT_DATA_H_INCLUDE
 #define MPEGTS_SDT_DATA_H_INCLUDE MPEGTS_SDT_DATA_H_INCLUDE
 
+#include <FwDecl.h>
 #include <mpegts/TableData.h>
 
-#include <string>
 #include <map>
+#include <string>
+
+FW_DECL_SP_NS1(mpegts, SDT);
 
 namespace mpegts {
 
@@ -63,7 +66,7 @@ namespace mpegts {
 				return _transportStreamID;
 			}
 
-			bool getSDTDataFor(int progID, SDT::Data &data) const;
+			SDT::Data getSDTDataFor(int progID) const;
 
 		protected:
 

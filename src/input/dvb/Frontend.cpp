@@ -79,10 +79,8 @@ namespace dvb {
 	}
 
 	Frontend::~Frontend() {
-		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
-		     it != _deliverySystem.end();
-		     ++it) {
-			DELETE(*it);
+		for (auto system : _deliverySystem) {
+			DELETE(system);
 		}
 	}
 
@@ -193,8 +191,8 @@ namespace dvb {
 
 		// Channel
 		_frontendData.addToXML(xml);
-		mpegts::SDT::Data sdtData;
-		_filter.getSDTData().getSDTDataFor(_filter.getPMTData().getProgramNumber(), sdtData);
+		const mpegts::SDT::Data sdtData = _filter.getSDTData()->getSDTDataFor(
+				_filter.getPMTData()->getProgramNumber());
 		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
 		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 
@@ -207,7 +205,7 @@ namespace dvb {
 
 		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 
-		for (size_t i = 0u; i < _deliverySystem.size(); ++i) {
+		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 			ADD_XML_N_ELEMENT(xml, "deliverySystem", i, _deliverySystem[i]->toXML());
 		}
 	}
@@ -223,7 +221,7 @@ namespace dvb {
 
 			}
 		}
-		for (size_t i = 0u; i < _deliverySystem.size(); ++i) {
+		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem%1", i);
 			if (findXMLElement(xml, deliverySystem, element)) {
 				_deliverySystem[i]->fromXML(element);
@@ -272,9 +270,8 @@ namespace dvb {
 		const int bytes = ::read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
 			buffer.addAmountOfBytesWritten(bytes);
-			const bool full = buffer.full();
-			if (full) {
-				const std::size_t size = buffer.getNumberOfTSPackets();
+			if (buffer.full()) {
+				static constexpr std::size_t size = buffer.getNumberOfTSPackets();
 				for (std::size_t i = 0; i < size; ++i) {
 					const unsigned char *ptr = buffer.getTSPacketPtr(i);
 					// sync byte then check cc
@@ -284,11 +281,11 @@ namespace dvb {
 						const uint8_t  cc  =   ptr[3] & 0x0f;
 						_frontendData.addPIDData(pid, cc);
 
-						getFilter().addData(_streamID, ptr);
+						_filter.addData(_streamID, ptr);
 					}
 				}
+				return true;
 			}
-			return full;
 		} else if (bytes < 0) {
 			PERROR("Frontend::readFullTSPacket");
 		}
@@ -296,10 +293,8 @@ namespace dvb {
 	}
 
 	bool Frontend::capableOf(const input::InputSystem system) const {
-		for (input::dvb::delivery::SystemVector::const_iterator it = _deliverySystem.begin();
-		     it != _deliverySystem.end();
-		     ++it) {
-			if ((*it)->isCapableOf(system)) {
+		for (const auto deliverySystem : _deliverySystem) {
+			if (deliverySystem->isCapableOf(system)) {
 				return true;
 			}
 		}
@@ -386,7 +381,7 @@ namespace dvb {
 		while (!setupAndTune()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			++timeout;
-			if (timeout > 3) {
+			if (timeout > 1) {
 				return false;
 			}
 		}
@@ -398,7 +393,7 @@ namespace dvb {
 
 	bool Frontend::teardown() {
 		// Close active PIDs
-		for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
+		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
 			closePid(i);
 		}
 		_tuned = false;
@@ -508,7 +503,7 @@ namespace dvb {
 		CLOSE_FD(fd_fe);
 #endif
 		// get capability of this frontend and count the delivery systems
-		for (std::size_t i = 0u; i < dtvProperty.u.buffer.len; ++i) {
+		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; ++i) {
 			switch (dtvProperty.u.buffer.data[i]) {
 				case SYS_DSS:
 					SI_LOG_INFO("Frontend Type: DSS");
@@ -531,27 +526,27 @@ namespace dvb {
 					break;
 #if FULL_DVB_API_VERSION >= 0x0505
 				case SYS_DVBC_ANNEX_A:
-					if (_dvbc == 0u) {
+					if (_dvbc == 0) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex A)");
 					break;
 				case SYS_DVBC_ANNEX_C:
-					if (_dvbc == 0u) {
+					if (_dvbc == 0) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex C)");
 					break;
 #else
 				case SYS_DVBC_ANNEX_AC:
-					if (_dvbc == 0u) {
+					if (_dvbc == 0) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex AC)");
 					break;
 #endif
 				case SYS_DVBC_ANNEX_B:
-					if (_dvbc == 0u) {
+					if (_dvbc == 0) {
 						++_dvbc;
 					}
 					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
@@ -577,13 +572,13 @@ namespace dvb {
 #endif
 
 		// Set delivery systems
-		if (_dvbs2 > 0u) {
+		if (_dvbs2 > 0) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBS(_streamID));
 		}
-		if (_dvbt > 0u || _dvbt2 > 0u) {
+		if (_dvbt > 0 || _dvbt2 > 0) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBT(_streamID));
 		}
-		if (_dvbc > 0u) {
+		if (_dvbc > 0) {
 			_deliverySystem.push_back(new input::dvb::delivery::DVBC(_streamID));
 		}
 	}
@@ -644,11 +639,9 @@ namespace dvb {
 
 	bool Frontend::tune() {
 		const input::InputSystem delsys = _frontendData.getDeliverySystem();
-		for (input::dvb::delivery::SystemVector::iterator it = _deliverySystem.begin();
-		     it != _deliverySystem.end();
-		     ++it) {
-			if ((*it)->isCapableOf(delsys)) {
-				return (*it)->tune(_fd_fe, _frontendData);
+		for (auto system : _deliverySystem) {
+			if (system->isCapableOf(delsys)) {
+				return system->tune(_fd_fe, _frontendData);
 			}
 		}
 		return false;
@@ -666,7 +659,7 @@ namespace dvb {
 			while (!tune()) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(450));
 				++timeout;
-				if (timeout > 3) {
+				if (timeout > 2) {
 					return false;
 				}
 			}
@@ -706,8 +699,8 @@ namespace dvb {
 
 			{
 				base::MutexLock lock(_mutex);
-				if (_dvrBufferSizeMB > 0u) {
-					const unsigned int size = _dvrBufferSizeMB * 1024u * 1024u;
+				if (_dvrBufferSizeMB > 0) {
+					const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
 					if (::ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) != 0) {
 						PERROR("DVR - DMX_SET_BUFFER_SIZE failed");
 					} else {
@@ -733,7 +726,7 @@ namespace dvb {
 			}
 			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
 					_streamID, pid, _frontendData.getDMXFileDescriptor(pid),
-					getFilter().isMarkedAsPMT(pid) ? " - PMT" : "");
+					_filter.isMarkedAsPMT(pid) ? " - PMT" : "");
 		}
 		return true;
 	}
@@ -756,13 +749,13 @@ namespace dvb {
 				_frontendData.resetPIDTableChanged();
 				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
 				// Check should we close PIDs first
-				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
+				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
 					if (_frontendData.shouldPIDClose(i)) {
 						closePid(i);
 					}
 				}
 				// Check which PID should be openend (again)
-				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
+				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
 					if (_frontendData.isPIDUsed(i)) {
 						// Check if we have no DMX for this PID, then open one
 						if (!openPid(i)) {

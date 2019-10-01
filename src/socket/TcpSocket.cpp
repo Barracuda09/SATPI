@@ -31,6 +31,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+// ============================================================================
+//  -- Constructors and destructor --------------------------------------------
+// ============================================================================
 
 TcpSocket::TcpSocket(int maxClients, const std::string &protocol) :
 		_MAX_CLIENTS(maxClients),
@@ -45,7 +48,14 @@ TcpSocket::~TcpSocket() {
 	_server.closeFD();
 }
 
+// ============================================================================
+//  -- Other member functions -------------------------------------------------
+// ============================================================================
+
 void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
+	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
+		_client[i].setProtocol(_protocolString);
+	}
 	if (initServerSocket(ipAddr, port, _MAX_CLIENTS, nonblock)) {
 		_pfd[0].fd = _server.getFD();
 		_pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
@@ -57,47 +67,50 @@ void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
 			_pfd[i].revents = 0;
 		}
 	}
-	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
-		_client[i].setProtocol(_protocolString);
-	}
 }
 
 int TcpSocket::poll(int timeout) {
 	if (::poll(_pfd, _MAX_POLL, timeout) > 0) {
 		// Check who is sending data, so iterate over pfd
 		for (std::size_t i = 0; i < _MAX_POLL; ++i) {
-			if (_pfd[i].revents != 0) {
-				if (i == 0) {
-					// Try to find a free poll entry
-					for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
-						if (_pfd[j + 1].fd == -1) {
-							if (acceptConnection(_client[j], true)) {
-								// setup polling
-								_pfd[j + 1].fd = _client[j].getFD();
-								_pfd[j + 1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-								_pfd[j + 1].revents = 0;
-								break;
-							}
-						}
+			if (_pfd[i].revents == 0) {
+				continue;
+			}
+			// index 0 is server
+			if (i == 0) {
+				// Try to find a free poll entry
+				for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
+					if (_pfd[j + 1].fd != -1) {
+						continue;
 					}
-				} else {
-					// receive httpc messages
-					const auto dataSize = recvHttpcMessage(_client[i-1], MSG_DONTWAIT);
-					if (dataSize > 0) {
-						process(_client[i - 1]);
-					} else {
-						// Try to find the client that requested to close
-						for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
-							if (_client[j].getFD() == _pfd[i].fd) {
-								SI_LOG_INFO("%s Client %s:%d Connection closed with fd: %d", _client[j].getProtocolString().c_str(),
-								             _client[j].getIPAddressOfSocket().c_str(), _client[j].getSocketPort(), _client[j].getFD());
-								_client[j].closeFD();
-								break;
-							}
-						}
-						_pfd[i].fd = -1;
+					if (acceptConnection(_client[j], true)) {
+						// setup polling
+						_pfd[j + 1].fd = _client[j].getFD();
+						_pfd[j + 1].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+						_pfd[j + 1].revents = 0;
+						break;
 					}
 				}
+			} else {
+				// receive httpc messages
+				const auto dataSize = recvHttpcMessage(_client[i-1], MSG_DONTWAIT);
+				if (dataSize > 0) {
+					process(_client[i - 1]);
+					continue;
+				}
+				// Try to find the client that requested to close
+				for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
+					if (_client[j].getFD() != _pfd[i].fd) {
+						continue;
+					}
+					SI_LOG_INFO("%s Client %s:%d Connection closed with fd: %d",
+					            _client[j].getProtocolString().c_str(),
+					            _client[j].getIPAddressOfSocket().c_str(),
+								_client[j].getSocketPort(), _client[j].getFD());
+					_client[j].closeFD();
+					break;
+				}
+				_pfd[i].fd = -1;
 			}
 		}
 	}

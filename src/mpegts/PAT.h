@@ -20,10 +20,13 @@
 #ifndef MPEGTS_PAT_DATA_H_INCLUDE
 #define MPEGTS_PAT_DATA_H_INCLUDE MPEGTS_PAT_DATA_H_INCLUDE
 
+#include <FwDecl.h>
 #include <mpegts/TableData.h>
 
-#include <string>
 #include <map>
+#include <string>
+
+FW_DECL_SP_NS1(mpegts, PAT);
 
 namespace mpegts {
 

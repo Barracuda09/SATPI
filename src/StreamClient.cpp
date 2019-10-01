@@ -23,100 +23,104 @@
 #include <socket/SocketClient.h>
 #include <Stream.h>
 
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/uio.h>
 
-#include <ctime>
+// ============================================================================
+//  -- Constructors and destructor --------------------------------------------
+// ============================================================================
 
-	StreamClient::StreamClient() :
-			_httpStream(nullptr),
-			_streamID(-1),
-			_clientID(-1),
-			_ipAddress("0.0.0.0"),
-			_watchdog(0),
-			_sessionTimeout(60),
-			_sessionID("-1"),
-			_userAgent("None"),
-			_cseq(0) {}
+StreamClient::StreamClient() :
+		_httpStream(nullptr),
+		_streamID(-1),
+		_clientID(-1),
+		_ipAddress("0.0.0.0"),
+		_watchdog(0),
+		_sessionTimeout(60),
+		_sessionID("-1"),
+		_userAgent("None"),
+		_cseq(0) {}
 
-	StreamClient::~StreamClient() {}
+StreamClient::~StreamClient() {}
 
-	void StreamClient::teardown() {
-		base::MutexLock lock(_mutex);
+// ============================================================================
+//  -- Other member functions -------------------------------------------------
+// ============================================================================
 
-		_watchdog = 0;
-		_sessionID = "-1";
-		_ipAddress = "0.0.0.0";
-		_userAgent = "None";
+void StreamClient::teardown() {
+	base::MutexLock lock(_mutex);
 
-		// Do not delete
-		_httpStream = nullptr;
-	}
+	_watchdog = 0;
+	_sessionID = "-1";
+	_ipAddress = "0.0.0.0";
+	_userAgent = "None";
 
-	void StreamClient::restartWatchDog() {
-		base::MutexLock lock(_mutex);
+	// Do not delete
+	_httpStream = nullptr;
+}
 
-		// reset watchdog and give some extra timeout
-		_watchdog = std::time(nullptr) + _sessionTimeout + 15;
-	}
+void StreamClient::restartWatchDog() {
+	base::MutexLock lock(_mutex);
 
-	void StreamClient::selfDestruct() {
-		base::MutexLock lock(_mutex);
-		_watchdog = 1;
-	}
+	// reset watchdog and give some extra timeout
+	_watchdog = std::time(nullptr) + _sessionTimeout + 15;
+}
 
-	bool StreamClient::isSelfDestructing() const {
-		base::MutexLock lock(_mutex);
-		return _watchdog == 1;
-	}
+void StreamClient::selfDestruct() {
+	base::MutexLock lock(_mutex);
+	_watchdog = 1;
+}
 
-	bool StreamClient::sessionTimeout() const {
-		base::MutexLock lock(_mutex);
+bool StreamClient::isSelfDestructing() const {
+	base::MutexLock lock(_mutex);
+	return _watchdog == 1;
+}
 
-		return (((_httpStream == nullptr) ? -1 : _httpStream->getFD()) == -1) &&
-			   (_watchdog != 0) &&
-			   (_watchdog < std::time(nullptr));
-	}
+bool StreamClient::sessionTimeout() const {
+	base::MutexLock lock(_mutex);
 
-	void StreamClient::setSocketClient(SocketClient &socket) {
-		base::MutexLock lock(_mutex);
-		_httpStream = &socket;
-	}
+	return (((_httpStream == nullptr) ? -1 : _httpStream->getFD()) == -1) &&
+		   (_watchdog != 0) &&
+		   (_watchdog < std::time(nullptr));
+}
 
-	SocketAttr &StreamClient::getRtpSocketAttr() {
-		return _rtp;
-	}
+void StreamClient::setSocketClient(SocketClient &socket) {
+	base::MutexLock lock(_mutex);
+	_httpStream = &socket;
+}
 
-	SocketAttr &StreamClient::getRtcpSocketAttr() {
-		return _rtcp;
-	}
+SocketAttr &StreamClient::getRtpSocketAttr() {
+	return _rtp;
+}
 
-	// =======================================================================
-	//  -- HTTP member functions ---------------------------------------------
-	// =======================================================================
+SocketAttr &StreamClient::getRtcpSocketAttr() {
+	return _rtcp;
+}
 
-	bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
-		base::MutexLock lock(_mutex);
-		return (_httpStream == nullptr) ? false : _httpStream->sendData(buf, len, flags);
-	}
+// ============================================================================
+//  -- HTTP member functions --------------------------------------------------
+// ============================================================================
 
-	bool StreamClient::writeHttpData(const struct iovec *iov, int iovcnt) {
-		base::MutexLock lock(_mutex);
-		return (_httpStream == nullptr) ? false : _httpStream->writeData(iov, iovcnt);
-	}
+bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
+	base::MutexLock lock(_mutex);
+	return (_httpStream == nullptr) ? false : _httpStream->sendData(buf, len, flags);
+}
 
-	int StreamClient::getHttpSocketPort() const {
-		base::MutexLock lock(_mutex);
-		return (_httpStream == nullptr) ? 0 : _httpStream->getSocketPort();
-	}
+bool StreamClient::writeHttpData(const struct iovec *iov, int iovcnt) {
+	base::MutexLock lock(_mutex);
+	return (_httpStream == nullptr) ? false : _httpStream->writeData(iov, iovcnt);
+}
 
-	int StreamClient::getHttpNetworkSendBufferSize() const {
-		base::MutexLock lock(_mutex);
-		return (_httpStream == nullptr) ? 0 : _httpStream->getNetworkSendBufferSize();
-	}
+int StreamClient::getHttpSocketPort() const {
+	base::MutexLock lock(_mutex);
+	return (_httpStream == nullptr) ? 0 : _httpStream->getSocketPort();
+}
 
-	bool StreamClient::setHttpNetworkSendBufferSize(int size) {
-		base::MutexLock lock(_mutex);
-		return (_httpStream == nullptr) ? false : _httpStream->setNetworkSendBufferSize(size);
-	}
+int StreamClient::getHttpNetworkSendBufferSize() const {
+	base::MutexLock lock(_mutex);
+	return (_httpStream == nullptr) ? 0 : _httpStream->getNetworkSendBufferSize();
+}
+
+bool StreamClient::setHttpNetworkSendBufferSize(int size) {
+	base::MutexLock lock(_mutex);
+	return (_httpStream == nullptr) ? false : _httpStream->setNetworkSendBufferSize(size);
+}

@@ -25,8 +25,8 @@
 #include <socket/SocketClient.h>
 #include <base/Mutex.h>
 
-#include <string>
 #include <ctime>
+#include <string>
 
 /// StreamClient defines the owner/participants of an stream
 class StreamClient {

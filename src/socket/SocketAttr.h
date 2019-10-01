@@ -25,8 +25,6 @@
 #include <string>
 
 #include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
 
 FW_DECL_NS0(SocketClient);
 
@@ -70,7 +68,7 @@ class SocketAttr {
 		}
 
 		///
-		bool writeData(const iovec *iov, int iovcnt);
+		bool writeData(const struct iovec *iov, int iovcnt);
 
 		/// Use this function when the socket is in connected state
 		bool sendData(const void *buf, std::size_t len, int flags);

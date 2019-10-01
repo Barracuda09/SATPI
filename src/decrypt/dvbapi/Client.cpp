@@ -92,7 +92,7 @@ namespace dvbapi {
 		if (_connected && _enabled) {
 			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(streamID);
 			const int maxBatchSize = frontend->getMaximumBatchSize();
-			const std::size_t size = buffer.getNumberOfTSPackets();
+			static constexpr std::size_t size = buffer.getNumberOfTSPackets();
 			for (std::size_t i = 0; i < size; ++i) {
 				// Get TS packet from the buffer
 				unsigned char *data = buffer.getTSPacketPtr(i);
@@ -177,7 +177,7 @@ namespace dvbapi {
 ///////////////////////////////////////////////////////////////////
 
 						if (frontend->isMarkedAsPMT(pid)) {
-							sendPMT(streamID, frontend->getPMTData());
+							sendPMT(streamID, *frontend->getPMTData());
 							// Do we need to clean PMT
 							if (_rewritePMT) {
 								cleanPMT(data);
@@ -327,41 +327,42 @@ namespace dvbapi {
 
 	void Client::sendPMT(const int streamID, const mpegts::PMT &pmt) {
 		// Did we send the collecting PMT already
-		if (pmt.isReadySend()) {
-			// Send it here !!
-			const mpegts::TSData &progInfo = pmt.getProgramInfo();
-			const int programNumber = pmt.getProgramNumber();
+		if (!pmt.isReadySend()) {
+			return;
+		}
+		// Send it here !!
+		const mpegts::TSData progInfo = pmt.getProgramInfo();
+		const int programNumber = pmt.getProgramNumber();
 
-			const char demuxIndex = static_cast<char>(streamID + _adapterOffset);
-			const int cpyLength = progInfo.size();
-			const int piLenght  = cpyLength + 1 + 4;
-			const int totLength = piLenght + 6;
-			unsigned char caPMT[totLength + 50];
+		const char demuxIndex = static_cast<char>(streamID + _adapterOffset);
+		const int cpyLength = progInfo.size();
+		const int piLenght  = cpyLength + 1 + 4;
+		const int totLength = piLenght + 6;
+		unsigned char caPMT[totLength + 50];
 
-			// DVBAPI_AOT_CA_PMT 0x9F 80 32 82
-			const uint32_t request = htonl(DVBAPI_AOT_CA_PMT);
-			std::memcpy(&caPMT[0], &request, 4);
-			const uint16_t length = htons(totLength);        // Total Length of caPMT
-			std::memcpy(&caPMT[4], &length, 2);
-			caPMT[6] = LIST_ONLY_UPDATE;                     // send LIST_ONLY_UPDATE
+		// DVBAPI_AOT_CA_PMT 0x9F 80 32 82
+		const uint32_t request = htonl(DVBAPI_AOT_CA_PMT);
+		std::memcpy(&caPMT[0], &request, 4);
+		const uint16_t length = htons(totLength);        // Total Length of caPMT
+		std::memcpy(&caPMT[4], &length, 2);
+		caPMT[6] = LIST_ONLY_UPDATE;                     // send LIST_ONLY_UPDATE
 //			caPMT[6] = LIST_ONLY;                            // send LIST_ONLY
-			const uint16_t programNr = htons(programNumber); // Program ID
-			std::memcpy(&caPMT[7], &programNr, 2);
-			caPMT[9] = DVBAPI_PROTOCOL_VERSION;              // Version
-			const uint16_t pLenght = htons(piLenght);        // Prog Info Length
-			std::memcpy(&caPMT[10], &pLenght, 2);
-			caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
-			caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
-			caPMT[14] = 0x02;                                // Length
-			caPMT[15] = demuxIndex;                          // Demux ID
-			caPMT[16] = demuxIndex;                          // streamID
-			std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
+		const uint16_t programNr = htons(programNumber); // Program ID
+		std::memcpy(&caPMT[7], &programNr, 2);
+		caPMT[9] = DVBAPI_PROTOCOL_VERSION;              // Version
+		const uint16_t pLenght = htons(piLenght);        // Prog Info Length
+		std::memcpy(&caPMT[10], &pLenght, 2);
+		caPMT[12] = 0x01;                                // ca_pmt_cmd_id = CAPMT_CMD_OK_DESCRAMBLING
+		caPMT[13] = 0x82;                                // CAPMT_DESC_DEMUX
+		caPMT[14] = 0x02;                                // Length
+		caPMT[15] = demuxIndex;                          // Demux ID
+		caPMT[16] = demuxIndex;                          // streamID
+		std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
-			SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam with demux index %d", streamID, demuxIndex);
+		SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Stream: %d, PMT data to OSCam with demux index %d", streamID, demuxIndex);
 
-			if (!_client.sendData(caPMT, totLength + 6, MSG_DONTWAIT)) {
-				SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
-			}
+		if (!_client.sendData(caPMT, totLength + 6, MSG_DONTWAIT)) {
+			SI_LOG_ERROR("Stream: %d, PMT - send data to server failed", streamID);
 		}
 	}
 

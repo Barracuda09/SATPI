@@ -116,14 +116,13 @@ namespace mpegts {
 		}
 	}
 
-	bool SDT::getSDTDataFor(const int progID, SDT::Data &data) const {
+	SDT::Data SDT::getSDTDataFor(const int progID) const {
+		SDT::Data data;
 		auto s = _sdtTable.find(progID);
 		if (s != _sdtTable.end()) {
-			data = s->second;
-			return true;
+			return s->second;
 		}
-		data = { "Not Found", "Not Found" };
-		return false;
+		return { "Not Found", "Not Found" };
 	}
 
 } // namespace mpegts

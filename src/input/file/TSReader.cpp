@@ -126,11 +126,11 @@ namespace file {
 					// Check is this the beginning of the TS and no Transport error indicator
 					if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
 						// Add data to Filter
-						getFilter().addData(_streamID, data);
+						_filter.addData(_streamID, data);
 
 						// get PID from TS
 						const uint16_t pid = ((data[1] & 0x1f) << 8) | data[2];
-						const uint16_t pcrPID = getFilter().getPMTData().getPCRPid();
+						const uint16_t pcrPID = _filter.getPMTData()->getPCRPid();
 						if (pid == pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
 							// Check for 'adaptation field flag' and 'PCR field present'
 

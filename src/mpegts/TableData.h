@@ -89,7 +89,7 @@ namespace mpegts {
 			void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
 
 			/// Get the collected Table Data
-			void getData(size_t secNr, TSData &data) const;
+			TSData getData(size_t secNr) const;
 
 			/// Check if Table is collected
 			bool isCollected() const;
@@ -132,6 +132,7 @@ namespace mpegts {
 
 			std::size_t _currentSectionNumber;
 			std::map<int, Data> _dataTable;
+			mutable bool _collectingFinished;
 
 	};
 

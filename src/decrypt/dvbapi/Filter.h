@@ -73,7 +73,7 @@ namespace dvbapi {
 							tableID = _tableID;
 							_collecting = false;
 							// Because we collect raw there is only 1
-							_filterData[demux][filter].getTableData(0, filterData);
+							filterData = _filterData[demux][filter].getTableData(0);
 							_filterData[demux][filter].resetTableData();
 							return true;
 						}
@@ -93,7 +93,7 @@ namespace dvbapi {
 										_tableID = tableID;
 									} else {
 										// Because we collect raw there is only 1
-										_filterData[demux][filter].getTableData(0, filterData);
+										filterData = _filterData[demux][filter].getTableData(0);
 										_filterData[demux][filter].resetTableData();
 										return true;
 									}

@@ -54,25 +54,24 @@ namespace mpegts {
 	}
 
 	bool PacketBuffer::trySyncing() {
-		if (!isSynced()) {
-			for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
-				const unsigned char *cData = _buffer + i;
-				if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
-					cData[TS_PACKET_SIZE * 1] == 0x47 &&
-					cData[TS_PACKET_SIZE * 2] == 0x47) {
-					// found sync, now move it to begin of buffer
-					const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
-					_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
-					std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
-					return true;
-				}
-			}
-			// did not find a sync, so flush buffer
-			reset();
-			return false;
-		} else {
+		if (isSynced()) {
 			return true;
 		}
+		for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
+			const unsigned char *cData = _buffer + i;
+			if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
+			    cData[TS_PACKET_SIZE * 1] == 0x47 &&
+			    cData[TS_PACKET_SIZE * 2] == 0x47) {
+				// found sync, now move it to begin of buffer
+				const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
+				_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
+				std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
+				return true;
+			}
+		}
+		// did not find a sync, so flush buffer
+		reset();
+		return false;
 	}
 
 } // namespace mpegts
