@@ -27,6 +27,7 @@
 #include <cstring>
 
 #include <arpa/inet.h>
+#include <sys/uio.h>
 
 	// ===================================================================
 	//  -- Constructors and destructor -----------------------------------
