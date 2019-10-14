@@ -30,7 +30,6 @@
 #include <decrypt/dvbapi/ClientProperties.h>
 #endif
 
-#include <vector>
 #include <string>
 
 FW_DECL_NS1(input, DeviceData);
@@ -39,7 +38,7 @@ FW_DECL_NS3(input, dvb, delivery, System);
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 FW_DECL_SP_NS2(input, dvb, Frontend);
 
-FW_DECL_VECTOR_NS0(Stream);
+FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 namespace input {
 namespace dvb {
@@ -82,7 +81,7 @@ class Frontend :
 	public:
 
 		static void enumerate(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &dvbAdapterpath);
@@ -237,7 +236,7 @@ class Frontend :
 		std::string _path_to_dmx;
 		struct dvb_frontend_info _fe_info;
 
-		input::dvb::delivery::SystemVector _deliverySystem;
+		input::dvb::delivery::SystemUpVector _deliverySystem;
 		input::dvb::FrontendData _frontendData;
 #ifdef LIBDVBCSA
 		decrypt::dvbapi::ClientProperties _dvbapiData;

@@ -49,10 +49,10 @@ namespace stream {
 	// =======================================================================
 
 	void Streamer::enumerate(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &bindIPAddress) {
 		SI_LOG_INFO("Setting up TS Streamer");
-		const StreamVector::size_type size = streamVector.size();
+		const StreamSpVector::size_type size = streamVector.size();
 		const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress);
 		streamVector.push_back(std::make_shared<Stream>(size, streamer, nullptr));
 	}

@@ -25,16 +25,14 @@
 #include <base/XMLSupport.h>
 
 #include <string>
-#include <vector>
 
 FW_DECL_NS2(input, dvb, FrontendData);
+
+FW_DECL_VECTOR_OF_UP_NS3(input, dvb, delivery, System);
 
 namespace input {
 namespace dvb {
 namespace delivery {
-
-	class System;
-	using SystemVector = std::vector<System *>;
 
 	/// The class @c System specifies the interface to an specific delivery system
 	class System :

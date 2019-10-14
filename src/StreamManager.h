@@ -24,12 +24,11 @@
 #include <base/XMLSupport.h>
 
 #include <string>
-#include <vector>
 
 FW_DECL_NS0(SocketClient);
 
 
-FW_DECL_VECTOR_NS0(Stream);
+FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
@@ -111,7 +110,7 @@ class StreamManager :
 	private:
 
 		decrypt::dvbapi::SpClient _decrypt;
-		StreamVector _stream;
+		StreamSpVector _stream;
 };
 
 #endif // STREAM_MANAGER_H_INCLUDE

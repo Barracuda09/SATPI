@@ -32,7 +32,6 @@ FW_DECL_NS0(StreamManager);
 FW_DECL_NS1(mpegts, PacketBuffer);
 FW_DECL_NS1(mpegts, PMT);
 
-FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 namespace decrypt {

@@ -78,18 +78,14 @@ namespace dvb {
 		setupFrontend();
 	}
 
-	Frontend::~Frontend() {
-		for (auto system : _deliverySystem) {
-			DELETE(system);
-		}
-	}
+	Frontend::~Frontend() {}
 
 	// =======================================================================
 	//  -- Static functions --------------------------------------------------
 	// =======================================================================
 	// Called recursive
 	static void getAttachedFrontends(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &path,
@@ -136,7 +132,7 @@ namespace dvb {
 								const std::string dmx = StringConverter::stringFormat(DMX.c_str(), adapt_nr, fe_nr);
 
 								// Make new frontend here
-								const StreamVector::size_type size = streamVector.size();
+								const StreamSpVector::size_type size = streamVector.size();
 								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
 								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
 							}
@@ -163,14 +159,14 @@ namespace dvb {
 	// =======================================================================
 
 	void Frontend::enumerate(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &dvbAdapterpath) {
-		const StreamVector::size_type beginSize = streamVector.size();
+		const StreamSpVector::size_type beginSize = streamVector.size();
 		SI_LOG_INFO("Detecting frontends in: %s", dvbAdapterpath.c_str());
 		getAttachedFrontends(streamVector, appDataPath, decrypt, dvbAdapterpath, dvbAdapterpath);
-		const StreamVector::size_type endSize = streamVector.size();
+		const StreamSpVector::size_type endSize = streamVector.size();
 		SI_LOG_INFO("Frontends found: %u", endSize - beginSize);
 	}
 
@@ -293,7 +289,7 @@ namespace dvb {
 	}
 
 	bool Frontend::capableOf(const input::InputSystem system) const {
-		for (const auto deliverySystem : _deliverySystem) {
+		for (const input::dvb::delivery::UpSystem &deliverySystem : _deliverySystem) {
 			if (deliverySystem->isCapableOf(system)) {
 				return true;
 			}
@@ -573,13 +569,13 @@ namespace dvb {
 
 		// Set delivery systems
 		if (_dvbs2 > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBS(_streamID));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_streamID)));
 		}
 		if (_dvbt > 0 || _dvbt2 > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBT(_streamID));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_streamID)));
 		}
 		if (_dvbc > 0) {
-			_deliverySystem.push_back(new input::dvb::delivery::DVBC(_streamID));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_streamID)));
 		}
 	}
 
@@ -639,7 +635,7 @@ namespace dvb {
 
 	bool Frontend::tune() {
 		const input::InputSystem delsys = _frontendData.getDeliverySystem();
-		for (auto system : _deliverySystem) {
+		for (input::dvb::delivery::UpSystem &system : _deliverySystem) {
 			if (system->isCapableOf(delsys)) {
 				return system->tune(_fd_fe, _frontendData);
 			}

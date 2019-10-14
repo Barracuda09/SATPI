@@ -21,6 +21,7 @@
 #define FW_DECL_H_INCLUDE FW_DECL_H_INCLUDE
 
 #include <memory>
+#include <vector>
 
 #define FW_DECL_NS0(CLASS) \
 	class CLASS
@@ -50,8 +51,8 @@ namespace NS3 { \
 
 #define FW_DECL_UP_NS0(CLASS) \
 	class CLASS; \
-	using   Sp ## CLASS = std::unique_ptr<CLASS>; \
-	using  Scp ## CLASS = std::unique_ptr<const CLASS>;
+	using   Up ## CLASS = std::unique_ptr<CLASS>; \
+	using  Ucp ## CLASS = std::unique_ptr<const CLASS>;
 
 #define FW_DECL_UP_NS1(NS1, CLASS) \
 namespace NS1 { \
@@ -115,8 +116,62 @@ namespace NS3 { \
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define FW_DECL_VECTOR_NS0(CLASS) \
+#define FW_DECL_VECTOR_OF_UP_NS0(CLASS) \
+	FW_DECL_UP_NS0(CLASS); \
+	using CLASS ## UpVector = std::vector<Up ## CLASS>;
+
+#define FW_DECL_VECTOR_OF_UP_NS1(NS1, CLASS) \
+namespace NS1 { \
+	FW_DECL_UP_NS0(CLASS); \
+	using CLASS ## UpVector = std::vector<Up ## CLASS>; \
+}
+
+#define FW_DECL_VECTOR_OF_UP_NS2(NS1, NS2, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+	FW_DECL_UP_NS0(CLASS); \
+	using CLASS ## UpVector = std::vector<Up ## CLASS>; \
+} \
+}
+
+#define FW_DECL_VECTOR_OF_UP_NS3(NS1, NS2, NS3, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+namespace NS3 { \
+	FW_DECL_UP_NS0(CLASS); \
+	using CLASS ## UpVector = std::vector<Up ## CLASS>; \
+} \
+} \
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+#define FW_DECL_VECTOR_OF_SP_NS0(CLASS) \
 	FW_DECL_SP_NS0(CLASS); \
-	using CLASS ## Vector = std::vector<Sp ## CLASS>;
+	using CLASS ## SpVector = std::vector<Sp ## CLASS>;
+
+#define FW_DECL_VECTOR_OF_SP_NS1(NS1, CLASS) \
+namespace NS1 { \
+	FW_DECL_SP_NS0(CLASS); \
+	using CLASS ## SpVector = std::vector<Sp ## CLASS>; \
+}
+
+#define FW_DECL_VECTOR_OF_SP_NS2(NS1, NS2, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+	FW_DECL_SP_NS0(CLASS); \
+	using CLASS ## SpVector = std::vector<Sp ## CLASS>; \
+} \
+}
+
+#define FW_DECL_VECTOR_OF_SP_NS3(NS1, NS2, NS3, CLASS) \
+namespace NS1 { \
+namespace NS2 { \
+namespace NS3 { \
+	FW_DECL_SP_NS0(CLASS); \
+	using CLASS ## SpVector = std::vector<Sp ## CLASS>; \
+} \
+} \
+}
 
 #endif // FW_DECL_H_INCLUDE

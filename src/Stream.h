@@ -40,7 +40,7 @@ FW_DECL_UP_NS1(output, StreamThreadBase);
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
-FW_DECL_VECTOR_NS0(Stream);
+FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 /// The class @c Stream carries all the data/information of an stream
 class Stream :

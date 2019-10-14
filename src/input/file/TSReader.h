@@ -25,14 +25,13 @@
 #include <input/Transformation.h>
 #include <input/file/TSReaderData.h>
 
-#include <vector>
 #include <string>
 #include <chrono>
 #include <fstream>
 
 FW_DECL_SP_NS2(input, file, TSReader);
 
-FW_DECL_VECTOR_NS0(Stream);
+FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 namespace input {
 namespace file {
@@ -62,7 +61,7 @@ class TSReader :
 
 		///
 		static void enumerate(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &appDataPath);
 
 		// =====================================================================

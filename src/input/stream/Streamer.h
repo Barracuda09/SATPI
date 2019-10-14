@@ -25,7 +25,6 @@
 #include <socket/SocketClient.h>
 #include <socket/UdpSocket.h>
 
-#include <vector>
 #include <string>
 
 #include <poll.h>
@@ -34,7 +33,7 @@ FW_DECL_NS1(input, DeviceData);
 
 FW_DECL_SP_NS2(input, stream, Streamer);
 
-FW_DECL_VECTOR_NS0(Stream);
+FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 namespace input {
 namespace stream {
@@ -63,7 +62,7 @@ class Streamer :
 	public:
 
 		static void enumerate(
-			StreamVector &streamVector,
+			StreamSpVector &streamVector,
 			const std::string &bindIPAddress);
 
 		// =====================================================================

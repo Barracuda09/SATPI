@@ -24,8 +24,6 @@
 #include <socket/HttpcSocket.h>
 #include <socket/SocketAttr.h>
 
-#include <vector>
-
 #include <poll.h>
 
 FW_DECL_NS0(SocketClient);
