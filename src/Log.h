@@ -58,13 +58,13 @@
 
 
 #ifdef NDEBUG
-#define PERROR(fmt, ...)            Log::applog(LOG_ERR, fmt ": %s (code %d)", ##__VA_ARGS__, strerror(errno), errno)
-#define GAI_PERROR(str, s)          Log::applog(LOG_ERR, str ": %s (code %d)", gai_strerror(s), s)
-#define SI_LOG_INFO(...)            Log::applog(LOG_INFO, __VA_ARGS__)
-#define SI_LOG_ERROR(...)           Log::applog(LOG_ERR, __VA_ARGS__)
-#define SI_LOG_DEBUG(...)
-#define SI_LOG_COND_DEBUG(cond, fmt, ...)
-#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)
+#define PERROR(fmt, ...)                       Log::applog(LOG_ERR, fmt ": %s (code %d)", ##__VA_ARGS__, strerror(errno), errno)
+#define GAI_PERROR(str, s)                     Log::applog(LOG_ERR, str ": %s (code %d)", gai_strerror(s), s)
+#define SI_LOG_INFO(...)                       Log::applog(LOG_INFO, __VA_ARGS__)
+#define SI_LOG_ERROR(...)                      Log::applog(LOG_ERR, __VA_ARGS__)
+#define SI_LOG_DEBUG(...)                      Log::applog(LOG_DEBUG, __VA_ARGS__)
+#define SI_LOG_COND_DEBUG(cond, fmt, ...)      if (cond) { Log::applog(LOG_DEBUG, fmt, ##__VA_ARGS__); }
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
 #else
 #define PERROR(fmt, ...)                       Log::applog(LOG_ERR,   "[%45s:%03d] " fmt ": %s (code %d)", __FILE__, __LINE__, ##__VA_ARGS__, strerror(errno), errno)
 #define GAI_PERROR(str, s)                     Log::applog(LOG_ERR,   "[%45s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
