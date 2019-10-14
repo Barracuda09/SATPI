@@ -155,13 +155,8 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	std::string sessionID("-1");
 	const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
 
-#ifdef DEBUG
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
-#else
-	SI_LOG_INFO("%s Stream data from client %s with IP %s on Port %d", client.getProtocolString().c_str(),
-		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort());
-#endif
 
 	std::string httpcReply;
 	std::string method;
