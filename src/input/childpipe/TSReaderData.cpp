@@ -17,14 +17,14 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#include <input/file/TSReaderData.h>
+#include <input/childpipe/TSReaderData.h>
 
 #include <Log.h>
 #include <Unused.h>
 #include <StringConverter.h>
 
 namespace input {
-namespace file {
+namespace childpipe {
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -63,7 +63,7 @@ namespace file {
 			const std::string &msg,
 			const std::string &method) {
 		base::MutexLock lock(_mutex);
-		const std::string file = StringConverter::getStringParameter(msg, method, "uri=");
+		const std::string file = StringConverter::getStringParameter(msg, method, "exec=");
 		if (!file.empty()) {
 			initialize();
 			_filePath = file;
@@ -104,5 +104,5 @@ namespace file {
 		setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 	}
 
-} // namespace file
+} // namespace childpipe
 } // namespace input

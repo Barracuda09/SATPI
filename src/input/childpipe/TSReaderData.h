@@ -17,18 +17,18 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_FILE_TSREADER_DATA_H_INCLUDE
-#define INPUT_FILE_TSREADER_DATA_H_INCLUDE INPUT_FILE_TSREADER_DATA_H_INCLUDE
+#ifndef INPUT_CHILD_PIPE_TSREADER_DATA_H_INCLUDE
+#define INPUT_CHILD_PIPE_TSREADER_DATA_H_INCLUDE INPUT_CHILD_PIPE_TSREADER_DATA_H_INCLUDE
 
 #include <input/DeviceData.h>
 
 #include <string>
 
 namespace input {
-namespace file {
+namespace childpipe {
 
 	/// The class @c TSReaderData carries all the data/information for Reading
-	/// from an file
+	/// from an Child PIPE
 	class TSReaderData :
 		public DeviceData {
 		public:
@@ -88,7 +88,7 @@ namespace file {
 
 	};
 
-} // namespace file
+} // namespace childpipe
 } // namespace input
 
-#endif // INPUT_FILE_TSREADER_DATA_H_INCLUDE
+#endif // INPUT_CHILD_PIPE_TSREADER_DATA_H_INCLUDE

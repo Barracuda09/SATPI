@@ -31,6 +31,7 @@ namespace input {
 		DVBC,
 		FILE,
 		STREAMER,
+		CHILDPIPE,
 		IPTV
 	};
 

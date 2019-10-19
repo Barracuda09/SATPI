@@ -62,6 +62,8 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/Lnb.cpp \
 	input/file/TSReader.cpp \
 	input/file/TSReaderData.cpp \
+	input/childpipe/TSReader.cpp \
+	input/childpipe/TSReaderData.cpp \
 	input/stream/Streamer.cpp \
 	mpegts/Filter.cpp \
 	mpegts/PacketBuffer.cpp \

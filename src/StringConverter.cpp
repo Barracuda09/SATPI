@@ -326,6 +326,8 @@ input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, con
 			return input::InputSystem::FILE;
 		} else if (val == "streamer") {
 			return input::InputSystem::STREAMER;
+		} else if (val == "childpipe") {
+			return input::InputSystem::CHILDPIPE;
 		}
 	}
 	return input::InputSystem::UNDEFINED;
@@ -392,6 +394,8 @@ const char *StringConverter::delsys_to_string(input::InputSystem system) {
 			return "dvbt";
 		case input::InputSystem::DVBT2:
 			return "dvbt2";
+		case input::InputSystem::CHILDPIPE:
+			return "childPIPE";
 		case input::InputSystem::FILE:
 			return "file";
 		case input::InputSystem::STREAMER:

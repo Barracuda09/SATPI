@@ -24,6 +24,7 @@
 #include <StreamClient.h>
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
+#include <input/childpipe/TSReader.h>
 #include <input/dvb/Frontend.h>
 #include <input/file/TSReader.h>
 #include <input/stream/Streamer.h>
@@ -73,6 +74,7 @@ void StreamManager::enumerateDevices(
 	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
 	input::stream::Streamer::enumerate(_stream, bindIPAddress);
+	input::childpipe::TSReader::enumerate(_stream, appDataPath);
 }
 
 std::string StreamManager::getXMLDeliveryString() const {

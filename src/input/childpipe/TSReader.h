@@ -17,28 +17,28 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_FILE_TSREADER_H_INCLUDE
-#define INPUT_FILE_TSREADER_H_INCLUDE INPUT_FILE_TSREADER_H_INCLUDE
+#ifndef INPUT_CHILD_PIPE_TSREADER_H_INCLUDE
+#define INPUT_CHILD_PIPE_TSREADER_H_INCLUDE INPUT_CHILD_PIPE_TSREADER_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/ChildPIPEReader.h>
 #include <input/Device.h>
 #include <input/Transformation.h>
-#include <input/file/TSReaderData.h>
+#include <input/childpipe/TSReaderData.h>
 
 #include <string>
 #include <chrono>
-#include <fstream>
 
-FW_DECL_SP_NS2(input, file, TSReader);
+FW_DECL_SP_NS2(input, childpipe, TSReader);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 namespace input {
-namespace file {
+namespace childpipe {
 
-/// The class @c TSReader is for reading from an TS files as input device
-/// Some example for opening a TS file:
-/// http://ip.of.your.box:8875/?msys=file&uri=test.ts
+/// The class @c TSReader is for reading from an Child PIPE as input device
+/// Some example for opening a TS file with cat:
+/// http://ip.of.your.box:8875/?msys=childpipe&exec=cat%20test.ts"
 class TSReader :
 	public input::Device {
 		// =====================================================================
@@ -120,7 +120,7 @@ class TSReader :
 		// =====================================================================
 
 	private:
-		std::ifstream _file;
+		base::ChildPIPEReader _exec;
 		TSReaderData _deviceData;
 		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
@@ -131,7 +131,7 @@ class TSReader :
 		std::chrono::steady_clock::time_point _t2;
 };
 
-} // namespace file
+} // namespace childpipe
 } // namespace input
 
-#endif // INPUT_FILE_TSREADER_H_INCLUDE
+#endif // INPUT_CHILD_PIPE_TSREADER_H_INCLUDE
