@@ -211,7 +211,7 @@ namespace dvb {
 		{
 			base::MutexLock lock(_xmlMutex);
 			if (findXMLElement(xml, "dvrbuffer.value", element)) {
-				const unsigned int newSize = atoi(element.c_str());
+				const unsigned int newSize = std::stoi(element);
 				_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
 					newSize : DEFAULT_DVR_BUFFER_SIZE;
 

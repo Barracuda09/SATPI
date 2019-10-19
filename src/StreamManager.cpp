@@ -131,8 +131,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	// Here we need to find the correct Stream and StreamClient
 	assert(!_stream.empty());
 	const std::string &msg = socketClient.getMessage();
-	std::string method;
-	StringConverter::getMethod(msg, method);
+	const std::string method = StringConverter::getMethod(msg);
 
 	int streamID = StringConverter::getIntParameter(msg, method, "stream=");
 	const int fe_nr = StringConverter::getIntParameter(msg, method, "fe=");
@@ -140,13 +139,12 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		streamID = fe_nr - 1;
 	}
 
-	std::string sessionID;
-	const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
+	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
 	bool newSession = false;
 	clientID = 0;
 
 	// if no sessionID, then try to find it.
-	if (!foundSessionID) {
+	if (sessionID.empty()) {
 		if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
 			// Do we need to make a new sessionID (only if there are transport parameters)
 			std::random_device rd;
@@ -163,7 +161,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 
 	// if no streamID, then we need to find the streamID
 	if (streamID == -1) {
-		if (foundSessionID) {
+		if (!sessionID.empty()) {
 			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
 			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {

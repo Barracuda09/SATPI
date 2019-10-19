@@ -53,7 +53,7 @@ namespace delivery {
 		base::MutexLock lock(_xmlMutex);
 		std::string element;
 		if (findXMLElement(xml, "lna.value", element)) {
-			_lna = atoi(element.c_str());
+			_lna = std::stoi(element);
 		}
 	}
 

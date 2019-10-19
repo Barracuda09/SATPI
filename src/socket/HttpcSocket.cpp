@@ -80,9 +80,8 @@ const int HttpcSocket::HTTPC_TIMEOUT = 500;
 					end = headerSize != std::string::npos;
 
 					// check do we need to read more?
-					std::string parameter;
-					const std::size_t contentLength = StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length:", parameter) ?
-						atoi(parameter.c_str()) : 0;
+					const std::string parameter = StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length:");
+					const std::size_t contentLength = parameter.empty() ? 0 : std::stoi(parameter);
 					if (contentLength > 0) {
 						// now check did we read it all
 						actualSize = headerSize + contentLength + 4; // 4 = "\r\n\r\n"

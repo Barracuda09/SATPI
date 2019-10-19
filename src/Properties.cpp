@@ -69,12 +69,12 @@ void Properties::fromXML(const std::string &xml) {
 		_xmlDeviceDescriptionFile = element;
 	}
 	if (findXMLElement(xml, "httpport.value", element)) {
-		const unsigned int httpPort = atoi(element.c_str());
+		const unsigned int httpPort = std::stoi(element);
 		_httpPort = _httpPortOpt != 0 ? _httpPortOpt : httpPort;
 		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
 	}
 	if (findXMLElement(xml, "rtspport.value", element)) {
-		const unsigned int rtspPort = atoi(element.c_str());
+		const unsigned int rtspPort = std::stoi(element);
 		_rtspPort = _rtspPortOpt != 0 ? _rtspPortOpt : rtspPort;
 		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
 	}

@@ -111,59 +111,59 @@ namespace file {
 	}
 
 	bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
-		if (_file.is_open()) {
-			const auto size = buffer.getAmountOfBytesToWrite();
-			_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), size);
-			buffer.addAmountOfBytesWritten(size);
-			buffer.trySyncing();
+		if (!_file.is_open()) {
+			return false;
+		}
+		const auto sizeFree = buffer.getAmountOfBytesToWrite();
+		_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), sizeFree);
+		buffer.addAmountOfBytesWritten(sizeFree);
+		buffer.trySyncing();
+		if (!buffer.full()) {
+			return false;
+		}
+		const std::size_t size = buffer.getNumberOfTSPackets();
+		for (std::size_t i = 0; i < size; ++i) {
+			// Get TS packet from the buffer
+			const unsigned char *data = buffer.getTSPacketPtr(i);
 
-			if (buffer.full()) {
-				const std::size_t size = buffer.getNumberOfTSPackets();
-				for (std::size_t i = 0; i < size; ++i) {
-					// Get TS packet from the buffer
-					const unsigned char *data = buffer.getTSPacketPtr(i);
+			// Check is this the beginning of the TS and no Transport error indicator
+			if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
+				// Add data to Filter
+				_filter.addData(_streamID, data);
 
-					// Check is this the beginning of the TS and no Transport error indicator
-					if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
-						// Add data to Filter
-						_filter.addData(_streamID, data);
+				// get PID from TS
+				const uint16_t pid = ((data[1] & 0x1f) << 8) | data[2];
+				const uint16_t pcrPID = _filter.getPMTData()->getPCRPid();
+				if (pid == pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
+					// Check for 'adaptation field flag' and 'PCR field present'
 
-						// get PID from TS
-						const uint16_t pid = ((data[1] & 0x1f) << 8) | data[2];
-						const uint16_t pcrPID = _filter.getPMTData()->getPCRPid();
-						if (pid == pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
-							// Check for 'adaptation field flag' and 'PCR field present'
+					//        4           3          2          1          0
+					// 76543210 98765432 10987654 32109876 54321098 76543210
+					// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xRRRRRRx xxxxxxxx
+					// 21098765 43210987 65432109 87654321 0      8 76543210
+					//   3          2          1           0               0
+					//  b6       b7       b8       b9       b10      b11
+					// PCR Base runs with 90KHz and PCR Ext runs with 27MHz
+					#define PCR_BASE(DATA) static_cast<uint64_t>(DATA[6] << 24 | DATA[7] << 16 | DATA[8] << 8 | DATA[9]) << 1
+					#define PCR_EXT(DATA)  static_cast<uint64_t>((DATA[10] & 0x01 << 8) | DATA[11])
 
-							//        4           3          2          1          0
-							// 76543210 98765432 10987654 32109876 54321098 76543210
-							// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xRRRRRRx xxxxxxxx
-							// 21098765 43210987 65432109 87654321 0      8 76543210
-							//   3          2          1           0               0
-							//  b6       b7       b8       b9       b10      b11
-							// PCR Base runs with 90KHz and PCR Ext runs with 27MHz
-							#define PCR_BASE(DATA) static_cast<uint64_t>(DATA[6] << 24 | DATA[7] << 16 | DATA[8] << 8 | DATA[9]) << 1
-							#define PCR_EXT(DATA)  static_cast<uint64_t>((DATA[10] & 0x01 << 8) | DATA[11])
+					const uint64_t pcrCur = PCR_BASE(data);
 
-							const uint64_t pcrCur = PCR_BASE(data);
-
-							_pcrDelta = pcrCur - _pcrPrev;
-							_pcrPrev = pcrCur;
-							if (_pcrDelta < 0) {
-								_pcrDelta = 1;
-							}
-							if (_pcrDelta > 75000) {
-								_pcrDelta = 75000;
-							}
-							_pcrDelta *= 11;  // 11 -> PCR_Base runs with 90KHz
-							#undef PCR_BASE
-							#undef PCR_EXT
-						}
+					_pcrDelta = pcrCur - _pcrPrev;
+					_pcrPrev = pcrCur;
+					if (_pcrDelta < 0) {
+						_pcrDelta = 1;
 					}
+					if (_pcrDelta > 75000) {
+						_pcrDelta = 75000;
+					}
+					_pcrDelta *= 11;  // 11 -> PCR_Base runs with 90KHz
+					#undef PCR_BASE
+					#undef PCR_EXT
 				}
 			}
-			return buffer.full();
 		}
-		return false;
+		return true;
 	}
 
 	bool TSReader::capableOf(const input::InputSystem system) const {

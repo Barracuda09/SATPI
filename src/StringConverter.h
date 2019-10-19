@@ -86,8 +86,8 @@ class StringConverter  {
 		static std::string convertToHexASCIITable(const unsigned char *p, std::size_t length, std::size_t blockSize);
 
 		/// Get next line with line_delim (if available) from msg
-		/// @return @c true if there is a line found @c false if none was found
-		static bool getline(const std::string &msg, std::string::size_type &begin, std::string &line, const char *line_delim);
+		/// @return @c line or empty line
+		static std::string getline(const std::string &msg, std::string::size_type &begin, const char *line_delim);
 
 		///
 		static std::string makeXMLString(const std::string &msg);
@@ -114,39 +114,39 @@ class StringConverter  {
 		static bool isRootFile(const std::string &msg);
 
 		///
-		static bool getProtocol(const std::string &msg, std::string &protocol);
+		static std::string getProtocol(const std::string &msg);
 
 		///
-		static bool getRequestedFile(const std::string &msg, std::string &file);
+		static std::string getRequestedFile(const std::string &msg);
 
 		///
 		static void splitPath(const std::string &fullPath, std::string &path, std::string &file);
 
 		///
-		static bool getMethod(const std::string &msg, std::string &method);
+		static std::string getMethod(const std::string &msg);
 
 		///
-		static bool getContentFrom(const std::string &msg, std::string &content);
+		static std::string getContentFrom(const std::string &msg);
 
 		///
 		static bool hasTransportParameters(const std::string &msg);
 
 		///
-		static bool getHeaderFieldParameter(const std::string &msg, const std::string &header_field, std::string &parameter);
+		static std::string getHeaderFieldParameter(const std::string &msg, const std::string &header_field);
 
 		///
-		static bool getStringParameter(const std::string &msg, const std::string &header_field,
-		                               const std::string &delim, const std::string &parameter, std::string &value);
+		static std::string getStringParameter(const std::string &msg, const std::string &header_field,
+		   const std::string &delim, const std::string &parameter);
 
 		///
-		static bool getStringParameter(const std::string &msg, const std::string &header_field,
-		                               const std::string &parameter, std::string &value);
+		static std::string getStringParameter(const std::string &msg,
+		    const std::string &header_field, const std::string &parameter);
 
 		///
 		static double getDoubleParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
 
 		///
-		static int getURIParameter(const std::string &msg, const std::string &header_field, std::string &value);
+		static std::string getURIParameter(const std::string &msg, const std::string &header_field);
 
 		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);

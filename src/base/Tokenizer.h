@@ -31,7 +31,7 @@ namespace base {
 			// =======================================================================
 			// -- Constructors and destructor ----------------------------------------
 			// =======================================================================
-			TokenizerTempl(STRING_TYPE &string, const STRING_TYPE &delimiters) :
+			TokenizerTempl(const STRING_TYPE &string, const STRING_TYPE &delimiters) :
 					_begin(0),
 					_end(0),
 					_atEnd(false),

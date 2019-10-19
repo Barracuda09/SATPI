@@ -68,6 +68,11 @@ class Server :
 	private:
 
 		///
+		void checkReply(
+			struct sockaddr_in &si_other,
+			const std::string &message);
+
+		///
 		void sendSATIPClientDiscoverResponse(
 			struct sockaddr_in &si_other,
 			const std::string &ip_addr);

@@ -63,8 +63,8 @@ namespace file {
 			const std::string &msg,
 			const std::string &method) {
 		base::MutexLock lock(_mutex);
-		std::string file;
-		if (StringConverter::getStringParameter(msg, method, "uri=", file) == true) {
+		const std::string file = StringConverter::getStringParameter(msg, method, "uri=");
+		if (!file.empty()) {
 			initialize();
 			_filePath = file;
 			_changed = true;

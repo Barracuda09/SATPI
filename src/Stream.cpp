@@ -341,14 +341,14 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 	base::MutexLock lock(_xmlMutex);
 
 	// Save clients seq number
-	std::string cseq("0");
-	if (StringConverter::getHeaderFieldParameter(msg, "CSeq:", cseq)) {
+	const std::string cseq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
+	if (!cseq.empty()) {
 		_client[clientID].setCSeq(std::stoi(cseq));
 	}
 
 	// Save clients User-Agent
-	std::string userAgent;
-	if (StringConverter::getHeaderFieldParameter(msg, "User-Agent:", userAgent)) {
+	const std::string userAgent = StringConverter::getHeaderFieldParameter(msg, "User-Agent:");
+	if (!userAgent.empty()) {
 		_client[clientID].setUserAgent(userAgent);
 	}
 
@@ -370,8 +370,7 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		if (method == "GET") {
 			_streamingType = StreamingType::HTTP;
 		} else {
-			std::string transport;
-			StringConverter::getHeaderFieldParameter(msg, "Transport:", transport);
+			const std::string transport = StringConverter::getHeaderFieldParameter(msg, "Transport:");
 			// First check 'RTP/AVP/TCP' then 'RTP/AVP'
 			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
 				_streamingType = StreamingType::RTP_TCP;

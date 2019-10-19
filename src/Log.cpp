@@ -67,7 +67,11 @@ void Log::applog(const int priority, const char *fmt, ...) {
 	std::string line;
 	std::string::size_type index = 0;
 
-	while (StringConverter::getline(msg, index, line, "\r\n")) {
+	for (;;) {
+		const std::string line = StringConverter::getline(msg, index, "\r\n");
+		if (line.empty()) {
+			return;
+		}
 		LogElem elem;
 
 		// set priority

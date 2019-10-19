@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--http-port") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				httpPort = atoi(argv[i]);
+				httpPort = std::stoi(argv[i]);
 				if (httpPort < 1024 || httpPort > 65535) {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
@@ -418,7 +418,7 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				rtspPort = atoi(argv[i]);
+				rtspPort = std::stoi(argv[i]);
 				if (rtspPort <  554 || rtspPort > 65535) {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;

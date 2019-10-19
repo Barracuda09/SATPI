@@ -119,45 +119,8 @@ void Server::threadEntry() {
 			sockaddr_in si_other;
 			socklen_t addrlen = sizeof(si_other);
 			const ssize_t size = recvfromHttpcMessage(_udpMultiListen, MSG_DONTWAIT, &si_other, &addrlen);
-
 			if (size > 0) {
-				// save client ip address
-				const std::string ip_addr = inet_ntoa(si_other.sin_addr);
-
-				// @TODO we should probably listen to only one message
-				// check do we hear our echo, same UUID
-				std::string usn("None");
-				StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "USN:", usn);
-				if (!(usn.size() > 5 && usn.compare(5, _properties.getUUID().size(), _properties.getUUID()) == 0)) {
-					// get method from message
-					std::string method;
-					if (StringConverter::getMethod(_udpMultiListen.getMessage(), method)) {
-						if (method.compare("NOTIFY") == 0) {
-							std::string param;
-							if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param) &&
-								usn.find("SatIPServer:1") != std::string::npos) {
-								// check server found with clashing DEVICEID? we should defend it!!
-								// get device id of other
-								const unsigned int otherDeviceID = atoi(param.c_str());
-								checkDefendDeviceID(otherDeviceID, ip_addr) ;
-							}
-						} else if (method.compare("M-SEARCH") == 0) {
-							std::string param;
-							if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "DEVICEID.SES.COM:", param)) {
-								// someone contacted us, so this should mean we have the same DEVICEID
-								sendGiveUpDeviceID(si_other, ip_addr);
-								// reset repeat time to annouce new DEVICEID
-								repeat_time =  std::time(nullptr) + 5;
-							} else if (StringConverter::getHeaderFieldParameter(_udpMultiListen.getMessage(), "ST:", param)) {
-								if (param.compare("urn:ses-com:device:SatIPServer:1") == 0) {
-									sendSATIPClientDiscoverResponse(si_other, ip_addr);
-								} else if (param.compare("upnp:rootdevice") == 0 ) {
-									sendRootDeviceDiscoverResponse(si_other, ip_addr);
-								}
-							}
-						}
-					}
-				}
+				checkReply(si_other, _udpMultiListen.getMessage());
 			}
 		}
 
@@ -183,6 +146,45 @@ void Server::threadEntry() {
 			repeat_time = _announceTimeSec + curr_time;
 
 			sendAnnounce();
+		}
+	}
+}
+
+void Server::checkReply(
+	struct sockaddr_in &si_other,
+	const std::string &message) {
+	// save client ip address
+	const std::string ipAddress = inet_ntoa(si_other.sin_addr);
+
+	// @TODO we should probably listen to only one message
+	// check do we hear our echo, same UUID
+	const std::string usn = StringConverter::getHeaderFieldParameter(message, "USN:");
+	if (!usn.empty() && usn.substr(5, _properties.getUUID().size()) == _properties.getUUID()) {
+		return;
+	}
+	// get method from message
+	const std::string method = StringConverter::getMethod(message);
+	if (!method.empty()) {
+		const std::string deviceID = StringConverter::getHeaderFieldParameter(message, "DEVICEID.SES.COM:");
+		const std::string st = StringConverter::getHeaderFieldParameter(message, "ST:");
+		if (method == "NOTIFY") {
+			if (!deviceID.empty() && usn.find("SatIPServer:1") != std::string::npos) {
+				// check server found with clashing DEVICEID? we should defend it!!
+				// get device id of other
+				const unsigned int otherDeviceID = std::stoi(deviceID);
+				checkDefendDeviceID(otherDeviceID, ipAddress);
+			}
+		} else if (method == "M-SEARCH") {
+			if (!deviceID.empty()) {
+				// someone contacted us, so this should mean we have the same DEVICEID
+				sendGiveUpDeviceID(si_other, ipAddress);
+			} else if (!st.empty()) {
+				if (st == "urn:ses-com:device:SatIPServer:1") {
+					sendSATIPClientDiscoverResponse(si_other, ipAddress);
+				} else if (st == "upnp:rootdevice") {
+					sendRootDeviceDiscoverResponse(si_other, ipAddress);
+				}
+			}
 		}
 	}
 }

@@ -138,7 +138,8 @@ namespace stream {
 
 	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
-		if (StringConverter::getURIParameter(msg, method, _uri) == true) {
+		_uri = StringConverter::getURIParameter(msg, method);
+		if (!_uri.empty()) {
 			// Open stream
 			_udp = _uri.find("udp") != std::string::npos;
 			std::string::size_type begin = _uri.find("//");

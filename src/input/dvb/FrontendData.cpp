@@ -125,7 +125,6 @@ namespace dvb {
 			const std::string &msg,
 			const std::string &method) {
 		base::MutexLock lock(_mutex);
-		std::string strVal;
 
 		// Save freq FIRST because of possible initializing of channel data
 		const double oldFreq = _freq / 1000.0;
@@ -151,10 +150,11 @@ namespace dvb {
 		if (msys != input::InputSystem::UNDEFINED) {
 			_delsys = msys;
 		}
-		if (StringConverter::getStringParameter(msg, method, "pol=", strVal) == true) {
-			if (strVal == "h") {
+		const std::string pol = StringConverter::getStringParameter(msg, method, "pol=");
+		if (!pol.empty()) {
+			if (pol == "h") {
 				_pol = Lnb::Polarization::Horizontal;
-			} else if (strVal == "v") {
+			} else if (pol == "v") {
 				_pol = Lnb::Polarization::Vertical;
 			}
 		}
@@ -162,76 +162,80 @@ namespace dvb {
 		if (src != -1) {
 			_src = src;
 		}
-		if (StringConverter::getStringParameter(msg, method, "plts=", strVal) == true) {
+		const std::string plts = StringConverter::getStringParameter(msg, method, "plts=");
+		if (!plts.empty()) {
 			// "on", "off"[, "auto"]
-			if (strVal == "on") {
+			if (plts == "on") {
 				_pilot = PILOT_ON;
-			} else if (strVal == "off") {
+			} else if (plts == "off") {
 				_pilot = PILOT_OFF;
-			} else if (strVal == "auto") {
+			} else if (plts == "auto") {
 				_pilot = PILOT_AUTO;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown Pilot Tone [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown Pilot Tone [%s]", streamID, plts.c_str());
 				_pilot = PILOT_AUTO;
 			}
 		}
-		if (StringConverter::getStringParameter(msg, method, "ro=", strVal) == true) {
+		const std::string ro = StringConverter::getStringParameter(msg, method, "ro=");
+		if (!ro.empty()) {
 			// "0.35", "0.25", "0.20"[, "auto"]
-			if (strVal == "0.35") {
+			if (ro == "0.35") {
 				_rolloff = ROLLOFF_35;
-			} else if (strVal == "0.25") {
+			} else if (ro == "0.25") {
 				_rolloff = ROLLOFF_25;
-			} else if (strVal == "0.20") {
+			} else if (ro == "0.20") {
 				_rolloff = ROLLOFF_20;
-			} else if (strVal == "auto") {
+			} else if (ro == "auto") {
 				_rolloff = ROLLOFF_AUTO;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown Rolloff [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown Rolloff [%s]", streamID, ro.c_str());
 				_rolloff = ROLLOFF_AUTO;
 			}
 		}
-		if (StringConverter::getStringParameter(msg, method, "fec=", strVal) == true) {
+		const std::string fec = StringConverter::getStringParameter(msg, method, "fec=");
+		if (!fec.empty()) {
 			// "12", "23", "34", "56", "78", "89", "35", "45", "910"[, "auto"]
-			if (strVal == "12") {
+			if (fec == "12") {
 				_fec = FEC_1_2;
-			} else if (strVal == "23") {
+			} else if (fec == "23") {
 				_fec = FEC_2_3;
-			} else if (strVal == "34") {
+			} else if (fec == "34") {
 				_fec = FEC_3_4;
-			} else if (strVal == "35") {
+			} else if (fec == "35") {
 				_fec = FEC_3_5;
-			} else if (strVal == "45") {
+			} else if (fec == "45") {
 				_fec = FEC_4_5;
-			} else if (strVal == "56") {
+			} else if (fec == "56") {
 				_fec = FEC_5_6;
-			} else if (strVal == "67") {
+			} else if (fec == "67") {
 				_fec = FEC_6_7;
-			} else if (strVal == "78") {
+			} else if (fec == "78") {
 				_fec = FEC_7_8;
-			} else if (strVal == "89") {
+			} else if (fec == "89") {
 				_fec = FEC_8_9;
-			} else if (strVal == "910") {
+			} else if (fec == "910") {
 				_fec = FEC_9_10;
-			} else if (strVal == "auto") {
+			} else if (fec == "auto") {
 				_fec = FEC_AUTO;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown forward error control [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown forward error control [%s]", streamID, fec.c_str());
 				_fec = FEC_AUTO;
 			}
 		}
-		if (StringConverter::getStringParameter(msg, method, "mtype=", strVal) == true) {
-			if (strVal == "8psk") {
+		const std::string mtype = StringConverter::getStringParameter(msg, method, "mtype=");
+		if (!mtype.empty()) {
+			if (mtype == "8psk") {
 				_modtype = PSK_8;
-			} else if (strVal == "qpsk") {
+			} else if (mtype == "qpsk") {
 				_modtype = QPSK;
-			} else if (strVal == "16qam") {
+			} else if (mtype == "16qam") {
 				_modtype = QAM_16;
-			} else if (strVal == "64qam") {
+			} else if (mtype == "64qam") {
 				_modtype = QAM_64;
-			} else if (strVal == "256qam") {
+			} else if (mtype == "256qam") {
 				_modtype = QAM_256;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown modulation type [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown modulation type [%s]", streamID, mtype.c_str());
 			}
 		} else if (msys != input::InputSystem::UNDEFINED) {
 			// no 'mtype' set, so guess one according to 'msys'
@@ -260,47 +264,49 @@ namespace dvb {
 		if (bw != -1) {
 			_bandwidthHz = bw * 1000000.0;
 		}
-		if (StringConverter::getStringParameter(msg, method, "tmode=", strVal) == true) {
+		const std::string tmode = StringConverter::getStringParameter(msg, method, "tmode=");
+		if (!tmode.empty()) {
 			// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
-			if (strVal == "1k") {
+			if (tmode == "1k") {
 				_transmission = TRANSMISSION_MODE_1K;
-			} else if (strVal == "2k") {
+			} else if (tmode == "2k") {
 				_transmission = TRANSMISSION_MODE_2K;
-			} else if (strVal == "4k") {
+			} else if (tmode == "4k") {
 				_transmission = TRANSMISSION_MODE_4K;
-			} else if (strVal == "8k") {
+			} else if (tmode == "8k") {
 				_transmission = TRANSMISSION_MODE_8K;
-			} else if (strVal == "16k") {
+			} else if (tmode == "16k") {
 				_transmission = TRANSMISSION_MODE_16K;
-			} else if (strVal == "32k") {
+			} else if (tmode == "32k") {
 				_transmission = TRANSMISSION_MODE_32K;
-			} else if (strVal == "auto") {
+			} else if (tmode == "auto") {
 				_transmission = TRANSMISSION_MODE_AUTO;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown transmision mode [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown transmision mode [%s]", streamID, tmode.c_str());
 				_transmission = TRANSMISSION_MODE_AUTO;
 			}
 		}
-		if (StringConverter::getStringParameter(msg, method, "gi=", strVal) == true) {
+		const std::string gi = StringConverter::getStringParameter(msg, method, "gi=");
+		if (!gi.empty()) {
 			// "14", "18", "116", "132","1128", "19128", "19256"[, "auto"]
-			if (strVal == "14") {
+			if (gi == "14") {
 				_guard = GUARD_INTERVAL_1_4;
-			} else if (strVal == "18") {
+			} else if (gi == "18") {
 				_guard = GUARD_INTERVAL_1_8;
-			} else if (strVal == "116") {
+			} else if (gi == "116") {
 				_guard = GUARD_INTERVAL_1_16;
-			} else if (strVal == "132") {
+			} else if (gi == "132") {
 				_guard = GUARD_INTERVAL_1_32;
-			} else if (strVal == "1128") {
+			} else if (gi == "1128") {
 				_guard = GUARD_INTERVAL_1_128;
-			} else if (strVal == "19128") {
+			} else if (gi == "19128") {
 				_guard = GUARD_INTERVAL_19_128;
-			} else if (strVal == "19256") {
+			} else if (gi == "19256") {
 				_guard = GUARD_INTERVAL_19_256;
-			} else if (strVal == "auto") {
+			} else if (gi == "auto") {
 				_guard = GUARD_INTERVAL_AUTO;
 			} else {
-				SI_LOG_ERROR("Stream: %d, Unknown Guard interval [%s]", streamID, strVal.c_str());
+				SI_LOG_ERROR("Stream: %d, Unknown Guard interval [%s]", streamID, gi.c_str());
 				_guard = GUARD_INTERVAL_AUTO;
 			}
 		}
@@ -320,16 +326,21 @@ namespace dvb {
 		const std::string addPATPid = ",0";
 		// Add user defined PIDs
 		const std::string addUserPids = ",1,16,17,18";
-		if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
-			const std::string pids = strVal + addPATPid + addUserPids;
-			parsePIDString(pids, true, true);
+		const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
+		if (!pidsList.empty()) {
+			// 'pids=' requested then 'remove' all used PIDS first
+			_pidTable.clear();
+			const std::string pids = pidsList + addPATPid + addUserPids;
+			parsePIDString(pids, true);
 		}
-		if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
-			const std::string pids = strVal + addPATPid + addUserPids;
-			parsePIDString(pids, false, true);
+		const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
+		if (!addpidsList.empty()) {
+			const std::string pids = addpidsList + addPATPid + addUserPids;
+			parsePIDString(pids, true);
 		}
-		if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
-			parsePIDString(strVal, false, false);
+		const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
+		if (!delpidsList.empty()) {
+			parsePIDString(delpidsList, false);
 		}
 	}
 
@@ -413,35 +424,25 @@ namespace dvb {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void FrontendData::parsePIDString(
-			const std::string &pids,
-			const bool clearPidsFirst,
-			const bool add) {
+	void FrontendData::parsePIDString(const std::string &pids, const bool add) {
 		if (pids == "all" || pids == "none") {
-			// all/none pids requested then 'remove' all used PIDS
-			for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
-				setPID(i, false);
-			}
+			// all/none pids requested then 'remove' all used PIDS first
+			_pidTable.clear();
 			if (pids == "all") {
 				setAllPID(add);
 			}
 		} else {
-			if (clearPidsFirst) {
-				for (std::size_t i = 0u; i < mpegts::PidTable::MAX_PIDS; ++i) {
-					setPID(i, false);
-				}
-			}
 			std::string::size_type begin = 0;
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
-					const int pid = atoi(pids.substr(begin, end - begin).c_str());
+					const int pid = std::stoi(pids.substr(begin, end - begin));
 					setPID(pid, add);
 					begin = end + 1;
 				} else {
 					// Get the last one
 					if (begin < pids.size()) {
-						const int pid = atoi(pids.substr(begin, end - begin).c_str());
+						const int pid = std::stoi(pids.substr(begin, end - begin));
 						setPID(pid, add);
 					}
 					break;

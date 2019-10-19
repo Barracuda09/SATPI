@@ -120,90 +120,87 @@ bool HttpcServer::process(SocketClient &client) {
 //	SI_LOG_DEBUG("%s HTML data from client %s: %s", client.getProtocolString().c_str(), client.getIPAddress().c_str(), msg.c_str());
 
 	// parse HTML
-	std::string method;
-	std::string protocol;
-	if (StringConverter::getMethod(msg.c_str(), method) &&
-	    StringConverter::getProtocol(msg.c_str(), protocol)) {
-		if (protocol == "RTSP") {
-			processStreamingRequest(client);
-		} else if (protocol == "HTTP") {
-			if (method == "GET") {
-				methodGet(client);
-			} else if (method == "POST") {
-				methodPost(client);
-			} else {
-				SI_LOG_ERROR("Unknown HTML message: %s", msg.c_str());
-			}
+	const std::string method = StringConverter::getMethod(msg);
+	const std::string protocol = StringConverter::getProtocol(msg);
+	if (method.empty() || protocol.empty()) {
+		SI_LOG_ERROR("Unknown Data: %s", msg.c_str());
+		return false;
+	}
+	if (protocol == "RTSP") {
+		processStreamingRequest(client);
+	} else if (protocol == "HTTP") {
+		if (method == "GET") {
+			methodGet(client);
+		} else if (method == "POST") {
+			methodPost(client);
 		} else {
-			SI_LOG_ERROR("%s: Unknown HTML protocol: %s", protocol.c_str(), msg.c_str());
+			SI_LOG_ERROR("Unknown HTML message: %s", msg.c_str());
+			return false;
 		}
 	} else {
-		SI_LOG_ERROR("Unknown Data: %s", msg.c_str());
+		SI_LOG_ERROR("%s: Unknown HTML protocol: %s", protocol.c_str(), msg.c_str());
+		return false;
 	}
 	return true;
 }
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
 	std::string msg = client.getMessage();
-
-	// Save clients seq number
-	std::string fieldCSeq("0");
-	const int cseq = StringConverter::getHeaderFieldParameter(msg, "CSeq:", fieldCSeq) ?
-		std::stoi(fieldCSeq) : 0;
-
-	// Save sessionID
-	std::string sessionID("-1");
-	const bool foundSessionID = StringConverter::getHeaderFieldParameter(msg, "Session:", sessionID);
-
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
 
+	const std::string method = StringConverter::getMethod(msg);
+	if (method.empty()) {
+		return;
+	}
+	// Save clients seq number
+	const std::string fieldCSeq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
+	const int cseq =  fieldCSeq.empty() ? 0 : std::stoi(fieldCSeq);
+	// Save sessionID
+	const std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
+
 	std::string httpcReply;
-	std::string method;
-	if (StringConverter::getMethod(msg, method)) {
-		if (!foundSessionID && method == "OPTIONS") {
-			methodOptions(sessionID, cseq, httpcReply);
-		} else if (!foundSessionID && method == "DESCRIBE") {
-			methodDescribe(sessionID, cseq, httpcReply);
-		} else {
-			int clientID;
-			SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
-			if (stream != nullptr) {
-				stream->processStreamingRequest(msg, clientID, method);
+	if (sessionID.empty() && method == "OPTIONS") {
+		methodOptions("", cseq, httpcReply);
+	} else if (sessionID.empty() && method == "DESCRIBE") {
+		methodDescribe("", cseq, httpcReply);
+	} else {
+		int clientID;
+		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
+		if (stream != nullptr) {
+			stream->processStreamingRequest(msg, clientID, method);
 
-				// Check the Method
-				if (method == "GET") {
-					stream->update(clientID, true);
-					getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
+			// Check the Method
+			if (method == "GET") {
+				stream->update(clientID, true);
+				getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
 
-				} else if (method == "SETUP") {
-					methodSetup(*stream, clientID, httpcReply);
+			} else if (method == "SETUP") {
+				methodSetup(*stream, clientID, httpcReply);
 
-				} else if (method == "PLAY") {
-					methodPlay(sessionID, cseq, stream->getStreamID(), httpcReply);
+			} else if (method == "PLAY") {
+				methodPlay(sessionID, cseq, stream->getStreamID(), httpcReply);
 
-					// @TODO  check return of update();
-					stream->update(clientID, true);
+				// @TODO  check return of update();
+				stream->update(clientID, true);
 
-				} else if (method == "TEARDOWN") {
-					methodTeardown(sessionID, cseq, httpcReply);
+			} else if (method == "TEARDOWN") {
+				methodTeardown(sessionID, cseq, httpcReply);
 
-					stream->teardown(clientID);
-				} else if (method == "OPTIONS") {
-					methodOptions(sessionID, cseq, httpcReply);
-				} else if (method == "DESCRIBE") {
-					methodDescribe(sessionID, cseq, httpcReply);
-				} else {
-					// method not supported
-					SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
-				}
+				stream->teardown(clientID);
+			} else if (method == "OPTIONS") {
+				methodOptions(sessionID, cseq, httpcReply);
+			} else if (method == "DESCRIBE") {
+				methodDescribe(sessionID, cseq, httpcReply);
 			} else {
-				// something wrong here... send 503 error
-				getHtmlBodyNoContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, cseq);
+				// method not supported
+				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
 			}
+		} else {
+			// something wrong here... send 503 error
+			getHtmlBodyNoContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, cseq);
 		}
 	}
-
 	SI_LOG_DEBUG("%s", httpcReply.c_str());
 
 	// send reply to client

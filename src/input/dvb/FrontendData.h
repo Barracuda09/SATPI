@@ -166,7 +166,7 @@ namespace dvb {
 		private:
 
 			///
-			void parsePIDString(const std::string &pids, bool clearPidsFirst, bool add);
+			void parsePIDString(const std::string &pids, bool add);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

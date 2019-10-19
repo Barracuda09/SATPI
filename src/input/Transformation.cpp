@@ -131,18 +131,20 @@ namespace input {
 				msgTrans = method;
 				msgTrans += " ";
 				msgTrans += uri;
-				std::string strVal;
-				if (StringConverter::getStringParameter(msg, method, "pids=", strVal) == true) {
+				const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
+				if (!pidsList.empty()) {
 					msgTrans += "&pids=";
-					msgTrans += strVal;
+					msgTrans += pidsList;
 				}
-				if (StringConverter::getStringParameter(msg, method, "addpids=", strVal) == true) {
+				const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
+				if (!addpidsList.empty()) {
 					msgTrans += "&addpids=";
-					msgTrans += strVal;
+					msgTrans += addpidsList;
 				}
-				if (StringConverter::getStringParameter(msg, method, "delpids=", strVal) == true) {
+				const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
+				if (!delpidsList.empty()) {
 					msgTrans += "&delpids=";
-					msgTrans += strVal;
+					msgTrans += delpidsList;
 				}
 				msgTrans += " RTSP/1.0";
 				SI_LOG_DEBUG("Stream: %d, Request Transformed to %s", streamID, msgTrans.c_str());

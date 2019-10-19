@@ -75,13 +75,11 @@ std::size_t HttpServer::readFile(const char *filePath, std::string &data) const 
 }
 
 bool HttpServer::methodPost(SocketClient &client) {
-	std::string content;
-	if (StringConverter::getContentFrom(client.getMessage(), content)) {
-		std::string file;
-		if (StringConverter::getRequestedFile(client.getMessage(), file)) {
-			if (file.compare("/SatPI.xml") == 0) {
-				_xml.fromXML(content);
-			}
+	const std::string content = StringConverter::getContentFrom(client.getMessage());
+	if (!content.empty()) {
+		const std::string file = StringConverter::getRequestedFile(client.getMessage());
+		if (file == "/SatPI.xml") {
+			_xml.fromXML(content);
 		}
 	}
 	// setup reply
@@ -119,10 +117,10 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
 	} else {
-		std::string file;
+		std::string file = StringConverter::getRequestedFile(client.getMessage());
 		if (StringConverter::hasTransportParameters(client.getMessage())) {
 			processStreamingRequest(client);
-		} else if (StringConverter::getRequestedFile(client.getMessage(), file)) {
+		} else if (!file.empty()) {
 			// remove first '/'?
 			if (file[0] == '/') {
 				file.erase(0, 1);
@@ -135,15 +133,15 @@ bool HttpServer::methodGet(SocketClient &client) {
 			}
 
 			const std::string filePath = _properties.getWebPath() + "/" + file;
-			if (file.compare("SatPI.xml") == 0) {
+			if (file == "SatPI.xml") {
 				_xml.addToXML(docType);
 				docTypeSize = docType.size();
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_XML, docTypeSize, 0);
-			} else if (file.compare("log.json") == 0) {
+			} else if (file == "log.json") {
 				docType = Log::makeJSON();
 				docTypeSize = docType.size();
 				getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_JSON, docTypeSize, 0);
-			} else if (file.compare("STOP") == 0) {
+			} else if (file == "STOP") {
 				exitRequest = true;
 				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 			} else if ((docTypeSize = readFile(filePath.c_str(), docType))) {
