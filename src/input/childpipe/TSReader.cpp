@@ -200,7 +200,7 @@ namespace childpipe {
 	bool TSReader::update() {
 		if (!_exec.isOpen()) {
 			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
-			const std::string execPath = "cat test.ts";
+			const std::string execPath = _deviceData.getFilePath();
 			_exec.open(execPath);
 			if (_exec.isOpen()) {
 				SI_LOG_INFO("Stream: %d, Child PIPE - TS Reader using exec: %s", _streamID, execPath.c_str());

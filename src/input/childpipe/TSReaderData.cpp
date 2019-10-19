@@ -63,19 +63,24 @@ namespace childpipe {
 			const std::string &msg,
 			const std::string &method) {
 		base::MutexLock lock(_mutex);
-		const std::string file = StringConverter::getStringParameter(msg, method, "exec=");
-		if (!file.empty()) {
-			initialize();
-			_filePath = file;
-			_changed = true;
+		_filePath = StringConverter::getStringParameter(msg, method, "exec=");
+		if (_filePath.empty()) {
+			clearData();
+			return;
 		}
+		std::string::size_type n;
+		while ((n = _filePath.find("%20")) != std::string::npos) {
+			_filePath.replace(n, 3, " ");
+		}
+		initialize();
+		_changed = true;
 	}
 
 	std::string TSReaderData::attributeDescribeString(const int streamID) const {
 		base::MutexLock lock(_mutex);
 		std::string desc;
-		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;file=<file>
-		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;file=%s",
+		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;exec=<file>
+		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;exec=%s",
 				streamID + 1,
 				getSignalStrength(),
 				hasLock(),
