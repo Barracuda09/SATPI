@@ -1,4 +1,5 @@
 sudo: false
+dist: bionic
 language: cpp
 compiler:
   - g++
@@ -13,7 +14,8 @@ addons:
 
 install:
   - g++-4.8 --version
-  - export CXXSUFFIX=-4.8
+  - g++ --version
+#  - export CXXSUFFIX=-4.8
 
 script:
   - make
