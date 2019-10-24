@@ -9,6 +9,7 @@ CXX = $(CXXPREFIX)g++$(CXXSUFFIX)
 INCLUDES +=
 
 # Libraries needed for linking
+#LDFLAGS += -pthread -lrt -latomic
 LDFLAGS += -pthread -lrt
 
 # Set Compiler Flags
