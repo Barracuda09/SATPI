@@ -250,6 +250,7 @@ class Frontend :
 		std::size_t _dvbc2;
 
 		unsigned long _dvrBufferSizeMB;
+		bool _oldApiCallStats;
 };
 
 } // namespace dvb

@@ -43,6 +43,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
 
 namespace input {
 namespace dvb {
@@ -76,6 +77,11 @@ namespace dvb {
 		_dvrBufferSizeMB(DEFAULT_DVR_BUFFER_SIZE) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		setupFrontend();
+#if FULL_DVB_API_VERSION >= 0x050A
+		_oldApiCallStats = false;
+#else
+		_oldApiCallStats = true;
+#endif
 	}
 
 	Frontend::~Frontend() {}
@@ -309,28 +315,88 @@ namespace dvb {
 		_frontendData.setMonitorData(0, 0, 0, 0, 0);
 #else
 		fe_status_t status;
-		uint16_t strength;
-		uint16_t snr;
-		uint32_t ber;
-		uint32_t ublocks;
 
 		// first read status
 		if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-			// some frontends might not support all these ioctls
-			if (::ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
-				strength = 0;
+			uint16_t strength = 0;
+			uint16_t snr = 0;
+			uint32_t ber = 0;
+			uint32_t ublocks = 0;
+
+#	if FULL_DVB_API_VERSION >= 0x050A
+			if (!_oldApiCallStats) {
+				struct dtv_property p[3];
+				int size = 0;
+				#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
+
+				FILL_PROP(DTV_STAT_SIGNAL_STRENGTH, DTV_UNDEFINED);
+				FILL_PROP(DTV_STAT_CNR, DTV_UNDEFINED);
+				FILL_PROP(DTV_STAT_ERROR_BLOCK_COUNT, DTV_UNDEFINED);
+
+				#undef FILL_PROP
+
+				struct dtv_properties cmdseq;
+				cmdseq.num = size;
+				cmdseq.props = p;
+
+				if (ioctl(_fd_fe, FE_GET_PROPERTY, &cmdseq) == -1) {
+					PERROR("FE_GET_PROPERTY failed");
+				}
+
+				const auto strengthScale = cmdseq.props[0].u.st.stat[0].scale;
+				switch (strengthScale) {
+					case FE_SCALE_DECIBEL:
+						strength = cmdseq.props[0].u.st.stat[0].svalue * 0.0001;
+						break;
+					case FE_SCALE_RELATIVE:
+						strength = cmdseq.props[0].u.st.stat[0].uvalue;
+						break;
+					case FE_SCALE_NOT_AVAILABLE:
+						_oldApiCallStats = true;
+						break;
+				}
+				const auto cnrScale = cmdseq.props[1].u.st.stat[0].scale;
+				switch (cnrScale) {
+					case FE_SCALE_DECIBEL:
+						snr = cmdseq.props[1].u.st.stat[0].svalue * 0.0001;
+						break;
+					case FE_SCALE_RELATIVE:
+						snr = cmdseq.props[1].u.st.stat[0].uvalue;
+						break;
+					case FE_SCALE_NOT_AVAILABLE:
+						_oldApiCallStats = true;
+						break;
+				}
+				const auto berScale = cmdseq.props[2].u.st.stat[0].scale;
+				switch (berScale) {
+					case FE_SCALE_DECIBEL:
+					case FE_SCALE_RELATIVE:
+					case FE_SCALE_COUNTER:
+						ber = cmdseq.props[2].u.st.stat[0].uvalue & 0x7FFF;
+						break;
+					case FE_SCALE_NOT_AVAILABLE:
+						_oldApiCallStats = true;
+						break;
+				}
 			}
-			if (::ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
-				snr = 0;
+#	endif
+			if (_oldApiCallStats) {
+				// some frontends might not support all these ioctls
+				if (::ioctl(_fd_fe, FE_READ_SIGNAL_STRENGTH, &strength) != 0) {
+					strength = 0;
+				}
+				if (::ioctl(_fd_fe, FE_READ_SNR, &snr) != 0) {
+					snr = 0;
+				}
+				if (::ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
+					ber = 0;
+				}
+				if (::ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
+					ublocks = 0;
+				}
+				strength = (strength * 240) / 0xffff;
+				snr = (snr * 15) / 0xffff;
 			}
-			if (::ioctl(_fd_fe, FE_READ_BER, &ber) != 0) {
-				ber = 0;
-			}
-			if (::ioctl(_fd_fe, FE_READ_UNCORRECTED_BLOCKS, &ublocks) != 0) {
-				ublocks = 0;
-			}
-			strength = (strength * 240) / 0xffff;
-			snr = (snr * 15) / 0xffff;
 
 			// Print Status
 			if (showStatus) {
