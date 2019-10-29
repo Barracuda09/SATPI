@@ -294,8 +294,18 @@ std::string StringConverter::getStringParameter(const std::string &msg,
 	return StringConverter::getStringParameter(msg, header_field, "/&?;", parameter);
 }
 
-std::string StringConverter::getURIParameter(const std::string &msg, const std::string &header_field) {
-	return StringConverter::getStringParameter(msg, header_field, "&?;", "uri=");
+std::string StringConverter::getURIParameter(const std::string &msg,
+	const std::string &header_field, const std::string &uriParameter) {
+	std::string uri = StringConverter::getStringParameter(msg, header_field, "&?;", uriParameter);
+	std::string::size_type n;
+	while ((n = uri.find("%20")) != std::string::npos) {
+		uri.replace(n, 3, " ");
+	}
+	while ((n = uri.find("%2F")) != std::string::npos ||
+	       (n = uri.find("%2f")) != std::string::npos) {
+		uri.replace(n, 3, "/");
+	}
+	return uri;
 }
 
 double StringConverter::getDoubleParameter(const std::string &msg,

@@ -146,7 +146,7 @@ class StringConverter  {
 		static double getDoubleParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
 
 		///
-		static std::string getURIParameter(const std::string &msg, const std::string &header_field);
+		static std::string getURIParameter(const std::string &msg, const std::string &header_field, const std::string &uriParameter);
 
 		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);

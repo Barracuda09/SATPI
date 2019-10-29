@@ -63,14 +63,10 @@ namespace childpipe {
 			const std::string &msg,
 			const std::string &method) {
 		base::MutexLock lock(_mutex);
-		_filePath = StringConverter::getStringParameter(msg, method, "exec=");
+		_filePath = StringConverter::getURIParameter(msg, method, "exec=");
 		if (_filePath.empty()) {
 			clearData();
 			return;
-		}
-		std::string::size_type n;
-		while ((n = _filePath.find("%20")) != std::string::npos) {
-			_filePath.replace(n, 3, " ");
 		}
 		initialize();
 		_changed = true;
