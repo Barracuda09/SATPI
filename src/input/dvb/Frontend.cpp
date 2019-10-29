@@ -352,6 +352,7 @@ namespace dvb {
 						strength = cmdseq.props[0].u.st.stat[0].uvalue;
 						break;
 					case FE_SCALE_NOT_AVAILABLE:
+					default:
 						_oldApiCallStats = true;
 						break;
 				}
@@ -364,6 +365,7 @@ namespace dvb {
 						snr = cmdseq.props[1].u.st.stat[0].uvalue;
 						break;
 					case FE_SCALE_NOT_AVAILABLE:
+					default:
 						_oldApiCallStats = true;
 						break;
 				}
@@ -375,6 +377,7 @@ namespace dvb {
 						ber = cmdseq.props[2].u.st.stat[0].uvalue & 0x7FFF;
 						break;
 					case FE_SCALE_NOT_AVAILABLE:
+					default:
 						_oldApiCallStats = true;
 						break;
 				}
