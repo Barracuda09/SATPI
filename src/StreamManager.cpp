@@ -61,7 +61,8 @@ StreamManager::~StreamManager() {}
 void StreamManager::enumerateDevices(
 		const std::string &bindIPAddress,
 		const std::string &appDataPath,
-		const std::string &dvbPath) {
+		const std::string &dvbPath,
+		const bool enableChildPIPE) {
 	base::MutexLock lock(_xmlMutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -74,7 +75,9 @@ void StreamManager::enumerateDevices(
 	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
 	input::stream::Streamer::enumerate(_stream, bindIPAddress);
-	input::childpipe::TSReader::enumerate(_stream, appDataPath);
+	if (enableChildPIPE) {
+		input::childpipe::TSReader::enumerate(_stream, appDataPath);
+	}
 }
 
 std::string StreamManager::getXMLDeliveryString() const {

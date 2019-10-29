@@ -73,7 +73,8 @@ class SatPI :
 			const std::string &webPath,
 			const std::string &dvbPath,
 			unsigned int httpPort,
-			unsigned int rtspPort) :
+			unsigned int rtspPort,
+			const bool enableChildPIPE) :
 			XMLSaveSupport((appdataPath.empty() ? currentPath : appdataPath) + "/" + "SatPI.xml"),
 			_interface(ifaceName),
 			_streamManager(),
@@ -84,7 +85,7 @@ class SatPI :
 			_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 			//
-			_streamManager.enumerateDevices(_interface.getIPAddress(), _properties.getAppDataPath(), dvbPath);
+			_streamManager.enumerateDevices(_interface.getIPAddress(), _properties.getAppDataPath(), dvbPath, enableChildPIPE);
 			//
 			std::string xml;
 			if (restoreXML(xml)) {
@@ -310,7 +311,6 @@ static void daemonize(const std::string &lockfile, const char *user) {
 
 	// tell the parent process that we are running
 	kill(getppid(), SIGUSR1);
-
 }
 
 /*
@@ -327,6 +327,7 @@ static void printUsage(const char *prog_name) {
 	       "\t--http-path      set root path of web/http pages\r\n" \
 	       "\t--http-port      set http port default 8875 (1024 - 65535)\r\n" \
 	       "\t--rtsp-port      set rtsp port default 554  ( 554 - 65535)\r\n" \
+	       "\t--childpipe      enabled Frontend 'Child PIPE - TS Reader'\r\n" \
 	       "\t--no-daemon      do NOT daemonize\r\n" \
 	       "\t--no-ssdp        do NOT advertise server\r\n", prog_name);
 }
@@ -337,6 +338,7 @@ static void printUsage(const char *prog_name) {
 int main(int argc, char *argv[]) {
 	bool ssdp = true;
 	bool daemon = true;
+	bool enableChildPIPE = false;
 	int i;
 	char *user = nullptr;
 	extern const char *satpi_version;
@@ -379,6 +381,8 @@ int main(int argc, char *argv[]) {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
 			}
+		} else if (strcmp(argv[i], "--childpipe") == 0) {
+			enableChildPIPE = true;
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
 			if (i + 1 < argc) {
 				++i;
@@ -463,7 +467,7 @@ int main(int argc, char *argv[]) {
 			dvbca.startThread();
 #endif
 			SatPI satpi(ssdp, ifaceName, currentPath, appdataPath,
-					webPath, dvbPath, httpPort, rtspPort);
+					webPath, dvbPath, httpPort, rtspPort, enableChildPIPE);
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {
