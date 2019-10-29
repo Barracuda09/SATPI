@@ -1,6 +1,6 @@
 /* Filter.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,11 +27,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 namespace mpegts {
 
 	Filter::Filter() {
 		_pat = std::make_shared<PAT>();
+		_pcr = std::make_shared<PCR>();
 		_pmt = std::make_shared<PMT>();
 		_sdt = std::make_shared<SDT>();
 	}
@@ -40,8 +40,9 @@ namespace mpegts {
 
 	void Filter::clear(int streamID) {
 		base::MutexLock lock(_mutex);
-		SI_LOG_INFO("Stream: %d, Clearing PAT/PMT/SDT Tables...", streamID);
+		SI_LOG_INFO("Stream: %d, Clearing PAT/PCR/PMT/SDT Tables...", streamID);
 		_pat = std::make_shared<PAT>();
+		_pcr = std::make_shared<PCR>();
 		_pmt = std::make_shared<PMT>();
 		_sdt = std::make_shared<SDT>();
 	}
@@ -114,6 +115,8 @@ namespace mpegts {
 
 			SI_LOG_INFO("Stream: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", streamID, tableID, y, m, d, h, mi, s, mjd);
 //			SI_LOG_BIN_DEBUG(ptr, 188, "Stream: %d, TDT - ", _streamID);
+		} else if (pid == _pmt->getPCRPid()) {
+			_pcr->collectData(streamID, ptr);
 		}
 	}
 

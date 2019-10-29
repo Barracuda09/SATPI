@@ -125,8 +125,6 @@ class TSReader :
 		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
 
-		uint64_t _pcrPrev;
-		int64_t _pcrDelta;
 		std::chrono::steady_clock::time_point _t1;
 		std::chrono::steady_clock::time_point _t2;
 };

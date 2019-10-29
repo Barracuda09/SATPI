@@ -94,16 +94,17 @@ namespace file {
 	}
 
 	bool TSReader::isDataAvailable() {
-		if (_pcrDelta != 0) {
+		const std::int64_t pcrDelta = _filter.getPCRData()->getPCRDelta();
+		if (pcrDelta != 0) {
 			_t2 = _t1;
 			_t1 = std::chrono::steady_clock::now();
 
-			const long interval = _pcrDelta - std::chrono::duration_cast<std::chrono::microseconds>(_t1 - _t2).count();
+			const long interval = pcrDelta - std::chrono::duration_cast<std::chrono::microseconds>(_t1 - _t2).count();
 			if (interval > 0) {
 				std::this_thread::sleep_for(std::chrono::microseconds(interval));
 			}
 			_t1 = std::chrono::steady_clock::now();
-			_pcrDelta = 0;
+			_filter.getPCRData()->clearPCRDelta();
 		} else {
 			std::this_thread::sleep_for(std::chrono::microseconds(1000));
 		}
@@ -130,37 +131,6 @@ namespace file {
 			if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
 				// Add data to Filter
 				_filter.addData(_streamID, data);
-
-				// get PID from TS
-				const uint16_t pid = ((data[1] & 0x1f) << 8) | data[2];
-				const uint16_t pcrPID = _filter.getPMTData()->getPCRPid();
-				if (pid == pcrPID && (data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
-					// Check for 'adaptation field flag' and 'PCR field present'
-
-					//        4           3          2          1          0
-					// 76543210 98765432 10987654 32109876 54321098 76543210
-					// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xRRRRRRx xxxxxxxx
-					// 21098765 43210987 65432109 87654321 0      8 76543210
-					//   3          2          1           0               0
-					//  b6       b7       b8       b9       b10      b11
-					// PCR Base runs with 90KHz and PCR Ext runs with 27MHz
-					#define PCR_BASE(DATA) static_cast<uint64_t>(DATA[6] << 24 | DATA[7] << 16 | DATA[8] << 8 | DATA[9]) << 1
-					#define PCR_EXT(DATA)  static_cast<uint64_t>((DATA[10] & 0x01 << 8) | DATA[11])
-
-					const uint64_t pcrCur = PCR_BASE(data);
-
-					_pcrDelta = pcrCur - _pcrPrev;
-					_pcrPrev = pcrCur;
-					if (_pcrDelta < 0) {
-						_pcrDelta = 1;
-					}
-					if (_pcrDelta > 75000) {
-						_pcrDelta = 75000;
-					}
-					_pcrDelta *= 11;  // 11 -> PCR_Base runs with 90KHz
-					#undef PCR_BASE
-					#undef PCR_EXT
-				}
 			}
 		}
 		return true;
@@ -202,8 +172,6 @@ namespace file {
 			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
 			if (_file.is_open()) {
 				SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
-				_pcrPrev = 0;
-				_pcrDelta = 0;
 				_t1 = std::chrono::steady_clock::now();
 				_t2 = _t1;
 			} else {

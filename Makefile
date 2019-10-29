@@ -69,6 +69,7 @@ SOURCES = Version.cpp \
 	mpegts/Filter.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/PAT.cpp \
+	mpegts/PCR.cpp \
 	mpegts/PidTable.cpp \
 	mpegts/PMT.cpp \
 	mpegts/SDT.cpp \

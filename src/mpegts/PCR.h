@@ -1,4 +1,4 @@
-/* Filter.h
+/* PCR.h
 
    Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,27 +17,27 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef MPEGTS_FILTER_H_INCLUDE
-#define MPEGTS_FILTER_H_INCLUDE MPEGTS_FILTER_H_INCLUDE
+#ifndef MPEGTS_PCR_DATA_H_INCLUDE
+#define MPEGTS_PCR_DATA_H_INCLUDE MPEGTS_PCR_DATA_H_INCLUDE
 
-#include <base/Mutex.h>
-#include <mpegts/PAT.h>
-#include <mpegts/PCR.h>
-#include <mpegts/PMT.h>
-#include <mpegts/SDT.h>
+#include <FwDecl.h>
+
+#include <cstdint>
+
+FW_DECL_SP_NS1(mpegts, PCR);
 
 namespace mpegts {
 
-	/// The class @c Filter carries the PID Tables
-	class Filter {
+	class PCR {
 		public:
 
 			// ================================================================
-			//  -- Constructors and destructor --------------------------------
+			// -- Constructors and destructor ---------------------------------
 			// ================================================================
-			Filter();
 
-			virtual ~Filter();
+			PCR();
+
+			virtual ~PCR();
 
 			// ================================================================
 			//  -- Other member functions -------------------------------------
@@ -45,60 +45,25 @@ namespace mpegts {
 
 		public:
 
-			///
-			void addData(int streamID, const unsigned char *ptr);
+			/// Collect Table data for tableID
+			void collectData(int streamID, const unsigned char *data);
 
-			///
-			void clear(int streamID);
+			std::int64_t getPCRDelta() const;
 
-			///
-			bool isMarkedAsPMT(int pid) const {
-				base::MutexLock lock(_mutex);
-				return _pat->isMarkedAsPMT(pid);
+			void clearPCRDelta() {
+				_pcrDelta = 0;
 			}
-
-			///
-			mpegts::SpPMT getPMTData() const {
-				base::MutexLock lock(_mutex);
-				return _pmt;
-			}
-
-			///
-			mpegts::SpPCR getPCRData() const {
-				base::MutexLock lock(_mutex);
-				return _pcr;
-			}
-
-			///
-			mpegts::SpPAT getPATData() const {
-				base::MutexLock lock(_mutex);
-				return _pat;
-			}
-
-			///
-			mpegts::SpSDT getSDTData() const {
-				base::MutexLock lock(_mutex);
-				return _sdt;
-			}
-
-		protected:
-
 
 			// ================================================================
 			//  -- Data members -----------------------------------------------
 			// ================================================================
 
-		protected:
-
 		private:
-			mutable base::Mutex _mutex;
 
-			mpegts::SpPAT _pat;
-			mpegts::SpPCR _pcr;
-			mpegts::SpPMT _pmt;
-			mpegts::SpSDT _sdt;
+			std::uint64_t _pcrPrev;
+			std::int64_t _pcrDelta;
 	};
 
 } // namespace mpegts
 
-#endif // MPEGTS_FILTER_H_INCLUDE
+#endif // MPEGTS_PCR_DATA_H_INCLUDE

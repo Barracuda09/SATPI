@@ -38,7 +38,7 @@ namespace childpipe {
 
 /// The class @c TSReader is for reading from an Child PIPE as input device
 /// Some example for opening a TS file with cat:
-/// http://ip.of.your.box:8875/?msys=childpipe&exec=cat%20test.ts"
+/// http://ip.of.your.box:8875/?msys=childpipe&exec=cat%20%2Fdir%2Ftest.ts"
 class TSReader :
 	public input::Device {
 		// =====================================================================
@@ -125,8 +125,6 @@ class TSReader :
 		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
 
-		uint64_t _pcrPrev;
-		int64_t _pcrDelta;
 		std::chrono::steady_clock::time_point _t1;
 		std::chrono::steady_clock::time_point _t2;
 };
