@@ -65,6 +65,7 @@ Tested Hardware
 - <a href="https://www.digitalbox.de/de_DE/HD-6i/490-1460-10080/">DIGITALBOX IMPERIAL HD 6i</a> - Thanks to <a href="http://www.apfutura.net/en">APfutura</a> for kindly suppling this to me
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
+- <a href="http://www.vuplus.de">VU+ Zero 4K with DVB-S2X Tuner</a>
 - <a href="http://www.vuplus.de/produkt_uno4k.php">VU+ Uno 4K with DVB-C FBC Tuner</a>
 
 Build
