@@ -223,8 +223,11 @@ namespace childpipe {
 	}
 
 	std::string TSReader::attributeDescribeString() const {
-		const DeviceData &data = _transform.transformDeviceData(_deviceData);
-		return data.attributeDescribeString(_streamID);
+		if (_exec.isOpen()) {
+			const DeviceData &data = _transform.transformDeviceData(_deviceData);
+			return data.attributeDescribeString(_streamID);
+		}
+		return "";
 	}
 
 	// =========================================================================

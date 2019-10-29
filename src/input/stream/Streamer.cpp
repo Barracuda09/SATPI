@@ -156,7 +156,7 @@ namespace stream {
 					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr, _bindIPAddress, _port)) {
 						SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID, _multiAddr.c_str(), _port, _udpMultiListen.getFD());
 						// set receive buffer to 8MB
-						const int bufferSize =  1024 * 1024 * 8;
+						constexpr int bufferSize =  1024 * 1024 * 8;
 						_udpMultiListen.setNetworkReceiveBufferSize(bufferSize);
 
 						_pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
@@ -183,15 +183,14 @@ namespace stream {
 	}
 
 	std::string Streamer::attributeDescribeString() const {
-		std::string desc;
 		if (_udpMultiListen.getFD() != -1) {
+			std::string desc;
 			// ver=1.5;tuner=<feID>;uri=<uri>
 			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;uri=%s",
 					_streamID + 1, _uri.c_str());
-		} else {
-			desc = "";
+			return desc;
 		}
-		return desc;
+		return "";
 	}
 
 	// =======================================================================

@@ -221,8 +221,11 @@ namespace file {
 	}
 
 	std::string TSReader::attributeDescribeString() const {
-		const DeviceData &data = _transform.transformDeviceData(_deviceData);
-		return data.attributeDescribeString(_streamID);
+		if (_file.is_open()) {
+			const DeviceData &data = _transform.transformDeviceData(_deviceData);
+			return data.attributeDescribeString(_streamID);
+		}
+		return "";
 	}
 
 	// =========================================================================

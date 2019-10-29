@@ -52,7 +52,7 @@ class ChildPIPEReader {
 			_pipe.release();
 		}
 
-		bool isOpen() {
+		bool isOpen() const {
 			return _pipe ? true : false;
 		}
 
