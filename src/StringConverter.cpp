@@ -297,13 +297,12 @@ std::string StringConverter::getStringParameter(const std::string &msg,
 std::string StringConverter::getURIParameter(const std::string &msg,
 	const std::string &header_field, const std::string &uriParameter) {
 	std::string uri = StringConverter::getStringParameter(msg, header_field, "&?;", uriParameter);
+
+	// Search for ASCII Percent-Encoding and decode it
 	std::string::size_type n;
-	while ((n = uri.find("%20")) != std::string::npos) {
-		uri.replace(n, 3, " ");
-	}
-	while ((n = uri.find("%2F")) != std::string::npos ||
-	       (n = uri.find("%2f")) != std::string::npos) {
-		uri.replace(n, 3, "/");
+	while ((n = uri.find("%")) != std::string::npos) {
+		const std::string sub = uri.substr(n + 1, 2);
+		uri.replace(n, 3, 1, static_cast<char>(std::stoi(sub, 0 , 16)));
 	}
 	return uri;
 }
