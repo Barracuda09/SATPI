@@ -32,42 +32,44 @@ FW_DECL_UP_NS1(output, StreamThreadRtp);
 
 namespace output {
 
-	/// TS Writer streaming thread
-	class StreamThreadTSWriter :
-		public StreamThreadBase {
-		public:
-			// =======================================================================
-			// -- Constructors and destructor ----------------------------------------
-			// =======================================================================
-			StreamThreadTSWriter(
-				StreamInterface &stream,
-				const std::string &file);
+/// TS Writer streaming thread
+class StreamThreadTSWriter :
+	public StreamThreadBase {
 
-			virtual ~StreamThreadTSWriter();
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
+		StreamThreadTSWriter(
+			StreamInterface &stream,
+			const std::string &file);
 
-			// =======================================================================
-			//  -- output::StreamThreadBase ------------------------------------------
-			// =======================================================================
+		virtual ~StreamThreadTSWriter();
 
-		protected:
+		// =====================================================================
+		//  -- output::StreamThreadBase ----------------------------------------
+		// =====================================================================
+	protected:
 
-			virtual void threadEntry() override;
+		/// @see StreamThreadBase
+		virtual bool writeDataToOutputDevice(
+			mpegts::PacketBuffer &buffer,
+			StreamClient &client) override;
 
-			virtual bool writeDataToOutputDevice(mpegts::PacketBuffer &buffer,
-				StreamClient &client) override;
+	private:
 
-			virtual int getStreamSocketPort(int clientID) const override;
+		/// @see StreamThreadBase
+		virtual void doStartStreaming(int clientID) override;
 
-			// =======================================================================
-			//  -- Data members ------------------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	private:
 
-		private:
+		std::ofstream _file;
+		std::string _filePath;
 
-			std::ofstream _file;
-			std::string _filePath;
-
-	};
+};
 
 } // namespace output
 

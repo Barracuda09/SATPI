@@ -30,11 +30,9 @@ namespace output {
 /// RTCP Server over UDP
 class StreamThreadRtcp :
 	public StreamThreadRtcpBase {
-
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
-
 	public:
 
 		StreamThreadRtcp(StreamInterface &stream);
@@ -44,25 +42,24 @@ class StreamThreadRtcp :
 		// =====================================================================
 		//  -- output::StreamThreadRtcpBase ------------------------------------
 		// =====================================================================
-
-	public:
-
-		/// Start streaming
-		/// @return true if stream is started else false on error
-		virtual bool startStreaming() override;
-
-		/// Pause streaming
-		/// @return true if stream is paused else false on error
-		virtual bool pauseStreaming(int clientID) override;
-
-		/// Restart streaming
-		/// @return true if stream is restarted else false on error
-		virtual bool restartStreaming(int clientID) override;
-		
 	protected:
 
-		/// Thread execute function
-		virtual bool threadExecuteFunction() override;
+		/// @see StreamThreadRtcpBase
+		virtual int getStreamSocketPort(int clientID) const override;
+
+	private:
+
+		/// @see StreamThreadRtcpBase
+		virtual void doStartStreaming(int clientID) override;
+
+		/// @see StreamThreadRtcpBase
+		virtual void doSendDataToClient(int clientID,
+			uint8_t *sr,
+			std::size_t srlen,
+			uint8_t *sdes,
+			std::size_t sdeslen,
+			uint8_t *app,
+			std::size_t applen) override;
 
 };
 

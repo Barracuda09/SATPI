@@ -22,104 +22,62 @@
 #include <StreamClient.h>
 #include <Stream.h>
 #include <Log.h>
-#include <Utils.h>
-#include <Unused.h>
 
-#include <chrono>
 #include <cstring>
 
 namespace output {
 
+// =========================================================================
+// -- Constructors and destructor ------------------------------------------
+// =========================================================================
+
 StreamThreadRtcp::StreamThreadRtcp(StreamInterface &stream) :
-		StreamThreadRtcpBase(stream) {}
+		StreamThreadRtcpBase("RTCP/UDP", stream) {}
 
 StreamThreadRtcp::~StreamThreadRtcp() {
 	_thread.terminateThread();
+	const int streamID = _stream.getStreamID();
+	const StreamClient &client = _stream.getStreamClient(_clientID);
+	SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID,
+		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 
-	SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
-	SI_LOG_INFO("Stream: %d, Destroy RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-		rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-	rtcp.closeFD();
+	_stream.getStreamClient(_clientID).getRtcpSocketAttr().closeFD();
 }
 
-bool StreamThreadRtcp::startStreaming() {
-	SocketAttr &rtcp = _stream.getStreamClient(_clientID).getRtcpSocketAttr();
+// =============================================================================
+//  -- output::StreamThreadRtcpBase --------------------------------------------
+// =============================================================================
+
+void StreamThreadRtcp::doStartStreaming(int clientID) {
+	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
 
 	if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
 		SI_LOG_ERROR("Stream: %d, Get RTCP handle failed", _stream.getStreamID());
 	}
-
-	if (!_thread.startThread()) {
-		SI_LOG_ERROR("Stream: %d, Start RTCP/UDP stream to %s:%d ERROR", _stream.getStreamID(),
-					 rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-		return false;
-	}
-	SI_LOG_INFO("Stream: %d, Start RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-				rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-
-	_mon_update = 0;
-	return true;
 }
 
-bool StreamThreadRtcp::pauseStreaming(int clientID) {
-	_thread.pauseThread();
-
-	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
-	SI_LOG_INFO("Stream: %d, Pause RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-			rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-	return true;
+int StreamThreadRtcp::getStreamSocketPort(const int clientID) const {
+	return  _stream.getStreamClient(clientID).getRtcpSocketAttr().getSocketPort();
 }
 
-bool StreamThreadRtcp::restartStreaming(int clientID) {
-	_thread.restartThread();
+void StreamThreadRtcp::doSendDataToClient(const int clientID,
+	uint8_t *sr, const std::size_t srlen,
+	uint8_t *sdes, const std::size_t sdeslen,
+	uint8_t *app, const std::size_t applen) {
+	StreamClient &client = _stream.getStreamClient(clientID);
 
-	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
-	SI_LOG_INFO("Stream: %d, Restart RTCP/UDP stream to %s:%d", _stream.getStreamID(),
-			rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-	return true;
-}
+	const std::size_t len = srlen + sdeslen + applen;
+	uint8_t data[len];
 
-bool StreamThreadRtcp::threadExecuteFunction() {
-	StreamClient &client = _stream.getStreamClient(_clientID);
+	std::memcpy(data, sr, srlen);
+	std::memcpy(data + srlen, sdes, sdeslen);
+	std::memcpy(data + srlen + sdeslen, app, applen);
 
-	// check do we need to update Device monitor signals
-	if (_mon_update == 0) {
-		_stream.getInputDevice()->monitorSignal(false);
-
-		_mon_update = _stream.getRtcpSignalUpdateFrequency();
-	} else {
-		--_mon_update;
+	// send the RTCP/UDP packet
+	if (!client.getRtcpSocketAttr().sendDataTo(data, len, 0)) {
+		SI_LOG_ERROR("Stream: %d, Error sending %s data to %s:%d", _stream.getStreamID(),
+			_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 	}
-
-	// RTCP compound packets must start with a SR, SDES then APP
-	std::size_t srlen   = 0;
-	std::size_t sdeslen = 0;
-	std::size_t applen  = 0;
-	uint8_t *sr   = get_sr_packet(&srlen);
-	uint8_t *sdes = get_sdes_packet(&sdeslen);
-	uint8_t *app  = get_app_packet(&applen);
-
-	if (sr && sdes && app) {
-		const std::size_t len = srlen + sdeslen + applen;
-		uint8_t data[len];
-
-		std::memcpy(data, sr, srlen);
-		std::memcpy(data + srlen, sdes, sdeslen);
-		std::memcpy(data + srlen + sdeslen, app, applen);
-
-		// send the RTCP/UDP packet
-		SocketAttr &rtcp = client.getRtcpSocketAttr();
-		if (!rtcp.sendDataTo(data, len, 0)) {
-			SI_LOG_ERROR("Stream: %d, Error sending RTCP/UDP data to %s:%d", _stream.getStreamID(),
-						 rtcp.getIPAddressOfSocket().c_str(), rtcp.getSocketPort());
-		}
-	}
-	DELETE_ARRAY(sr);
-	DELETE_ARRAY(sdes);
-	DELETE_ARRAY(app);
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-	return true;
 }
 
 }

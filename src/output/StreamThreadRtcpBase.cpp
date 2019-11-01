@@ -19,20 +19,103 @@
 */
 #include <output/StreamThreadRtcpBase.h>
 
+#include <Log.h>
 #include <Stream.h>
+#include <Utils.h>
 
+#include <chrono>
 #include <cstring>
 
 namespace output {
 
-StreamThreadRtcpBase::StreamThreadRtcpBase(StreamInterface &stream) :
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
+StreamThreadRtcpBase::StreamThreadRtcpBase(
+	const std::string &protocol,
+	StreamInterface &stream) :
 		_clientID(0),
+		_protocol(protocol),
 		_stream(stream),
  		_thread(
 			"RtcpThread",
 			std::bind(&StreamThreadRtcpBase::threadExecuteFunction, this)) {}
 
 StreamThreadRtcpBase::~StreamThreadRtcpBase() {}
+
+// =========================================================================
+//  -- Other member functions ----------------------------------------------
+// =========================================================================
+
+bool StreamThreadRtcpBase::startStreaming(const int clientID) {
+
+	doStartStreaming(clientID);
+
+	const StreamClient &client = _stream.getStreamClient(clientID);
+
+	if (!_thread.startThread()) {
+		SI_LOG_ERROR("Stream: %d, Start %s stream to %s:%d ERROR", _stream.getStreamID(),
+			_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+		return false;
+	}
+	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", _stream.getStreamID(),
+		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+
+	_mon_update = 0;
+	return true;
+}
+
+bool StreamThreadRtcpBase::pauseStreaming(const int clientID) {
+	_thread.pauseThread();
+
+	doPauseStreaming(clientID);
+
+	const StreamClient &client = _stream.getStreamClient(clientID);
+	SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d", _stream.getStreamID(),
+		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	return true;
+}
+
+bool StreamThreadRtcpBase::restartStreaming(const int clientID) {
+	_thread.restartThread();
+
+	doRestartStreaming(clientID);
+
+	const StreamClient &client = _stream.getStreamClient(clientID);
+	SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
+		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	return true;
+}
+
+bool StreamThreadRtcpBase::threadExecuteFunction() {
+	// check do we need to update Device monitor signals
+	if (_mon_update == 0) {
+		_stream.getInputDevice()->monitorSignal(false);
+
+		_mon_update = _stream.getRtcpSignalUpdateFrequency();
+	} else {
+		--_mon_update;
+	}
+
+	// RTCP compound packets must start with a SR, SDES then APP
+	std::size_t srlen   = 0;
+	std::size_t sdeslen = 0;
+	std::size_t applen  = 0;
+	uint8_t *sr   = get_sr_packet(&srlen);
+	uint8_t *sdes = get_sdes_packet(&sdeslen);
+	uint8_t *app  = get_app_packet(&applen);
+
+	if (sr != nullptr && sdes != nullptr && app != nullptr) {
+		doSendDataToClient(_clientID, sr, srlen, sdes, sdeslen, app, applen);
+	}
+	DELETE_ARRAY(sr);
+	DELETE_ARRAY(sdes);
+	DELETE_ARRAY(app);
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+	return true;
+}
 
 uint8_t *StreamThreadRtcpBase::get_app_packet(std::size_t *len) {
 	uint8_t app[1024 * 2];

@@ -31,58 +31,43 @@
 
 namespace output {
 
-	StreamThreadTSWriter::StreamThreadTSWriter(
-		StreamInterface &stream,
-		const std::string &file) :
-		StreamThreadBase("TSWRITER", stream),
-		_filePath(file) {}
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
 
-	StreamThreadTSWriter::~StreamThreadTSWriter() {
-		terminateThread();
+StreamThreadTSWriter::StreamThreadTSWriter(
+	StreamInterface &stream,
+	const std::string &file) :
+	StreamThreadBase("TSWRITER", stream),
+	_filePath(file) {}
+
+StreamThreadTSWriter::~StreamThreadTSWriter() {
+	terminateThread();
+}
+
+// =============================================================================
+//  -- output::StreamThreadBase ------------------------------------------------
+// =============================================================================
+
+void StreamThreadTSWriter::doStartStreaming(int UNUSED(clientID)) {
+	_file.open(_filePath, std::ofstream::binary);
+}
+
+bool StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
+	const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
+
+	const unsigned int size = buffer.getBufferSize();
+
+	const long timestamp = base::TimeCounter::getTicks() * 90;
+
+	// RTP packet octet count (Bytes)
+	_stream.addRtpData(size, timestamp);
+
+	// write TS packets to file
+	if (_file.is_open()) {
+		_file.write(reinterpret_cast<const char *>(tsBuffer), size);
 	}
-
-	int StreamThreadTSWriter::getStreamSocketPort(int UNUSED(clientID)) const {
-		return 0;
-	}
-
-	void StreamThreadTSWriter::threadEntry() {
-		StreamClient &client = _stream.getStreamClient(0);
-		_file.open(_filePath, std::ofstream::binary);
-		while (running()) {
-			switch (_state) {
-			case State::Pause:
-				_state = State::Paused;
-				break;
-			case State::Paused:
-				// Do nothing here, just wait
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				break;
-			case State::Running:
-				readDataFromInputDevice(client);
-				break;
-			default:
-				PERROR("Wrong State");
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				break;
-			}
-		}
-	}
-
-	bool StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
-		const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
-
-		const unsigned int size = buffer.getBufferSize();
-
-		const long timestamp = base::TimeCounter::getTicks() * 90;
-
-		// RTP packet octet count (Bytes)
-		_stream.addRtpData(size, timestamp);
-
-		// write TS packets to file
-		if (_file.is_open()) {
-			_file.write(reinterpret_cast<const char *>(tsBuffer), size);
-		}
-		return true;
-	}
+	return true;
+}
 
 } // namespace output

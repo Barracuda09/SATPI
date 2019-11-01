@@ -48,8 +48,10 @@ class Thread {
 	public:
 
 		///
-		/// @param name
-		/// @param threadExecuteFunction
+		/// @param name specifies the thread name as viewed in 'top'
+		/// @param threadExecuteFunction specifies the execution function it should
+		/// @return true to keep thread running and @return false will stop and then
+		///  terminate this thread
 		Thread(
 			const std::string &name,
 			FunctionThreadExecute threadExecuteFunction);
@@ -59,7 +61,6 @@ class Thread {
 		// =====================================================================
 		// -- Other member functions -------------------------------------------
 		// =====================================================================
-
 	public:
 
 		/// Start the Thread
@@ -112,7 +113,6 @@ class Thread {
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 	private:
 
 		enum class State {

@@ -52,13 +52,14 @@ namespace base {
 	// =========================================================================
 
 	bool Thread::startThread() {
-		if (_threadExecuteFunction != nullptr) {
-			_state = State::Unknown;
-			const int threadCreate = pthread_create(&_thread, nullptr, threadEntryFunc, this);
-			if (threadCreate == 0) {
-				_state = State::Starting;
-				return true;
-			}
+		if (_threadExecuteFunction == nullptr) {
+			return false;
+		}
+		_state = State::Unknown;
+		const int threadCreate = pthread_create(&_thread, nullptr, threadEntryFunc, this);
+		if (threadCreate == 0) {
+			_state = State::Starting;
+			return true;
 		}
 		return false;
 	}

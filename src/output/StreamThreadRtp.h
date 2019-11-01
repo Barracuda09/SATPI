@@ -38,7 +38,6 @@ class StreamThreadRtp :
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
-
 	public:
 
 		explicit StreamThreadRtp(StreamInterface &stream);
@@ -48,34 +47,33 @@ class StreamThreadRtp :
 		// =====================================================================
 		//  -- output::StreamThreadBase ----------------------------------------
 		// =====================================================================
-
-	public:
-
-		virtual bool startStreaming() override;
-
-		virtual bool pauseStreaming(int clientID) override;
-
-		virtual bool restartStreaming(int clientID) override;
-
 	protected:
 
-		virtual void threadEntry() override;
-
+		/// @see StreamThreadBase
 		virtual bool writeDataToOutputDevice(
 			mpegts::PacketBuffer &buffer,
 			StreamClient &client) override;
 
+		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const override;
+
+	private:
+
+		/// @see StreamThreadBase
+		virtual void doStartStreaming(int clientID) override;
+
+		/// @see StreamThreadBase
+		virtual void doPauseStreaming(int clientID) override;
+
+		/// @see StreamThreadBase
+		virtual void doRestartStreaming(int clientID) override;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 	private:
 
-		int _clientID;
-		uint16_t _cseq;         /// RTP sequence number
-		StreamThreadRtcp _rtcp; ///
+		StreamThreadRtcp _rtcp;
 
 };
 

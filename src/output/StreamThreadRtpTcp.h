@@ -34,11 +34,9 @@ namespace output {
 /// RTP over TCP Streaming thread
 class StreamThreadRtpTcp :
 	public StreamThreadBase {
-
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
-
 	public:
 
 		explicit StreamThreadRtpTcp(StreamInterface &stream);
@@ -48,34 +46,33 @@ class StreamThreadRtpTcp :
 		// =====================================================================
 		//  -- output::StreamThreadBase ----------------------------------------
 		// =====================================================================
-
-	public:
-
-		virtual bool startStreaming() override;
-
-		virtual bool pauseStreaming(int clientID) override;
-
-		virtual bool restartStreaming(int clientID) override;
-
 	protected:
 
-		virtual void threadEntry() override;
-
+		/// @see StreamThreadBase
 		virtual bool writeDataToOutputDevice(
 			mpegts::PacketBuffer &buffer,
 			StreamClient &client) override;
 
+		/// @see StreamThreadBase
 		virtual int getStreamSocketPort(int clientID) const override;
+
+	private:
+
+		/// @see StreamThreadBase
+		virtual void doStartStreaming(int clientID) override;
+
+		/// @see StreamThreadBase
+		virtual void doPauseStreaming(int clientID) override;
+
+		/// @see StreamThreadBase
+		virtual void doRestartStreaming(int clientID) override;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 	private:
 
-		int _clientID;
-		uint16_t _cseq;            /// RTP sequence number
-		StreamThreadRtcpTcp _rtcp; ///
+		StreamThreadRtcpTcp _rtcp;
 };
 
 } // namespace output

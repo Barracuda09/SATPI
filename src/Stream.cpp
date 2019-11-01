@@ -300,7 +300,7 @@ bool Stream::update(int clientID, bool start) {
 	// start or restart streaming again
 	if (_streaming) {
 		if (!_streamActive) {
-			_streamActive = _streaming->startStreaming();
+			_streamActive = _streaming->startStreaming(clientID);
 		} else if (changed) {
 			_streaming->restartStreaming(clientID);
 		}

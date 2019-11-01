@@ -22,110 +22,63 @@
 #include <StreamClient.h>
 #include <Stream.h>
 #include <Log.h>
-#include <Utils.h>
-#include <Unused.h>
 
-#include <chrono>
-#include <cstring>
-#include <thread>
-
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
+#include <sys/uio.h>
 
 namespace output {
 
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
 StreamThreadRtcpTcp::StreamThreadRtcpTcp(StreamInterface &stream) :
-		StreamThreadRtcpBase(stream) {}
+		StreamThreadRtcpBase("RTCP/TCP", stream) {}
 
 StreamThreadRtcpTcp::~StreamThreadRtcpTcp() {
 	_thread.terminateThread();
+	const int streamID = _stream.getStreamID();
 	const StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Destroy RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-		client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
+	SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID,
+		_protocol.c_str(), client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
 }
 
-bool StreamThreadRtcpTcp::startStreaming() {
-	const StreamClient &client = _stream.getStreamClient(_clientID);
-	if (!_thread.startThread()) {
-		SI_LOG_ERROR("Stream: %d, Start RTCP/TCP stream  to %s:%d ERROR", _stream.getStreamID(),
-			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
-		return false;
+// =============================================================================
+//  -- output::StreamThreadRtcpBase --------------------------------------------
+// =============================================================================
+
+int StreamThreadRtcpTcp::getStreamSocketPort(const int clientID) const {
+	return  _stream.getStreamClient(clientID).getHttpSocketPort();
+}
+
+void StreamThreadRtcpTcp::doSendDataToClient(const int clientID,
+	uint8_t *sr, const std::size_t srlen,
+	uint8_t *sdes, const std::size_t sdeslen,
+	uint8_t *app, const std::size_t applen) {
+	StreamClient &client = _stream.getStreamClient(clientID);
+
+	const std::size_t len = srlen + sdeslen + applen;
+
+	unsigned char header[4];
+	header[0] = 0x24;
+	header[1] = 0x01;
+	header[2] = (len >> 8) & 0xFF;
+	header[3] = (len >> 0) & 0xFF;
+
+	iovec iov[4];
+	iov[0].iov_base = header;
+	iov[0].iov_len = 4;
+	iov[1].iov_base = sr;
+	iov[1].iov_len = srlen;
+	iov[2].iov_base = sdes;
+	iov[2].iov_len = sdeslen;
+	iov[3].iov_base = app;
+	iov[3].iov_len = applen;
+
+	// send the RTCP/TCP packet
+	if (!client.writeHttpData(iov, 4)) {
+		SI_LOG_ERROR("Stream: %d, Error sending %s Stream Data to %s",
+			_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str());
 	}
-	SI_LOG_INFO("Stream: %d, Start RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-		client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
-
-	_mon_update = 0;
-	return true;
-}
-
-bool StreamThreadRtcpTcp::pauseStreaming(int UNUSED(clientID)) {
-	_thread.pauseThread();
-
-	const StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Pause RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
-	return true;
-}
-
-bool StreamThreadRtcpTcp::restartStreaming(int UNUSED(clientID)) {
-	_thread.restartThread();
-
-	const StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Restart RTCP/TCP stream to %s:%d", _stream.getStreamID(),
-			client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
-	return true;
-}
-
-bool StreamThreadRtcpTcp::threadExecuteFunction() {
-	StreamClient &client = _stream.getStreamClient(_clientID);
-
-	// check do we need to update Device monitor signals
-	if (_mon_update == 0) {
-		_stream.getInputDevice()->monitorSignal(false);
-
-		_mon_update = _stream.getRtcpSignalUpdateFrequency();
-	} else {
-		--_mon_update;
-	}
-
-	// RTCP compound packets must start with a SR, SDES then APP
-	std::size_t srlen   = 0;
-	std::size_t sdeslen = 0;
-	std::size_t applen  = 0;
-	uint8_t *sr   = get_sr_packet(&srlen);
-	uint8_t *sdes = get_sdes_packet(&sdeslen);
-	uint8_t *app  = get_app_packet(&applen);
-
-	if (sr && sdes && app) {
-		const std::size_t len = srlen + sdeslen + applen;
-		unsigned char header[4];
-		header[0] = 0x24;
-		header[1] = 0x01;
-		header[2] = (len >> 8) & 0xFF;
-		header[3] = (len >> 0) & 0xFF;
-
-		iovec iov[4];
-		iov[0].iov_base = header;
-		iov[0].iov_len = 4;
-		iov[1].iov_base = sr;
-		iov[1].iov_len = srlen;
-		iov[2].iov_base = sdes;
-		iov[2].iov_len = sdeslen;
-		iov[3].iov_base = app;
-		iov[3].iov_len = applen;
-
-		// send the RTCP/TCP packet
-		if (!client.writeHttpData(iov, 4)) {
-			SI_LOG_ERROR("Stream: %d, Error sending RTCP/TCP Stream Data to %s", _stream.getStreamID(),
-				client.getIPAddressOfStream().c_str());
-		}
-	}
-	DELETE_ARRAY(sr);
-	DELETE_ARRAY(sdes);
-	DELETE_ARRAY(app);
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	return true;
 }
 
 }

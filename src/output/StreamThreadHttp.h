@@ -30,43 +30,41 @@ FW_DECL_UP_NS1(output, StreamThreadHttp);
 
 namespace output {
 
-	/// HTTP Streaming thread
-	class StreamThreadHttp :
-		public StreamThreadBase {
-		public:
-			// =======================================================================
-			// -- Constructors and destructor ----------------------------------------
-			// =======================================================================
-			explicit StreamThreadHttp(StreamInterface &stream);
+/// HTTP Streaming thread
+class StreamThreadHttp :
+	public StreamThreadBase {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
+		explicit StreamThreadHttp(StreamInterface &stream);
 
-			virtual ~StreamThreadHttp();
+		virtual ~StreamThreadHttp();
 
-			// =======================================================================
-			//  -- output::StreamThreadBase ------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- output::StreamThreadBase ----------------------------------------
+		// =====================================================================
+	protected:
 
-		public:
+		/// @see StreamThreadBase
+		virtual bool writeDataToOutputDevice(
+			mpegts::PacketBuffer &buffer,
+			StreamClient &client) override;
 
-			virtual bool startStreaming() override;
+		/// @see StreamThreadBase
+		virtual int getStreamSocketPort(int clientID) const override;
 
-		protected:
+	private:
 
-			virtual void threadEntry() override;
+		/// @see StreamThreadBase
+		virtual void doStartStreaming(int clientID) override;
 
-			virtual bool writeDataToOutputDevice(
-				mpegts::PacketBuffer &buffer,
-				StreamClient &client) override;
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
+	private:
 
-			virtual int getStreamSocketPort(int clientID) const override;
-
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
-
-		private:
-
-			int _clientID;
-	};
+};
 
 } // namespace output
 

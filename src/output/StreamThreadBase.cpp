@@ -34,23 +34,124 @@
 
 namespace output {
 
-	StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream) :
-		ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
-		_stream(stream),
-		_protocol(protocol),
-		_state(State::Paused),
-		_writeIndex(0),
-		_readIndex(0),
-		_sendInterval(100) {
-		// Initialize all TS packets
-		uint32_t ssrc = _stream.getSSRC();
-		long timestamp = _stream.getTimestamp();
-		for (size_t i = 0; i < MAX_BUF; ++i) {
-			_tsBuffer[i].initialize(ssrc, timestamp);
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
+StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream) :
+	ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
+	_stream(stream),
+	_protocol(protocol),
+	_state(State::Paused),
+	_clientID(0),
+	_cseq(0),
+	_writeIndex(0),
+	_readIndex(0),
+	_sendInterval(100) {
+	// Initialize all TS packets
+	uint32_t ssrc = _stream.getSSRC();
+	long timestamp = _stream.getTimestamp();
+	for (size_t i = 0; i < MAX_BUF; ++i) {
+		_tsBuffer[i].initialize(ssrc, timestamp);
+	}
+}
+
+StreamThreadBase::~StreamThreadBase() {
+#ifdef LIBDVBCSA
+	decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
+	if (decrypt != nullptr) {
+		decrypt->stopDecrypt(_stream.getStreamID());
+	}
+#endif
+}
+
+// =============================================================================
+//  -- base::ThreadBase --------------------------------------------------------
+// =============================================================================
+
+void StreamThreadBase::threadEntry() {
+	StreamClient &client = _stream.getStreamClient(_clientID);
+	while (running()) {
+		switch (_state) {
+			case State::Pause:
+				_state = State::Paused;
+				break;
+			case State::Paused:
+				// Do nothing here, just wait
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				break;
+			case State::Running:
+				readDataFromInputDevice(client);
+				break;
+			default:
+				PERROR("Wrong State");
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				break;
 		}
 	}
+}
 
-	StreamThreadBase::~StreamThreadBase() {
+// =========================================================================
+//  -- Other member functions ----------------------------------------------
+// =========================================================================
+
+bool StreamThreadBase::startStreaming(const int clientID) {
+	_clientID = clientID;
+	const int streamID = _stream.getStreamID();
+	const StreamClient &client = _stream.getStreamClient(clientID);
+
+	doStartStreaming(clientID);
+
+	_cseq = 0x0000;
+	_writeIndex = 0;
+	_readIndex = 0;
+	_tsBuffer[_writeIndex].reset();
+
+	if (!startThread()) {
+		SI_LOG_ERROR("Stream: %d, Start %s Start stream to %s:%d ERROR", streamID, _protocol.c_str(),
+			client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+		return false;
+	}
+	// Set priority above normal for this Thread
+	setPriority(Priority::AboveNormal);
+
+	// set begin timestamp
+	_t1 = std::chrono::steady_clock::now();
+
+	_state = State::Running;
+	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
+		client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+
+	return true;
+}
+
+bool StreamThreadBase::pauseStreaming(const int clientID) {
+	bool paused = true;
+	// Check if thread is running
+	if (running()) {
+		doPauseStreaming(clientID);
+
+		_state = State::Pause;
+		const StreamClient &client = _stream.getStreamClient(clientID);
+		const double payload = _stream.getRtpPayload() / (1024.0 * 1024.0);
+		// try waiting on pause
+		auto timeout = 0;
+		while (_state != State::Paused) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			++timeout;
+			if (timeout > 50) {
+				SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
+					_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+					getStreamSocketPort(clientID), payload);
+				paused = false;
+				break;
+			}
+		}
+		if (paused) {
+			SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
+					_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+					getStreamSocketPort(clientID), payload);
+		}
 #ifdef LIBDVBCSA
 		decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 		if (decrypt != nullptr) {
@@ -58,125 +159,66 @@ namespace output {
 		}
 #endif
 	}
+	return paused;
+}
 
-	bool StreamThreadBase::startStreaming() {
-		const int streamID = _stream.getStreamID();
-		const int clientID = 0;
-		const StreamClient &client = _stream.getStreamClient(clientID);
-
+bool StreamThreadBase::restartStreaming(const int clientID) {
+	// Check if thread is running
+	if (running()) {
+		doRestartStreaming(clientID);
 		_writeIndex = 0;
-		_readIndex = 0;
+		_readIndex  = 0;
 		_tsBuffer[_writeIndex].reset();
-
-		if (!startThread()) {
-			SI_LOG_ERROR("Stream: %d, Start %s Start stream to %s:%d ERROR", streamID, _protocol.c_str(),
-					client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
-			return false;
-		}
-		// Set priority above normal for this Thread
-		setPriority(Priority::AboveNormal);
-
-		// set begin timestamp
-		_t1 = std::chrono::steady_clock::now();
-
 		_state = State::Running;
-		SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
-				client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
-
-		return true;
+		SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
+				_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddressOfStream().c_str(),
+				getStreamSocketPort(clientID));
 	}
+	return true;
+}
 
-	bool StreamThreadBase::restartStreaming(int clientID) {
-		// Check if thread is running
-		if (running()) {
-			_writeIndex = 0;
-			_readIndex  = 0;
-			_tsBuffer[_writeIndex].reset();
-			_state = State::Running;
-			SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
-					_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddressOfStream().c_str(),
-					getStreamSocketPort(clientID));
-		}
-		return true;
+void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
+	const input::SpDevice inputDevice = _stream.getInputDevice();
+
+	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
+	if (availableSize > MAX_BUF) {
+		availableSize %= MAX_BUF;
 	}
-
-	bool StreamThreadBase::pauseStreaming(int clientID) {
-		bool paused = true;
-		// Check if thread is running
-		if (running()) {
-			_state = State::Pause;
-			const StreamClient &client = _stream.getStreamClient(clientID);
-			const double payload = _stream.getRtpPayload() / (1024.0 * 1024.0);
-			// try waiting on pause
-			auto timeout = 0;
-			while (_state != State::Paused) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				++timeout;
-				if (timeout > 50) {
-					SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
-							_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
-							getStreamSocketPort(clientID), payload);
-					paused = false;
-					break;
-				}
-			}
-			if (paused) {
-				SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
-						_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
-						getStreamSocketPort(clientID), payload);
-			}
+//		SI_LOG_DEBUG("Stream: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getStreamID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+	if (inputDevice->isDataAvailable() && availableSize > 1) {
+		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
 			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 			if (decrypt != nullptr) {
-				decrypt->stopDecrypt(_stream.getStreamID());
+				decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
 			}
 #endif
-		}
-		return paused;
-	}
+			// goto next, so inc write index
+			++_writeIndex;
+			_writeIndex %= MAX_BUF;
 
-	void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
-		const input::SpDevice inputDevice = _stream.getInputDevice();
-
-		size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
-		if (availableSize > MAX_BUF) {
-			availableSize %= MAX_BUF;
-		}
-//		SI_LOG_DEBUG("Stream: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getStreamID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
-		if (inputDevice->isDataAvailable() && availableSize > 1) {
-			if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
-#ifdef LIBDVBCSA
-				decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
-				if (decrypt != nullptr) {
-					decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
-				}
-#endif
-				// goto next, so inc write index
-				++_writeIndex;
-				_writeIndex %= MAX_BUF;
-
-				// reset next
-				_tsBuffer[_writeIndex].reset();
-			}
-		}
-
-		// calculate interval
-		_t2 = std::chrono::steady_clock::now();
-		const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
-		if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
-			//
-			_t1 = _t2;
-
-			if (!_tsBuffer[_readIndex].isSynced()) {
-				SI_LOG_ERROR("Stream: %d, PacketBuffer not in sync!", _stream.getStreamID());
-			}
-
-			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
-				// inc read index only when send is successful
-				++_readIndex;
-				_readIndex %= MAX_BUF;
-			}
+			// reset next
+			_tsBuffer[_writeIndex].reset();
 		}
 	}
+
+	// calculate interval
+	_t2 = std::chrono::steady_clock::now();
+	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
+	if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
+		//
+		_t1 = _t2;
+
+		if (!_tsBuffer[_readIndex].isSynced()) {
+			SI_LOG_ERROR("Stream: %d, PacketBuffer not in sync!", _stream.getStreamID());
+		}
+
+		if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
+			// inc read index only when send is successful
+			++_readIndex;
+			_readIndex %= MAX_BUF;
+		}
+	}
+}
 
 } // namespace output
