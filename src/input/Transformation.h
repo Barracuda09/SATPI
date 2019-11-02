@@ -38,7 +38,6 @@ class Transformation :
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
-
 	public:
 
 		Transformation(
@@ -50,7 +49,6 @@ class Transformation :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
-
 	public:
 
 		virtual void addToXML(std::string &xml) const override;
@@ -60,7 +58,6 @@ class Transformation :
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
-
 	public:
 
 		/// Check if transformation is enabled
@@ -68,6 +65,9 @@ class Transformation :
 
 		///
 		bool advertiseAsDVBS2() const;
+
+		///
+		bool advertiseAsDVBC() const;
 
 		///
 		void resetTransformFlag();
@@ -92,10 +92,16 @@ class Transformation :
 		// =====================================================================
 
 	private:
-
+		enum class AdvertiseAs {
+			NONE,
+			DVB_S2,
+			DVB_C,
+			DVB_T
+		};
 		bool _enabled;
 		bool _transform;
-		bool _advertiseAsDVBS2;
+		bool _fileParsed;
+		AdvertiseAs _advertiseAs;
 		base::M3UParser _m3u;
 		std::string _transformFileM3U;
 		input::DeviceData &_transformedDeviceData;

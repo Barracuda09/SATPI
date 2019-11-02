@@ -20,6 +20,7 @@
 #include <input/Transformation.h>
 
 #include <Log.h>
+#include <Utils.h>
 #include <StringConverter.h>
 #include <base/Tokenizer.h>
 #include <input/DeviceData.h>
@@ -36,11 +37,12 @@ namespace input {
 	Transformation::Transformation(
 			const std::string &appDataPath,
 			input::DeviceData &transformedDeviceData) :
+			_enabled(false),
 			_transform(false),
-			_advertiseAsDVBS2(false),
+			_advertiseAs(AdvertiseAs::NONE),
 			_transformFileM3U(appDataPath + "/" + "mapping.m3u"),
 			_transformedDeviceData(transformedDeviceData) {
-		_enabled = _m3u.parse(_transformFileM3U);
+		_fileParsed = _m3u.parse(_transformFileM3U);
 		_transformedDeviceData.initialize();
 	}
 
@@ -53,8 +55,18 @@ namespace input {
 	void Transformation::addToXML(std::string &xml) const {
 		base::MutexLock lock(_xmlMutex);
 		ADD_XML_CHECKBOX(xml, "transformEnable", (_enabled ? "true" : "false"));
-		ADD_XML_CHECKBOX(xml, "advertiseAsDVBS2", (_advertiseAsDVBS2 ? "true" : "false"));
 		ADD_XML_TEXT_INPUT(xml, "transformM3U", _transformFileM3U);
+
+		ADD_XML_BEGIN_ELEMENT(xml, "advertiseAsType");
+			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
+			ADD_XML_ELEMENT(xml, "value", asInteger(_advertiseAs));
+			ADD_XML_BEGIN_ELEMENT(xml, "list");
+			ADD_XML_ELEMENT(xml, "option0", "None");
+			ADD_XML_ELEMENT(xml, "option1", "DVB-S2");
+			ADD_XML_ELEMENT(xml, "option2", "DVB-C");
+			ADD_XML_ELEMENT(xml, "option3", "DVB-T");
+			ADD_XML_END_ELEMENT(xml, "list");
+		ADD_XML_END_ELEMENT(xml, "advertiseAsType");
 	}
 
 	void Transformation::fromXML(const std::string &xml) {
@@ -63,12 +75,28 @@ namespace input {
 		if (findXMLElement(xml, "transformEnable.value", element)) {
 			_enabled = (element == "true") ? true : false;
 		}
-		if (findXMLElement(xml, "advertiseAsDVBS2.value", element)) {
-			_advertiseAsDVBS2 = (element == "true") ? true : false;
-		}
 		if (findXMLElement(xml, "transformM3U.value", element)) {
 			_transformFileM3U = element;
-			_enabled = _m3u.parse(_transformFileM3U);
+			_fileParsed = _m3u.parse(_transformFileM3U);
+		}
+		if (findXMLElement(xml, "advertiseAsType.value", element)) {
+			const AdvertiseAs type = static_cast<AdvertiseAs>(std::stoi(element));
+			switch (type) {
+				case AdvertiseAs::NONE:
+					_advertiseAs = AdvertiseAs::NONE;
+					break;
+				case AdvertiseAs::DVB_S2:
+					_advertiseAs = AdvertiseAs::DVB_S2;
+					break;
+				case AdvertiseAs::DVB_C:
+					_advertiseAs = AdvertiseAs::DVB_C;
+					break;
+				case AdvertiseAs::DVB_T:
+					_advertiseAs = AdvertiseAs::DVB_T;
+					break;
+				default:
+					SI_LOG_ERROR("Stream: %d, Wrong AdvertiseAs type requested, not changing", 0);
+			}
 		}
 	}
 
@@ -78,12 +106,17 @@ namespace input {
 
 	bool Transformation::isEnabled() const {
 		base::MutexLock lock(_xmlMutex);
-		return _enabled;
+		return _enabled && _fileParsed;
 	}
 
 	bool Transformation::advertiseAsDVBS2() const {
 		base::MutexLock lock(_xmlMutex);
-		return _advertiseAsDVBS2;
+		return _advertiseAs == AdvertiseAs::DVB_S2;
+	}
+
+	bool Transformation::advertiseAsDVBC() const {
+		base::MutexLock lock(_xmlMutex);
+		return _advertiseAs == AdvertiseAs::DVB_C;
 	}
 
 	void Transformation::resetTransformFlag() {
@@ -95,7 +128,7 @@ namespace input {
 			const double frequency) const {
 		base::MutexLock lock(_xmlMutex);
 		input::InputSystem system = input::InputSystem::UNDEFINED;
-		if (_enabled) {
+		if (_enabled && _fileParsed) {
 			std::string uri;
 			if (frequency > 0.0 && _m3u.findURIFor(frequency, uri)) {
 				system = StringConverter::getMSYSParameter(uri, "");
@@ -110,7 +143,7 @@ namespace input {
 			const std::string &method) {
 		base::MutexLock lock(_xmlMutex);
 		std::string msgTrans = msg;
-		if (_enabled) {
+		if (_enabled && _fileParsed) {
 			std::string uriMain;
 			const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
 			if (freq > 0.0 && _m3u.findURIFor(freq, uriMain)) {
@@ -156,7 +189,7 @@ namespace input {
 	const DeviceData &Transformation::transformDeviceData(
 			const DeviceData &deviceData) const {
 		base::MutexLock lock(_xmlMutex);
-		if (_enabled) {
+		if (_enabled && _fileParsed) {
 			const fe_status_t status = deviceData.getSignalStatus();
 			const uint32_t ber = deviceData.getBitErrorRate();
 			const uint32_t ublocks = deviceData.getUncorrectedBlocks();
@@ -171,7 +204,7 @@ namespace input {
 
 			_transformedDeviceData.setMonitorData(status, strength, snr, ber, ublocks);
 		}
-		return (_transform && _enabled) ? _transformedDeviceData : deviceData;
+		return (_transform && _enabled && _fileParsed) ? _transformedDeviceData : deviceData;
 	}
 
 } // namespace input

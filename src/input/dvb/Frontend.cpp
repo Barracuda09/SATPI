@@ -247,7 +247,7 @@ namespace dvb {
 		dvbs2 += _transform.advertiseAsDVBS2() ? _dvbc : _dvbs2;
 		dvbt  += _dvbt;
 		dvbt2 += _dvbt2;
-		dvbc  += _dvbc;
+		dvbc  +=  _transform.advertiseAsDVBC() ? _dvbs2 : _dvbc;
 		dvbc2 += _dvbc2;
 	}
 

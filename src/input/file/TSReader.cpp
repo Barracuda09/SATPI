@@ -89,7 +89,7 @@ namespace file {
 		dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
 		dvbt  += 0;
 		dvbt2 += 0;
-		dvbc  += 0;
+		dvbc  += _transform.advertiseAsDVBC() ? 1 : 0;
 		dvbc2 += 0;
 	}
 
