@@ -312,7 +312,8 @@ namespace dvb {
 
 	void Frontend::monitorSignal(const bool showStatus) {
 #if SIMU
-		_frontendData.setMonitorData(0, 0, 0, 0, 0);
+		(void)showStatus;
+		_frontendData.setMonitorData(FE_HAS_LOCK, 214, 15, 0, 0);
 #else
 		fe_status_t status;
 
