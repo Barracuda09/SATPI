@@ -35,7 +35,7 @@ namespace ssdp {
 class Server :
 	public base::XMLSupport,
 	public base::ThreadBase,
-	public UdpSocket {
+	protected UdpSocket {
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
