@@ -371,11 +371,15 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 			_streamingType = StreamingType::HTTP;
 		} else {
 			const std::string transport = StringConverter::getHeaderFieldParameter(msg, "Transport:");
-			// First check 'RTP/AVP/TCP' then 'RTP/AVP'
-			if (transport.find("RTP/AVP/TCP") != std::string::npos) {
-				_streamingType = StreamingType::RTP_TCP;
-			} else if (transport.find("RTP/AVP") != std::string::npos) {
-				_streamingType = StreamingType::RTSP_UNICAST;
+			if (transport.find("unicast") != std::string::npos) {
+				// First check 'RTP/AVP/TCP' then 'RTP/AVP'
+				if (transport.find("RTP/AVP/TCP") != std::string::npos) {
+					_streamingType = StreamingType::RTP_TCP;
+				} else if (transport.find("RTP/AVP") != std::string::npos) {
+					_streamingType = StreamingType::RTSP_UNICAST;
+				}
+			} else if (transport.find("multicast") != std::string::npos) {
+				_streamingType = StreamingType::RTSP_MULTICAST;
 			}
 		}
 	}
@@ -396,10 +400,14 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 			}
 			break;
 		case StreamingType::RTSP_MULTICAST: {
+				const std::string dest = StringConverter::getStringParameter(msg, "Transport:", "destination=");
+				if (!dest.empty()) {
+					_client[clientID].setIPAddressOfStream(dest);
+				}
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "port=");
 				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1);
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(dest, port);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(dest, port + 1);
 				}
 			}
 			break;
