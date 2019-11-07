@@ -1,43 +1,42 @@
 #EXTM3U
 
+# To use Translation you need to set in the web interface
+# - 'Advertise as' to exp. 'DVB-S2'
+# - 'Transformation enable' should be checked
+# - and a valid m3u file like this
+
 #EXTINF:-1 satip-freq="200", Translation to: File uri=/usr/satpi/test.ts
-rtsp://192.168.178.10/?msys=file&uri=%2Fusr%2Fsatpi%2Ftest.ts
+rtsp://%1/?msys=file&uri=%2Fusr%2Fsatpi%2Ftest.ts
 
 #EXTINF:-1 satip-freq="201", Translation to: ChildPIPE exec=cat /usr/satpi/test.ts
-rtsp://192.168.178.10/?msys=childpipe&exec=cat%20%2Fusr%2Fsatpi%2Ftest.ts
+rtsp://%1/?msys=childpipe&exec=cat%20%2Fusr%2Fsatpi%2Ftest.ts
+
+#EXTINF:-1 satip-freq="202", Translation to: Streamer - Multicast UDP input 224.0.1.3:15001
+rtsp://%1/?msys=streamer&uri=udp@224.0.1.3:15001
 
 #EXTINF:-1 satip-freq="10123", Translation to: File uri=test.ts
-rtsp://192.168.178.10/?msys=file&uri=test.ts
+rtsp://%1/?msys=file&uri=test.ts
 
 #EXTINF:-1 satip-freq="10744", Translation to: DVB-C 514MHz
-rtsp://192.168.178.10/?freq=514&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=514&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10773", Translation to: DVB-C 530MHz
-rtsp://192.168.178.10/?freq=530&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=530&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10788", Translation to: DVB-C 554MHz
-rtsp://192.168.178.10/?freq=554&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=554&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10818", Translation to: DVB-C 578MHz
-rtsp://192.168.178.10/?freq=578&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=578&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10832", Translation to: DVB-C 610MHz
-rtsp://192.168.178.10/?freq=610&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=610&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10847", Translation to: DVB-C 618MHz
-rtsp://192.168.178.10/?freq=618&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=618&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10862", Translation to: DVB-C 626MHz
-rtsp://192.168.178.10/?freq=626&sr=6900&msys=dvbc&mtype=256qam&fec=35
+rtsp://%1/?freq=626&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
 #EXTINF:-1 satip-freq="10877", Translation to: DVB-C 658MHz
-rtsp://192.168.178.10/?freq=658&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="11494", Translation to: Stream 1 - Multicast UDP input
-udp://@224.0.0.1:12345
-
-#EXTINF:-1 satip-freq="11362", Translation to: Stream 2 - Multicast RTP input
-rtp://@224.0.0.2:12345
-
-#EXTINF:-1 satip-freq="12604", Translation to: Stream 3 - Unicast UDP input (bind to any address)
-udp://@:12345
+rtsp://%1/?freq=658&sr=6900&msys=dvbc&mtype=256qam&fec=35
