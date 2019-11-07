@@ -330,17 +330,15 @@ namespace dvb {
 		if (!pidsList.empty()) {
 			// 'pids=' requested then 'remove' all used PIDS first
 			_pidTable.clear();
-			const std::string pids = pidsList + addPATPid + addUserPids;
-			parsePIDString(pids, true);
+			parsePIDString(pidsList, addPATPid + addUserPids, true);
 		}
 		const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
 		if (!addpidsList.empty()) {
-			const std::string pids = addpidsList + addPATPid + addUserPids;
-			parsePIDString(pids, true);
+			parsePIDString(addpidsList, addPATPid + addUserPids, true);
 		}
 		const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
 		if (!delpidsList.empty()) {
-			parsePIDString(delpidsList, false);
+			parsePIDString(delpidsList, "", false);
 		}
 	}
 
@@ -424,26 +422,33 @@ namespace dvb {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void FrontendData::parsePIDString(const std::string &pids, const bool add) {
-		if (pids == "all" || pids == "none") {
+	void FrontendData::parsePIDString(const std::string &reqPids,
+		const std::string &userPids, const bool add) {
+		if (reqPids.find("all") != std::string::npos ||
+			reqPids.find("none") != std::string::npos) {
 			// all/none pids requested then 'remove' all used PIDS first
 			_pidTable.clear();
-			if (pids == "all") {
+			if (reqPids.find("all") != std::string::npos) {
 				setAllPID(add);
 			}
 		} else {
+			const std::string pids = reqPids + userPids;
 			std::string::size_type begin = 0;
 			for (;; ) {
 				const std::string::size_type end = pids.find_first_of(",", begin);
 				if (end != std::string::npos) {
-					const int pid = std::stoi(pids.substr(begin, end - begin));
-					setPID(pid, add);
+					const std::string pid = pids.substr(begin, end - begin);
+					if (std::isdigit(pid[0]) != 0) {
+						setPID(std::stoi(pid), add);
+					}
 					begin = end + 1;
 				} else {
 					// Get the last one
 					if (begin < pids.size()) {
-						const int pid = std::stoi(pids.substr(begin, end - begin));
-						setPID(pid, add);
+						const std::string pid = pids.substr(begin, end - begin);
+						if (std::isdigit(pid[0]) != 0) {
+							setPID(std::stoi(pid), add);
+						}
 					}
 					break;
 				}
