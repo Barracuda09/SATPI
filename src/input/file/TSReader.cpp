@@ -168,6 +168,8 @@ namespace file {
 	bool TSReader::update() {
 		if (!_file.is_open()) {
 			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+			_deviceData.resetDeviceDataChanged();
+
 			const std::string filePath = _deviceData.getFilePath();
 			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
 			if (_file.is_open()) {
@@ -177,6 +179,7 @@ namespace file {
 			} else {
 				SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
 			}
+			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		}
 		return true;
 	}

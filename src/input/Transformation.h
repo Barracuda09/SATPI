@@ -103,6 +103,7 @@ class Transformation :
 		bool _fileParsed;
 		AdvertiseAs _advertiseAs;
 		base::M3UParser _m3u;
+		std::string _appDataPath;
 		std::string _transformFileM3U;
 		input::DeviceData &_transformedDeviceData;
 };

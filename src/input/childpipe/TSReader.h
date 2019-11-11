@@ -37,7 +37,7 @@ namespace input {
 namespace childpipe {
 
 /// The class @c TSReader is for reading from an Child PIPE as input device
-/// Some example for opening a TS file with cat:
+/// Some example for opening a TS file with 'cat /dir/test.ts:
 /// http://ip.of.your.box:8875/?msys=childpipe&exec=cat%20%2Fdir%2Ftest.ts"
 class TSReader :
 	public input::Device {

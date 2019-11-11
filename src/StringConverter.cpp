@@ -296,7 +296,7 @@ std::string StringConverter::getStringParameter(const std::string &msg,
 
 std::string StringConverter::getURIParameter(const std::string &msg,
 	const std::string &header_field, const std::string &uriParameter) {
-	std::string uri = StringConverter::getStringParameter(msg, header_field, "&?;", uriParameter);
+	std::string uri = StringConverter::getStringParameter(msg, header_field, "/&?;", uriParameter);
 
 	// Search for ASCII Percent-Encoding and decode it
 	std::string::size_type n;

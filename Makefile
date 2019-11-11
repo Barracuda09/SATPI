@@ -66,6 +66,7 @@ SOURCES = Version.cpp \
 	input/childpipe/TSReader.cpp \
 	input/childpipe/TSReaderData.cpp \
 	input/stream/Streamer.cpp \
+	input/stream/StreamerData.cpp \
 	mpegts/Filter.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/PAT.cpp \

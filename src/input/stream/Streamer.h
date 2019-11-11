@@ -22,14 +22,14 @@
 
 #include <FwDecl.h>
 #include <input/Device.h>
+#include <input/Transformation.h>
+#include <input/stream/StreamerData.h>
 #include <socket/SocketClient.h>
 #include <socket/UdpSocket.h>
 
 #include <string>
 
 #include <poll.h>
-
-FW_DECL_NS1(input, DeviceData);
 
 FW_DECL_SP_NS2(input, stream, Streamer);
 
@@ -40,35 +40,35 @@ namespace stream {
 
 /// The class @c Streamer is for reading from an TS stream as input device.
 /// Stream can be an Multicast UDP e.g.
-/// http://ip.of.your.box:8875/?msys=streamer&uri=udp://224.0.1.3:1234
+/// http://ip.of.your.box:8875/?msys=streamer&uri=udp@224.0.1.3:1234
 class Streamer :
 	public input::Device,
-	public UdpSocket {
-
+	protected UdpSocket {
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
-
 	public:
 
-		Streamer(int streamID, const std::string &bindIPAddress);
+		Streamer(
+			int streamID,
+			const std::string &bindIPAddress,
+			const std::string &appDataPath);
 
 		virtual ~Streamer();
 
 		// =====================================================================
 		//  -- Static member functions -----------------------------------------
 		// =====================================================================
-
 	public:
 
 		static void enumerate(
 			StreamSpVector &streamVector,
-			const std::string &bindIPAddress);
+			const std::string &bindIPAddress,
+			const std::string &appDataPath);
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
-
 	public:
 		///
 		virtual void addToXML(std::string &xml) const override;
@@ -80,7 +80,6 @@ class Streamer :
 		// =====================================================================
 		//  -- input::Device----------------------------------------------------
 		// =====================================================================
-
 	public:
 
 		virtual void addDeliverySystemCount(
@@ -113,21 +112,21 @@ class Streamer :
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
-
 	protected:
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 	private:
-		std::string _bindIPAddress;
-		std::string _uri;
+
+		StreamerData _deviceData;
+		StreamerData _transformDeviceData;
+		input::Transformation _transform;
+
 		pollfd _pfd[1];
 		SocketClient _udpMultiListen;
-		std::string _multiAddr;
-		int _port;
-		bool _udp;
+
+		std::string _bindIPAddress;
 };
 
 } // namespace stream

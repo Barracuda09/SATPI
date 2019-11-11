@@ -30,13 +30,13 @@
 namespace input {
 namespace stream {
 
-	Streamer::Streamer(int streamID, const std::string &bindIPAddress) :
+	Streamer::Streamer(
+		int streamID,
+		const std::string &bindIPAddress,
+		const std::string &appDataPath) :
 		Device(streamID),
-		_bindIPAddress(bindIPAddress),
-		_uri("None"),
-		_multiAddr("None"),
-		_port(0),
-		_udp(false) {
+		_transform(appDataPath, _transformDeviceData),
+		_bindIPAddress(bindIPAddress) {
 		_pfd[0].events  = 0;
 		_pfd[0].revents = 0;
 		_pfd[0].fd      = -1;
@@ -50,10 +50,11 @@ namespace stream {
 
 	void Streamer::enumerate(
 			StreamSpVector &streamVector,
-			const std::string &bindIPAddress) {
+			const std::string &bindIPAddress,
+			const std::string &appDataPath) {
 		SI_LOG_INFO("Setting up TS Streamer");
 		const StreamSpVector::size_type size = streamVector.size();
-		const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress);
+		const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress, appDataPath);
 		streamVector.push_back(std::make_shared<Stream>(size, streamer, nullptr));
 	}
 
@@ -64,11 +65,17 @@ namespace stream {
 	void Streamer::addToXML(std::string &xml) const {
 		base::MutexLock lock(_mutex);
 		ADD_XML_ELEMENT(xml, "frontendname", "Streamer");
-		ADD_XML_ELEMENT(xml, "pathname", _uri);
+		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
+		_deviceData.addToXML(xml);
 	}
 
-	void Streamer::fromXML(const std::string &UNUSED(xml)) {
+	void Streamer::fromXML(const std::string &xml) {
 		base::MutexLock lock(_mutex);
+		std::string element;
+		if (findXMLElement(xml, "transformation", element)) {
+			_transform.fromXML(element);
+		}
+		_deviceData.fromXML(xml);
 	}
 
 	// =======================================================================
@@ -81,10 +88,10 @@ namespace stream {
 			std::size_t &dvbt2,
 			std::size_t &dvbc,
 			std::size_t &dvbc2) {
-		dvbs2 += 0;
+		dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
 		dvbt  += 0;
 		dvbt2 += 0;
-		dvbc  += 0;
+		dvbc  += _transform.advertiseAsDVBC() ? 1 : 0;
 		dvbc2 += 0;
 	}
 
@@ -119,76 +126,76 @@ namespace stream {
 		return system == input::InputSystem::STREAMER;
 	}
 
-	bool Streamer::capableToTransform(const std::string &UNUSED(msg),
-			const std::string &UNUSED(method)) const {
-		return false;
+	bool Streamer::capableToTransform(
+		const std::string &msg,
+		const std::string &method) const {
+		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		const input::InputSystem system = _transform.getTransformationSystemFor(freq);
+		return capableOf(system);
 	}
 
-	void Streamer::monitorSignal(const bool UNUSED(showStatus)) {}
+	void Streamer::monitorSignal(const bool UNUSED(showStatus)) {
+		_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
+	}
 
 	bool Streamer::hasDeviceDataChanged() const {
-		return false;
+		return _deviceData.hasDeviceDataChanged();
 	}
 
 // Server side
-// vlc -vvv "D:\test.ts" :sout=#udp{dst=224.0.1.3:123} :sout-all :sout-keep --loop
+// vlc -vvv "D:\test.ts" :sout=#udp{dst=224.0.1.3:1234} :sout-all :sout-keep --loop
 
 // Client side
-// http://192.168.178.10:8875/?msys=streamer&uri=udp://224.0.1.3:1234
-
+// http://192.168.178.10:8875/?msys=streamer&uri=udp@224.0.1.3:1234
 	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
-		_uri = StringConverter::getURIParameter(msg, method, "uri=");
-		if (!_uri.empty()) {
-			// Open stream
-			_udp = _uri.find("udp") != std::string::npos;
-			std::string::size_type begin = _uri.find("//");
-			if (begin != std::string::npos) {
-				std::string::size_type end = _uri.find_first_of(":", begin);
-				if (end != std::string::npos) {
-					begin += 2;
-					_multiAddr = _uri.substr(begin, end - begin);
-					begin = end + 1;
-					end = _uri.size();
-					_port = std::stoi(_uri.substr(begin, end - begin));
 
-					//  Open mutlicast stream
-					if(initMutlicastUDPSocket(_udpMultiListen, _multiAddr, _bindIPAddress, _port)) {
-						SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID, _multiAddr.c_str(), _port, _udpMultiListen.getFD());
-						// set receive buffer to 8MB
-						constexpr int bufferSize =  1024 * 1024 * 8;
-						_udpMultiListen.setNetworkReceiveBufferSize(bufferSize);
+		// Do we need to transform this request?
+		const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
 
-						_pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
-						_pfd[0].revents = 0;
-						_pfd[0].fd      = _udpMultiListen.getFD();
-
-					} else {
-						SI_LOG_ERROR("Stream: %d, Init UDP Multicast socket failed", _streamID);
-					}
-				}
-			}
-		}
+		_deviceData.parseStreamString(_streamID, msgTrans, method);
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
 
 	bool Streamer::update() {
+		if (_udpMultiListen.getFD() == -1) {
+			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+			_deviceData.resetDeviceDataChanged();
+
+			//  Open mutlicast stream
+			const std::string multiAddr = _deviceData.getMultiAddr();
+			const int port = _deviceData.getPort();
+			if(initMutlicastUDPSocket(_udpMultiListen, multiAddr, _bindIPAddress, port)) {
+				SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID,
+					multiAddr.c_str(), port, _udpMultiListen.getFD());
+				// set receive buffer to 8MB
+				constexpr int bufferSize =  1024 * 1024 * 8;
+				_udpMultiListen.setNetworkReceiveBufferSize(bufferSize);
+
+				_pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
+				_pfd[0].revents = 0;
+				_pfd[0].fd      = _udpMultiListen.getFD();
+
+			} else {
+				SI_LOG_ERROR("Stream: %d, Init UDP Multicast socket failed", _streamID);
+			}
+			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
+		}
 		return true;
 	}
 
 	bool Streamer::teardown() {
-		// Close stream
+		_deviceData.clearData();
+		_transform.resetTransformFlag();
+
 		_udpMultiListen.closeFD();
 		return true;
 	}
 
 	std::string Streamer::attributeDescribeString() const {
 		if (_udpMultiListen.getFD() != -1) {
-			std::string desc;
-			// ver=1.5;tuner=<feID>;uri=<uri>
-			StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d;uri=%s",
-					_streamID + 1, _uri.c_str());
-			return desc;
+			const DeviceData &data = _transform.transformDeviceData(_deviceData);
+			return data.attributeDescribeString(_streamID);
 		}
 		return "";
 	}

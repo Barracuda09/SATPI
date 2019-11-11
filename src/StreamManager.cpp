@@ -74,7 +74,7 @@ void StreamManager::enumerateDevices(
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
 	input::file::TSReader::enumerate(_stream, appDataPath);
-	input::stream::Streamer::enumerate(_stream, bindIPAddress);
+	input::stream::Streamer::enumerate(_stream, bindIPAddress, appDataPath);
 	if (enableChildPIPE) {
 		input::childpipe::TSReader::enumerate(_stream, appDataPath);
 	}

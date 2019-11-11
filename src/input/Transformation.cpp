@@ -40,9 +40,10 @@ namespace input {
 			_enabled(false),
 			_transform(false),
 			_advertiseAs(AdvertiseAs::NONE),
-			_transformFileM3U(appDataPath + "/" + "mapping.m3u"),
+			_appDataPath(appDataPath),
+			_transformFileM3U("mapping.m3u"),
 			_transformedDeviceData(transformedDeviceData) {
-		_fileParsed = _m3u.parse(_transformFileM3U);
+		_fileParsed = _m3u.parse(_appDataPath + "/" + _transformFileM3U);
 		_transformedDeviceData.initialize();
 	}
 
@@ -77,7 +78,7 @@ namespace input {
 		}
 		if (findXMLElement(xml, "transformM3U.value", element)) {
 			_transformFileM3U = element;
-			_fileParsed = _m3u.parse(_transformFileM3U);
+			_fileParsed = _m3u.parse(_appDataPath + "/" + _transformFileM3U);
 		}
 		if (findXMLElement(xml, "advertiseAsType.value", element)) {
 			const AdvertiseAs type = static_cast<AdvertiseAs>(std::stoi(element));
