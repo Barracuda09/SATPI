@@ -34,7 +34,7 @@ class ChildPIPEReader {
 	public:
 		ChildPIPEReader() :
 			_pipe(::popen("", "r"), ::pclose) {
-			_pipe.release();
+			_pipe.reset();
 		}
 
 		virtual ~ChildPIPEReader() {}
@@ -49,7 +49,7 @@ class ChildPIPEReader {
 		}
 
 		void close() {
-			_pipe.release();
+			_pipe.reset();
 		}
 
 		bool isOpen() const {
