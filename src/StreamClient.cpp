@@ -77,10 +77,10 @@ bool StreamClient::isSelfDestructing() const {
 
 bool StreamClient::sessionTimeout() const {
 	base::MutexLock lock(_mutex);
-
-	return (((_httpStream == nullptr) ? -1 : _httpStream->getFD()) == -1) &&
-		   (_watchdog != 0) &&
-		   (_watchdog < std::time(nullptr));
+	// See if we need to check watchdog or http FD
+	return (_httpStream == nullptr) ?
+		((_watchdog != 0) && (_watchdog < std::time(nullptr))) :
+		(_httpStream->getFD() == -1);
 }
 
 void StreamClient::setSocketClient(SocketClient &socket) {
