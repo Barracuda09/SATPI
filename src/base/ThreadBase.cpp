@@ -144,7 +144,11 @@ namespace base {
 #else
 		prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
 #endif
-		threadEntry();
+		try {
+			threadEntry();
+		} catch (...) {
+			SI_LOG_ERROR("%s: Catched an exception", _name.c_str());
+		}
 		_exit = true;
 	}
 

@@ -164,31 +164,36 @@ namespace base {
 #else
 		prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
 #endif
-		for (;;) {
-			switch (_state) {
-				case State::Starting:
-					_state = State::Started;
-					break;
-				case State::Started:
-					if (!_threadExecuteFunction()) {
-						_state = State::Stopping;
-					}
-					break;
-				case State::Pausing:
-					_state = State::Paused;
-					break;
-				case State::Paused:
-					// Do nothing here, just wait
-					std::this_thread::sleep_for(std::chrono::milliseconds(150));
-					break;
-				case State::Stopping:
-					_state = State::Stopped;
-					break;
-				case State::Stopped:
-					return;
-				default:
-					break;
+		try {
+			for (;;) {
+				switch (_state) {
+					case State::Starting:
+						_state = State::Started;
+						break;
+					case State::Started:
+						if (!_threadExecuteFunction()) {
+							_state = State::Stopping;
+						}
+						break;
+					case State::Pausing:
+						_state = State::Paused;
+						break;
+					case State::Paused:
+						// Do nothing here, just wait
+						std::this_thread::sleep_for(std::chrono::milliseconds(150));
+						break;
+					case State::Stopping:
+						_state = State::Stopped;
+						break;
+					case State::Stopped:
+						return;
+					default:
+						break;
+				}
 			}
+		} catch (...) {
+			SI_LOG_ERROR("%s: Catched an exception", _name.c_str());
+			_state = State::Stopped;
 		}
 	}
 
