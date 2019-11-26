@@ -83,7 +83,8 @@ namespace stream {
 		}
 
 		initialize();
-		_changed = true;
+		if (method != "PLAY")
+			_changed = true;
 	}
 
 	std::string StreamerData::attributeDescribeString(const int streamID) const {
