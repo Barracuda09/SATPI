@@ -69,7 +69,8 @@ namespace childpipe {
 			return;
 		}
 		initialize();
-		_changed = true;
+		if (method != "PLAY")
+			_changed = true;
 	}
 
 	std::string TSReaderData::attributeDescribeString(const int streamID) const {
