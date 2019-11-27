@@ -352,6 +352,11 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		_client[clientID].setUserAgent(userAgent);
 	}
 
+	if (method == "DESCRIBE") {
+		_client[clientID].restartWatchDog();
+		return true;
+	}
+
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
 		_device->parseStreamString(msg, method);
