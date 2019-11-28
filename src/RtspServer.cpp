@@ -130,7 +130,8 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 	stream.update(clientID, true);
 }
 
-void RtspServer::methodPlay(const std::string &sessionID, const int cseq, int streamID, std::string &htmlBody) {
+void RtspServer::methodPlay(
+	const std::string &sessionID, const int cseq, const int streamID, std::string &htmlBody) {
 	static const char *RTSP_PLAY_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"RTP-Info: url=rtsp://%1/stream=%2\r\n" \
@@ -143,7 +144,8 @@ void RtspServer::methodPlay(const std::string &sessionID, const int cseq, int st
 		streamID, cseq, sessionID);
 }
 
-void RtspServer::methodTeardown(const std::string &sessionID, const int cseq, std::string &htmlBody) {
+void RtspServer::methodTeardown(
+	const std::string &sessionID, const int cseq, std::string &htmlBody) {
 	static const char *RTSP_TEARDOWN_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"CSeq: %1\r\n" \
@@ -153,7 +155,8 @@ void RtspServer::methodTeardown(const std::string &sessionID, const int cseq, st
 	htmlBody = StringConverter::stringFormat(RTSP_TEARDOWN_OK, cseq, sessionID);
 }
 
-void RtspServer::methodOptions(const std::string &sessionID, const int cseq, std::string &htmlBody) {
+void RtspServer::methodOptions(
+	const std::string &sessionID, const int cseq, std::string &htmlBody) {
 	static const char *RTSP_OPTIONS_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"CSeq: %1\r\n" \
@@ -168,7 +171,8 @@ void RtspServer::methodOptions(const std::string &sessionID, const int cseq, std
 	htmlBody = StringConverter::stringFormat(RTSP_OPTIONS_OK, cseq, sessionIDHeaderField);
 }
 
-void RtspServer::methodDescribe(const std::string &sessionID, const int cseq, std::string &htmlBody) {
+void RtspServer::methodDescribe(
+	const std::string &sessionID, const int cseq, const int streamID, std::string &htmlBody) {
 	static const char *RTSP_DESCRIBE  =
 		"%1" \
 		"CSeq: %2\r\n" \
@@ -200,13 +204,23 @@ void RtspServer::methodDescribe(const std::string &sessionID, const int cseq, st
 		_streamManager.getRTSPDescribeString());
 
 	std::size_t streamsSetup = 0;
-	for (auto i = 0u; i < _streamManager.getMaxStreams(); ++i) {
+
+	// Lambda Expression 'setupAttributeDescribeString'
+	const auto setupAttributeDescribeString = [&](const int streamID) {
 		bool active = false;
-		const std::string desc_attr = _streamManager.attributeDescribeString(i, active);
+		const std::string desc_attr = _streamManager.attributeDescribeString(streamID, active);
 		if (desc_attr.size() > 5) {
 			++streamsSetup;
-			desc += StringConverter::stringFormat(RTSP_DESCRIBE_CONT2, i, desc_attr, (active) ? "sendonly" : "inactive");
+			desc += StringConverter::stringFormat(RTSP_DESCRIBE_CONT2, streamID, desc_attr, (active) ? "sendonly" : "inactive");
 		}
+	};
+	// Check if there is a specific stream ID requested
+	if (streamID == -1) {
+		for (std::size_t i = 0; i < _streamManager.getMaxStreams(); ++i) {
+			setupAttributeDescribeString(i);
+		}
+	} else {
+		setupAttributeDescribeString(streamID);
 	}
 
 	// check if we are in session, then we need to send the Session ID

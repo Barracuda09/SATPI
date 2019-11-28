@@ -118,9 +118,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
 	} else {
 		std::string file = StringConverter::getRequestedFile(client.getMessage());
-		if (StringConverter::hasTransportParameters(client.getMessage())) {
-			processStreamingRequest(client);
-		} else if (!file.empty()) {
+		if (!file.empty()) {
 			// remove first '/'?
 			if (file[0] == '/') {
 				file.erase(0, 1);

@@ -102,7 +102,7 @@ class HttpcServer :
 		virtual void methodOptions(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
+		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client) override;

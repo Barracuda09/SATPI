@@ -130,7 +130,11 @@ bool HttpcServer::process(SocketClient &client) {
 		processStreamingRequest(client);
 	} else if (protocol == "HTTP") {
 		if (method == "GET") {
-			methodGet(client);
+			if (StringConverter::hasTransportParameters(client.getMessage())) {
+				processStreamingRequest(client);
+			} else {
+				methodGet(client);
+			}
 		} else if (method == "POST") {
 			methodPost(client);
 		} else {
@@ -145,7 +149,7 @@ bool HttpcServer::process(SocketClient &client) {
 }
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
-	std::string msg = client.getMessage();
+	const std::string msg = client.getMessage();
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
 
@@ -158,12 +162,14 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const int cseq =  fieldCSeq.empty() ? 0 : std::stoi(fieldCSeq);
 	// Save sessionID
 	const std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
+	//
+	const int streamID = StringConverter::getIntParameter(msg, method, "stream=");
 
 	std::string httpcReply;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
-		methodDescribe("", cseq, httpcReply);
+		methodDescribe("", cseq, streamID, httpcReply);
 	} else {
 		int clientID;
 		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
@@ -191,7 +197,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "OPTIONS") {
 				methodOptions(sessionID, cseq, httpcReply);
 			} else if (method == "DESCRIBE") {
-				methodDescribe(sessionID, cseq, httpcReply);
+				methodDescribe(sessionID, cseq, streamID, httpcReply);
 			} else {
 				// method not supported
 				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());

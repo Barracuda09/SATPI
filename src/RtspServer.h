@@ -66,7 +66,7 @@ class RtspServer :
 		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) override;
 
 		///
-		virtual void methodDescribe(const std::string &sessionID, int cseq, std::string &htmlBody) override;
+		virtual void methodDescribe(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) override;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
