@@ -68,7 +68,7 @@ namespace stream {
 			clearData();
 			return;
 		}
-		// Parse uri ex. uri=udp@224.0.1.3:12345
+		// Parse uri ex. udp@224.0.1.3:1234
 		_udp = _uri.find("udp") != std::string::npos;
 		std::string::size_type begin = _uri.find("@");
 		if (begin != std::string::npos) {

@@ -149,6 +149,9 @@ class StringConverter  {
 		static std::string getURIParameter(const std::string &msg, const std::string &header_field, const std::string &uriParameter);
 
 		///
+		static std::string getPercentDecoding(const std::string &msg);
+
+		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
 
 		///

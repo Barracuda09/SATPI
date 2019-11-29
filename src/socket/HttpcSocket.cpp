@@ -42,7 +42,7 @@ const int HttpcSocket::HTTPC_TIMEOUT = 500;
 	// =========================================================================
 	//  -- Other member functions ----------------------------------------------
 	// =========================================================================
-	
+
 	ssize_t HttpcSocket::recvHttpcMessage(SocketClient &client, int recv_flags) {
 		return recv_recvfrom_httpc_message(client, recv_flags, nullptr, nullptr);
 	}

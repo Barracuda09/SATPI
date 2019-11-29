@@ -130,8 +130,8 @@ namespace input {
 		base::MutexLock lock(_xmlMutex);
 		input::InputSystem system = input::InputSystem::UNDEFINED;
 		if (_enabled && _fileParsed) {
-			std::string uri;
-			if (frequency > 0.0 && _m3u.findURIFor(frequency, uri)) {
+			if (frequency > 0.0) {
+				const std::string uri = _m3u.findURIFor(frequency);
 				system = StringConverter::getMSYSParameter(uri, "");
 			}
 		}
@@ -145,43 +145,44 @@ namespace input {
 		base::MutexLock lock(_xmlMutex);
 		std::string msgTrans = msg;
 		if (_enabled && _fileParsed) {
-			std::string uriMain;
 			const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-			if (freq > 0.0 && _m3u.findURIFor(freq, uriMain)) {
-				SI_LOG_INFO("Stream: %d, Request Transformed", streamID);
-				_transform = true;
+			if (freq > 0.0) {
+				const std::string uriMain = _m3u.findURIFor(freq);
+				if (!uriMain.empty()) {
+					_transform = true;
 
-				// remove '*pids' from uri
-				base::StringTokenizer tokenizer(uriMain, "?& ");
-				tokenizer.removeToken("addpids=");
-				tokenizer.removeToken("delpids=");
-				const std::string uri = tokenizer.removeToken("pids=");
+					// remove '*pids' from uri
+					base::StringTokenizer tokenizer(uriMain, "?& ");
+					tokenizer.removeToken("addpids=");
+					tokenizer.removeToken("delpids=");
+					const std::string uri = tokenizer.removeToken("pids=");
 
-				const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
-				if (msys != input::InputSystem::UNDEFINED) {
-					_transformedDeviceData.setDeliverySystem(msys);
-				}
+					const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
+					if (msys != input::InputSystem::UNDEFINED) {
+						_transformedDeviceData.setDeliverySystem(msys);
+					}
 
-				msgTrans = method;
-				msgTrans += " ";
-				msgTrans += uri;
-				const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
-				if (!pidsList.empty()) {
-					msgTrans += "&pids=";
-					msgTrans += pidsList;
+					msgTrans = method;
+					msgTrans += " ";
+					msgTrans += uri;
+					const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
+					if (!pidsList.empty()) {
+						msgTrans += "&pids=";
+						msgTrans += pidsList;
+					}
+					const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
+					if (!addpidsList.empty()) {
+						msgTrans += "&addpids=";
+						msgTrans += addpidsList;
+					}
+					const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
+					if (!delpidsList.empty()) {
+						msgTrans += "&delpids=";
+						msgTrans += delpidsList;
+					}
+					msgTrans += " RTSP/1.0";
+					SI_LOG_INFO("Stream: %d, Request Transformed to %s", streamID, msgTrans.c_str());
 				}
-				const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
-				if (!addpidsList.empty()) {
-					msgTrans += "&addpids=";
-					msgTrans += addpidsList;
-				}
-				const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
-				if (!delpidsList.empty()) {
-					msgTrans += "&delpids=";
-					msgTrans += delpidsList;
-				}
-				msgTrans += " RTSP/1.0";
-				SI_LOG_DEBUG("Stream: %d, Request Transformed to %s", streamID, msgTrans.c_str());
 			}
 		}
 		return msgTrans;

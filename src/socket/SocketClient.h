@@ -21,6 +21,7 @@
 #define SOCKET_SOCKETCLIENT_H_INCLUDE SOCKET_SOCKETCLIENT_H_INCLUDE
 
 #include <socket/SocketAttr.h>
+#include <StringConverter.h>
 
 #include <string>
 
@@ -68,9 +69,14 @@ class SocketClient :
 			_msg += msg;
 		}
 
-		/// Get the HTTP message from this client
-		const std::string &getMessage() const {
+		/// Get the Raw HTTP message from this client
+		std::string getMessage() const {
 			return _msg;
+		}
+
+		/// Get the Percent Decoded HTTP message from this client
+		std::string getPercentDecodedMessage() const {
+			return StringConverter::getPercentDecoding(_msg);
 		}
 
 		/// Set protocol string
@@ -80,7 +86,7 @@ class SocketClient :
 		}
 
 		/// Get the protocol string
-		const std::string &getProtocolString() const {
+		std::string getProtocolString() const {
 			return _protocolString;
 		}
 

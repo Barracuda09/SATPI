@@ -177,7 +177,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              int &clientID) {
 	base::MutexLock lock(_xmlMutex);
 
-	const std::string &message = socketClient.getMessage();
+	const std::string message = socketClient.getPercentDecodedMessage();
 	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
 
 	// Check if the input device is set, else this stream is not usable

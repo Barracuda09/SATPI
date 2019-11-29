@@ -38,7 +38,7 @@ namespace file {
 
 /// The class @c TSReader is for reading from an TS files as input device
 /// Some example for opening a TS file:
-/// http://ip.of.your.box:8875/?msys=file&uri=test.ts
+/// http://ip.of.your.box:8875/?msys=file&uri="test.ts"
 class TSReader :
 	public input::Device {
 		// =====================================================================

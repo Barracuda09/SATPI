@@ -149,7 +149,7 @@ bool HttpcServer::process(SocketClient &client) {
 }
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
-	const std::string msg = client.getMessage();
+	const std::string msg = client.getPercentDecodedMessage();
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
 

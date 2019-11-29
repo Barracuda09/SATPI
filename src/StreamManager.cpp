@@ -135,7 +135,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 
 	// Here we need to find the correct Stream and StreamClient
 	assert(!_stream.empty());
-	const std::string &msg = socketClient.getMessage();
+	const std::string msg = socketClient.getPercentDecodedMessage();
 	const std::string method = StringConverter::getMethod(msg);
 
 	int streamID = StringConverter::getIntParameter(msg, method, "stream=");

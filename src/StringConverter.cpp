@@ -296,15 +296,47 @@ std::string StringConverter::getStringParameter(const std::string &msg,
 
 std::string StringConverter::getURIParameter(const std::string &msg,
 	const std::string &header_field, const std::string &uriParameter) {
-	std::string uri = StringConverter::getStringParameter(msg, header_field, "/&?;", uriParameter);
-
-	// Search for ASCII Percent-Encoding and decode it
-	std::string::size_type n;
-	while ((n = uri.find("%")) != std::string::npos) {
-		const std::string sub = uri.substr(n + 1, 2);
-		uri.replace(n, 3, 1, static_cast<char>(std::stoi(sub, 0 , 16)));
+	const std::string line = StringConverter::getHeaderFieldParameter(msg, header_field);
+	if (line.empty()) {
+		return "";
 	}
-	return uri;
+	std::string::size_type begin = line.find(uriParameter);
+	if (begin != std::string::npos) {
+		begin += uriParameter.size();
+		begin = line.find("\"", begin);
+		if (begin != std::string::npos) {
+			begin += 1;
+			std::string::size_type end = line.find("\"", begin);
+			if (end != std::string::npos) {
+				return line.substr(begin, end - begin);
+			}
+		}
+	}
+	return "";
+}
+
+std::string StringConverter::getPercentDecoding(const std::string &msg) {
+	std::string decoded = msg;
+	// Search for ASCII Percent-Encoding and decode it
+	std::string::size_type n = 0;
+	while ((n = decoded.find("%", n)) != std::string::npos) {
+		++n;
+		if ( n + 2 > decoded.size()) {
+			break;
+		}
+		const char c1 = decoded[n];
+		const char c2 = decoded[n + 1];
+		if (std::isdigit(c1) && (std::isdigit(c2) || std::isalpha(c2))) {
+			// It was ex. %2F -> decode it to ASCII '/'
+			const std::string sub = decoded.substr(n, 2);
+			decoded.replace(n - 1, 3, 1, static_cast<char>(std::stoi(sub, 0 , 16)));
+		} else if (c1 == '%' && std::isdigit(c2)) {
+			// It was ex. %%2F -> remove first % (so double percent decoded)
+			decoded.erase(n - 1, 1);
+			n += 2;
+		}
+	}
+	return decoded;
 }
 
 double StringConverter::getDoubleParameter(const std::string &msg,

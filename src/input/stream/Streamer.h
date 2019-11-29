@@ -40,7 +40,7 @@ namespace stream {
 
 /// The class @c Streamer is for reading from an TS stream as input device.
 /// Stream can be an Multicast UDP e.g.
-/// http://ip.of.your.box:8875/?msys=streamer&uri=udp@224.0.1.3:1234
+/// http://ip.of.your.box:8875/?msys=streamer&uri="udp@224.0.1.3:1234"
 class Streamer :
 	public input::Device,
 	protected UdpSocket {

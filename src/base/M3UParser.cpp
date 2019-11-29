@@ -19,6 +19,8 @@
  */
 #include <base/M3UParser.h>
 
+#include <StringConverter.h>
+
 #include <algorithm>
 
 namespace base {
@@ -72,7 +74,7 @@ namespace base {
 												SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
 											} else {
 												line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());												
-												_transformationMap[freq] = line;
+												_transformationMap[freq] = StringConverter::getPercentDecoding(line);
 											}
 										}
 										// do next one
@@ -92,13 +94,12 @@ namespace base {
 		}
 	}
 
-	bool M3UParser::findURIFor(double freq, std::string &uri) const {
+	std::string M3UParser::findURIFor(double freq) const {
 		const auto uriMap = _transformationMap.find(freq);
 		if(uriMap != _transformationMap.end()) {
-			uri = uriMap->second;
-			return true;
+			return uriMap->second;
 		}
-		return false;
+		return "";
 	}
 
 	bool M3UParser::exist(const double freq) const {

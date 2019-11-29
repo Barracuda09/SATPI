@@ -146,7 +146,7 @@ namespace stream {
 // vlc -vvv "D:\test.ts" :sout=#udp{dst=224.0.1.3:1234} :sout-all :sout-keep --loop
 
 // Client side
-// http://192.168.178.10:8875/?msys=streamer&uri=udp@224.0.1.3:1234
+// http://192.168.178.10:8875/?msys=streamer&uri="udp@224.0.1.3:1234"
 	void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 

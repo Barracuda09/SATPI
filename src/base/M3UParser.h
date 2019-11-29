@@ -54,9 +54,8 @@ namespace base {
 
 			/// Get the uri for the requested frequency
 			/// @param freq  requested frequency to transform
-			/// @param uri   the uri is freq is available
-			/// @retval
-			bool findURIFor(double freq, std::string &uri) const;
+			/// @retval the uri of freq if available
+			std::string findURIFor(double freq) const;
 
 			/// Check if the requested frequency can be transformed
 			/// @retval true means the frequency can be used for
