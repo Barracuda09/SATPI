@@ -37,7 +37,7 @@ class socket::SocketClient {
 
 class socket::SocketAttr {
   _fd
-  std::string _ip_addr
+  std::string _ipAddr
 }
 
 socket::TcpSocket --|> socket::HttpcSocket
@@ -57,9 +57,17 @@ class socket::UdpSocket {
 }
 
 SsdpServer --|> socket::UdpSocket
+class SsdpServer {
+  Thread
+
+  threadEntry()
+}
+
 
 RtspServer --|> HttpcServer
 class RtspServer {
+  Thread
+
   threadEntry() -> calls poll(..)
   methodSetup(..)
   methodPlay(..)
@@ -71,6 +79,8 @@ class RtspServer {
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
 class HttpServer {
+  Thread
+
   threadEntry() -> calls poll(..)
   methodPost(..)
   methodGet(..)
@@ -85,14 +95,11 @@ class HttpcServer {
   processStreamingRequest(..)
 }
 
-class RtcpThread
-
 class StreamInterface #aaaaff {
   getInputDevice() = 0
   getStreamClient(..) = 0
   getDecryptDevice() = 0
 }
-StreamInterface ..* RtcpThread
 
 Stream --|> StreamInterface
 Stream *-- StreamClient : " _client[..] "
@@ -100,52 +107,74 @@ Stream *-- input::Device
 Stream *-- output::StreamThreadBase
 decrypt::dvbapi::Client ..* Stream : " _decrypt "
 class Stream #aaaaff {
-  Mutex
-  streamInUse
+  XMLSupport
+  --
   enabled
-  StreamingType
+  StreamingType (RSTP/RTP/HTTP/..)
+  streamInUse
+  --
+  getFrontendDecryptInterface()
 }
 
 class decrypt::dvbapi::Client           #ffbb11 {
-  Mutex
+  Thread
+  --
+  --
 }
+
 class decrypt::dvbapi::ClientProperties #ffbb11
+class dvbcsa_bs_batch_s                 #ffbb11
 class Keys                              #ffbb11
-class Filter                            #ffbb11
+class decrypt::dvbapi::Filter           #ffbb11 {
+  Mutex _mutex
+  --
+}
 
 decrypt::dvbapi::Client --* StreamManager  : " _decrypt "
 decrypt::dvbapi::Client *.. StreamManager  : " _streamManager "
 
 StreamManager *-- Stream : " _stream[..] "
 class StreamManager #aaaaff {
-  Mutex
+  XMLSupport
+  --
+  Mutex _mutex
+  --
   getFrontendDecryptInterface(..)
 }
 
 StreamClient *-- socket::SocketAttr : " _rtp "
 StreamClient *-- socket::SocketAttr : " _rtcp "
-StreamClient *.. socket::SocketClient : " _httpc "
+StreamClient *.. socket::SocketClient : " _httpStream "
 class StreamClient #aaaaff {
-  Mutex
-  SocketClient *_httpc
+  Mutex _mutex
+  --
+  SocketClient *_httpStream
   watchdog
-  canClose
 }
 
-class mpegts::Filter        #11ff11
+class mpegts::Filter        #11ff11 {
+  Mutex _mutex
+  --
+}
 class mpegts::PacketBuffer  #11ff11
 class mpegts::TableData     #11ff11
 class mpegts::PidTable      #11ff11
 class mpegts::PAT           #11ff11
 class mpegts::PMT           #11ff11
+class mpegts::PCR           #11ff11
 class mpegts::SDT           #11ff11
 
 output::StreamThreadBase *-- mpegts::PacketBuffer : " _tsBuffer[..] "
 output::StreamThreadBase *.. StreamInterface
-class output::StreamThreadBase #ccffff
+class output::StreamThreadBase #ccffff {
+  Thread
+  --
+}
 
+class output::StreamThreadRtcp #ccffff
+class output::StreamThreadHttp #ccffff
 
-RtcpThread --* output::StreamThreadRtp
+output::StreamThreadRtcp --* output::StreamThreadRtp
 
 output::StreamThreadRtp --|> output::StreamThreadBase
 class output::StreamThreadRtp #ccffff {
@@ -153,7 +182,6 @@ class output::StreamThreadRtp #ccffff {
 }
 
 output::StreamThreadHttp --|> output::StreamThreadBase
-class output::StreamThreadHttp #ccffff
 
 class input::stream::Streamer #55ccff
 input::Device <|-- input::stream::Streamer
@@ -168,19 +196,29 @@ TSReaderData --|> input::DeviceData
 
 input::Device <|-- input::dvb::Frontend
 class input::Device      #aaccaa {
-  Mutex
+  Mutex _mutex
+  --
   StreamID
   isDataAvailable() = 0
   readFullTSPacket(..) = 0
 }
 class input::Translation #aaccaa
-class input::DeviceData  #aaccaa
+
+class input::DeviceData  #aaccaa {
+  XMLSupport
+  --
+  Mutex _mutex
+  bool _changed
+  --
+}
 
 input::dvb::FrontendDecryptInterface <|-- input::dvb::Frontend
 
 class input::dvb::FrontendDecryptInterface #ffccaa
 class input::dvb::Frontend                 #ffccaa
-class input::dvb::FrontendData             #ffccaa
+class input::dvb::FrontendData             #ffccaa {
+  Tuning/Channel Data
+}
 
 input::dvb::Frontend *-- input::dvb::delivery::System : " _deliverySystem[..] "
 input::dvb::Frontend *-- input::dvb::FrontendData
@@ -215,7 +253,7 @@ DVBS *-- DiSEqc : " _diseqc "
 DiSEqc *-- Lnb : " _lnb[MAX_LNB] "
 
 decrypt::dvbapi::ClientProperties *-- dvbcsa_bs_batch_s : " _batch "
-decrypt::dvbapi::ClientProperties *-- Filter
+decrypt::dvbapi::ClientProperties *-- decrypt::dvbapi::Filter
 decrypt::dvbapi::ClientProperties *-- Keys
 
 input::DeviceData <|-- input::dvb::FrontendData
@@ -224,12 +262,13 @@ mpegts::PAT --|> mpegts::TableData
 mpegts::PMT --|> mpegts::TableData
 mpegts::SDT --|> mpegts::TableData
 
-mpegts::Filter *-- mpegts::PAT : " _pat "
-mpegts::Filter *-- mpegts::PMT : " _pmt "
-mpegts::Filter *-- mpegts::SDT : " _sdt "
-mpegts::Filter --* input::Device : " _filter "
+mpegts::Filter *-- mpegts::PidTable
+mpegts::Filter *-- mpegts::PAT
+mpegts::Filter *-- mpegts::PMT
+mpegts::Filter *-- mpegts::PCR
+mpegts::Filter *-- mpegts::SDT
+input::DeviceData *-- mpegts::Filter : " _filter "
 
-input::dvb::FrontendData *-- mpegts::PidTable
 
 @enduml
 
