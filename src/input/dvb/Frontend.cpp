@@ -437,6 +437,10 @@ namespace dvb {
 		if (_frontendData.hasDeviceDataChanged()) {
 			_frontendData.resetDeviceDataChanged();
 			_tuned = false;
+			// Close active PIDs
+			for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
+				closePid(i);
+			}
 			closeFE();
 			closeDVR();
 			// After close wait a moment before opening it again
