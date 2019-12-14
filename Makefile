@@ -5,24 +5,31 @@
 # Set the compiler being used.
 CXX = $(CXXPREFIX)g++$(CXXSUFFIX)
 
+# Check compiler support for some functions
+RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf npfunc)
+RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /dev/null ; echo $$? ; rm -rf atomic)
+
 # Includes needed for proper compilation
 INCLUDES +=
 
 # Libraries needed for linking
-#LDFLAGS += -pthread -lrt -latomic
 LDFLAGS += -pthread -lrt
+# RESULT_HAS_ATOMIC_FUNCTIONS = 1 if compile fails
+ifeq "$(RESULT_HAS_ATOMIC_FUNCTIONS)" "1"
+  LDFLAGS += -latomic
+endif
 
 # Set Compiler Flags
 CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
-ifeq ($(BUILD),debug)
+ifeq "$(BUILD)" "debug"
   # "Debug" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
-else ifeq ($(BUILD),debug1)
+else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
   CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
-else ifeq ($(BUILD),simu)
+else ifeq "$(BUILD)" "simu"
   # "Debug Simu" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
 else
@@ -90,13 +97,13 @@ SOURCES = Version.cpp \
 	upnp/ssdp/Server.cpp
 
 # Add gprof, use gprof-helper.c for multithreading profiling
-ifeq ($(GPROF),yes)
+ifeq "$(GPROF)" "yes"
   LDFLAGS += -pg
   CFLAGS  += -pg
 endif
 
 # Add dvbcsa ?
-ifeq ($(LIBDVBCSA),yes)
+ifeq "$(LIBDVBCSA)" "yes"
   LDFLAGS += -ldvbcsa
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
@@ -106,18 +113,21 @@ ifeq ($(LIBDVBCSA),yes)
 endif
 
 # Add dvbca ?
-ifeq ($(DVBCA),yes)
+ifeq "$(DVBCA)" "yes"
   CFLAGS  += -DADDDVBCA
   SOURCES += decrypt/dvbca/DVBCA.cpp
 endif
 
 # Has np functions
-ifeq ($(HAS_NP_FUNCTIONS),yes)
+# RESULT_HAS_NP_FUNCTIONS = 0 if compile is succesfull which means NP are OK
+ifeq "$(HAS_NP_FUNCTIONS)" "yes"
+  CFLAGS  += -DHAS_NP_FUNCTIONS
+else ifeq "$(RESULT_HAS_NP_FUNCTIONS)" "0"
   CFLAGS  += -DHAS_NP_FUNCTIONS
 endif
 
 # Need to build for Enigma support
-ifeq ($(ENIGMA),yes)
+ifeq "$(ENIGMA)" "yes"
   CFLAGS += -DENIGMA
 endif
 
@@ -184,7 +194,7 @@ debug:
 	$(MAKE) "BUILD=debug"
 
 debug1:
-	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
+	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes
 
 # Create a 'simulation' version
 simu:
@@ -193,7 +203,7 @@ simu:
 # Create a 'test suite' Compile
 testsuite:
 	$(MAKE) clean
-	$(MAKE) debug LIBDVBCSA=yes HAS_NP_FUNCTIONS=yes
+	$(MAKE) debug LIBDVBCSA=yes
 	$(MAKE) clean
 	$(MAKE) debug
 	$(MAKE) clean
@@ -202,23 +212,6 @@ testsuite:
 	$(MAKE)
 	$(MAKE) clean
 
-testcode:
-ifndef HAS_NP_FUNCTIONS
-	@echo "#include <stdio.h>" > testcode.c
-	@echo "#ifndef _GNU_SOURCE" >> testcode.c
-	@echo "#define _GNU_SOURCE _GNU_SOURCE" >> testcode.c
-	@echo "#endif" >> testcode.c
-	@echo "#include <pthread.h>" >> testcode.c
-	@echo "int main(void) {" >> testcode.c
-	@echo "  pthread_t _thread;" >> testcode.c
-	@echo "  pthread_setname_np(_thread, \"Hello\");" >> testcode.c
-	@echo "  return 0;" >> testcode.c
-	@echo "}" >> testcode.c
-#	@$(CXX) testcode.c -o testcode -pthread 2> /dev/null ; if [ $$? -eq 0 ] ; then $(MAKE) -f Makefile.mk $(MAKECMDGOALS) HAS_NP_FUNCTIONS=yes ; else $(MAKE) -f Makefile.mk $(MAKECMDGOALS) HAS_NP_FUNCTIONS=no ; fi
-	-@$(CXX) -o testcode testcode.c -pthread > out 2>&1 ; if [ $$? -eq 0 ] ; then $(MAKE) $(MAKECMDGOALS) HAS_NP_FUNCTIONS=yes ; else $(MAKE) $(MAKECMDGOALS) HAS_NP_FUNCTIONS=no ; fi
-	@rm -rf testcode.c testcode
-endif
-
 # Install Doxygen and Graphviz/dot
 # sudo apt-get install graphviz doxygen
 docu:
@@ -226,6 +219,7 @@ docu:
 
 help:
 	@echo "Help, use these command for building this project:"
+	@echo " - Make project clean                   :  make clean"
 	@echo " - Make debug version                   :  make debug"
 	@echo " - Make debug version with DVBAPI       :  make debug LIBDVBCSA=yes"
 	@echo " - Make debug version for ENIGMA        :  make debug ENIGMA=yes"
@@ -253,5 +247,7 @@ checkcpp:
 	clean
 
 clean:
-	rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp /web/*.*~
-	rm -rf src/*.*~ src/*~
+	@echo Clearing project...
+	@rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp /web/*.*~
+	@rm -rf src/*.*~ src/*~
+	@echo ...Done
