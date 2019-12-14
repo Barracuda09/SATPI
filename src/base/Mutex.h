@@ -1,6 +1,6 @@
 /* Mutex.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -21,32 +21,38 @@
 #define BASE_MUTEX_H_INCLUDE BASE_MUTEX_H_INCLUDE
 
 #include <Log.h>
+#include <base/Thread.h>
 
 #include <chrono>
 #include <thread>
 
 #include <pthread.h>
-#include <unistd.h>
-#include <sys/prctl.h>
 
 namespace base {
 
 /// The class @c Mutex can be locked exclusively per thread
 /// to guarantee thread safety.
 class Mutex {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
+
 		Mutex() {
 			pthread_mutexattr_t attr;
 			pthread_mutexattr_init(&attr);
 			pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 			pthread_mutex_init(&_mutex, &attr);
 		}
+
 		virtual ~Mutex() {
 			pthread_mutex_destroy(&_mutex);
 		}
+
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
 		/// Exclusively lock the @c Mutex per thread.
 		void lock() const {
@@ -57,68 +63,56 @@ class Mutex {
 		/// timeout msec.
 		/// @param timeout specifies the time, in msec, to try locking this mutex.
 		bool tryLock(unsigned int timeout) const {
-			bool locked = true;
 			while (pthread_mutex_trylock(&_mutex) != 0) {
 				std::this_thread::sleep_for(std::chrono::microseconds(1000));
 				--timeout;
 				if (timeout == 0) {
-					locked = false;
-					break;
+					return false;
 				}
 			}
-			return locked;
+			return true;
 		}
 
 		/// Unlocking of the @c Mutex.
-		void unlock() const {
-			pthread_mutex_unlock(&_mutex);
+		bool unlock() const {
+			return pthread_mutex_unlock(&_mutex) == 0;
 		}
 
-	protected:
-
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+
 		mutable pthread_mutex_t _mutex;
-}; // class Mutex
+};
 
 /// The class @c MutexLock can be used for @c Mutex to 'auto' lock and unlock
 class MutexLock {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
 	public:
-		static const unsigned int TIMEOUT_15SEC = 15000;
 
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-/*
-		MutexLock(const Mutex &mutex) : _mutex(mutex) {
-			_mutex.lock();
-		}
-*/
 		MutexLock(const Mutex &mutex, unsigned int timeout = TIMEOUT_15SEC) : _mutex(mutex) {
 			if (!_mutex.tryLock(timeout)) {
-				char name[32];
-#ifdef HAS_NP_FUNCTIONS
-				pthread_t thread = pthread_self();
-				pthread_getname_np(thread, name, sizeof(name));
-#else
-				prctl(PR_GET_NAME, name, 0, 0, 0);
-#endif
-				SI_LOG_ERROR("Mutex in %s did not lock within timeout?  !!DEADLOCK!!", name);
+				SI_LOG_ERROR("Mutex in %s did not lock within timeout?  !!DEADLOCK!!",
+					Thread::getThisThreadName().c_str());
 			}
 		}
 
 		virtual ~MutexLock() {
-			_mutex.unlock();
+			if (!_mutex.unlock()) {
+				SI_LOG_ERROR("Mutex in %s not unlocked!!",
+					Thread::getThisThreadName().c_str());
+			}
 		}
 
-	protected:
-
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+
+		static constexpr unsigned int TIMEOUT_15SEC = 15000;
 		const Mutex &_mutex;
 };
 

@@ -25,12 +25,15 @@
 #include <functional>
 
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/prctl.h>
 
 namespace base {
 
 /// Thread can be use to implement thread functionality
 class Thread {
 	public:
+
 		using FunctionPauseThread = std::function<bool()>;
 		using FunctionThreadExecute = std::function<bool()>;
 
@@ -57,6 +60,22 @@ class Thread {
 			FunctionThreadExecute threadExecuteFunction);
 
 		virtual ~Thread();
+
+		// =====================================================================
+		// -- static member functions ------------------------------------------
+		// =====================================================================
+	public:
+
+		static std::string getThisThreadName() {
+			char name[32];
+#ifdef HAS_NP_FUNCTIONS
+			pthread_t thread = pthread_self();
+			pthread_getname_np(thread, name, sizeof(name));
+#else
+			prctl(PR_GET_NAME, name, 0, 0, 0);
+#endif
+			return name;
+		}
 
 		// =====================================================================
 		// -- Other member functions -------------------------------------------
