@@ -20,26 +20,8 @@ rtsp://%1/?msys=childpipe&exec="wget%20-qO-%20http:%2F%2F192.168.0.104:8875%2F%3
 #EXTINF:-1 satip-freq="10123", Translation to: File uri="test.ts"
 rtsp://%1/?msys=file&uri="test.ts"
 
-#EXTINF:-1 satip-freq="10744", Translation to: DVB-C 514MHz
-rtsp://%1/?freq=514&sr=6900&msys=dvbc&mtype=256qam&fec=35
+#EXTINF:-1 satip-freq="10744", Translation to: DVB-C 386MHz
+rtsp://%1/?freq=386&sr=6900&msys=dvbc&mtype=256qam&fec=35
 
-#EXTINF:-1 satip-freq="10773", Translation to: DVB-C 530MHz
-rtsp://%1/?freq=530&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10788", Translation to: DVB-C 554MHz
-rtsp://%1/?freq=554&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10818", Translation to: DVB-C 578MHz
-rtsp://%1/?freq=578&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10832", Translation to: DVB-C 610MHz
-rtsp://%1/?freq=610&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10847", Translation to: DVB-C 618MHz
-rtsp://%1/?freq=618&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10862", Translation to: DVB-C 626MHz
-rtsp://%1/?freq=626&sr=6900&msys=dvbc&mtype=256qam&fec=35
-
-#EXTINF:-1 satip-freq="10877", Translation to: DVB-C 658MHz
-rtsp://%1/?freq=658&sr=6900&msys=dvbc&mtype=256qam&fec=35
+#EXTINF:-1 satip-freq="10773", Translation to: DVB-C 458MHz
+rtsp://%1/?freq=458&sr=6900&msys=dvbc&mtype=256qam&fec=35
