@@ -177,7 +177,7 @@ namespace mpegts {
 				// Add Table Data
 				if (addData(tableID, data, 188, pid, cc)) {
 					if (!raw) {
-						SI_LOG_INFO("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
+						SI_LOG_INFO("Stream: %d, %s - PID %04d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
 							streamID, getTableTXT(tableID), pid, sectionLength, currentTableData.data.size(), secNr, lastSecNr, _currentSectionNumber);
 					}
 					// Check did we finish collecting Table Data
@@ -213,7 +213,7 @@ namespace mpegts {
 			if (addData(tableID, &data[4u], 188 - 4, pid, cc)) { // 4 = TS Header
 				const std::size_t tableDataSize = currentTableData.data.size();
 				if (!raw) {
-					SI_LOG_INFO("Stream: %d, %s - PID %d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
+					SI_LOG_INFO("Stream: %d, %s - PID %04d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
 							streamID, getTableTXT(tableID), pid, sectionLength, tableDataSize, currentTableData.secNr, currentTableData.lastSecNr, _currentSectionNumber);
 				}
 				// Check did we finish collecting Table Data
@@ -231,12 +231,12 @@ namespace mpegts {
 					}
 				}
 			} else {
-				SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data",
+				SI_LOG_ERROR("Stream: %d, %s - PID %04d: Unable to add data! Retrying to collect data",
 						streamID, getTableTXT(tableID), pid);
 				_dataTable.erase(_dataTable.find(_currentSectionNumber));
 			}
 		} else {
-//			SI_LOG_ERROR("Stream: %d, %s - PID %d: Unable to add data! Retrying to collect data", streamID, getTableTXT(0), pid);
+//			SI_LOG_ERROR("Stream: %d, %s - PID %04d: Unable to add data! Retrying to collect data", streamID, getTableTXT(0), pid);
 			_dataTable.erase(_dataTable.find(_currentSectionNumber));
 		}
 	}
