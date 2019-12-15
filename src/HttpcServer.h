@@ -57,6 +57,8 @@ class HttpcServer :
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
+	public:
+
 		HttpcServer(int maxClients, const std::string &protocol,
 			StreamManager &streamManager,
 			const std::string &bindIPAddress);
@@ -105,7 +107,7 @@ class HttpcServer :
 		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
-		virtual bool process(SocketClient &client) override;
+		virtual bool process(SocketClient &client) final;
 
 		/// Process the the Method HTTP/RTSP
 		void processStreamingRequest(SocketClient &client);
@@ -119,6 +121,7 @@ class HttpcServer :
 		// Data members
 		// =======================================================================
 	protected:
+
 		StreamManager &_streamManager;
 		std::string _bindIPAddress;
 

@@ -35,7 +35,6 @@ class RtspServer :
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
-
 	public:
 
 		RtspServer(StreamManager &streamManager, const std::string &bindIPAddress);
@@ -49,24 +48,24 @@ class RtspServer :
 
 	protected:
 		/// Thread function
-		virtual void threadEntry() override;
+		virtual void threadEntry() final;
 
 	private:
 
 		///
-		virtual void methodSetup(Stream &stream, int clientID, std::string &htmlBody) override;
+		virtual void methodSetup(Stream &stream, int clientID, std::string &htmlBody) final;
 
 		///
-		virtual void methodPlay(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) override;
+		virtual void methodPlay(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) final;
 
 		///
-		virtual void methodTeardown(const std::string &sessionID, int cseq, std::string &htmlBody) override;
+		virtual void methodTeardown(const std::string &sessionID, int cseq, std::string &htmlBody) final;
 
 		///
-		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) override;
+		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) final;
 
 		///
-		virtual void methodDescribe(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) override;
+		virtual void methodDescribe(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) final;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

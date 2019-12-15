@@ -32,11 +32,11 @@ FW_DECL_NS1(base, XMLSupport);
 class HttpServer :
 	public base::ThreadBase,
 	public HttpcServer {
-	public:
-
 		// =======================================================================
 		// Constructors and destructor
 		// =======================================================================
+	public:
+
 		HttpServer(
 			base::XMLSupport &xml,
 			StreamManager &streamManager,
@@ -48,6 +48,7 @@ class HttpServer :
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
+	public:
 
 		/// Call this to initialize, setup and start this server
 		virtual void initialize(
@@ -57,13 +58,13 @@ class HttpServer :
 	protected:
 
 		/// Thread function
-		virtual void threadEntry() override;
+		virtual void threadEntry() final;
 
 		/// Method for getting the required files
-		virtual bool methodGet(SocketClient &client) override;
+		virtual bool methodGet(SocketClient &client) final;
 
 		/// Method for getting the required files
-		virtual bool methodPost(SocketClient &client) override;
+		virtual bool methodPost(SocketClient &client) final;
 
 		///
 		std::size_t readFile(const char *filePath, std::string &data) const;
@@ -71,7 +72,6 @@ class HttpServer :
 		// =======================================================================
 		// Data members
 		// =======================================================================
-
 	private:
 
 		Properties &_properties;

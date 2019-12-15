@@ -29,65 +29,62 @@ FW_DECL_SP_NS1(mpegts, PMT);
 
 namespace mpegts {
 
-	class PMT :
-		public TableData {
-		public:
+class PMT :
+	public TableData {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			// -- Constructors and destructor ---------------------------------
-			// ================================================================
+		PMT();
 
-			PMT();
+		virtual ~PMT();
 
-			virtual ~PMT();
+		// =====================================================================
+		// -- mpegts::TableData ------------------------------------------------
+		// =====================================================================
+	public:
 
-			// =======================================================================
-			// -- mpegts::TableData --------------------------------------------------
-			// =======================================================================
+		virtual void clear() final;
 
-		public:
-			virtual void clear() override;
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		void parse(int streamID);
 
-			void parse(int streamID);
+		mpegts::TSData getProgramInfo() const {
+			return _progInfo;
+		}
 
-			mpegts::TSData getProgramInfo() const {
-				return _progInfo;
+		uint16_t getProgramNumber() const {
+			return _programNumber;
+		}
+
+		int getPCRPid() const {
+			return _pcrPID;
+		}
+
+		bool isReadySend() const {
+			if (isCollected() && !_send) {
+				_send = true;
+				return true;
 			}
+			return false;
+		}
 
-			uint16_t getProgramNumber() const {
-				return _programNumber;
-			}
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	private:
 
-			int getPCRPid() const {
-				return _pcrPID;
-			}
-
-			bool isReadySend() const {
-				if (isCollected() && !_send) {
-					_send = true;
-					return true;
-				}
-				return false;
-			}
-
-		public:
-
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
-
-		private:
-
-			mpegts::TSData _progInfo;
-			uint16_t _programNumber;
-			int _pcrPID;
-			std::size_t _prgLength;
-			mutable bool _send;
-	};
+		mpegts::TSData _progInfo;
+		uint16_t _programNumber;
+		int _pcrPID;
+		std::size_t _prgLength;
+		mutable bool _send;
+};
 
 } // namespace mpegts
 

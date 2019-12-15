@@ -30,65 +30,65 @@ FW_DECL_SP_NS1(mpegts, SDT);
 
 namespace mpegts {
 
-	class SDT :
-		public TableData {
-		public:
-			// ================================================================
-			// -- Forward declaration -----------------------------------------
-			// ================================================================
-			struct Data;
+class SDT :
+	public TableData {
+		// =====================================================================
+		// -- Forward declaration ----------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			// -- Constructors and destructor ---------------------------------
-			// ================================================================
+		struct Data;
 
-			SDT();
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			virtual ~SDT();
+		SDT();
 
-			// ================================================================
-			// -- mpegts::TableData -------------------------------------------
-			// ================================================================
+		virtual ~SDT();
 
-		public:
+		// =====================================================================
+		// -- mpegts::TableData ------------------------------------------------
+		// =====================================================================
+	public:
 
-			virtual void clear() override;
+		virtual void clear() final;
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
+		void parse(int streamID);
 
-			void parse(int streamID);
+		int getTransportStreamID() const {
+			return _transportStreamID;
+		}
 
-			int getTransportStreamID() const {
-				return _transportStreamID;
-			}
+		SDT::Data getSDTDataFor(int progID) const;
 
-			SDT::Data getSDTDataFor(int progID) const;
+	protected:
 
-		protected:
+		void copyToUTF8(std::string &str, const unsigned char *ptr, std::size_t len);
 
-			void copyToUTF8(std::string &str, const unsigned char *ptr, std::size_t len);
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		struct Data {
+			std::string networkNameUTF8;
+			std::string channelNameUTF8;
+		};
 
-		public:
+	private:
 
-			struct Data {
-				std::string networkNameUTF8;
-				std::string channelNameUTF8;
-			};
+		int _transportStreamID;
+		int _networkID;
+		std::map<int, Data> _sdtTable;
 
-		private:
-			int _transportStreamID;
-			int _networkID;
-			std::map<int, Data> _sdtTable;
-
-	};
+};
 
 } // namespace mpegts
 
