@@ -62,15 +62,13 @@ namespace stream {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void Streamer::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+	void Streamer::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "frontendname", "Streamer");
 		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 		_deviceData.addToXML(xml);
 	}
 
-	void Streamer::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+	void Streamer::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "transformation", element)) {
 			_transform.fromXML(element);

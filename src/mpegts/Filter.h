@@ -23,81 +23,113 @@
 #include <base/Mutex.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PCR.h>
+#include <mpegts/PidTable.h>
 #include <mpegts/PMT.h>
 #include <mpegts/SDT.h>
 
 namespace mpegts {
 
-	/// The class @c Filter carries the PID Tables
-	class Filter {
-		public:
+/// The class @c Filter carries the PID Tables
+class Filter {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Constructors and destructor --------------------------------
-			// ================================================================
-			Filter();
+		Filter();
 
-			virtual ~Filter();
+		virtual ~Filter();
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
+		///
+		void clear();
 
-			///
-			void addData(int streamID, const unsigned char *ptr);
+		///
+		void addData(int streamID, const unsigned char *ptr);
 
-			///
-			void clear(int streamID);
+		///
+		bool isMarkedAsPMT(int pid) const {
+			base::MutexLock lock(_mutex);
+			return _pat->isMarkedAsPMT(pid);
+		}
 
-			///
-			bool isMarkedAsPMT(int pid) const {
-				base::MutexLock lock(_mutex);
-				return _pat->isMarkedAsPMT(pid);
-			}
+		///
+		mpegts::SpPMT getPMTData() const {
+			base::MutexLock lock(_mutex);
+			return _pmt;
+		}
 
-			///
-			mpegts::SpPMT getPMTData() const {
-				base::MutexLock lock(_mutex);
-				return _pmt;
-			}
+		///
+		mpegts::SpPCR getPCRData() const {
+			base::MutexLock lock(_mutex);
+			return _pcr;
+		}
 
-			///
-			mpegts::SpPCR getPCRData() const {
-				base::MutexLock lock(_mutex);
-				return _pcr;
-			}
+		///
+		mpegts::SpPAT getPATData() const {
+			base::MutexLock lock(_mutex);
+			return _pat;
+		}
 
-			///
-			mpegts::SpPAT getPATData() const {
-				base::MutexLock lock(_mutex);
-				return _pat;
-			}
+		///
+		mpegts::SpSDT getSDTData() const {
+			base::MutexLock lock(_mutex);
+			return _sdt;
+		}
 
-			///
-			mpegts::SpSDT getSDTData() const {
-				base::MutexLock lock(_mutex);
-				return _sdt;
-			}
+		// =====================================================================
+		// =====================================================================
 
-		protected:
+		/// Set DMX file descriptor
+		void setDMXFileDescriptor(int pid, int fd);
 
+		/// Get DMX file descriptor
+		int getDMXFileDescriptor(int pid) const;
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		/// Close DMX file descriptor and reset data, but keep used flag
+		void closeDMXFileDescriptor(int pid);
 
-		protected:
+		/// Reset 'PID has changed' flag
+		void resetPIDTableChanged();
 
-		private:
-			mutable base::Mutex _mutex;
+		/// Check the 'PID has changed' flag
+		bool hasPIDTableChanged() const;
 
-			mpegts::SpPAT _pat;
-			mpegts::SpPCR _pcr;
-			mpegts::SpPMT _pmt;
-			mpegts::SpSDT _sdt;
-	};
+		/// Get the amount of packet that were received of this pid
+		uint32_t getPacketCounter(int pid) const;
+
+		/// Get the CSV of all the requested PID
+		std::string getPidCSV() const;
+
+		/// Set pid used or not
+		void setPID(int pid, bool val);
+
+		/// Check if this pid should be closed
+		bool shouldPIDClose(int pid) const;
+
+		/// Check if PID is used
+		bool isPIDUsed(int pid) const;
+
+		/// Set all PID
+		void setAllPID(bool val);
+
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	private:
+
+		mutable base::Mutex _mutex;
+
+		mpegts::PidTable _pidTable;
+		mpegts::SpPAT _pat;
+		mpegts::SpPCR _pcr;
+		mpegts::SpPMT _pmt;
+		mpegts::SpSDT _sdt;
+};
 
 } // namespace mpegts
 

@@ -27,66 +27,58 @@
 namespace input {
 namespace childpipe {
 
-	/// The class @c TSReaderData carries all the data/information for Reading
-	/// from an Child PIPE
-	class TSReaderData :
-		public DeviceData {
-		public:
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
-			TSReaderData();
-			virtual ~TSReaderData();
+/// The class @c TSReaderData carries all the data/information for Reading
+/// from an Child PIPE
+class TSReaderData :
+	public DeviceData {
+		// =======================================================================
+		// -- Constructors and destructor ----------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		TSReaderData();
+		virtual ~TSReaderData();
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+		// =======================================================================
+		// -- input::DeviceData --------------------------------------------------
+		// =======================================================================
+	private:
+		/// @see DeviceData
+		virtual void doNextAddToXML(std::string &xml) const final;
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		/// @see DeviceData
+		virtual void doNextFromXML(const std::string &xml) final;
 
-			// =======================================================================
-			// -- input::DeviceData --------------------------------------------------
-			// =======================================================================
+		/// @see DeviceData
+		virtual void doInitialize() final;
 
-		public:
+		/// @see DeviceData
+		virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
 
-			///
-			virtual void initialize() override;
+		/// @see DeviceData
+		virtual std::string doAttributeDescribeString(int streamID) const final;
 
-			///
-			virtual void parseStreamString(int streamID, const std::string &msg, const std::string &method) override;
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+	public:
 
-			///
-			virtual std::string attributeDescribeString(int streamID) const override;
+		///
+		std::string getFilePath() const;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		bool hasFilePath() const;
 
-		public:
+		///
+		void clearData();
 
-			///
-			std::string getFilePath() const;
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	private:
 
-			bool hasFilePath() const;
+		std::string _filePath;
 
-			///
-			void clearData();
-
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
-
-		private:
-
-			std::string _filePath;
-
-	};
+};
 
 } // namespace childpipe
 } // namespace input

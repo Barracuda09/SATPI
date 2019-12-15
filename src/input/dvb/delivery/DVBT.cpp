@@ -43,14 +43,12 @@ namespace delivery {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void DVBT::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
+	void DVBT::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "type", "DVB-T(2)");
 		ADD_XML_NUMBER_INPUT(xml, "lna", _lna, 0, 5);
 	}
 
-	void DVBT::fromXML(const std::string &xml) {
-		base::MutexLock lock(_xmlMutex);
+	void DVBT::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "lna.value", element)) {
 			_lna = std::stoi(element);

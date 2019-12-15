@@ -42,24 +42,6 @@ namespace delivery {
 	DiSEqcSwitch::~DiSEqcSwitch() {}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
-	// =======================================================================
-
-	void DiSEqcSwitch::addToXML(std::string &xml) const {
-		{
-			base::MutexLock lock(_xmlMutex);
-		}
-		DiSEqc::addToXML(xml);
-	}
-
-	void DiSEqcSwitch::fromXML(const std::string &xml) {
-		{
-			base::MutexLock lock(_xmlMutex);
-		}
-		DiSEqc::fromXML(xml);
-	}
-
-	// =======================================================================
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
 	// =======================================================================
 
@@ -94,6 +76,10 @@ namespace delivery {
 				cmd, hiband ? SEC_TONE_ON : SEC_TONE_OFF, (src % 2) ? SEC_MINI_B : SEC_MINI_A);
 	}
 
+	void DiSEqcSwitch::doNextAddToXML(std::string &UNUSED(xml)) const {}
+
+	void DiSEqcSwitch::doNextFromXML(const std::string &UNUSED(xml)) {}
+
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
@@ -117,8 +103,6 @@ namespace delivery {
 		{
 			// Framing 0xe1: Command from Master, No reply required, Repeated transmission
 			cmd.msg[0] = 0xe1;
-
-			base::MutexLock lock(_xmlMutex);
 			for (size_t i = 0; i < _diseqcRepeat; ++i) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {

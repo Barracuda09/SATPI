@@ -59,16 +59,14 @@ namespace childpipe {
 	//  -- base::XMLSupport ----------------------------------------------------
 	// =========================================================================
 
-	void TSReader::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
+	void TSReader::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "frontendname", "Child PIPE - TS Reader");
 		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 
 		_deviceData.addToXML(xml);
 	}
 
-	void TSReader::fromXML(const std::string &xml) {
-		base::MutexLock lock(_mutex);
+	void TSReader::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "transformation", element)) {
 			_transform.fromXML(element);
@@ -94,7 +92,7 @@ namespace childpipe {
 	}
 
 	bool TSReader::isDataAvailable() {
-		const std::int64_t pcrDelta = _filter.getPCRData()->getPCRDelta();
+		const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
 		if (pcrDelta != 0) {
 			_t2 = _t1;
 			_t1 = std::chrono::steady_clock::now();
@@ -104,7 +102,7 @@ namespace childpipe {
 				std::this_thread::sleep_for(std::chrono::microseconds(interval));
 			}
 			_t1 = std::chrono::steady_clock::now();
-			_filter.getPCRData()->clearPCRDelta();
+			_deviceData.getFilterData().getPCRData()->clearPCRDelta();
 		} else {
 			std::this_thread::sleep_for(std::chrono::microseconds(1000));
 		}
@@ -129,11 +127,8 @@ namespace childpipe {
 			// Get TS packet from the buffer
 			const unsigned char *data = buffer.getTSPacketPtr(i);
 
-			// Check is this the beginning of the TS and no Transport error indicator
-			if (data[0] == 0x47 && (data[1] & 0x80) != 0x80) {
-				// Add data to Filter
-				_filter.addData(_streamID, data);
-			}
+			// Add data to Filter
+			_deviceData.addFilterData(_streamID, data);
 		}
 		return true;
 	}

@@ -22,72 +22,85 @@
 
 #include <base/Mutex.h>
 #include <StringConverter.h>
+#include <Unused.h>
 
 #include <string>
 #include <functional>
 
 namespace base {
 
-	/// The class @c XMLSupport has some basic functions to handle XML strings
-	class XMLSupport {
+/// The class @c XMLSupport has some basic functions to handle XML strings
+class XMLSupport {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-		// =======================================================================
-		// -- Constructors and destructor ----------------------------------------
-		// =======================================================================
-		public:
+		XMLSupport() {}
 
-			XMLSupport() {}
+		virtual ~XMLSupport() {}
 
-			virtual ~XMLSupport() {}
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
+	public:
 
-		// =======================================================================
-		// -- Other member functions ---------------------------------------------
-		// =======================================================================
-		public:
+		/// Add data to an XML for storing or web interface
+		std::string toXML() const {
+			std::string xml;
+			addToXML(xml);
+			return xml;
+		}
 
-			/// Add data to an XML for storing or web interface
-			virtual void addToXML(std::string &xml) const = 0;
+		/// Add data to an XML for storing or web interface
+		void addToXML(std::string &xml) const {
+			base::MutexLock lock(_mutex);
+			doAddToXML(xml);
+		}
 
-			/// Add data to an XML for storing or web interface
-			virtual std::string toXML() const {
-				std::string xml;
-				addToXML(xml);
-				return xml;
-			}
+		/// Get data from an XML for restoring or web interface
+		void fromXML(const std::string &xml) {
+			base::MutexLock lock(_mutex);
+			doFromXML(xml);
+		}
 
-			/// Get data from an XML for restoring or web interface
-			virtual void fromXML(const std::string &xml) = 0;
+		using FunctionNotifyChanges = std::function<bool()>;
+		void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
+			base::MutexLock lock(_mutex);
+			_notifyChanges = notifyChanges;
+		}
 
-			using FunctionNotifyChanges = std::function<bool()>;
-			void setFunctionNotifyChanges(FunctionNotifyChanges notifyChanges) {
-				_notifyChanges = notifyChanges;
-			}
+	private:
 
-		protected:
+		/// Specialization for @see addToXML
+		virtual void doAddToXML(std::string &UNUSED(xml)) const {}
 
-			virtual bool notifyChanges() const;
+		/// Specialization for @see fromXML
+		virtual void doFromXML(const std::string &UNUSED(xml)) {}
 
-			///
-			bool findXMLElement(const std::string &xml, const std::string &elementToFind,
-				std::string &element);
+	protected:
 
-		private:
+		virtual bool notifyChanges() const;
 
-			/// Very basic/simple recursive XML parser
-			bool parseXML(const std::string &xml, const std::string &elementToFind, bool &found, std::string &element,
-						  std::string::const_iterator &it, std::string &tagEnd, std::string::const_iterator &itEndElement);
+		///
+		bool findXMLElement(const std::string &xml, const std::string &elementToFind,
+			std::string &element);
 
-		// =======================================================================
-		// -- Data members ------------------------------------------------------
-		// =======================================================================
-		protected:
+	private:
 
-			base::Mutex _xmlMutex;
+		/// Very basic/simple recursive XML parser
+		bool parseXML(const std::string &xml, const std::string &elementToFind,
+			bool &found, std::string &element, std::string::const_iterator &it,
+			std::string &tagEnd, std::string::const_iterator &itEndElement);
 
-		private:
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
+	private:
 
-			FunctionNotifyChanges _notifyChanges;
-	};
+		base::Mutex _mutex;
+		FunctionNotifyChanges _notifyChanges;
+};
 
 } // namespace base
 

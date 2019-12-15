@@ -24,100 +24,129 @@
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
+#include <mpegts/Filter.h>
 
 namespace input {
 
-	/// The class @c DeviceData. carries all the data/information for a device
-	class DeviceData :
-		public base::XMLSupport {
-		public:
-			// =======================================================================
-			// -- Constructors and destructor ----------------------------------------
-			// =======================================================================
-			DeviceData();
-			virtual ~DeviceData();
+/// The class @c DeviceData. carries all the data/information for a device
+class DeviceData :
+	public base::XMLSupport {
+		// =======================================================================
+		// -- Constructors and destructor ----------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		DeviceData();
+		virtual ~DeviceData();
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	private:
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
-		public:
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+	public:
 
-			///
-			virtual void initialize();
+		///
+		void initialize();
 
-			///
-			virtual void parseStreamString(int streamID, const std::string &msg, const std::string &method) = 0;
+		///
+		void parseStreamString(int streamID, const std::string &msg, const std::string &method);
 
-			///
-			virtual std::string attributeDescribeString(int streamID) const = 0;
+		///
+		std::string attributeDescribeString(int streamID) const;
 
-			///
-			void setMonitorData(fe_status_t status,
-					uint16_t strength,
-					uint16_t snr,
-					uint32_t ber,
-					uint32_t ublocks);
+	private:
 
-			/// Check the 'Channel Data changed' flag.
-			/// If changed we should update frontend
-			bool hasDeviceDataChanged() const;
+		/// Specialization for @see doAddToXML
+		virtual void doNextAddToXML(std::string &UNUSED(xml)) const {}
 
-			/// Reset/clear the 'Channel Data changed' flag
-			void resetDeviceDataChanged();
+		/// Specialization for @see doFromXML
+		virtual void doNextFromXML(const std::string &UNUSED(xml)) {}
 
-			/// Set the current Delivery System
-			void setDeliverySystem(input::InputSystem system);
+		/// Specialization for @see initialize
+		virtual void doInitialize() {}
 
-			/// Get the current Delivery System
-			input::InputSystem getDeliverySystem() const;
+		/// Specialization for @see parseStreamString
+		virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) = 0;
 
-			///
-			fe_delivery_system convertDeliverySystem() const;
+		/// Specialization for @see attributeDescribeString
+		virtual std::string doAttributeDescribeString(int streamID) const = 0;
 
-			int hasLock() const;
+	public:
 
-			fe_status_t getSignalStatus() const;
+		///
+		void setMonitorData(fe_status_t status,
+				uint16_t strength,
+				uint16_t snr,
+				uint32_t ber,
+				uint32_t ublocks);
 
-			uint16_t getSignalStrength() const;
+		/// Check the 'Channel Data changed' flag.
+		/// If changed we should update frontend
+		bool hasDeviceDataChanged() const;
 
-			uint16_t getSignalToNoiseRatio() const;
+		/// Reset/clear the 'Channel Data changed' flag
+		void resetDeviceDataChanged();
 
-			uint32_t getBitErrorRate() const;
+		/// Set the current Delivery System
+		void setDeliverySystem(input::InputSystem system);
 
-			uint32_t getUncorrectedBlocks() const;
+		/// Get the current Delivery System
+		input::InputSystem getDeliverySystem() const;
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		///
+		const mpegts::Filter &getFilterData() const;
 
-		protected:
+		///
+		mpegts::Filter &getFilterData();
 
-			base::Mutex _mutex;
+		///
+		void addFilterData(int streamID, const unsigned char *ptr);
 
-			bool _changed;             ///
-			input::InputSystem _delsys;/// modulation system i.e. (DVBS/DVBS2)
+		///
+		fe_delivery_system convertDeliverySystem() const;
 
-			// =======================================================================
-			// -- Monitor Data members -----------------------------------------------
-			// =======================================================================
-			fe_status_t _status;
-			uint16_t _strength;
-			uint16_t _snr;
-			uint32_t _ber;
-			uint32_t _ublocks;
-	};
+		int hasLock() const;
+
+		fe_status_t getSignalStatus() const;
+
+		uint16_t getSignalStrength() const;
+
+		uint16_t getSignalToNoiseRatio() const;
+
+		uint32_t getBitErrorRate() const;
+
+		uint32_t getUncorrectedBlocks() const;
+
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	protected:
+
+		base::Mutex _mutex;
+
+		bool _changed;
+		input::InputSystem _delsys;
+		mpegts::Filter _filter;
+
+		// =======================================================================
+		// -- Monitor Data members -----------------------------------------------
+		// =======================================================================
+		fe_status_t _status;
+		uint16_t _strength;
+		uint16_t _snr;
+		uint32_t _ber;
+		uint32_t _ublocks;
+};
 
 } // namespace input
 

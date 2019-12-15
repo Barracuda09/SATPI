@@ -32,38 +32,34 @@ namespace delivery {
 	/// The class @c DiSEqcEN50494 specifies which type of DiSEqc switch is connected
 	class DiSEqcEN50494 :
 		public DiSEqc {
-		public:
-
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
+		public:
+
 			DiSEqcEN50494();
 			virtual ~DiSEqcEN50494();
 
 			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
-
-		public:
-
-			virtual void addToXML(std::string &xml) const override;
-
-			virtual void fromXML(const std::string &xml) override;
-
-			// =======================================================================
 			// -- input::dvb::delivery::DiSEqc ---------------------------------------
 			// =======================================================================
-
 		public:
 
-			///
+			/// @see DiSEqc
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
-				int src, Lnb::Polarization pol) override;
+				int src, Lnb::Polarization pol) final;
+
+		private:
+
+			/// @see DiSEqc
+			virtual void doNextAddToXML(std::string &xml) const final;
+
+			/// @see DiSEqc
+			virtual void doNextFromXML(const std::string &xml) final;
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
 			// =======================================================================
-
 		private:
 
 			bool sendDiseqcUnicable(int feFD, int streamID, uint32_t &freq,
@@ -72,7 +68,6 @@ namespace delivery {
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
-
 		private:
 
 			int _pin;

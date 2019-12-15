@@ -38,18 +38,27 @@ namespace mpegts {
 
 	Filter::~Filter() {}
 
-	void Filter::clear(int streamID) {
+	void Filter::clear() {
 		base::MutexLock lock(_mutex);
-		SI_LOG_INFO("Stream: %d, Clearing PAT/PCR/PMT/SDT Tables...", streamID);
 		_pat = std::make_shared<PAT>();
 		_pcr = std::make_shared<PCR>();
 		_pmt = std::make_shared<PMT>();
 		_sdt = std::make_shared<SDT>();
+		_pidTable.clear();
 	}
 
 	void Filter::addData(const int streamID, const unsigned char *ptr) {
+		// Check is this the beginning of the TS and no Transport error indicator
+		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
+			return;
+		}
 		base::MutexLock lock(_mutex);
+
+		// get PID and CC from TS
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
+		const uint8_t  cc  =   ptr[3] & 0x0f;
+		_pidTable.addPIDData(pid, cc);
+
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
@@ -60,7 +69,7 @@ namespace mpegts {
 					_pat->parse(streamID);
 				}
 			}
-		} else if (_pat->isMarkedAsPMT(pid)) {
+		} else if (_pat->isMarkedAsPMT(pid) && _pidTable.isPIDUsed(pid)) {
 			if (!_pmt->isCollected()) {
 #ifdef ADDDVBCA
 				{
@@ -118,6 +127,68 @@ namespace mpegts {
 		} else if (pid == _pmt->getPCRPid()) {
 			_pcr->collectData(streamID, ptr);
 		}
+	}
+
+	void Filter::setDMXFileDescriptor(int pid, int fd) {
+		base::MutexLock lock(_mutex);
+		return _pidTable.setDMXFileDescriptor(pid, fd);
+	}
+
+	int Filter::getDMXFileDescriptor(int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.getDMXFileDescriptor(pid);
+	}
+
+	void Filter::closeDMXFileDescriptor(int pid) {
+		base::MutexLock lock(_mutex);
+		if (pid == 0) {
+//			_pat = std::make_shared<PAT>();
+		} else if (_pat->isMarkedAsPMT(pid)) {
+			_pmt = std::make_shared<PMT>();
+		} else if (pid == 17) {
+			_sdt = std::make_shared<SDT>();
+		}
+		_pidTable.closeDMXFileDescriptor(pid);
+	}
+
+	void Filter::resetPIDTableChanged() {
+		base::MutexLock lock(_mutex);
+		_pidTable.resetPIDTableChanged();
+	}
+
+	bool Filter::hasPIDTableChanged() const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.hasPIDTableChanged();
+	}
+
+	uint32_t Filter::getPacketCounter(int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.getPacketCounter(pid);
+	}
+
+	std::string Filter::getPidCSV() const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.getPidCSV();
+	}
+
+	void Filter::setPID(int pid, bool val) {
+		base::MutexLock lock(_mutex);
+		_pidTable.setPID(pid, val);
+	}
+
+	bool Filter::shouldPIDClose(int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.shouldPIDClose(pid);
+	}
+
+	bool Filter::isPIDUsed(int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.isPIDUsed(pid);
+	}
+
+	void Filter::setAllPID(bool val) {
+		base::MutexLock lock(_mutex);
+		_pidTable.setAllPID(val);
 	}
 
 } // namespace mpegts

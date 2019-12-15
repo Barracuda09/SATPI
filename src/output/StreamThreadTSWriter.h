@@ -54,12 +54,12 @@ class StreamThreadTSWriter :
 		/// @see StreamThreadBase
 		virtual bool writeDataToOutputDevice(
 			mpegts::PacketBuffer &buffer,
-			StreamClient &client) override;
+			StreamClient &client) final;
 
 	private:
 
 		/// @see StreamThreadBase
-		virtual void doStartStreaming(int clientID) override;
+		virtual void doStartStreaming(int clientID) final;
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------

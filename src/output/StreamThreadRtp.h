@@ -52,21 +52,21 @@ class StreamThreadRtp :
 		/// @see StreamThreadBase
 		virtual bool writeDataToOutputDevice(
 			mpegts::PacketBuffer &buffer,
-			StreamClient &client) override;
+			StreamClient &client) final;
 
 		/// @see StreamThreadBase
-		virtual int getStreamSocketPort(int clientID) const override;
+		virtual int getStreamSocketPort(int clientID) const final;
 
 	private:
 
 		/// @see StreamThreadBase
-		virtual void doStartStreaming(int clientID) override;
+		virtual void doStartStreaming(int clientID) final;
 
 		/// @see StreamThreadBase
-		virtual void doPauseStreaming(int clientID) override;
+		virtual void doPauseStreaming(int clientID) final;
 
 		/// @see StreamThreadBase
-		virtual void doRestartStreaming(int clientID) override;
+		virtual void doRestartStreaming(int clientID) final;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

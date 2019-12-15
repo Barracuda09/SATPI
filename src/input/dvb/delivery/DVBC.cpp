@@ -43,14 +43,11 @@ namespace delivery {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void DVBC::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
+	void DVBC::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "type", "DVB-C(2)");
 	}
 
-	void DVBC::fromXML(const std::string &UNUSED(xml)) {
-		base::MutexLock lock(_xmlMutex);
-	}
+	void DVBC::doFromXML(const std::string &UNUSED(xml)) {}
 
 	// =======================================================================
 	// -- input::dvb::delivery::System ---------------------------------------

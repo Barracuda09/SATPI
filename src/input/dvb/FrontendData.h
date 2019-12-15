@@ -22,7 +22,6 @@
 
 #include <input/DeviceData.h>
 #include <input/dvb/delivery/Lnb.h>
-#include <mpegts/PidTable.h>
 
 #include <stdint.h>
 #include <string>
@@ -33,10 +32,11 @@ namespace dvb {
 	/// The class @c FrontendData carries all the data/information for tuning a frontend
 	class FrontendData :
 		public DeviceData {
-		public:
 			// =======================================================================
 			// Constructors and destructor
 			// =======================================================================
+		public:
+
 			FrontendData();
 
 			virtual ~FrontendData();
@@ -46,72 +46,30 @@ namespace dvb {
 			FrontendData& operator=(const FrontendData&) = delete;
 
 			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
-
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
-
-			///
-			virtual void fromXML(const std::string &xml) override;
-
-			// =======================================================================
 			// -- input::DeviceData --------------------------------------------------
 			// =======================================================================
+		private:
 
-		public:
+			/// @see DeviceData
+			virtual void doNextAddToXML(std::string &xml) const final;
 
-			///
-			virtual void initialize() override;
+			/// @see DeviceData
+			virtual void doNextFromXML(const std::string &xml) final;
 
-			///
-			virtual void parseStreamString(int streamID, const std::string &msg, const std::string &method) override;
+			/// @see DeviceData
+			virtual void doInitialize() final;
 
-			///
-			virtual std::string attributeDescribeString(int streamID) const override;
+			/// @see DeviceData
+			virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
+
+			/// @see DeviceData
+			virtual std::string doAttributeDescribeString(int streamID) const final;
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
 
 		public:
-
-			/// Set DMX file descriptor
-			void setDMXFileDescriptor(int pid, int fd);
-
-			/// Get DMX file descriptor
-			int getDMXFileDescriptor(int pid) const;
-
-			/// Close DMX file descriptor and reset data, but keep used flag
-			void closeDMXFileDescriptor(int pid);
-
-			/// Reset 'PID has changed' flag
-			void resetPIDTableChanged();
-
-			/// Check the 'PID has changed' flag
-			bool hasPIDTableChanged() const;
-
-			/// Get the amount of packet that were received of this pid
-			uint32_t getPacketCounter(int pid) const;
-
-			/// Get the CSV of all the requested PID
-			std::string getPidCSV() const;
-
-			/// Set the continuity counter for pid
-			void addPIDData(int pid, uint8_t cc);
-
-			/// Set pid used or not
-			void setPID(int pid, bool val);
-
-			/// Check if this pid should be closed
-			bool shouldPIDClose(int pid) const;
-
-			/// Check if PID is used
-			bool isPIDUsed(int pid) const;
-
-			/// Set all PID
-			void setAllPID(bool val);
 
 			/// Get the frequency in Mhz
 			uint32_t getFrequency() const;
@@ -181,7 +139,6 @@ namespace dvb {
 			int _fec;                  /// forward error control i.e. (FEC_1_2 / FEC_2_3)
 			int _rolloff;              /// roll-off
 			int _inversion;            ///
-			mpegts::PidTable _pidTable;///
 
 			// =======================================================================
 			// -- DVB-S(2) Data members ----------------------------------------------

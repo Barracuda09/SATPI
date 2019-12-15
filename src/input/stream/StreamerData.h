@@ -35,33 +35,30 @@ class StreamerData :
 		// Constructors and destructor -----------------------------------------
 		// =====================================================================
 	public:
+
 		StreamerData();
+
 		virtual ~StreamerData();
-
-		// =====================================================================
-		// -- base::XMLSupport -------------------------------------------------
-		// =====================================================================
-	public:
-		///
-		virtual void addToXML(std::string &xml) const override;
-
-		///
-		virtual void fromXML(const std::string &xml) override;
 
 		// =====================================================================
 		// -- input::DeviceData ------------------------------------------------
 		// =====================================================================
-	public:
+	private:
 
-		///
-		virtual void initialize() override;
+		/// @see DeviceData
+		virtual void doNextAddToXML(std::string &xml) const final;
 
-		///
-		virtual void parseStreamString(int streamID, const std::string &msg,
-			const std::string &method) override;
+		/// @see DeviceData
+		virtual void doNextFromXML(const std::string &xml) final;
 
-		///
-		virtual std::string attributeDescribeString(int streamID) const override;
+		/// @see DeviceData
+		virtual void doInitialize() final;
+
+		/// @see DeviceData
+		virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
+
+		/// @see DeviceData
+		virtual std::string doAttributeDescribeString(int streamID) const final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------

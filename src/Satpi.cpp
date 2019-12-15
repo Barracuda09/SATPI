@@ -119,25 +119,24 @@ class SatPI :
 
 	public:
 
-		virtual void addToXML(std::string &xml) const override {
+		virtual void doAddToXML(std::string &xml) const final {
 			xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
 			ADD_XML_BEGIN_ELEMENT(xml, "data");
-				{
-					// application data
-					ADD_XML_BEGIN_ELEMENT(xml, "appdata");
+
+				// application data
+				ADD_XML_BEGIN_ELEMENT(xml, "appdata");
 					ADD_XML_ELEMENT(xml, "uptime", std::time(nullptr) - _properties.getApplicationStartTime());
 					ADD_XML_ELEMENT(xml, "appversion", _properties.getSoftwareVersion());
 					ADD_XML_ELEMENT(xml, "uuid", _properties.getUUID());
-					ADD_XML_END_ELEMENT(xml, "appdata");
-				}
+				ADD_XML_END_ELEMENT(xml, "appdata");
+
 				ADD_XML_ELEMENT(xml, "streams", _streamManager.toXML());
 				ADD_XML_ELEMENT(xml, "configdata", _properties.toXML());
 				ADD_XML_ELEMENT(xml, "ssdp", _ssdpServer.toXML());
-
 			ADD_XML_END_ELEMENT(xml, "data");
 		}
 
-		virtual void fromXML(const std::string &xml) override {
+		virtual void doFromXML(const std::string &xml) final {
 			std::string element;
 			if (findXMLElement(xml, "streams", element)) {
 				_streamManager.fromXML(element);
@@ -155,7 +154,7 @@ class SatPI :
 		// -- base::XMLSaveSupport -----------------------------------------------
 		// =======================================================================
 
-		public:
+	public:
 
             virtual bool saveXML() const {
                 std::string xml;

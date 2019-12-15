@@ -61,6 +61,8 @@ class Stream :
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
+	public:
+
 		Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt);
 
 		virtual ~Stream();
@@ -68,43 +70,45 @@ class Stream :
 		// =======================================================================
 		// -- base::XMLSupport ---------------------------------------------------
 		// =======================================================================
+	private:
 
-	public:
-		virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =======================================================================
 		// -- StreamInterface ----------------------------------------------------
 		// =======================================================================
 	public:
 
-		virtual int  getStreamID() const override;
+		virtual int  getStreamID() const final;
 
-		virtual StreamClient &getStreamClient(int clientID) const override;
+		virtual StreamClient &getStreamClient(int clientID) const final;
 
-		virtual input::SpDevice getInputDevice() const override;
+		virtual input::SpDevice getInputDevice() const final;
 
 #ifdef LIBDVBCSA
 		///
-		virtual decrypt::dvbapi::SpClient getDecryptDevice() const override;
+		virtual decrypt::dvbapi::SpClient getDecryptDevice() const final;
 #endif
 
-		virtual uint32_t getSSRC() const override;
+		virtual uint32_t getSSRC() const final;
 
-		virtual long getTimestamp() const override;
+		virtual long getTimestamp() const final;
 
-		virtual uint32_t getSPC() const override;
+		virtual uint32_t getSPC() const final;
 
-		virtual unsigned int getRtcpSignalUpdateFrequency() const override;
+		virtual unsigned int getRtcpSignalUpdateFrequency() const final;
 
-		virtual uint32_t getSOC() const override;
+		virtual uint32_t getSOC() const final;
 
-		virtual void addRtpData(uint32_t byte, long timestamp) override;
+		virtual void addRtpData(uint32_t byte, long timestamp) final;
 
-		virtual double getRtpPayload() const override;
+		virtual double getRtpPayload() const final;
 
-		virtual std::string attributeDescribeString(bool &active) const override;
+		virtual std::string attributeDescribeString(bool &active) const final;
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
@@ -137,19 +141,19 @@ class Stream :
 
 		/// Check is this stream used already
 		bool streamInUse() const {
-			base::MutexLock lock(_xmlMutex);
+			base::MutexLock lock(_mutex);
 			return _streamInUse;
 		}
 
 		/// Check is this stream enabled, can we use it?
 		bool streamEnabled() const {
-			base::MutexLock lock(_xmlMutex);
+			base::MutexLock lock(_mutex);
 			return _enabled;
 		}
 
 		/// Get the stream type of this stream
 		StreamingType getStreamingType() const {
-			base::MutexLock lock(_xmlMutex);
+			base::MutexLock lock(_mutex);
 			return _streamingType;
 		}
 
@@ -171,13 +175,12 @@ class Stream :
 		///
 		bool update(int clientID, bool start);
 
-	protected:
-
-	private:
-
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
+	private:
+
+		base::Mutex _mutex;
 		int _streamID;                    ///
 
 		StreamingType     _streamingType; ///

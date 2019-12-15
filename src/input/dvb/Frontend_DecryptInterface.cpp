@@ -61,7 +61,7 @@ namespace dvb {
 		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
 			_streamID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
 		_dvbapiData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
-		_frontendData.setPID(pid, true);
+		_frontendData.getFilterData().setPID(pid, true);
 		// now update frontend, PID list has changed
 		updatePIDFilters();
    }
@@ -69,7 +69,7 @@ namespace dvb {
 	void Frontend::stopOSCamFilterData(int pid, int demux, int filter) {
 		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
 		_dvbapiData.stopOSCamFilterData(demux, filter);
-		// Do not remove the PID!
+		// Do not update frontend or remove the PID!
 	}
 
 	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
@@ -90,11 +90,11 @@ namespace dvb {
 	}
 
 	bool Frontend::isMarkedAsPMT(int pid) const {
-		return _filter.isMarkedAsPMT(pid);
+		return _frontendData.getFilterData().isMarkedAsPMT(pid);
 	}
 
 	mpegts::SpPMT Frontend::getPMTData() const {
-		return _filter.getPMTData();
+		return _frontendData.getFilterData().getPMTData();
 	}
 
 } // namespace dvb

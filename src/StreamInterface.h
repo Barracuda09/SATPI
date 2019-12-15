@@ -28,10 +28,11 @@ FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 /// The class @c StreamInterface is an interface to an @c Stream
 class StreamInterface {
-	public:
 		// =======================================================================
 		// -- Constructors and destructor ----------------------------------------
 		// =======================================================================
+	public:
+
 		StreamInterface() {}
 
 		virtual ~StreamInterface() {}
@@ -39,6 +40,7 @@ class StreamInterface {
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
+	public:
 
 		/// Get the streamID of this stream
 		virtual int getStreamID() const = 0;

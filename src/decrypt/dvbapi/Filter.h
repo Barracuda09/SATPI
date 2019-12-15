@@ -30,11 +30,10 @@ namespace dvbapi {
 
 	/// The class @c Filter are all available filters for OSCam
 	class Filter {
-		public:
-
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
+		public:
 
 			Filter() :
 				_collecting(false),
@@ -47,7 +46,6 @@ namespace dvbapi {
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
-
 		public:
 
 			void start(int pid, int demux, int filter,
@@ -129,8 +127,7 @@ namespace dvbapi {
 			// =======================================================================
 			//  -- Data members ------------------------------------------------------
 			// =======================================================================
-
-		protected:
+		private:
 
 			static constexpr int DEMUX_SIZE  = 25;
 			static constexpr int FILTER_SIZE = 25;

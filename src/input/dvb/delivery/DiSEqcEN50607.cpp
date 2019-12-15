@@ -45,37 +45,6 @@ namespace delivery {
 	DiSEqcEN50607::~DiSEqcEN50607() {}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
-	// =======================================================================
-
-	void DiSEqcEN50607::addToXML(std::string &xml) const {
-		{
-			base::MutexLock lock(_xmlMutex);
-			ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
-			ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 40);
-			ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
-		}
-		DiSEqc::addToXML(xml);
-	}
-
-	void DiSEqcEN50607::fromXML(const std::string &xml) {
-		{
-			base::MutexLock lock(_xmlMutex);
-			std::string element;
-			if (findXMLElement(xml, "chFreq.value", element)) {
-				_chFreq = std::stoi(element);
-			}
-			if (findXMLElement(xml, "chSlot.value", element)) {
-				_chSlot = std::stoi(element);
-			}
-			if (findXMLElement(xml, "pin.value", element)) {
-				_pin = std::stoi(element);
-			}
-		}
-		DiSEqc::fromXML(xml);
-	}
-
-	// =======================================================================
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
 	// =======================================================================
 
@@ -92,14 +61,31 @@ namespace delivery {
 		return sendDiseqcJess(feFD, streamID, freq, src, pol);
 	}
 
+	void DiSEqcEN50607::doNextAddToXML(std::string &xml) const {
+		ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
+		ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 40);
+		ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
+	}
+
+	void DiSEqcEN50607::doNextFromXML(const std::string &xml) {
+		std::string element;
+		if (findXMLElement(xml, "chFreq.value", element)) {
+			_chFreq = std::stoi(element);
+		}
+		if (findXMLElement(xml, "chSlot.value", element)) {
+			_chSlot = std::stoi(element);
+		}
+		if (findXMLElement(xml, "pin.value", element)) {
+			_pin = std::stoi(element);
+		}
+	}
+
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
 	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const int streamID, uint32_t &freq,
 		const int src, const Lnb::Polarization pol) {
-		base::MutexLock lock(_xmlMutex);
-
 		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
 		dvb_diseqc_master_cmd cmd = {
 			{0x70, 0x00, 0x00, 0x00, 0x00}, 4

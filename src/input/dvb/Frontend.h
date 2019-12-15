@@ -53,7 +53,6 @@ class Frontend :
 		// =======================================================================
 		// -- Static Data members ------------------------------------------------
 		// =======================================================================
-
 	public:
 
 		static const unsigned int DEFAULT_DVR_BUFFER_SIZE;
@@ -62,7 +61,6 @@ class Frontend :
 		// =======================================================================
 		//  -- Constructors and destructor ---------------------------------------
 		// =======================================================================
-
 	public:
 
 		Frontend(
@@ -77,7 +75,6 @@ class Frontend :
 		// =======================================================================
 		//  -- Static member functions -------------------------------------------
 		// =======================================================================
-
 	public:
 
 		static void enumerate(
@@ -89,12 +86,13 @@ class Frontend :
 		// =======================================================================
 		// -- base::XMLSupport ---------------------------------------------------
 		// =======================================================================
+	private:
 
-	public:
-		///
-		virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 #ifdef LIBDVBCSA
 		// =======================================================================
@@ -102,31 +100,31 @@ class Frontend :
 		// =======================================================================
 	public:
 
-		virtual int getStreamID() const override;
+		virtual int getStreamID() const final;
 
-		virtual int getBatchCount() const override;
+		virtual int getBatchCount() const final;
 
-		virtual int getBatchParity() const override;
+		virtual int getBatchParity() const final;
 
-		virtual int getMaximumBatchSize() const override;
+		virtual int getMaximumBatchSize() const final;
 
-		virtual void decryptBatch(bool final) override;
+		virtual void decryptBatch(bool final) final;
 
-		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) override;
+		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) final;
 
-		virtual const dvbcsa_bs_key_s *getKey(int parity) const override;
+		virtual const dvbcsa_bs_key_s *getKey(int parity) const final;
 
-		virtual void setKey(const unsigned char *cw, int parity, int index) override;
+		virtual void setKey(const unsigned char *cw, int parity, int index) final;
 
 		virtual void startOSCamFilterData(int pid, int demux, int filter,
-			const unsigned char *filterData, const unsigned char *filterMask) override;
+			const unsigned char *filterData, const unsigned char *filterMask) final;
 
-		virtual void stopOSCamFilterData(int pid, int demux, int filter) override;
+		virtual void stopOSCamFilterData(int pid, int demux, int filter) final;
 
 		virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-			int &filter, int &demux, mpegts::TSData &filterData) override;
+			int &filter, int &demux, mpegts::TSData &filterData) final;
 
-		virtual void stopOSCamFilters(int streamID) override;
+		virtual void stopOSCamFilters(int streamID) final;
 
 		virtual void setECMInfo(
 			int pid,
@@ -138,17 +136,16 @@ class Frontend :
 			const std::string &readerName,
 			const std::string &sourceName,
 			const std::string &protocolName,
-			int hops) override;
+			int hops) final;
 
-		virtual bool isMarkedAsPMT(int pid) const override;
+		virtual bool isMarkedAsPMT(int pid) const final;
 
-		virtual mpegts::SpPMT getPMTData() const override;
+		virtual mpegts::SpPMT getPMTData() const final;
 #endif
 
 		// =======================================================================
 		//  -- input::Device------------------------------------------------------
 		// =======================================================================
-
 	public:
 
 		virtual void addDeliverySystemCount(
@@ -156,33 +153,32 @@ class Frontend :
 			std::size_t &dvbt,
 			std::size_t &dvbt2,
 			std::size_t &dvbc,
-			std::size_t &dvbc2) override;
+			std::size_t &dvbc2) final;
 
-		virtual bool isDataAvailable() override;
+		virtual bool isDataAvailable() final;
 
-		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
+		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) final;
 
-		virtual bool capableOf(InputSystem system) const override;
+		virtual bool capableOf(InputSystem system) const final;
 
-		virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
+		virtual bool capableToTransform(const std::string &msg, const std::string &method) const final;
 
-		virtual void monitorSignal(bool showStatus) override;
+		virtual void monitorSignal(bool showStatus) final;
 
-		virtual bool hasDeviceDataChanged() const override;
+		virtual bool hasDeviceDataChanged() const final;
 
-		virtual void parseStreamString(const std::string &msg, const std::string &method) override;
+		virtual void parseStreamString(const std::string &msg, const std::string &method) final;
 
-		virtual bool update() override;
+		virtual bool update() final;
 
-		virtual bool teardown() override;
+		virtual bool teardown() final;
 
-		virtual std::string attributeDescribeString() const override;
+		virtual std::string attributeDescribeString() const final;
 
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
 		// =======================================================================
-
-	protected:
+	private:
 
 		void setupFrontend();
 
@@ -226,8 +222,8 @@ class Frontend :
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
-
 	private:
+
 		bool _tuned;
 		int _fd_fe;
 		int _fd_dvr;

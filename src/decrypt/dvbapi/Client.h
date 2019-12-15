@@ -41,10 +41,10 @@ namespace dvbapi {
 class Client :
 	public base::ThreadBase,
 	public base::XMLSupport {
-	public:
 		// ================================================================
 		// -- Constructors and destructor ---------------------------------
 		// ================================================================
+	public:
 
 		explicit Client(StreamManager &streamManager);
 
@@ -53,25 +53,24 @@ class Client :
 		// ================================================================
 		//  -- base::ThreadBase -------------------------------------------
 		// ================================================================
-
 	protected:
 
-		virtual void threadEntry() override;
+		virtual void threadEntry() final;
 
 		// ================================================================
 		//  -- base::XMLSupport -------------------------------------------
 		// ================================================================
+	private:
 
-	public:
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void addToXML(std::string &xml) const override;
-
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// ================================================================
 		//  -- Other member functions -------------------------------------
 		// ================================================================
-
 	public:
 
 		///
@@ -100,7 +99,6 @@ class Client :
 		// =================================================================
 		// -- Data members -------------------------------------------------
 		// =================================================================
-
 	private:
 
 		SocketClient     _client;

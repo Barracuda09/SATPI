@@ -180,30 +180,16 @@ namespace dvb {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void Frontend::addToXML(std::string &xml) const {
-		{
-			base::MutexLock lock(_xmlMutex);
-			ADD_XML_ELEMENT(xml, "frontendname", _fe_info.name);
-			ADD_XML_ELEMENT(xml, "pathname", _path_to_fe);
-			ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("%1 Hz to %2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
-			ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("%1 symbols/s to %2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
+	void Frontend::doAddToXML(std::string &xml) const {
+		ADD_XML_ELEMENT(xml, "frontendname", _fe_info.name);
+		ADD_XML_ELEMENT(xml, "pathname", _path_to_fe);
+		ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("%1 Hz to %2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
+		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("%1 symbols/s to %2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
 
-			ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
-		}
+		ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 
 		// Channel
 		_frontendData.addToXML(xml);
-		const mpegts::SDT::Data sdtData = _filter.getSDTData()->getSDTDataFor(
-				_filter.getPMTData()->getProgramNumber());
-		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
-		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
-
-		// Monitor
-		ADD_XML_ELEMENT(xml, "status", _frontendData.getSignalStatus());
-		ADD_XML_ELEMENT(xml, "signal", _frontendData.getSignalStrength());
-		ADD_XML_ELEMENT(xml, "snr", _frontendData.getSignalToNoiseRatio());
-		ADD_XML_ELEMENT(xml, "ber", _frontendData.getBitErrorRate());
-		ADD_XML_ELEMENT(xml, "unc", _frontendData.getUncorrectedBlocks());
 
 		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
 
@@ -212,16 +198,13 @@ namespace dvb {
 		}
 	}
 
-	void Frontend::fromXML(const std::string &xml) {
+	void Frontend::doFromXML(const std::string &xml) {
 		std::string element;
-		{
-			base::MutexLock lock(_xmlMutex);
-			if (findXMLElement(xml, "dvrbuffer.value", element)) {
-				const unsigned int newSize = std::stoi(element);
-				_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
-					newSize : DEFAULT_DVR_BUFFER_SIZE;
+		if (findXMLElement(xml, "dvrbuffer.value", element)) {
+			const unsigned int newSize = std::stoi(element);
+			_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
+				newSize : DEFAULT_DVR_BUFFER_SIZE;
 
-			}
 		}
 		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem%1", i);
@@ -276,15 +259,8 @@ namespace dvb {
 				static constexpr std::size_t size = buffer.getNumberOfTSPackets();
 				for (std::size_t i = 0; i < size; ++i) {
 					const unsigned char *ptr = buffer.getTSPacketPtr(i);
-					// sync byte then check cc
-					if (ptr[0] == 0x47) {
-						// get PID and CC from TS
-						const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
-						const uint8_t  cc  =   ptr[3] & 0x0f;
-						_frontendData.addPIDData(pid, cc);
-
-						_filter.addData(_streamID, ptr);
-					}
+					// Add data to Filter
+					_frontendData.addFilterData(_streamID, ptr);
 				}
 				return true;
 			}
@@ -701,7 +677,7 @@ namespace dvb {
 		pesFilter.flags    = DMX_IMMEDIATE_START;
 
 		if (::ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-			PERROR("DMX_SET_PES_FILTER");
+			PERROR("DMX_SET_PES_FILTER (PID %04d)", pid);
 			return false;
 		}
 		return true;
@@ -783,50 +759,51 @@ namespace dvb {
 	}
 
 	bool Frontend::openPid(const int pid) {
-		if (_frontendData.getDMXFileDescriptor(pid) == -1) {
+		if (_frontendData.getFilterData().getDMXFileDescriptor(pid) == -1) {
 			const int fd = openDMX(_path_to_dmx);
-			_frontendData.setDMXFileDescriptor(pid, fd);
+			_frontendData.getFilterData().setDMXFileDescriptor(pid, fd);
 			std::size_t timeout = 0;
-			while (setDMXFilter(_frontendData.getDMXFileDescriptor(pid), pid) != 1) {
+			while (setDMXFilter(fd, pid) != 1) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(350));
 				++timeout;
 				if (timeout > 3) {
 					return false;
 				}
 			}
-			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s",
-					_streamID, pid, _frontendData.getDMXFileDescriptor(pid),
-					_filter.isMarkedAsPMT(pid) ? " - PMT" : "");
+			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s", _streamID, pid, fd,
+					_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 		}
 		return true;
 	}
 
 	void Frontend::closePid(const int pid) {
-		if (_frontendData.getDMXFileDescriptor(pid) != -1) {
-			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d",
-					_streamID, pid, _frontendData.getDMXFileDescriptor(pid), _frontendData.getPacketCounter(pid));
-			if (::ioctl(_frontendData.getDMXFileDescriptor(pid), DMX_STOP) != 0) {
+		const int fd = _frontendData.getFilterData().getDMXFileDescriptor(pid);
+		if (fd != -1) {
+			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d%s",
+					_streamID, pid, fd, _frontendData.getFilterData().getPacketCounter(pid),
+					_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
+			if (::ioctl(fd, DMX_STOP) != 0) {
 				PERROR("DMX_STOP");
 			}
-			_frontendData.closeDMXFileDescriptor(pid);
+			_frontendData.getFilterData().closeDMXFileDescriptor(pid);
 		}
 	}
 
 	bool Frontend::updatePIDFilters() {
 		base::MutexLock lock(_mutex);
-		if (_frontendData.hasPIDTableChanged()) {
+		if (_frontendData.getFilterData().hasPIDTableChanged()) {
 			if (isTuned()) {
-				_frontendData.resetPIDTableChanged();
+				_frontendData.getFilterData().resetPIDTableChanged();
 				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
 				// Check should we close PIDs first
 				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-					if (_frontendData.shouldPIDClose(i)) {
+					if (_frontendData.getFilterData().shouldPIDClose(i)) {
 						closePid(i);
 					}
 				}
 				// Check which PID should be openend (again)
 				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-					if (_frontendData.isPIDUsed(i)) {
+					if (_frontendData.getFilterData().isPIDUsed(i)) {
 						// Check if we have no DMX for this PID, then open one
 						if (!openPid(i)) {
 							return false;

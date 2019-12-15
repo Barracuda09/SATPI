@@ -69,13 +69,13 @@ class Streamer :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
-	public:
-		///
-		virtual void addToXML(std::string &xml) const override;
+	private:
 
-		///
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		//  -- input::Device----------------------------------------------------
@@ -87,27 +87,27 @@ class Streamer :
 			std::size_t &dvbt,
 			std::size_t &dvbt2,
 			std::size_t &dvbc,
-			std::size_t &dvbc2) override;
+			std::size_t &dvbc2) final;
 
-		virtual bool isDataAvailable() override;
+		virtual bool isDataAvailable() final;
 
-		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) override;
+		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) final;
 
-		virtual bool capableOf(input::InputSystem msys) const override;
+		virtual bool capableOf(input::InputSystem msys) const final;
 
-		virtual bool capableToTransform(const std::string &msg, const std::string &method) const override;
+		virtual bool capableToTransform(const std::string &msg, const std::string &method) const final;
 
-		virtual void monitorSignal(bool showStatus) override;
+		virtual void monitorSignal(bool showStatus) final;
 
-		virtual bool hasDeviceDataChanged() const override;
+		virtual bool hasDeviceDataChanged() const final;
 
-		virtual void parseStreamString(const std::string &msg, const std::string &method) override;
+		virtual void parseStreamString(const std::string &msg, const std::string &method) final;
 
-		virtual bool update() override;
+		virtual bool update() final;
 
-		virtual bool teardown() override;
+		virtual bool teardown() final;
 
-		virtual std::string attributeDescribeString() const override;
+		virtual std::string attributeDescribeString() const final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------

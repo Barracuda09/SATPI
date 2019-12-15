@@ -45,12 +45,12 @@ class StreamThreadRtcp :
 	protected:
 
 		/// @see StreamThreadRtcpBase
-		virtual int getStreamSocketPort(int clientID) const override;
+		virtual int getStreamSocketPort(int clientID) const final;
 
 	private:
 
 		/// @see StreamThreadRtcpBase
-		virtual void doStartStreaming(int clientID) override;
+		virtual void doStartStreaming(int clientID) final;
 
 		/// @see StreamThreadRtcpBase
 		virtual void doSendDataToClient(int clientID,
@@ -59,7 +59,7 @@ class StreamThreadRtcp :
 			uint8_t *sdes,
 			std::size_t sdeslen,
 			uint8_t *app,
-			std::size_t applen) override;
+			std::size_t applen) final;
 
 };
 

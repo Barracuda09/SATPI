@@ -57,16 +57,14 @@ namespace delivery {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void Lnb::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
+	void Lnb::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "lnbtype", asInteger(_type));
 		ADD_XML_NUMBER_INPUT(xml, "lofSwitch", _switchlof / 1000UL, 0, 20000);
 		ADD_XML_NUMBER_INPUT(xml, "lofLow", _lofLow / 1000UL, 0, 20000);
 		ADD_XML_NUMBER_INPUT(xml, "lofHigh", _lofHigh / 1000UL, 0, 20000);
 	}
 
-	void Lnb::fromXML(const std::string &xml) {
-		base::MutexLock lock(_xmlMutex);
+	void Lnb::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "lnbtype", element)) {
 			_type = static_cast<LNBType>(std::stoi(element));

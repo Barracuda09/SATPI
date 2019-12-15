@@ -69,17 +69,15 @@ Server::~Server() {
 //  -- base::XMLSupport --------------------------------------------------------
 // =============================================================================
 
-void Server::addToXML(std::string &xml) const {
-	base::MutexLock lock(_xmlMutex);
-
+void Server::doAddToXML(std::string &xml) const {
+	base::MutexLock lock(_mutex);
 	ADD_XML_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
 	ADD_XML_ELEMENT(xml, "bootID", _bootID);
 	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
 }
 
-void Server::fromXML(const std::string &xml) {
-	base::MutexLock lock(_xmlMutex);
-
+void Server::doFromXML(const std::string &xml) {
+	base::MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "annouceTime.value", element)) {
 		_announceTimeSec = std::stoi(element.c_str());
@@ -115,6 +113,9 @@ void Server::threadEntry() {
 	for (;; ) {
 		// call poll with a timeout of 500 ms
 		const int pollRet = poll(pfd, 1, 500);
+
+		base::MutexLock lock(_mutex);
+
 		if (pollRet > 0 && pfd[0].revents != 0) {
 			sockaddr_in si_other;
 			socklen_t addrlen = sizeof(si_other);
@@ -206,7 +207,6 @@ void Server::checkDefendDeviceID(
 				"USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
 				"DEVICEID.SES.COM: %4\r\n" \
 				"\r\n";
-		base::MutexLock lock(_xmlMutex);
 		const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
 			_bindIPAddress,
 			SSDP_PORT,
@@ -239,7 +239,6 @@ void Server::sendGiveUpDeviceID(
 			"DEVICEID.SES.COM: %6\r\n" \
 			"\r\n";
 
-	base::MutexLock lock(_xmlMutex);
 	const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
 		_announceTimeSec,
 		_location,
@@ -292,7 +291,6 @@ void Server::sendDiscoverResponse(
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 
-	base::MutexLock lock(_xmlMutex);
 	const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
 		_announceTimeSec,
 		_location,
@@ -450,13 +448,11 @@ bool Server::sendByeBye(
 }
 
 void Server::incrementDeviceID() {
-	base::MutexLock lock(_xmlMutex);
 	++_deviceID;
 	notifyChanges();
 }
 
 void Server::incrementBootID() {
-	base::MutexLock lock(_xmlMutex);
 	++_bootID;
 	notifyChanges();
 }

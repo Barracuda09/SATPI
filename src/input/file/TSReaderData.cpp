@@ -38,31 +38,21 @@ namespace file {
 	TSReaderData::~TSReaderData() {}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
-	// =======================================================================
-
-	void TSReaderData::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		ADD_XML_ELEMENT(xml, "pathname", _filePath);
-	}
-
-	void TSReaderData::fromXML(const std::string &UNUSED(xml)) {}
-
-	// =======================================================================
 	// -- input::DeviceData --------------------------------------------------
 	// =======================================================================
 
-	void TSReaderData::initialize() {
-		base::MutexLock lock(_mutex);
-
-		DeviceData::initialize();
+	void TSReaderData::doNextAddToXML(std::string &xml) const {
+		ADD_XML_ELEMENT(xml, "pathname", _filePath);
 	}
 
-	void TSReaderData::parseStreamString(
+	void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
+
+	void TSReaderData::doInitialize() {}
+
+	void TSReaderData::doParseStreamString(
 			const int UNUSED(streamID),
 			const std::string &msg,
 			const std::string &method) {
-		base::MutexLock lock(_mutex);
 		_filePath = StringConverter::getURIParameter(msg, method, "uri=");
 		if (_filePath.empty()) {
 			clearData();
@@ -72,8 +62,7 @@ namespace file {
 		_changed = true;
 	}
 
-	std::string TSReaderData::attributeDescribeString(const int streamID) const {
-		base::MutexLock lock(_mutex);
+	std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
 		std::string desc;
 		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
 		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;uri=%s",

@@ -22,6 +22,7 @@
 
 #include <base/XMLSupport.h>
 #include <input/dvb/delivery/Lnb.h>
+#include <Unused.h>
 
 namespace input {
 namespace dvb {
@@ -30,11 +31,11 @@ namespace delivery {
 	/// The class @c DiSEqc specifies an interface to an connected DiSEqc device
 	class DiSEqc :
 		public base::XMLSupport {
-		public:
-
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
 			// =======================================================================
+		public:
+
 			DiSEqc();
 
 			virtual ~DiSEqc();
@@ -42,28 +43,36 @@ namespace delivery {
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
 			// =======================================================================
+		private:
 
-		public:
+			/// @see XMLSupport
+			virtual void doAddToXML(std::string &xml) const final;
 
-			virtual void addToXML(std::string &xml) const override;
-
-			virtual void fromXML(const std::string &xml) override;
+			/// @see XMLSupport
+			virtual void doFromXML(const std::string &xml) final;
 
 			// =======================================================================
 			// -- Other member functions ---------------------------------------------
 			// =======================================================================
-
 		public:
 
 			///
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
 				int src, Lnb::Polarization pol) = 0;
 
+		private:
+
+			/// Specialization for @see doAddToXML
+			virtual void doNextAddToXML(std::string &UNUSED(xml)) const {}
+
+			/// Specialization for @see doFromXML
+			virtual void doNextFromXML(const std::string &UNUSED(xml)) {}
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 		public:
+
 			static constexpr size_t MAX_LNB = 4;
 
 		protected:

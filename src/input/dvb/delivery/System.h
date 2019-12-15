@@ -21,8 +21,8 @@
 #define INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE
 
 #include <FwDecl.h>
-#include <input/InputSystem.h>
 #include <base/XMLSupport.h>
+#include <input/InputSystem.h>
 
 #include <string>
 
@@ -34,41 +34,39 @@ namespace input {
 namespace dvb {
 namespace delivery {
 
-	/// The class @c System specifies the interface to an specific delivery system
-	class System :
-		public base::XMLSupport {
-		public:
+/// The class @c System specifies the interface to an specific delivery system
+class System :
+	public base::XMLSupport {
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit System(int streamID) : _streamID(streamID) {}
+		explicit System(int streamID) : _streamID(streamID) {}
 
-			virtual ~System() {}
+		virtual ~System() {}
 
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+	public:
 
-		public:
+		///
+		virtual bool tune(
+			int feFD,
+			const input::dvb::FrontendData &frontendData) = 0;
 
-			///
-			virtual bool tune(
-				int feFD,
-				const input::dvb::FrontendData &frontendData) = 0;
+		///
+		virtual bool isCapableOf(input::InputSystem system) const = 0;
 
-			///
-			virtual bool isCapableOf(input::InputSystem system) const = 0;
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	protected:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		int _streamID;
 
-		protected:
-
-			int _streamID;
-
-	};
+};
 
 } // namespace delivery
 } // namespace dvb

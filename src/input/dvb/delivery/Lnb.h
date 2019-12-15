@@ -29,68 +29,68 @@ namespace input {
 namespace dvb {
 namespace delivery {
 
-	/// The class @c Lnb specifies which type of LNB is connected
-	class Lnb :
-		public base::XMLSupport {
-		public:
+/// The class @c Lnb specifies which type of LNB is connected
+class Lnb :
+	public base::XMLSupport {
+	public:
 
-			enum class Polarization {
-				Horizontal = 0,
-				Vertical   = 1,
-				CircularLeft  = 2,
-				CircularRight = 3
-			};
+		enum class Polarization {
+			Horizontal = 0,
+			Vertical   = 1,
+			CircularLeft  = 2,
+			CircularRight = 3
+		};
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			Lnb();
-			virtual ~Lnb();
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		Lnb();
+		virtual ~Lnb();
 
-		public:
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	private:
 
-			virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-			virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
-			// =======================================================================
-			// -- Static member functions --------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Static member functions --------------------------------------------
+		// =======================================================================
+	public:
 
-		public:
+		static char translatePolarizationToChar(Polarization pol);
 
-			static char translatePolarizationToChar(Polarization pol);
-		
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+	public:
 
-		public:
+		void getIntermediateFrequency(uint32_t &freq,
+			bool &hiband, Polarization pol) const;
 
-			void getIntermediateFrequency(uint32_t &freq,
-				bool &hiband, Polarization pol) const;
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	private:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		enum class LNBType {
+			Universal,
+			Standard,
+			UserDefined
+		};
 
-		private:
-
-			enum class LNBType {
-				Universal,
-				Standard,
-				UserDefined
-			};
-
-			LNBType _type;
-			uint32_t _switchlof;
-			uint32_t _lofLow;
-			uint32_t _lofHigh;
-	};
+		LNBType _type;
+		uint32_t _switchlof;
+		uint32_t _lofLow;
+		uint32_t _lofHigh;
+};
 
 } // namespace delivery
 } // namespace dvb

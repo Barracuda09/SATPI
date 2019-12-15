@@ -126,37 +126,32 @@ std::string Stream::attributeDescribeString(bool &active) const {
 //  -- base::XMLSupport --------------------------------------------------
 // =======================================================================
 
-void Stream::addToXML(std::string &xml) const {
-	{
-		base::MutexLock lock(_xmlMutex);
+void Stream::doAddToXML(std::string &xml) const {
+	base::MutexLock lock(_mutex);
+	ADD_XML_ELEMENT(xml, "streamindex", _streamID);
 
-		ADD_XML_ELEMENT(xml, "streamindex", _streamID);
+	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
+	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
+	ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddressOfStream());
+	ADD_XML_ELEMENT(xml, "ownerSessionID", _client[0].getSessionID());
+	ADD_XML_ELEMENT(xml, "userAgent", _client[0].getUserAgent());
 
-		ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
-		ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
-		ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddressOfStream());
-		ADD_XML_ELEMENT(xml, "ownerSessionID", _client[0].getSessionID());
-		ADD_XML_ELEMENT(xml, "userAgent", _client[0].getUserAgent());
+	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
 
-		ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
+	ADD_XML_ELEMENT(xml, "spc", _spc.load());
+	ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
 
-		ADD_XML_ELEMENT(xml, "spc", _spc.load());
-		ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
-	}
 	_device->addToXML(xml);
 }
 
-void Stream::fromXML(const std::string &xml) {
-	{
-		base::MutexLock lock(_xmlMutex);
-
-		std::string element;
-		if (findXMLElement(xml, "enable.value", element)) {
-			_enabled = (element == "true") ? true : false;
-		}
-		if (findXMLElement(xml, "rtcpSignalUpdate.value", element)) {
-			_rtcpSignalUpdate = std::stoi(element);
-		}
+void Stream::doFromXML(const std::string &xml) {
+	base::MutexLock lock(_mutex);
+	std::string element;
+	if (findXMLElement(xml, "enable.value", element)) {
+		_enabled = (element == "true") ? true : false;
+	}
+	if (findXMLElement(xml, "rtcpSignalUpdate.value", element)) {
+		_rtcpSignalUpdate = std::stoi(element);
 	}
 	_device->fromXML(xml);
 }
@@ -175,7 +170,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              const std::string sessionID,
                              const std::string &method,
                              int &clientID) {
-	base::MutexLock lock(_xmlMutex);
+	base::MutexLock lock(_mutex);
 
 	const std::string message = socketClient.getPercentDecodedMessage();
 	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
@@ -235,7 +230,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 }
 
 void Stream::checkForSessionTimeout() {
-	base::MutexLock lock(_xmlMutex);
+	base::MutexLock lock(_mutex);
 
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].sessionTimeout() || !_enabled) {
@@ -253,7 +248,7 @@ void Stream::checkForSessionTimeout() {
 }
 
 bool Stream::update(int clientID, bool start) {
-	base::MutexLock lock(_xmlMutex);
+	base::MutexLock lock(_mutex);
 
 	// first time streaming?
 	if (!_streaming && start) {
@@ -309,7 +304,7 @@ bool Stream::update(int clientID, bool start) {
 }
 
 bool Stream::teardown(int clientID) {
-	base::MutexLock lock(_xmlMutex);
+	base::MutexLock lock(_mutex);
 
 	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
 	            _streamID, clientID, _client[clientID].getSessionID().c_str());
@@ -319,7 +314,6 @@ bool Stream::teardown(int clientID) {
 		_streaming.reset(nullptr);
 	}
 
-	_device->clearMPEGFilters();
 	_device->teardown();
 
 	// as last, else sessionID and IP is reset
@@ -338,7 +332,7 @@ bool Stream::teardown(int clientID) {
 }
 
 bool Stream::processStreamingRequest(const std::string &msg, const int clientID, const std::string &method) {
-	base::MutexLock lock(_xmlMutex);
+	base::MutexLock lock(_mutex);
 
 	// Save clients seq number
 	const std::string cseq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
@@ -364,7 +358,6 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 
 	// Channel changed?.. stop/pause Stream
 	if (_device->hasDeviceDataChanged()) {
-		_device->clearMPEGFilters();
 		if (_streaming) {
 			_streaming->pauseStreaming(clientID);
 		}

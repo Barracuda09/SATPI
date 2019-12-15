@@ -40,18 +40,15 @@ namespace dvb {
 	FrontendData::~FrontendData() {;}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
+	// -- input::DeviceData --------------------------------------------------
 	// =======================================================================
 
-	void FrontendData::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
-
+	void FrontendData::doNextAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "delsys", StringConverter::delsys_to_string(_delsys));
 		ADD_XML_ELEMENT(xml, "tunefreq", _freq);
 		ADD_XML_ELEMENT(xml, "modulation", StringConverter::modtype_to_sting(_modtype));
 		ADD_XML_ELEMENT(xml, "fec", StringConverter::fec_to_string(_fec));
 		ADD_XML_ELEMENT(xml, "tunesymbol", _srate);
-		ADD_XML_ELEMENT(xml, "pidcsv", _pidTable.getPidCSV());
 
 		switch (_delsys) {
 			case input::InputSystem::DVBS:
@@ -75,17 +72,9 @@ namespace dvb {
 		}
 	}
 
-	void FrontendData::fromXML(const std::string &UNUSED(xml)) {}
+	void FrontendData::doNextFromXML(const std::string &UNUSED(xml)) {}
 
-	// =======================================================================
-	// -- input::DeviceData --------------------------------------------------
-	// =======================================================================
-
-	void FrontendData::initialize() {
-		base::MutexLock lock(_mutex);
-
-		DeviceData::initialize();
-
+	void FrontendData::doInitialize() {
 		_freq = 0;
 		_modtype = QAM_64;
 		_srate = 0;
@@ -93,7 +82,7 @@ namespace dvb {
 		_rolloff = ROLLOFF_AUTO;
 		_inversion = INVERSION_AUTO;
 
-		_pidTable.clear();
+		_filter.clear();
 
 		// =======================================================================
 		// DVB-S(2) Data members
@@ -120,26 +109,24 @@ namespace dvb {
 		_siso_miso = 0;
 	}
 
-	void FrontendData::parseStreamString(
+	void FrontendData::doParseStreamString(
 			const int streamID,
 			const std::string &msg,
 			const std::string &method) {
-		base::MutexLock lock(_mutex);
-
 		// Save freq FIRST because of possible initializing of channel data
 		const double oldFreq = _freq / 1000.0;
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		if (freq != -1.0) {
+		const double reqFreq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		if (reqFreq != -1.0) {
 			// New frequency or an SETUP/PLAY, so initialize FrontendData and 'remove' all used PIDS
-			if (freq != oldFreq || method == "SETUP" || method == "PLAY") {
-				if (freq != oldFreq) {
+			if (reqFreq != oldFreq || method == "SETUP" || method == "PLAY") {
+				if (reqFreq != oldFreq) {
 					SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
 				} else {
 					SI_LOG_INFO("Stream: %d, %s method with query, clearing old channel data...", streamID, method.c_str());
 				}
 				initialize();
 			}
-			_freq = freq * 1000.0;
+			_freq = reqFreq * 1000.0;
 			_changed = true;
 		}
 		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
@@ -329,7 +316,7 @@ namespace dvb {
 		const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
 		if (!pidsList.empty()) {
 			// 'pids=' requested then 'remove' all used PIDS first
-			_pidTable.clear();
+			_filter.clear();
 			parsePIDString(pidsList, addPATPid + addUserPids, true);
 		}
 		const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
@@ -342,7 +329,7 @@ namespace dvb {
 		}
 	}
 
-	std::string FrontendData::attributeDescribeString(const int streamID) const {
+	std::string FrontendData::doAttributeDescribeString(const int streamID) const {
 		std::string desc;
 		switch (getDeliverySystem()) {
 			case input::InputSystem::DVBS:
@@ -363,7 +350,7 @@ namespace dvb {
 						StringConverter::rolloff_to_sting(getRollOff()),
 						getSymbolRate() / 1000,
 						StringConverter::fec_to_string(getFEC()),
-						getPidCSV().c_str());
+						_filter.getPidCSV().c_str());
 				break;
 			case input::InputSystem::DVBT:
 			case input::InputSystem::DVBT2:
@@ -384,7 +371,7 @@ namespace dvb {
 						getUniqueIDPlp(),
 						getUniqueIDT2(),
 						getSISOMISO(),
-						getPidCSV().c_str());
+						_filter.getPidCSV().c_str());
 				break;
 			case input::InputSystem::DVBC:
 				// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,<mtype>,<sr>,<c2tft>,<ds>,
@@ -403,14 +390,14 @@ namespace dvb {
 						getDataSlice(),
 						getUniqueIDPlp(),
 						getSpectralInversion(),
-						getPidCSV().c_str());
+						_filter.getPidCSV().c_str());
 				break;
 			case input::InputSystem::UNDEFINED:
 				// Not setup yet
 				StringConverter::addFormattedString(desc, "NONE");
 				break;
 			default:
-				// Not supported/
+				// Not supported
 				StringConverter::addFormattedString(desc, "NONE");
 				break;
 		}
@@ -427,9 +414,9 @@ namespace dvb {
 		if (reqPids.find("all") != std::string::npos ||
 			reqPids.find("none") != std::string::npos) {
 			// all/none pids requested then 'remove' all used PIDS first
-			_pidTable.clear();
+			_filter.clear();
 			if (reqPids.find("all") != std::string::npos) {
-				setAllPID(add);
+				_filter.setAllPID(add);
 			}
 		} else {
 			const std::string pids = reqPids + userPids;
@@ -439,7 +426,7 @@ namespace dvb {
 				if (end != std::string::npos) {
 					const std::string pid = pids.substr(begin, end - begin);
 					if (std::isdigit(pid[0]) != 0) {
-						setPID(std::stoi(pid), add);
+						_filter.setPID(std::stoi(pid), add);
 					}
 					begin = end + 1;
 				} else {
@@ -447,73 +434,13 @@ namespace dvb {
 					if (begin < pids.size()) {
 						const std::string pid = pids.substr(begin, end - begin);
 						if (std::isdigit(pid[0]) != 0) {
-							setPID(std::stoi(pid), add);
+							_filter.setPID(std::stoi(pid), add);
 						}
 					}
 					break;
 				}
 			}
 		}
-	}
-
-	void FrontendData::addPIDData(const int pid, const uint8_t cc) {
-		base::MutexLock lock(_mutex);
-		_pidTable.addPIDData(pid, cc);
-	}
-
-	void FrontendData::setDMXFileDescriptor(const int pid, const int fd) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setDMXFileDescriptor(pid, fd);
-	}
-
-	void FrontendData::closeDMXFileDescriptor(const int pid) {
-		base::MutexLock lock(_mutex);
-		_pidTable.closeDMXFileDescriptor(pid);
-	}
-
-	void FrontendData::resetPIDTableChanged() {
-		base::MutexLock lock(_mutex);
-		_pidTable.resetPIDTableChanged();
-	}
-
-	void FrontendData::setPID(const int pid, const bool val) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setPID(pid, val);
-	}
-
-	bool FrontendData::shouldPIDClose(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.shouldPIDClose(pid);
-	}
-
-	void FrontendData::setAllPID(const bool val) {
-		base::MutexLock lock(_mutex);
-		_pidTable.setAllPID(val);
-	}
-
-	bool FrontendData::isPIDUsed(const int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.isPIDUsed(pid);
-	}
-
-	uint32_t FrontendData::getPacketCounter(const int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getPacketCounter(pid);
-	}
-
-	int FrontendData::getDMXFileDescriptor(const int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getDMXFileDescriptor(pid);
-	}
-
-	bool FrontendData::hasPIDTableChanged() const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.hasPIDTableChanged();
-	}
-
-	std::string FrontendData::getPidCSV() const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getPidCSV();
 	}
 
 	uint32_t FrontendData::getFrequency() const {

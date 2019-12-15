@@ -51,9 +51,7 @@ namespace delivery {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void DVBS::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
-
+	void DVBS::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
 
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
@@ -69,8 +67,7 @@ namespace delivery {
 		ADD_XML_ELEMENT(xml, "diseqc", _diseqc->toXML());
 	}
 
-	void DVBS::fromXML(const std::string &xml) {
-		base::MutexLock lock(_xmlMutex);
+	void DVBS::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "diseqcType.value", element)) {
 			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
@@ -109,13 +106,9 @@ namespace delivery {
 		const Lnb::Polarization pol = frontendData.getPolarization();
 		uint32_t freq = frontendData.getFrequency();
 
-		{
-			// send diseqc
-			base::MutexLock lock(_xmlMutex);
-			if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol)) {
-				return false;
-			}
-
+		// send diseqc
+		if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol)) {
+			return false;
 		}
 
 		// Now tune by setting properties

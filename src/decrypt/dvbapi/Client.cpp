@@ -522,9 +522,7 @@ namespace dvbapi {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void Client::fromXML(const std::string &xml) {
-		base::MutexLock lock(_xmlMutex);
-
+	void Client::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "OSCamIP.value", element)) {
 			_serverIPAddr = element;
@@ -549,9 +547,7 @@ namespace dvbapi {
 		}
 	}
 
-	void Client::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
-
+	void Client::doAddToXML(std::string &xml) const {
 		ADD_XML_CHECKBOX(xml, "OSCamEnabled", (_enabled ? "true" : "false"));
 		ADD_XML_CHECKBOX(xml, "RewritePMT", (_rewritePMT ? "true" : "false"));
 		ADD_XML_IP_INPUT(xml, "OSCamIP", _serverIPAddr);

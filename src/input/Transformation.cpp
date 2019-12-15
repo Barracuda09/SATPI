@@ -44,7 +44,6 @@ namespace input {
 			_transformFileM3U("mapping.m3u"),
 			_transformedDeviceData(transformedDeviceData) {
 		_fileParsed = _m3u.parse(_appDataPath + "/" + _transformFileM3U);
-		_transformedDeviceData.initialize();
 	}
 
 	Transformation::~Transformation() {}
@@ -53,8 +52,8 @@ namespace input {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void Transformation::addToXML(std::string &xml) const {
-		base::MutexLock lock(_xmlMutex);
+	void Transformation::doAddToXML(std::string &xml) const {
+		base::MutexLock lock(_mutex);
 		ADD_XML_CHECKBOX(xml, "transformEnable", (_enabled ? "true" : "false"));
 		ADD_XML_TEXT_INPUT(xml, "transformM3U", _transformFileM3U);
 
@@ -70,8 +69,8 @@ namespace input {
 		ADD_XML_END_ELEMENT(xml, "advertiseAsType");
 	}
 
-	void Transformation::fromXML(const std::string &xml) {
-		base::MutexLock lock(_xmlMutex);
+	void Transformation::doFromXML(const std::string &xml) {
+		base::MutexLock lock(_mutex);
 		std::string element;
 		if (findXMLElement(xml, "transformEnable.value", element)) {
 			_enabled = (element == "true") ? true : false;
@@ -106,28 +105,28 @@ namespace input {
 	// =======================================================================
 
 	bool Transformation::isEnabled() const {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		return _enabled && _fileParsed;
 	}
 
 	bool Transformation::advertiseAsDVBS2() const {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		return _advertiseAs == AdvertiseAs::DVB_S2;
 	}
 
 	bool Transformation::advertiseAsDVBC() const {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		return _advertiseAs == AdvertiseAs::DVB_C;
 	}
 
 	void Transformation::resetTransformFlag() {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		_transform = false;
 	}
 
 	input::InputSystem Transformation::getTransformationSystemFor(
 			const double frequency) const {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		input::InputSystem system = input::InputSystem::UNDEFINED;
 		if (_enabled && _fileParsed) {
 			if (frequency > 0.0) {
@@ -142,7 +141,7 @@ namespace input {
 			const int streamID,
 			const std::string &msg,
 			const std::string &method) {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		std::string msgTrans = msg;
 		if (_enabled && _fileParsed) {
 			const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
@@ -190,7 +189,7 @@ namespace input {
 
 	const DeviceData &Transformation::transformDeviceData(
 			const DeviceData &deviceData) const {
-		base::MutexLock lock(_xmlMutex);
+		base::MutexLock lock(_mutex);
 		if (_enabled && _fileParsed) {
 			const fe_status_t status = deviceData.getSignalStatus();
 			const uint32_t ber = deviceData.getBitErrorRate();

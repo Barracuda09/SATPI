@@ -27,66 +27,60 @@
 namespace input {
 namespace file {
 
-	/// The class @c TSReaderData carries all the data/information for Reading
-	/// from an file
-	class TSReaderData :
-		public DeviceData {
-		public:
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
-			TSReaderData();
-			virtual ~TSReaderData();
+/// The class @c TSReaderData carries all the data/information for Reading
+/// from an file
+class TSReaderData :
+	public DeviceData {
+		// =======================================================================
+		// Constructors and destructor
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		TSReaderData();
 
-		public:
-			///
-			virtual void addToXML(std::string &xml) const override;
+		virtual ~TSReaderData();
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		// =======================================================================
+		// -- input::DeviceData --------------------------------------------------
+		// =======================================================================
+	private:
 
-			// =======================================================================
-			// -- input::DeviceData --------------------------------------------------
-			// =======================================================================
+		/// @see DeviceData
+		virtual void doNextAddToXML(std::string &xml) const final;
 
-		public:
+		/// @see DeviceData
+		virtual void doNextFromXML(const std::string &xml) final;
 
-			///
-			virtual void initialize() override;
+		/// @see DeviceData
+		virtual void doInitialize() final;
 
-			///
-			virtual void parseStreamString(int streamID, const std::string &msg, const std::string &method) override;
+		/// @see DeviceData
+		virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
 
-			///
-			virtual std::string attributeDescribeString(int streamID) const override;
+		/// @see DeviceData
+		virtual std::string doAttributeDescribeString(int streamID) const final;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+	public:
 
-		public:
+		///
+		std::string getFilePath() const;
 
-			///
-			std::string getFilePath() const;
+		bool hasFilePath() const;
 
-			bool hasFilePath() const;
+		///
+		void clearData();
 
-			///
-			void clearData();
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	private:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		std::string _filePath;
 
-		private:
-
-			std::string _filePath;
-
-	};
+};
 
 } // namespace file
 } // namespace input

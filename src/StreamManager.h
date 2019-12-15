@@ -39,7 +39,6 @@ class StreamManager :
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
-
 	public:
 
 		explicit StreamManager();
@@ -49,16 +48,17 @@ class StreamManager :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
+	private:
 
-	public:
-		virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		// -- Other member functions -------------------------------------------
 		// =====================================================================
-
 	public:
 
 		/// enumerate all available devices
@@ -88,7 +88,7 @@ class StreamManager :
 
 		///
 		std::size_t getMaxStreams() const {
-			base::MutexLock lock(_xmlMutex);
+			base::MutexLock lock(_mutex);
 			return _stream.size();
 		}
 
@@ -101,9 +101,6 @@ class StreamManager :
 		///
 		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(
 			int streamID);
-
-		///
-		decrypt::dvbapi::SpClient getDecrypt() const;
 #endif
 
 		// =====================================================================
@@ -111,6 +108,7 @@ class StreamManager :
 		// =====================================================================
 	private:
 
+		base::Mutex _mutex;
 		decrypt::dvbapi::SpClient _decrypt;
 		StreamSpVector _stream;
 };

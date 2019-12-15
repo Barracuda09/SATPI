@@ -137,112 +137,112 @@ T comms_rcv_more 9F 8C 06 low-speed comms. --->
 #define DATE_TIME                      0x00240041
 #define MMI_MANAGER                    0x00400041
 
-    ///
-    class DVBCA :
-		public base::XMLSupport,
-		public base::ThreadBase {
-        public:
+///
+class DVBCA :
+	public base::XMLSupport,
+	public base::ThreadBase {
+	public:
 
-			using CAData = std::basic_string<unsigned char>;
+		using CAData = std::basic_string<unsigned char>;
 
-			// =======================================================================
-            //  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-            DVBCA();
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+	public:
 
-            virtual ~DVBCA();
+		DVBCA();
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		virtual ~DVBCA();
 
-		public:
-			virtual void addToXML(std::string &xml) const override;
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	public:
 
-			virtual void fromXML(const std::string &xml) override;
+		virtual void addToXML(std::string &xml) const final;
 
-			// =======================================================================
-			//  -- base::ThreadBase --------------------------------------------------
-			// =======================================================================
+		virtual void fromXML(const std::string &xml) final;
 
-		protected:
+		// =======================================================================
+		//  -- base::ThreadBase --------------------------------------------------
+		// =======================================================================
+	protected:
 
-			/// Thread function
-			virtual void threadEntry();
+		/// Thread function
+		virtual void threadEntry();
 
-			// =======================================================================
-            //  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		//  -- Other member functions --------------------------------------------
+		// =======================================================================
+	public:
 
-        public:
+		bool open(const std::size_t id);
 
-            bool open(const std::size_t id);
+		void close();
 
-            void close();
+		bool reset();
 
-            bool reset();
+		bool sendCAPMT(std::size_t sessionNB, const mpegts::PMT &pmt);
 
-            bool sendCAPMT(std::size_t sessionNB, const mpegts::PMT &pmt);
+	protected:
 
-        protected:
+		void openSessionRequest(const CAData &spduTag);
 
-			void openSessionRequest(const CAData &spduTag);
+		void closeSessionRequest(const CAData &spduTag);
 
-			void closeSessionRequest(const CAData &spduTag);
+		void sessionNumber(const CAData &spduTag);
 
-			void sessionNumber(const CAData &spduTag);
+		void createSessionFor(std::size_t resource, std::size_t &sessionStatus, std::size_t &sessionNB);
 
-			void createSessionFor(std::size_t resource, std::size_t &sessionStatus, std::size_t &sessionNB);
+		std::size_t findSessionNumberForRecource(std::size_t resource) const;
 
-			std::size_t findSessionNumberForRecource(std::size_t resource) const;
+		void clearSessionFor(std::size_t sessionNB);
 
-			void clearSessionFor(std::size_t sessionNB);
+		std::size_t read(CAData &data) const;
 
-            std::size_t read(CAData &data) const;
+		bool sendPDU(const CAData &data);
 
-			bool sendPDU(const CAData &data);
+		bool sendAPDU(std::size_t sessionNB, const CAData &data);
 
-			bool sendAPDU(std::size_t sessionNB, const CAData &data);
+		void sendOpenSessionResponse(std::size_t resource, std::size_t sessionStatus, std::size_t sessionNB);
 
-			void sendOpenSessionResponse(std::size_t resource, std::size_t sessionStatus, std::size_t sessionNB);
+		void createAndSendAPDUTag(std::size_t sessionNB, std::size_t apduTag);
 
-			void createAndSendAPDUTag(std::size_t sessionNB, std::size_t apduTag);
+		void createAndSendAPDUTag(std::size_t sessionNB, std::size_t apduTag, const CAData &apduData);
 
-			void createAndSendAPDUTag(std::size_t sessionNB, std::size_t apduTag, const CAData &apduData);
+		CAData addResourceID(std::size_t resource);
 
-			CAData addResourceID(std::size_t resource);
+		void parseAPDUTag(std::size_t sessionNB, const CAData &apduData);
 
-			void parseAPDUTag(std::size_t sessionNB, const CAData &apduData);
+		void parseMMIMenu(std::size_t sessionNB, const CAData &apduData);
 
-			void parseMMIMenu(std::size_t sessionNB, const CAData &apduData);
+		void parseCAInfo(std::size_t sessionNB, const CAData &apduData);
 
-			void parseCAInfo(std::size_t sessionNB, const CAData &apduData);
+		void parseApplicationInfo(std::size_t sessionNB, const CAData &apduData);
 
-			void parseApplicationInfo(std::size_t sessionNB, const CAData &apduData);
+		// ================================================================
+		//  -- Data members -----------------------------------------------
+		// ================================================================
+	private:
 
-            // ================================================================
-            //  -- Data members -----------------------------------------------
-            // ================================================================
+		using Session_t = struct Session {
+			std::size_t _resource;
+			std::size_t _sessionNB;
+			unsigned char _sessionStatus;
+		};
 
-        private:
-			using Session_t = struct Session {
-				std::size_t _resource;
-				std::size_t _sessionNB;
-				unsigned char _sessionStatus;
-			};
+		using  Handle = int;
+		Handle _fd;
+		Handle _fdFifo;
+		std::size_t _id;
+		std::size_t _timeoutCnt;
+		std::time_t _repeatTime;
+		std::size_t _timeDateInterval;
+		bool _connected;
+		bool _waiting;
+		Session_t _sessions[MAX_SESSIONS];
 
-			using  Handle = int;
-            Handle _fd;
-            Handle _fdFifo;
-            std::size_t _id;
-            std::size_t _timeoutCnt;
-			std::time_t _repeatTime;
-			std::size_t _timeDateInterval;
-            bool _connected;
-            bool _waiting;
-            Session_t _sessions[MAX_SESSIONS];
-
-			CAData apduTimeData;
-    };
+		CAData apduTimeData;
+};
 
 #endif // DVBCA_H_INCLUDE

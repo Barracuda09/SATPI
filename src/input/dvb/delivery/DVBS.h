@@ -34,64 +34,64 @@ namespace input {
 namespace dvb {
 namespace delivery {
 
-	/// The class @c DVBS specifies DVB-S/S2 delivery system
-	class DVBS :
-		public input::dvb::delivery::System {
-		public:
+/// The class @c DVBS specifies DVB-S/S2 delivery system
+class DVBS :
+	public input::dvb::delivery::System {
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit DVBS(int streamID);
-			virtual ~DVBS();
+		explicit DVBS(int streamID);
+		virtual ~DVBS();
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	private:
 
-		public:
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-			virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
-			virtual void fromXML(const std::string &xml) override;
+		// =======================================================================
+		// -- input::dvb::delivery::System ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- input::dvb::delivery::System ---------------------------------------
-			// =======================================================================
+		virtual bool tune(
+			int feFD,
+			const input::dvb::FrontendData &frontendData) final;
 
-		public:
+		virtual bool isCapableOf(input::InputSystem system) const final {
+			return system == input::InputSystem::DVBS2 ||
+				   system == input::InputSystem::DVBS;
+		}
 
-			virtual bool tune(
-				int feFD,
-				const input::dvb::FrontendData &frontendData) override;
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+	private:
 
-			virtual bool isCapableOf(input::InputSystem system) const override {
-				return system == input::InputSystem::DVBS2 ||
-				       system == input::InputSystem::DVBS;
-			}
+		///
+		bool setProperties(int feFD, uint32_t freq, const input::dvb::FrontendData &frontendData);
 
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
+	private:
 
-		private:
-			///
-			bool setProperties(int feFD, uint32_t freq, const input::dvb::FrontendData &frontendData);
+		enum class DiseqcType {
+			Switch,
+			EN50494,
+			EN50607
+		};
+		DiseqcType _diseqcType;
+		UpDiSEqc _diseqc;
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
-
-		private:
-			enum class DiseqcType {
-				Switch,
-				EN50494,
-				EN50607
-			};
-			DiseqcType _diseqcType;
-			UpDiSEqc _diseqc;
-
-	};
+};
 
 } // namespace delivery
 } // namespace dvb

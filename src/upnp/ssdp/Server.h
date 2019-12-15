@@ -39,7 +39,6 @@ class Server :
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
-
 	public:
 
 		Server(const std::string &bindIPAddress, const Properties &properties);
@@ -49,17 +48,17 @@ class Server :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
+	private:
 
-	public:
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void addToXML(std::string &xml) const override;
-
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
-
 	protected:
 
 		/// Thread function
@@ -115,9 +114,9 @@ class Server :
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
-
 	private:
 
+		base::Mutex _mutex;
 		const Properties &_properties;
 		std::string _bindIPAddress;
 		SocketClient _udpMultiListen;

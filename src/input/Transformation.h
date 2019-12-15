@@ -49,11 +49,13 @@ class Transformation :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
-	public:
+	private:
 
-		virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
@@ -85,19 +87,18 @@ class Transformation :
 		const DeviceData &transformDeviceData(
 			const DeviceData &deviceData) const;
 
-	private:
-
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 	private:
+
 		enum class AdvertiseAs {
 			NONE,
 			DVB_S2,
 			DVB_C,
 			DVB_T
 		};
+		base::Mutex _mutex;
 		bool _enabled;
 		bool _transform;
 		bool _fileParsed;

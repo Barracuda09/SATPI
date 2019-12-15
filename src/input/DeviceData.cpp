@@ -43,9 +43,27 @@ namespace input {
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void DeviceData::addToXML(std::string &UNUSED(xml)) const {}
+	void DeviceData::doAddToXML(std::string &xml) const {
+		const mpegts::SDT::Data sdtData = _filter.getSDTData()->getSDTDataFor(
+				_filter.getPMTData()->getProgramNumber());
+		ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
+		ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 
-	void DeviceData::fromXML(const std::string &UNUSED(xml)) {}
+		// Monitor
+		ADD_XML_ELEMENT(xml, "status", _status);
+		ADD_XML_ELEMENT(xml, "signal", _strength);
+		ADD_XML_ELEMENT(xml, "snr", _snr);
+		ADD_XML_ELEMENT(xml, "ber", _ber);
+		ADD_XML_ELEMENT(xml, "unc", _ublocks);
+
+		ADD_XML_ELEMENT(xml, "pidcsv", _filter.getPidCSV());
+
+		doNextAddToXML(xml);
+	}
+
+	void DeviceData::doFromXML(const std::string &xml) {
+		doNextFromXML(xml);
+	}
 
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
@@ -54,9 +72,21 @@ namespace input {
 	void DeviceData::initialize() {
 		base::MutexLock lock(_mutex);
 		_delsys = input::InputSystem::UNDEFINED;
+		doInitialize();
 	}
 
-	void DeviceData::setDeliverySystem(input::InputSystem system) {
+	void DeviceData::parseStreamString(int streamID, const std::string &msg,
+		const std::string &method) {
+		base::MutexLock lock(_mutex);
+		doParseStreamString(streamID, msg, method);
+	}
+
+	std::string DeviceData::attributeDescribeString(int streamID) const {
+		base::MutexLock lock(_mutex);
+		return doAttributeDescribeString(streamID);
+	}
+
+	void DeviceData::setDeliverySystem(const input::InputSystem system) {
 		base::MutexLock lock(_mutex);
 		_delsys = system;
 	}
@@ -64,6 +94,18 @@ namespace input {
 	input::InputSystem DeviceData::getDeliverySystem() const {
 		base::MutexLock lock(_mutex);
 		return _delsys;
+	}
+
+	const mpegts::Filter &DeviceData::getFilterData() const {
+		return _filter;
+	}
+
+	mpegts::Filter &DeviceData::getFilterData() {
+		return _filter;
+	}
+
+	void DeviceData::addFilterData(const int streamID, const unsigned char *ptr) {
+		_filter.addData(streamID, ptr);;
 	}
 
 	fe_delivery_system DeviceData::convertDeliverySystem() const {

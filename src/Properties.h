@@ -32,7 +32,6 @@ class Properties :
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
-
 	public:
 
 		Properties(
@@ -48,19 +47,17 @@ class Properties :
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
 		// =====================================================================
+	private:
 
-	public:
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-		/// Add data to an XML for storing or web interface
-		virtual void addToXML(std::string &xml) const override;
-
-		/// Get data from an XML for restoring or web interface
-		virtual void fromXML(const std::string &xml) override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		// -- Other member functions -------------------------------------------
 		// =====================================================================
-
 	public:
 
 		///
@@ -109,6 +106,7 @@ class Properties :
 		// =====================================================================
 	private:
 
+		base::Mutex _mutex;
 		std::string _uuid;
 		std::string _versionString;
 		std::string _xSatipM3U;

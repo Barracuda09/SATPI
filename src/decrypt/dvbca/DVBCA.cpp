@@ -75,13 +75,9 @@ static char fileFIFO[] = "/tmp/fifo";
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
-	void DVBCA::addToXML(std::string &/*xml*/) const {
-		base::MutexLock lock(_xmlMutex);
-	}
+	void DVBCA::doAddToXML(std::string &/*xml*/) const {}
 
-	void DVBCA::fromXML(const std::string &/*xml*/) {
-		base::MutexLock lock(_xmlMutex);
-	}
+	void DVBCA::doFromXML(const std::string &/*xml*/) {}
 
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------

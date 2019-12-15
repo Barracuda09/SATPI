@@ -55,7 +55,7 @@ class StreamThreadBase :
 	protected:
 
 		/// @see ThreadBase
-		virtual void threadEntry() override;
+		virtual void threadEntry() final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------

@@ -29,56 +29,54 @@ namespace input {
 namespace dvb {
 namespace delivery {
 
-	/// The class @c DVBC specifies DVB-C/C2 delivery system
-	class DVBC :
-		public input::dvb::delivery::System {
-		public:
+/// The class @c DVBC specifies DVB-C/C2 delivery system
+class DVBC :
+	public input::dvb::delivery::System {
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			//  -- Constructors and destructor ---------------------------------------
-			// =======================================================================
-			explicit DVBC(int streamID);
-			virtual ~DVBC();
+		explicit DVBC(int streamID);
+		virtual ~DVBC();
 
-			// =======================================================================
-			// -- base::XMLSupport ---------------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	public:
 
-		public:
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-			///
-			virtual void addToXML(std::string &xml) const override;
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
-			///
-			virtual void fromXML(const std::string &xml) override;
+		// =======================================================================
+		// -- input::dvb::delivery::System ---------------------------------------
+		// =======================================================================
+	public:
 
-			// =======================================================================
-			// -- input::dvb::delivery::System ---------------------------------------
-			// =======================================================================
+		virtual bool tune(
+			int feFD,
+			const input::dvb::FrontendData &frontendData) final;
 
-		public:
+		virtual bool isCapableOf(input::InputSystem system) const final;
 
-			virtual bool tune(
-				int feFD,
-				const input::dvb::FrontendData &frontendData) override;
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+	private:
 
-			virtual bool isCapableOf(input::InputSystem system) const override;
+		///
+		bool setProperties(int feFD, const input::dvb::FrontendData &frontendData);
 
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
 
-		private:
-			///
-			bool setProperties(int feFD, const input::dvb::FrontendData &frontendData);
+	private:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
-
-		private:
-
-	};
+};
 
 } // namespace delivery
 } // namespace dvb

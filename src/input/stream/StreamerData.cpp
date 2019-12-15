@@ -38,31 +38,21 @@ namespace stream {
 	StreamerData::~StreamerData() {}
 
 	// =======================================================================
-	//  -- base::XMLSupport --------------------------------------------------
-	// =======================================================================
-
-	void StreamerData::addToXML(std::string &xml) const {
-		base::MutexLock lock(_mutex);
-		ADD_XML_ELEMENT(xml, "pathname", _uri);
-	}
-
-	void StreamerData::fromXML(const std::string &UNUSED(xml)) {}
-
-	// =======================================================================
 	// -- input::DeviceData --------------------------------------------------
 	// =======================================================================
 
-	void StreamerData::initialize() {
-		base::MutexLock lock(_mutex);
-
-		DeviceData::initialize();
+	void StreamerData::doNextAddToXML(std::string &xml) const {
+		ADD_XML_ELEMENT(xml, "pathname", _uri);
 	}
 
-	void StreamerData::parseStreamString(
+	void StreamerData::doNextFromXML(const std::string &UNUSED(xml)) {}
+
+	void StreamerData::doInitialize() {}
+
+	void StreamerData::doParseStreamString(
 			const int UNUSED(streamID),
 			const std::string &msg,
 			const std::string &method) {
-		base::MutexLock lock(_mutex);
 		_uri = StringConverter::getURIParameter(msg, method, "uri=");
 		if (_uri.empty()) {
 			clearData();
@@ -86,8 +76,7 @@ namespace stream {
 		_changed = true;
 	}
 
-	std::string StreamerData::attributeDescribeString(const int streamID) const {
-		base::MutexLock lock(_mutex);
+	std::string StreamerData::doAttributeDescribeString(const int streamID) const {
 		std::string desc;
 		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
 		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;uri=%s",
