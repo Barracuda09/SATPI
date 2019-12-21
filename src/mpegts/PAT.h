@@ -62,7 +62,6 @@ class PAT :
 		// =====================================================================
 	private:
 
-		uint16_t _programNumber;
 		uint16_t _tid;
 		std::map<int, bool> _pmtPidTable;
 };

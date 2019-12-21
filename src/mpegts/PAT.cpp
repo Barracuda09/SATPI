@@ -27,7 +27,6 @@ namespace mpegts {
 	// ========================================================================
 
 	PAT::PAT() :
-		_programNumber(0),
 		_tid(0)	{}
 
 	PAT::~PAT() {}
@@ -37,7 +36,6 @@ namespace mpegts {
 	// =======================================================================
 
 	void PAT::clear() {
-		_programNumber = 0;
 		_tid = 0;
 		_pmtPidTable.clear();
 		TableData::clear();

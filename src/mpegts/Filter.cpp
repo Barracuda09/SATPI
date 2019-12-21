@@ -69,7 +69,7 @@ namespace mpegts {
 					_pat->parse(streamID);
 				}
 			}
-		} else if (_pat->isMarkedAsPMT(pid) && _pidTable.isPIDUsed(pid)) {
+		} else if (_pat->isMarkedAsPMT(pid) /*&& _pidTable.isPIDUsed(pid)*/) {
 			if (!_pmt->isCollected()) {
 #ifdef ADDDVBCA
 				{
@@ -145,6 +145,7 @@ namespace mpegts {
 //			_pat = std::make_shared<PAT>();
 		} else if (_pat->isMarkedAsPMT(pid)) {
 			_pmt = std::make_shared<PMT>();
+			_pcr = std::make_shared<PCR>();
 		} else if (pid == 17) {
 			_sdt = std::make_shared<SDT>();
 		}

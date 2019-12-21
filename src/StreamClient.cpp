@@ -30,7 +30,8 @@
 // ============================================================================
 
 StreamClient::StreamClient() :
-		_httpStream(nullptr),
+		_socketClient(nullptr),
+		_sessionTimeoutCheck(SessionTimeoutCheck::WATCHDOG),
 		_streamID(-1),
 		_clientID(-1),
 		_ipAddress("0.0.0.0"),
@@ -53,9 +54,10 @@ void StreamClient::teardown() {
 	_sessionID = "-1";
 	_ipAddress = "0.0.0.0";
 	_userAgent = "None";
+	_sessionTimeoutCheck = SessionTimeoutCheck::WATCHDOG;
 
 	// Do not delete
-	_httpStream = nullptr;
+	_socketClient = nullptr;
 }
 
 void StreamClient::restartWatchDog() {
@@ -78,14 +80,20 @@ bool StreamClient::isSelfDestructing() const {
 bool StreamClient::sessionTimeout() const {
 	base::MutexLock lock(_mutex);
 	// See if we need to check watchdog or http FD
-	return (_httpStream == nullptr) ?
-		((_watchdog != 0) && (_watchdog < std::time(nullptr))) :
-		(_httpStream->getFD() == -1);
+	switch (_sessionTimeoutCheck) {
+		case SessionTimeoutCheck::WATCHDOG:
+			return ((_watchdog != 0) && (_watchdog < std::time(nullptr)));
+		case SessionTimeoutCheck::FILE_DESCRIPTOR:
+			return (_socketClient->getFD() == -1);
+		case SessionTimeoutCheck::TEARDOWN:
+		default:
+			return false;
+	};
 }
 
 void StreamClient::setSocketClient(SocketClient &socket) {
 	base::MutexLock lock(_mutex);
-	_httpStream = &socket;
+	_socketClient = &socket;
 }
 
 SocketAttr &StreamClient::getRtpSocketAttr() {
@@ -102,25 +110,25 @@ SocketAttr &StreamClient::getRtcpSocketAttr() {
 
 bool StreamClient::sendHttpData(const void *buf, std::size_t len, int flags) {
 	base::MutexLock lock(_mutex);
-	return (_httpStream == nullptr) ? false : _httpStream->sendData(buf, len, flags);
+	return (_socketClient == nullptr) ? false : _socketClient->sendData(buf, len, flags);
 }
 
 bool StreamClient::writeHttpData(const struct iovec *iov, int iovcnt) {
 	base::MutexLock lock(_mutex);
-	return (_httpStream == nullptr) ? false : _httpStream->writeData(iov, iovcnt);
+	return (_socketClient == nullptr) ? false : _socketClient->writeData(iov, iovcnt);
 }
 
 int StreamClient::getHttpSocketPort() const {
 	base::MutexLock lock(_mutex);
-	return (_httpStream == nullptr) ? 0 : _httpStream->getSocketPort();
+	return (_socketClient == nullptr) ? 0 : _socketClient->getSocketPort();
 }
 
 int StreamClient::getHttpNetworkSendBufferSize() const {
 	base::MutexLock lock(_mutex);
-	return (_httpStream == nullptr) ? 0 : _httpStream->getNetworkSendBufferSize();
+	return (_socketClient == nullptr) ? 0 : _socketClient->getNetworkSendBufferSize();
 }
 
 bool StreamClient::setHttpNetworkSendBufferSize(int size) {
 	base::MutexLock lock(_mutex);
-	return (_httpStream == nullptr) ? false : _httpStream->setNetworkSendBufferSize(size);
+	return (_socketClient == nullptr) ? false : _socketClient->setNetworkSendBufferSize(size);
 }

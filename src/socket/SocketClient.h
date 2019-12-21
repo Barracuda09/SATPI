@@ -93,7 +93,7 @@ class SocketClient :
 	private:
 
 		std::string _msg;
-		std::string  _protocolString;
+		std::string _protocolString;
 };
 
 #endif // SOCKET_SOCKETCLIENT_H_INCLUDE

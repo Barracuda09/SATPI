@@ -30,6 +30,14 @@
 
 /// StreamClient defines the owner/participants of an stream
 class StreamClient {
+	public:
+		// Specifies were on the session timeout should react
+		enum class SessionTimeoutCheck {
+			WATCHDOG,
+			FILE_DESCRIPTOR,
+			TEARDOWN
+		};
+
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
@@ -65,13 +73,19 @@ class StreamClient {
 		/// Check if this client has an session timeout
 		bool sessionTimeout() const;
 
-		///
+		/// Set the client that is sending data
 		void setSocketClient(SocketClient &socket);
 
 		///
+		void setSessionTimeoutCheck(SessionTimeoutCheck sessionTimeoutCheck) {
+			base::MutexLock lock(_mutex);
+			_sessionTimeoutCheck = sessionTimeoutCheck;
+		}
+
+		/// For RTP stream
 		SocketAttr &getRtpSocketAttr();
 
-		///
+		/// For RTCP stream
 		SocketAttr &getRtcpSocketAttr();
 
 		/// Set the IP address of this client
@@ -134,19 +148,19 @@ class StreamClient {
 		//  -- HTTP member functions -------------------------------------------
 		// =====================================================================
 
-		/// Send HTTP/RTSP data to connected client
+		/// Send HTTP/RTP_TCP data to connected client
 		bool sendHttpData(const void *buf, std::size_t len, int flags);
 
-		/// Send HTTP/RTSP data to connected client
+		/// Send HTTP/RTP_TCP data to connected client
 		bool writeHttpData(const struct iovec *iov, int iovcnt);
 
-		/// Get the HTTP/RTSP port of the connected client
+		/// Get the HTTP/RTP_TCP port of the connected client
 		int getHttpSocketPort() const;
 
-		/// Get the HTTP/RTSP network send buffer size for this Socket
+		/// Get the HTTP/RTP_TCP network send buffer size for this Socket
 		int getHttpNetworkSendBufferSize() const;
 
-		/// Set the HTTP/RTSP network send buffer size for this Socket
+		/// Set the HTTP/RTP_TCP network send buffer size for this Socket
 		bool setHttpNetworkSendBufferSize(int size);
 
 		// =====================================================================
@@ -154,16 +168,17 @@ class StreamClient {
 		// =====================================================================
 	private:
 
-		base::Mutex  _mutex;           ///
-		SocketClient *_httpStream;     /// for HTTP stream
-		int          _streamID;        ///
+		base::Mutex  _mutex;
+		SocketClient *_socketClient;
+		SessionTimeoutCheck _sessionTimeoutCheck;
+		int          _streamID;
 		int          _clientID;
 		std::string  _ipAddress;
-		std::time_t  _watchdog;        /// watchdog
+		std::time_t  _watchdog;
 		unsigned int _sessionTimeout;
 		std::string  _sessionID;
 		std::string  _userAgent;
-		int          _cseq;            /// RTSP sequence number
+		int          _cseq;
 		SocketAttr   _rtp;
 		SocketAttr   _rtcp;
 };
