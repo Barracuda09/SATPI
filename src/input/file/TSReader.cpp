@@ -161,26 +161,28 @@ namespace file {
 	}
 
 	bool TSReader::update() {
-		if (!_file.is_open()) {
-			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		if (_deviceData.hasDeviceDataChanged()) {
 			_deviceData.resetDeviceDataChanged();
-
-			const std::string filePath = _deviceData.getFilePath();
-			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
-			if (_file.is_open()) {
-				SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
-				_t1 = std::chrono::steady_clock::now();
-				_t2 = _t1;
-			} else {
-				SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
+			_file.close();
+			if (!_file.is_open()) {
+				const std::string filePath = _deviceData.getFilePath();
+				_file.open(filePath, std::ifstream::binary | std::ifstream::in);
+				if (_file.is_open()) {
+					SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
+					_t1 = std::chrono::steady_clock::now();
+					_t2 = _t1;
+				} else {
+					SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
+				}
 			}
-			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		}
+		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		return true;
 	}
 
 	bool TSReader::teardown() {
-		_deviceData.clearData();
+		_deviceData.initialize();
 		_transform.resetTransformFlag();
 		_file.close();
 		return true;

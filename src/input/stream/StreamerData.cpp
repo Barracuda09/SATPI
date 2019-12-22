@@ -30,9 +30,8 @@ namespace stream {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	StreamerData::StreamerData() :
-		_uri("None") {
-		initialize();
+	StreamerData::StreamerData() {
+		doInitialize();
 	}
 
 	StreamerData::~StreamerData() {}
@@ -47,17 +46,25 @@ namespace stream {
 
 	void StreamerData::doNextFromXML(const std::string &UNUSED(xml)) {}
 
-	void StreamerData::doInitialize() {}
+	void StreamerData::doInitialize() {
+		_uri = "None";
+		_multiAddr = "0.0.0.0";
+		_port = 0;
+		_udp = false;
+	}
 
 	void StreamerData::doParseStreamString(
 			const int UNUSED(streamID),
 			const std::string &msg,
 			const std::string &method) {
-		_uri = StringConverter::getURIParameter(msg, method, "uri=");
-		if (_uri.empty()) {
-			clearData();
+		const std::string uri = StringConverter::getURIParameter(msg, method, "uri=");
+		if (uri.empty() || (hasFilePath() && uri == _uri)) {
 			return;
 		}
+		initialize();
+		_changed = true;
+		_uri = uri;
+
 		// Parse uri ex. udp@224.0.1.3:1234
 		_udp = _uri.find("udp") != std::string::npos;
 		std::string::size_type begin = _uri.find("@");
@@ -71,9 +78,6 @@ namespace stream {
 				_port = std::stoi(_uri.substr(begin, end - begin));
 			}
 		}
-
-		initialize();
-		_changed = true;
 	}
 
 	std::string StreamerData::doAttributeDescribeString(const int streamID) const {
@@ -105,12 +109,6 @@ namespace stream {
 	bool StreamerData::hasFilePath() const {
 		base::MutexLock lock(_mutex);
 		return _uri != "None";
-	}
-
-	void StreamerData::clearData() {
-		base::MutexLock lock(_mutex);
-		_uri = "None";
-		setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 	}
 
 } // namespace stream

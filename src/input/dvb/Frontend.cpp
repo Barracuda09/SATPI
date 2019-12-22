@@ -445,7 +445,6 @@ namespace dvb {
 		_tuned = false;
 		closeFE();
 		closeDVR();
-		_frontendData.setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 		_frontendData.initialize();
 		_transform.resetTransformFlag();
 		return true;

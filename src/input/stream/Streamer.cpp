@@ -156,10 +156,12 @@ namespace stream {
 	}
 
 	bool Streamer::update() {
-		if (_udpMultiListen.getFD() == -1) {
-			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		if (_deviceData.hasDeviceDataChanged()) {
 			_deviceData.resetDeviceDataChanged();
-
+			_udpMultiListen.closeFD();
+		}
+		if (_udpMultiListen.getFD() == -1) {
 			//  Open mutlicast stream
 			const std::string multiAddr = _deviceData.getMultiAddr();
 			const int port = _deviceData.getPort();
@@ -177,15 +179,14 @@ namespace stream {
 			} else {
 				SI_LOG_ERROR("Stream: %d, Init UDP Multicast socket failed", _streamID);
 			}
-			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		}
+		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		return true;
 	}
 
 	bool Streamer::teardown() {
-		_deviceData.clearData();
+		_deviceData.initialize();
 		_transform.resetTransformFlag();
-
 		_udpMultiListen.closeFD();
 		return true;
 	}

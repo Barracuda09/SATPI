@@ -34,7 +34,7 @@ namespace dvb {
 	// =======================================================================
 
 	FrontendData::FrontendData() {
-		FrontendData::initialize();
+		doInitialize();
 	}
 
 	FrontendData::~FrontendData() {;}
@@ -82,8 +82,6 @@ namespace dvb {
 		_rolloff = ROLLOFF_AUTO;
 		_inversion = INVERSION_AUTO;
 
-		_filter.clear();
-
 		// =======================================================================
 		// DVB-S(2) Data members
 		// =======================================================================
@@ -117,17 +115,24 @@ namespace dvb {
 		const double oldFreq = _freq / 1000.0;
 		const double reqFreq = StringConverter::getDoubleParameter(msg, method, "freq=");
 		if (reqFreq != -1.0) {
-			// New frequency or an SETUP/PLAY, so initialize FrontendData and 'remove' all used PIDS
-			if (reqFreq != oldFreq || method == "SETUP" || method == "PLAY") {
-				if (reqFreq != oldFreq) {
-					SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
-				} else {
-					SI_LOG_INFO("Stream: %d, %s method with query, clearing old channel data...", streamID, method.c_str());
-				}
+			if (reqFreq != oldFreq) {
+				// New frequency, so initialize FrontendData and 'remove' all used PIDS
+				SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
 				initialize();
+				_freq = reqFreq * 1000.0;
+				_changed = true;
+			} else if (method == "SETUP" || method == "PLAY") {
+				const std::string list = StringConverter::getStringParameter(msg, method, "pids=");
+				if (msg.find("pids=") == std::string::npos) {
+					// TvHeadend Bug #4809
+					// Channel change within the same frequency and no 'xxxpids=', 'remove' all used PIDS
+					SI_LOG_INFO("Stream: %d, %s method with query and no pids=, clearing old pids...", streamID, method.c_str());
+					_filter.clear();
+				} else if (!list.empty()) {
+					SI_LOG_INFO("Stream: %d, %s method with query and pids=, clearing old pids...", streamID, method.c_str());
+					_filter.clear();
+				}
 			}
-			_freq = reqFreq * 1000.0;
-			_changed = true;
 		}
 		const int sr = StringConverter::getIntParameter(msg, method, "sr=");
 		if (sr != -1) {

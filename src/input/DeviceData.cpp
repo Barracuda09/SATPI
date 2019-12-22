@@ -29,12 +29,14 @@ namespace input {
 	// =======================================================================
 
 	DeviceData::DeviceData() {
-		DeviceData::initialize();
+		_delsys = input::InputSystem::UNDEFINED;
 		_changed = false;
-		_strength = 0u;
-		_snr = 0u;
-		_ber = 0u;
-		_ublocks = 0u;
+		_status = static_cast<fe_status_t>(0);
+		_strength = 0;
+		_snr = 0;
+		_ber = 0;
+		_ublocks = 0;
+		_ublocks = 0;
 	}
 
 	DeviceData::~DeviceData() {}
@@ -71,7 +73,10 @@ namespace input {
 
 	void DeviceData::initialize() {
 		base::MutexLock lock(_mutex);
+		_changed = false;
 		_delsys = input::InputSystem::UNDEFINED;
+		_filter.clear();
+		setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 		doInitialize();
 	}
 

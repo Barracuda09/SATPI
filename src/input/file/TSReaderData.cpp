@@ -30,9 +30,8 @@ namespace file {
 	// -- Constructors and destructor ----------------------------------------
 	// =======================================================================
 
-	TSReaderData::TSReaderData() :
-		_filePath("None") {
-		TSReaderData::initialize();
+	TSReaderData::TSReaderData() {
+		doInitialize();
 	}
 
 	TSReaderData::~TSReaderData() {}
@@ -47,19 +46,21 @@ namespace file {
 
 	void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
 
-	void TSReaderData::doInitialize() {}
+	void TSReaderData::doInitialize() {
+		_filePath = "None";
+	}
 
 	void TSReaderData::doParseStreamString(
 			const int UNUSED(streamID),
 			const std::string &msg,
 			const std::string &method) {
-		_filePath = StringConverter::getURIParameter(msg, method, "uri=");
-		if (_filePath.empty()) {
-			clearData();
+		const std::string filePath = StringConverter::getURIParameter(msg, method, "uri=");
+		if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
 			return;
 		}
 		initialize();
 		_changed = true;
+		_filePath = filePath;
 	}
 
 	std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
@@ -86,12 +87,6 @@ namespace file {
 	bool TSReaderData::hasFilePath() const {
 		base::MutexLock lock(_mutex);
 		return _filePath != "None";
-	}
-
-	void TSReaderData::clearData() {
-		base::MutexLock lock(_mutex);
-		_filePath = "None";
-		setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
 	}
 
 } // namespace file

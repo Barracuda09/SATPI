@@ -163,10 +163,12 @@ namespace childpipe {
 	}
 
 	bool TSReader::update() {
-		if (!_exec.isOpen()) {
-			SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+		if (_deviceData.hasDeviceDataChanged()) {
 			_deviceData.resetDeviceDataChanged();
-
+			_exec.close();
+		}
+		if (!_exec.isOpen()) {
 			const std::string execPath = _deviceData.getFilePath();
 			_exec.open(execPath);
 			if (_exec.isOpen()) {
@@ -176,13 +178,13 @@ namespace childpipe {
 			} else {
 				SI_LOG_ERROR("Stream: %d, Child PIPE - TS Reader unable to use exec: %s", _streamID, execPath.c_str());
 			}
-			SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		}
+		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
 		return true;
 	}
 
 	bool TSReader::teardown() {
-		_deviceData.clearData();
+		_deviceData.initialize();
 		_transform.resetTransformFlag();
 		_exec.close();
 		return true;
