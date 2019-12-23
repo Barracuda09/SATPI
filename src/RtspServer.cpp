@@ -198,8 +198,8 @@ void RtspServer::methodDescribe(
 
 	std::size_t streamsSetup = 0;
 
-	// Lambda Expression 'setupAttributeDescribeString'
-	const auto setupAttributeDescribeString = [&](const int streamID) {
+	// Lambda Expression 'setupDescribeMediaLevelString'
+	const auto setupDescribeMediaLevelString = [&](const int streamID) {
 		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(streamID);
 		if (mediaLevel.size() > 5) {
 			++streamsSetup;
@@ -209,10 +209,10 @@ void RtspServer::methodDescribe(
 	// Check if there is a specific stream ID requested
 	if (streamID == -1) {
 		for (std::size_t i = 0; i < _streamManager.getMaxStreams(); ++i) {
-			setupAttributeDescribeString(i);
+			setupDescribeMediaLevelString(i);
 		}
 	} else {
-		setupAttributeDescribeString(streamID);
+		setupDescribeMediaLevelString(streamID);
 	}
 
 	// check if we are in session, then we need to send the Session ID
