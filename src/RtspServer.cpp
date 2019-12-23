@@ -183,21 +183,14 @@ void RtspServer::methodDescribe(
 		"\r\n" \
 		"%6";
 
-	static const char *RTSP_DESCRIBE_CONT1 =
+	static const char *RTSP_DESCRIBE_SESSION_LEVEL =
 		"v=0\r\n" \
 		"o=- %1 %2 IN IP4 %3\r\n" \
 		"s=SatIPServer:1 %4\r\n" \
 		"t=0 0\r\n";
 
-	static const char *RTSP_DESCRIBE_CONT2 =
-		"m=video 0 RTP/AVP 33\r\n" \
-		"c=IN IP4 0.0.0.0\r\n" \
-		"a=control:stream=%1\r\n" \
-		"a=fmtp:33 %2\r\n" \
-		"a=%3\r\n";
-
 	// Describe streams
-	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_CONT1,
+	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_SESSION_LEVEL,
 		(sessionID.size() > 2) ? sessionID : "0",
 		(sessionID.size() > 2) ? sessionID : "0",
 		_bindIPAddress,
@@ -207,11 +200,10 @@ void RtspServer::methodDescribe(
 
 	// Lambda Expression 'setupAttributeDescribeString'
 	const auto setupAttributeDescribeString = [&](const int streamID) {
-		bool active = false;
-		const std::string desc_attr = _streamManager.attributeDescribeString(streamID, active);
-		if (desc_attr.size() > 5) {
+		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(streamID);
+		if (mediaLevel.size() > 5) {
 			++streamsSetup;
-			desc += StringConverter::stringFormat(RTSP_DESCRIBE_CONT2, streamID, desc_attr, (active) ? "sendonly" : "inactive");
+			desc += mediaLevel;
 		}
 	};
 	// Check if there is a specific stream ID requested

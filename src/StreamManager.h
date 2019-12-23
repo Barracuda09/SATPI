@@ -27,7 +27,6 @@
 
 FW_DECL_NS0(SocketClient);
 
-
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
@@ -93,9 +92,7 @@ class StreamManager :
 		}
 
 		///
-		std::string attributeDescribeString(
-			std::size_t stream,
-			bool &active) const;
+		std::string getDescribeMediaLevelString(int streamID) const;
 
 #ifdef LIBDVBCSA
 		///

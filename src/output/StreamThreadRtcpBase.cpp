@@ -141,8 +141,7 @@ uint8_t *StreamThreadRtcpBase::get_app_packet(std::size_t *len) {
 	app[15] = 0;                   // string length
 	                               // Now the App defined data is added
 
-	bool active = false;
-	std::string desc = _stream.attributeDescribeString(active);
+	const std::string desc = _stream.attributeDescribeString();
 	const char *attr_desc_str = desc.c_str();
 	std::memcpy(app + 16, attr_desc_str, desc.size());
 

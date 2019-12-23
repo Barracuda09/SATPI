@@ -38,6 +38,10 @@
 
 #include <assert.h>
 
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
 StreamManager::StreamManager() :
 	XMLSupport(),
 	_decrypt(nullptr) {
@@ -48,11 +52,9 @@ StreamManager::StreamManager() :
 
 StreamManager::~StreamManager() {}
 
-#ifdef LIBDVBCSA
-	input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const int streamID) {
-		return _stream[streamID]->getFrontendDecryptInterface();
-	}
-#endif
+// =============================================================================
+// -- Other member functions ---------------------------------------------------
+// =============================================================================
 
 void StreamManager::enumerateDevices(
 		const std::string &bindIPAddress,
@@ -212,16 +214,21 @@ void StreamManager::checkForSessionTimeout() {
 	}
 }
 
-std::string StreamManager::attributeDescribeString(const std::size_t stream, bool &active) const {
+std::string StreamManager::getDescribeMediaLevelString(const int streamID) const {
 	base::MutexLock lock(_mutex);
-
 	assert(!_stream.empty());
-	return _stream[stream]->attributeDescribeString(active);
+	return _stream[streamID]->getDescribeMediaLevelString();
 }
 
-// =======================================================================
-//  -- base::XMLSupport --------------------------------------------------
-// =======================================================================
+#ifdef LIBDVBCSA
+input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const int streamID) {
+	return _stream[streamID]->getFrontendDecryptInterface();
+}
+#endif
+
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
 
 void StreamManager::doFromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);

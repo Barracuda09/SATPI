@@ -108,7 +108,9 @@ class Stream :
 
 		virtual double getRtpPayload() const final;
 
-		virtual std::string attributeDescribeString(bool &active) const final;
+		virtual std::string attributeDescribeString() const final;
+
+		virtual std::string getDescribeMediaLevelString() const final;
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------

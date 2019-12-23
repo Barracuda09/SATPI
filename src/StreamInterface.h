@@ -77,7 +77,10 @@ class StreamInterface {
 		virtual double getRtpPayload() const = 0;
 
 		/// Get the stream Description string for RTCP and DESCRIBE command
-		virtual std::string attributeDescribeString(bool &active) const = 0;
+		virtual std::string attributeDescribeString() const = 0;
+
+		/// Get the RTSP Describe Media-Level string
+		virtual std::string getDescribeMediaLevelString() const = 0;
 
 };
 

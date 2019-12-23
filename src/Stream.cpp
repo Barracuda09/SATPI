@@ -37,6 +37,10 @@
 static unsigned int seedp = 0xFEED;
 const unsigned int Stream::MAX_CLIENTS = 8;
 
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
 Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	_streamID(streamID),
 	_streamingType(StreamingType::NONE),
@@ -117,9 +121,30 @@ double Stream::getRtpPayload() const {
 	return _rtp_payload;
 }
 
-std::string Stream::attributeDescribeString(bool &active) const {
-	active = _streamActive;
+std::string Stream::attributeDescribeString() const {
 	return _device->attributeDescribeString();
+}
+
+std::string Stream::getDescribeMediaLevelString() const {
+	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
+		"m=video %1 RTP/AVP 33\r\n" \
+		"c=IN IP4 %2\r\n" \
+		"a=control:stream=%3\r\n" \
+		"a=fmtp:33 %4\r\n" \
+		"a=%5\r\n";
+	const std::string desc_attr = _device->attributeDescribeString();
+	if (desc_attr.size() > 5) {
+		if (_streamingType == StreamingType::RTSP_MULTICAST) {
+			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
+				_client[0].getRtpSocketAttr().getSocketPort(),
+				_client[0].getIPAddressOfStream() + "/0",
+				_streamID, desc_attr, (_streamActive) ? "sendonly" : "inactive");
+		} else {
+			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
+				0, "0.0.0.0", _streamID, desc_attr, (_streamActive) ? "sendonly" : "inactive");
+		}
+	}
+	return "";
 }
 
 // =======================================================================
@@ -212,7 +237,6 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s",
 				            _streamID, i, sessionID.c_str());
 			}
-			_client[i].setIPAddressOfStream(socketClient.getIPAddressOfSocket());
 			_client[i].setSocketClient(socketClient);
 			_streamInUse = true;
 			clientID = i;
@@ -388,13 +412,14 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		case StreamingType::RTP_TCP: {
 				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
 				if (interleaved != -1) {
-					//
+					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 				}
 			}
 			break;
 		case StreamingType::RTSP_UNICAST: {
 				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
 				if (port != -1) {
+					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
 					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1);
 				}

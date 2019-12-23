@@ -88,26 +88,32 @@ class StreamClient {
 		/// For RTCP stream
 		SocketAttr &getRtcpSocketAttr();
 
-		/// Set the IP address of this client
-		/// @param ipAddress specifies the IP address of this client
+		/// Set the IP address of the stream output
+		/// @param ipAddress specifies the IP address of the stream output
 		void setIPAddressOfStream(const std::string &ipAddress) {
 			base::MutexLock lock(_mutex);
 			_ipAddress = ipAddress;
 		}
 
-		/// Get the IP address of this client
+		/// Get the IP address of the stream output
 		std::string getIPAddressOfStream() const {
 			base::MutexLock lock(_mutex);
 			return _ipAddress;
 		}
 
-		/// Set the User-Agent of this client
+		/// Get the IP address of this socket client (Owner)
+		std::string getIPAddressOfSocket() const {
+			base::MutexLock lock(_mutex);
+			return (_socketClient == nullptr) ? "0.0.0.0" : _socketClient->getIPAddressOfSocket();
+		}
+
+		/// Set the User-Agent of the socket client (Owner)
 		void setUserAgent(const std::string &userAgent) {
 			base::MutexLock lock(_mutex);
 			_userAgent = userAgent;
 		}
 
-		/// Get the User-Agent of this client
+		/// Get the User-Agent of the socket client (Owner
 		std::string getUserAgent() const {
 			base::MutexLock lock(_mutex);
 			return _userAgent;
