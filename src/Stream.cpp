@@ -370,11 +370,6 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		_client[clientID].setUserAgent(userAgent);
 	}
 
-	if (method == "DESCRIBE") {
-		_client[clientID].restartWatchDog();
-		return true;
-	}
-
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 	    StringConverter::hasTransportParameters(msg)) {
 		_device->parseStreamString(msg, method);
@@ -392,6 +387,7 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		if (method == "GET") {
 			_streamingType = StreamingType::HTTP;
 			_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::FILE_DESCRIPTOR);
+			_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 		} else {
 			const std::string transport = StringConverter::getHeaderFieldParameter(msg, "Transport:");
 			if (transport.find("unicast") != std::string::npos) {
@@ -408,6 +404,7 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 			}
 		}
 	}
+
 	switch (_streamingType) {
 		case StreamingType::RTP_TCP: {
 				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
