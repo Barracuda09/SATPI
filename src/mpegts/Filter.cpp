@@ -129,6 +129,18 @@ namespace mpegts {
 		}
 	}
 
+	bool Filter::isMarkedAsActivePMT(int pid) const {
+		if (isMarkedAsPMT(pid)) {
+			const int pcrPID = _pmt->getPCRPid();
+			if (_pidTable.isPIDUsed(pcrPID)) {
+				return true;
+			}
+			// Probably not the correct PMT, so clear it and try again
+			_pmt = std::make_shared<PMT>();
+		}
+		return false;
+	}
+
 	void Filter::setDMXFileDescriptor(int pid, int fd) {
 		base::MutexLock lock(_mutex);
 		return _pidTable.setDMXFileDescriptor(pid, fd);

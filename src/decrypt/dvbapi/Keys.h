@@ -32,41 +32,43 @@ FW_DECL_NS0(dvbcsa_bs_key_s);
 namespace decrypt {
 namespace dvbapi {
 
-	///
-	class Keys {
-		public:
-			using KeyPair = std::pair<long, dvbcsa_bs_key_s *>;
-			using KeyQueue = std::queue<KeyPair>;
+///
+class Keys {
+	public:
+		using KeyPair = std::pair<long, dvbcsa_bs_key_s *>;
+		using KeyQueue = std::queue<KeyPair>;
 
-			// ================================================================
-			//  -- Constructors and destructor --------------------------------
-			// ================================================================
-			Keys();
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
+	public:
 
-			virtual ~Keys();
+		Keys();
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		virtual ~Keys();
 
-		public:
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-			void set(const unsigned char *cw, int parity, int index);
+		void set(const unsigned char *cw, int parity, int index);
 
-			const dvbcsa_bs_key_s *get(int parity) const;
+		const dvbcsa_bs_key_s *get(int parity) const;
 
-			void remove(int parity);
+		void freeKeys();
 
-			void freeKeys();
+	private:
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		void remove(int parity);
 
-		private:
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	private:
 
-			KeyQueue _key[2];
-	};
+		KeyQueue _key[2];
+};
 
 } // namespace dvbapi
 } // namespace decrypt

@@ -115,14 +115,12 @@ namespace dvbapi {
 						// check if the parity changed in this batch (but should not be the begin of the batch)
 						// or check if this batch full, then decrypt this batch
 						if (countBatch != 0 && (parity != parityBatch || countBatch >= maxBatchSize)) {
-
-							const bool final = parity != parityBatch;
 							//
-							SI_LOG_COND_DEBUG(final, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
-											  streamID, parityBatch, parity, countBatch);
+							SI_LOG_COND_DEBUG(parity != parityBatch, "Stream: %d, Parity changed from %d to %d, decrypting batch size %d",
+								streamID, parityBatch, parity, countBatch);
 
 							// decrypt this batch
-							frontend->decryptBatch(final);
+							frontend->decryptBatch();
 						}
 
 						// Can we add this packet to the batch
@@ -153,7 +151,7 @@ namespace dvbapi {
 						mpegts::TSData filterData;
 						if (frontend->findOSCamFilterData(streamID, pid, data, tableID, filter, demux, filterData)) {
 							// Don't send PAT or PMT before we have an active
-							if (pid == 0 || frontend->isMarkedAsPMT(pid)) {
+							if (pid == 0 || frontend->isMarkedAsActivePMT(pid)) {
 							} else {
 								const unsigned char *tableData = filterData.c_str();
 								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
@@ -176,7 +174,7 @@ namespace dvbapi {
 						}
 ///////////////////////////////////////////////////////////////////
 
-						if (frontend->isMarkedAsPMT(pid)) {
+						if (frontend->isMarkedAsActivePMT(pid)) {
 							sendPMT(streamID, *frontend->getPMTData());
 							// Do we need to clean PMT
 							if (_rewritePMT) {
@@ -330,6 +328,7 @@ namespace dvbapi {
 		if (!pmt.isReadySend()) {
 			return;
 		}
+
 		// Send it here !!
 		const mpegts::TSData progInfo = pmt.getProgramInfo();
 		const int programNumber = pmt.getProgramNumber();
@@ -345,8 +344,8 @@ namespace dvbapi {
 		std::memcpy(&caPMT[0], &request, 4);
 		const uint16_t length = htons(totLength);        // Total Length of caPMT
 		std::memcpy(&caPMT[4], &length, 2);
-		caPMT[6] = LIST_ONLY_UPDATE;                     // send LIST_ONLY_UPDATE
-//			caPMT[6] = LIST_ONLY;                            // send LIST_ONLY
+//		caPMT[6] = LIST_ONLY_UPDATE;                     // send LIST_ONLY_UPDATE
+		caPMT[6] = LIST_ONLY;                            // send LIST_ONLY
 		const uint16_t programNr = htons(programNumber); // Program ID
 		std::memcpy(&caPMT[7], &programNr, 2);
 		caPMT[9] = DVBAPI_PROTOCOL_VERSION;              // Version
@@ -464,10 +463,11 @@ namespace dvbapi {
 										i += 21;
 										break;
 									}
-								case DVBAPI_CA_SET_PID:
-									// Goto next cmd
-									i += 13;
-									break;
+								case DVBAPI_CA_SET_PID: {
+										// Goto next cmd
+										i += 13;
+										break;
+									}
 								case DVBAPI_ECM_INFO: {
 										const int adapter   =  buf[i +  4] - _adapterOffset;
 										const int serviceID = (buf[i +  5] <<  8) |  buf[i +  6];

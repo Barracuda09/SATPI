@@ -25,128 +25,132 @@
 
 namespace mpegts {
 
-	class PacketBuffer {
-		public:
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
-			PacketBuffer();
-			virtual ~PacketBuffer();
+class PacketBuffer {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
+		PacketBuffer();
 
-			// =======================================================================
-			// Other functions
-			// =======================================================================
+		virtual ~PacketBuffer();
 
-			/// Initialize this TS packet
-			void initialize(uint32_t ssrc, long timestamp);
+		// =====================================================================
+		// -- Other functions --------------------------------------------------
+		// =====================================================================
+	public:
 
-			/// Reset this TS packet
-			void reset() {
-				_decryptPending = false;
-				_writeIndex = RTP_HEADER_LEN;
-			}
+		/// Initialize this TS packet
+		void initialize(uint32_t ssrc, long timestamp);
 
-			/// Check if these packets are in sync
-			bool isSynced() const {
-				return _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 0)] == 0x47 &&
-					   _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 1)] == 0x47 &&
-					   _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 2)] == 0x47;
-			}
+		/// Reset this TS packet
+		void reset() {
+			_decryptPending = false;
+			_writeIndex = RTP_HEADER_LEN;
+		}
 
-			/// try to sync this buffer
-			bool trySyncing();
+		/// Check if these packets are in sync
+		bool isSynced() const {
+			return _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 0)] == 0x47 &&
+				   _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 1)] == 0x47 &&
+				   _buffer[RTP_HEADER_LEN + (TS_PACKET_SIZE * 2)] == 0x47;
+		}
 
-			/// This function will return the number of TS Packets that are
-			/// in this TS Packet
-			static constexpr std::size_t getNumberOfTSPackets() {
-				return NUMBER_OF_TS_PACKETS;
-			}
+		/// try to sync this buffer
+		bool trySyncing();
 
-			/// get the amount of data that can be written to this TS packet
-			static constexpr std::size_t getBufferSize() {
-				return MTU_MAX_TS_PACKET_SIZE;
-			}
+		/// This function will return the number of TS Packets that are
+		/// in this TS Packet
+		static constexpr std::size_t getNumberOfTSPackets() {
+			return NUMBER_OF_TS_PACKETS;
+		}
 
-			/// This will return the amount of bytes that (still) need to be written
-			std::size_t getAmountOfBytesToWrite() const {
-				return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
-			}
+		/// get the amount of data that can be written to this TS packet
+		static constexpr std::size_t getBufferSize() {
+			return MTU_MAX_TS_PACKET_SIZE;
+		}
 
-			/// Add the amount of bytes written. So increment write index
-			/// @param index specifies the amount written to TS packet
-			void addAmountOfBytesWritten(std::size_t index) {
-				_writeIndex += index;
-			}
+		/// This will return the amount of bytes that (still) need to be written
+		std::size_t getAmountOfBytesToWrite() const {
+			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
+		}
 
-			/// Check if we have written all the buffer
-			bool full() const {
-				return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
-			}
+		/// Add the amount of bytes written. So increment write index
+		/// @param index specifies the amount written to TS packet
+		void addAmountOfBytesWritten(std::size_t index) {
+			_writeIndex += index;
+		}
 
-			/// Get the write buffer pointer for this TS packet
-			unsigned char *getWriteBufferPtr() {
-				return &_buffer[_writeIndex];
-			}
+		/// Check if we have written all the buffer
+		bool full() const {
+			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
+		}
 
-			/// This function will return the begin of this RTP packet
-			unsigned char *getReadBufferPtr() {
-				return _buffer;
-			}
+		/// Get the write buffer pointer for this TS packet
+		unsigned char *getWriteBufferPtr() {
+			return &_buffer[_writeIndex];
+		}
 
-			/// This function will return the begin of this TS packets
-			unsigned char *getTSReadBufferPtr() {
-				return &_buffer[RTP_HEADER_LEN];
-			}
+		/// This function will return the begin of this RTP packet
+		unsigned char *getReadBufferPtr() {
+			return _buffer;
+		}
 
-			/// Get the TS packet pointer for packets 0 up until NUMBER_OF_TS_PACKETS
-			/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
-			unsigned char *getTSPacketPtr(std::size_t packetNumber) {
-				const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
-				return &_buffer[index];
-			}
-			const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
-				const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
-				return &_buffer[index];
-			}
+		/// This function will return the begin of this TS packets
+		unsigned char *getTSReadBufferPtr() {
+			return &_buffer[RTP_HEADER_LEN];
+		}
 
-			/// Set the decrypt pending flag, so we should check scramble flag if this
-			/// buffer is ready for sending
-			void setDecryptPending() {
-				_decryptPending = true;
-			}
+		/// Get the TS packet pointer for packets 0 up until NUMBER_OF_TS_PACKETS
+		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
+		unsigned char *getTSPacketPtr(std::size_t packetNumber) {
+			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
+			return &_buffer[index];
+		}
+		const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
+			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
+			return &_buffer[index];
+		}
 
-			/// This function checks if this TS packet is ready to be send.
-			/// When the pending decrypt flag was set, all scramble flags should be cleared from all TS packets.
-			bool isReadyToSend() const {
-				// can only be ready when buffer is full, so start from there
-				bool ready = full();
-				if (_decryptPending && ready) {
-					for (std::size_t i = 0; i < NUMBER_OF_TS_PACKETS; ++i) {
-						const unsigned char *ts = getTSPacketPtr(i);
-						ready &= ((ts[3] & 0x80) != 0x80);
-					}
+		/// Set the decrypt pending flag, so we should check scramble flag if this
+		/// buffer is ready for sending
+		void setDecryptPending() {
+			_decryptPending = true;
+		}
+
+		/// This function checks if this TS packet is ready to be send.
+		/// When the pending decrypt flag was set, all scramble flags should
+		/// be cleared from all TS packets.
+		bool isReadyToSend() const {
+			// can only be ready when buffer is full, so start from there
+			bool ready = full();
+			if (_decryptPending && ready) {
+				for (std::size_t i = 0; i < NUMBER_OF_TS_PACKETS; ++i) {
+					const unsigned char *ts = getTSPacketPtr(i);
+					ready &= ((ts[3] & 0x80) != 0x80);
 				}
-				return ready;
 			}
+			return ready;
+		}
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
-			static constexpr size_t MTU                    = 1500;
-			static constexpr size_t RTP_HEADER_LEN         =   12;
-			static constexpr size_t TS_PACKET_SIZE         =  188;
-			static constexpr size_t NUMBER_OF_TS_PACKETS   =    7;
-			static constexpr size_t MTU_MAX_TS_PACKET_SIZE = TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS;
+		static constexpr size_t MTU                    = 1500;
+		static constexpr size_t RTP_HEADER_LEN         =   12;
+		static constexpr size_t TS_PACKET_SIZE         =  188;
+		static constexpr size_t NUMBER_OF_TS_PACKETS   =    7;
+		static constexpr size_t MTU_MAX_TS_PACKET_SIZE = TS_PACKET_SIZE * NUMBER_OF_TS_PACKETS;
 
-		protected:
-			unsigned char _buffer[MTU];
-			std::size_t   _writeIndex;
-			bool          _initialized;
-			bool          _decryptPending;
+	protected:
 
-	};
+		unsigned char _buffer[MTU];
+		std::size_t   _writeIndex;
+		bool          _initialized;
+		bool          _decryptPending;
+
+};
 
 } // namespace mpegts
 

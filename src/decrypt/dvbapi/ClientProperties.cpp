@@ -68,17 +68,12 @@ namespace dvbapi {
 		++_batchCount;
 	}
 
-	void ClientProperties::decryptBatch(bool final) {
+	void ClientProperties::decryptBatch() {
 		if (_keys.get(_parity) != nullptr) {
 			// terminate batch buffer
 			setBatchData(nullptr, 0, _parity, nullptr);
 			// decrypt it
 			dvbcsa_bs_decrypt(_keys.get(_parity), _batch, 184);
-
-			// Final, then remove this key
-			if (final) {
-				_keys.remove(_parity);
-			}
 
 			// clear scramble flags, so we can send it.
 			unsigned int i = 0;

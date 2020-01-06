@@ -58,6 +58,9 @@ class Filter {
 		}
 
 		///
+		bool isMarkedAsActivePMT(int pid) const;
+
+		///
 		mpegts::SpPMT getPMTData() const {
 			base::MutexLock lock(_mutex);
 			return _pmt;
@@ -124,11 +127,11 @@ class Filter {
 
 		mutable base::Mutex _mutex;
 
-		mpegts::PidTable _pidTable;
-		mpegts::SpPAT _pat;
-		mpegts::SpPCR _pcr;
-		mpegts::SpPMT _pmt;
-		mpegts::SpSDT _sdt;
+		mutable mpegts::PidTable _pidTable;
+		mutable mpegts::SpPAT _pat;
+		mutable mpegts::SpPCR _pcr;
+		mutable mpegts::SpPMT _pmt;
+		mutable mpegts::SpSDT _sdt;
 };
 
 } // namespace mpegts

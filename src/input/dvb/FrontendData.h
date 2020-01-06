@@ -23,147 +23,147 @@
 #include <input/DeviceData.h>
 #include <input/dvb/delivery/Lnb.h>
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 namespace input {
 namespace dvb {
 
-	/// The class @c FrontendData carries all the data/information for tuning a frontend
-	class FrontendData :
-		public DeviceData {
-			// =======================================================================
-			// Constructors and destructor
-			// =======================================================================
-		public:
+/// The class @c FrontendData carries all the data/information for tuning a frontend
+class FrontendData :
+	public DeviceData {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			FrontendData();
+		FrontendData();
 
-			virtual ~FrontendData();
+		virtual ~FrontendData();
 
-			FrontendData(const FrontendData&) = delete;
+		FrontendData(const FrontendData&) = delete;
 
-			FrontendData& operator=(const FrontendData&) = delete;
+		FrontendData& operator=(const FrontendData&) = delete;
 
-			// =======================================================================
-			// -- input::DeviceData --------------------------------------------------
-			// =======================================================================
-		private:
+		// =====================================================================
+		// -- input::DeviceData ------------------------------------------------
+		// =====================================================================
+	private:
 
-			/// @see DeviceData
-			virtual void doNextAddToXML(std::string &xml) const final;
+		/// @see DeviceData
+		virtual void doNextAddToXML(std::string &xml) const final;
 
-			/// @see DeviceData
-			virtual void doNextFromXML(const std::string &xml) final;
+		/// @see DeviceData
+		virtual void doNextFromXML(const std::string &xml) final;
 
-			/// @see DeviceData
-			virtual void doInitialize() final;
+		/// @see DeviceData
+		virtual void doInitialize() final;
 
-			/// @see DeviceData
-			virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
+		/// @see DeviceData
+		virtual void doParseStreamString(int streamID, const std::string &msg,
+			const std::string &method) final;
 
-			/// @see DeviceData
-			virtual std::string doAttributeDescribeString(int streamID) const final;
+		/// @see DeviceData
+		virtual std::string doAttributeDescribeString(int streamID) const final;
 
-			// =======================================================================
-			//  -- Other member functions --------------------------------------------
-			// =======================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
+		/// Get the frequency in Mhz
+		uint32_t getFrequency() const;
 
-			/// Get the frequency in Mhz
-			uint32_t getFrequency() const;
+		///
+		int getSymbolRate() const;
 
-			///
-			int getSymbolRate() const;
+		/// Get modulation type
+		int getModulationType() const;
 
-			/// Get modulation type
-			int getModulationType() const;
+		/// Set modulation type
+		void setModulationType(int modtype);
 
-			/// Set modulation type
-			void setModulationType(int modtype);
+		///
+		int getRollOff() const;
 
-			///
-			int getRollOff() const;
+		///
+		int getFEC() const;
 
-			///
-			int getFEC() const;
+		///
+		int getPilotTones() const;
 
-			///
-			int getPilotTones() const;
+		/// Get the LNB polarizaion
+		input::dvb::delivery::Lnb::Polarization getPolarization() const;
 
-			/// Get the LNB polarizaion
-			input::dvb::delivery::Lnb::Polarization getPolarization() const;
+		/// Get the LNB polarizaion as char
+		char getPolarizationChar() const;
 
-			/// Get the LNB polarizaion as char
-			char getPolarizationChar() const;
+		/// Get the DiSEqc source
+		int getDiSEqcSource() const;
 
-			/// Get the DiSEqc source
-			int getDiSEqcSource() const;
+		int getSpectralInversion() const;
 
-			int getSpectralInversion() const;
+		int getBandwidthHz() const;
 
-			int getBandwidthHz() const;
+		int getTransmissionMode() const;
 
-			int getTransmissionMode() const;
+		int getGuardInverval() const;
 
-			int getGuardInverval() const;
+		int getHierarchy() const;
 
-			int getHierarchy() const;
+		int getUniqueIDPlp() const;
 
-			int getUniqueIDPlp() const;
+		int getUniqueIDT2() const;
 
-			int getUniqueIDT2() const;
+		int getSISOMISO() const;
 
-			int getSISOMISO() const;
+		int getDataSlice() const;
 
-			int getDataSlice() const;
+		int getC2TuningFrequencyType() const;
 
-			int getC2TuningFrequencyType() const;
+	private:
 
-		private:
+		///
+		void parsePIDString(const std::string &reqPids,
+			const std::string &userPids, bool add);
 
-			///
-			void parsePIDString(const std::string &reqPids,
-				const std::string &userPids, bool add);
+		// =====================================================================
+		// -- Data members -----------------------------------------------------
+		// =====================================================================
+	private:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
+		uint32_t _freq;          /// frequency in MHZ
+		int _modtype;            /// modulation type i.e. (QPSK/PSK_8)
+		int _srate;              /// symbol rate in kSymb/s
+		int _fec;                /// forward error control i.e. (FEC_1_2 / FEC_2_3)
+		int _rolloff;            /// roll-off
+		int _inversion;          ///
 
-		private:
+		// =====================================================================
+		// -- DVB-S(2) Data members --------------------------------------------
+		// =====================================================================
+		int _pilot;              /// pilot tones (on/off)
+		int _src;                /// Source (1-4) => DiSEqC switch position (0-3)
+		input::dvb::delivery::Lnb::Polarization _pol;
 
-			uint32_t _freq;            /// frequency in MHZ
-			int _modtype;              /// modulation type i.e. (QPSK/PSK_8)
-			int _srate;                /// symbol rate in kSymb/s
-			int _fec;                  /// forward error control i.e. (FEC_1_2 / FEC_2_3)
-			int _rolloff;              /// roll-off
-			int _inversion;            ///
+		// =====================================================================
+		// -- DVB-C2 Data members ----------------------------------------------
+		// =====================================================================
+		int _c2tft;
+		int _data_slice;
 
-			// =======================================================================
-			// -- DVB-S(2) Data members ----------------------------------------------
-			// =======================================================================
-			int _pilot;               // pilot tones (on/off)
-			int _src;                 // Source (1-4) => DiSEqC switch position (0-3)
-			input::dvb::delivery::Lnb::Polarization _pol;
+		// =======================================================================
+		// -- DVB-T(2) Data members ----------------------------------------------
+		// =======================================================================
+		int _transmission;
+		int _guard;
+		int _hierarchy;
+		uint32_t _bandwidthHz;
+		int _plp_id;
+		int _t2_system_id;
+		int _siso_miso;
 
-			// =======================================================================
-			// -- DVB-C2 Data members ------------------------------------------------
-			// =======================================================================
-			int _c2tft;               // DVB-C2
-			int _data_slice;          // DVB-C2
-
-			// =======================================================================
-			// -- DVB-T(2) Data members ----------------------------------------------
-			// =======================================================================
-			int _transmission;       // DVB-T(2)
-			int _guard;              // DVB-T(2)
-			int _hierarchy;          // DVB-T(2)
-			uint32_t _bandwidthHz;   // DVB-T(2)/C2
-			int _plp_id;             // DVB-T2/C2
-			int _t2_system_id;       // DVB-T2
-			int _siso_miso;          // DVB-T2
-	};
+};
 
 } // namespace dvb
 } // namespace input

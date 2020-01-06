@@ -25,116 +25,115 @@
 
 namespace mpegts {
 
-	using TSData = std::basic_string<unsigned char>;
+using TSData = std::basic_string<unsigned char>;
 
-	class TableData {
-		public:
-			// ================================================================
-			// -- Forward declaration -----------------------------------------
-			// ================================================================
-			struct Data;
+class TableData {
+		// =====================================================================
+		// -- Forward declaration ----------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			// -- Defines -----------------------------------------------------
-			// ================================================================
-			#define CRC(data, sectionLength) \
-				(data[sectionLength - 4 + 8] << 24) |     \
-				(data[sectionLength - 4 + 8 + 1] << 16) | \
-				(data[sectionLength - 4 + 8 + 2] <<  8) | \
-				 data[sectionLength - 4 + 8 + 3]
+		struct Data;
 
-			#define PAT_TABLE_ID           0x00
-			#define CAT_TABLE_ID           0x01
-			#define PMT_TABLE_ID           0x02
-			#define SDT_TABLE_ID           0x42
-			#define EIT1_TABLE_ID          0x4E
-			#define EIT2_TABLE_ID          0x4F
-			#define ECM0_TABLE_ID          0x80
-			#define ECM1_TABLE_ID          0x81
-			#define EMM1_TABLE_ID          0x82
-			#define EMM2_TABLE_ID          0x83
-			#define EMM3_TABLE_ID          0x84
+		// =====================================================================
+		// -- Defines ----------------------------------------------------------
+		// =====================================================================
+		#define CRC(data, sectionLength) \
+			(data[sectionLength - 4 + 8] << 24) |     \
+			(data[sectionLength - 4 + 8 + 1] << 16) | \
+			(data[sectionLength - 4 + 8 + 2] <<  8) | \
+			 data[sectionLength - 4 + 8 + 3]
 
-			// ================================================================
-			// -- Constructors and destructor ---------------------------------
-			// ================================================================
+		#define PAT_TABLE_ID           0x00
+		#define CAT_TABLE_ID           0x01
+		#define PMT_TABLE_ID           0x02
+		#define SDT_TABLE_ID           0x42
+		#define EIT1_TABLE_ID          0x4E
+		#define EIT2_TABLE_ID          0x4F
+		#define ECM0_TABLE_ID          0x80
+		#define ECM1_TABLE_ID          0x81
+		#define EMM1_TABLE_ID          0x82
+		#define EMM2_TABLE_ID          0x83
+		#define EMM3_TABLE_ID          0x84
 
-			TableData();
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			virtual ~TableData();
+		TableData();
 
-			// ================================================================
-			//  -- Static member functions ------------------------------------
-			// ================================================================
+		virtual ~TableData();
 
-		public:
+		// =====================================================================
+		//  -- Static member functions -----------------------------------------
+		// =====================================================================
+	public:
 
-			static uint32_t calculateCRC32(const unsigned char *data, std::size_t len);
+		static uint32_t calculateCRC32(const unsigned char *data, std::size_t len);
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
+		///
+		virtual void clear();
 
-			///
-			virtual void clear();
+		/// Get an copy of the requested table data
+		/// @param secNr
+		/// @param data
+		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
 
-			/// Get an copy of the requested table data
-			/// @param secNr
-			/// @param data
-			bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
+		/// Collect Table data for tableID
+		void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
 
-			/// Collect Table data for tableID
-			void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
+		/// Get the collected Table Data
+		TSData getData(size_t secNr) const;
 
-			/// Get the collected Table Data
-			TSData getData(size_t secNr) const;
+		/// Check if Table is collected
+		bool isCollected() const;
 
-			/// Check if Table is collected
-			bool isCollected() const;
+	protected:
 
-		protected:
+		/// Add Table data that was collected
+		bool addData(int tableID, const unsigned char *data, int length, int pid, int cc);
 
-			/// Add Table data that was collected
-			bool addData(int tableID, const unsigned char *data, int length, int pid, int cc);
+		/// Set if the current Table has been collected
+		void setCollected();
 
-			/// Set if the current Table has been collected
-			void setCollected();
+		///
+		const char* getTableTXT(int tableID) const;
 
-			///
-			const char* getTableTXT(int tableID) const;
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		struct Data {
+			int tableID;
+			std::size_t sectionLength;
+			int version;
+			int secNr;
+			int lastSecNr;
+			uint32_t crc;
+			TSData data;
+			int cc;
+			int pid;
+			bool collected;
+		};
 
-		public:
+	protected:
 
-			struct Data {
-				int tableID;
-				std::size_t sectionLength;
-				int version;
-				int secNr;
-				int lastSecNr;
-				uint32_t crc;
-				TSData data;
-				int cc;
-				int pid;
-				bool collected;
-			};
+		std::size_t _numberOfSections;
 
-		protected:
+	private:
 
-			std::size_t _numberOfSections;
+		std::size_t _currentSectionNumber;
+		std::map<int, Data> _dataTable;
+		mutable bool _collectingFinished;
 
-		private:
-
-			std::size_t _currentSectionNumber;
-			std::map<int, Data> _dataTable;
-			mutable bool _collectingFinished;
-
-	};
+};
 
 } // namespace mpegts
 

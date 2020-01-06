@@ -40,8 +40,8 @@ namespace dvb {
 		return _dvbapiData.getMaximumBatchSize();
 	}
 
-	void Frontend::decryptBatch(bool final) {
-		return _dvbapiData.decryptBatch(final);
+	void Frontend::decryptBatch() {
+		return _dvbapiData.decryptBatch();
 	}
 
 	void Frontend::setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
@@ -89,8 +89,8 @@ namespace dvb {
 			cardSystem, readerName, sourceName, protocolName, hops);
 	}
 
-	bool Frontend::isMarkedAsPMT(int pid) const {
-		return _frontendData.getFilterData().isMarkedAsPMT(pid);
+	bool Frontend::isMarkedAsActivePMT(int pid) const {
+		return _frontendData.getFilterData().isMarkedAsActivePMT(pid);
 	}
 
 	mpegts::SpPMT Frontend::getPMTData() const {

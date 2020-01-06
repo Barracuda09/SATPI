@@ -28,36 +28,35 @@ extern "C" {
 namespace decrypt {
 namespace dvbapi {
 
-	// =======================================================================
-	//  -- Constructors and destructor ---------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- Constructors and destructor -----------------------------------------
+	// =========================================================================
 	Keys::Keys() {}
 
 	Keys::~Keys() {}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
+	// =========================================================================
+	//  -- Other member functions ----------------------------------------------
+	// =========================================================================
+
 	void Keys::set(const unsigned char *cw, int parity, int UNUSED(index)) {
 		dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
 		dvbcsa_bs_key_set(cw, k);
 		_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
+		//
+		while (_key[parity].size() > 1) {
+			remove(parity);
+		}
 	}
 
 	const dvbcsa_bs_key_s *Keys::get(int parity) const {
 		if (!_key[parity].empty()) {
-			const KeyPair pair = _key[parity].front();
+			const KeyPair pair = _key[parity].back();
 //			const long duration = base::TimeCounter::getTicks() - pair.first;
 			return pair.second;
 		} else {
 			return nullptr;
 		}
-	}
-
-	void Keys::remove(int parity) {
-		const KeyPair pair = _key[parity].front();
-		dvbcsa_bs_key_free(pair.second);
-		_key[parity].pop();
 	}
 
 	void Keys::freeKeys() {
@@ -67,7 +66,13 @@ namespace dvbapi {
 		while (!_key[1].empty()) {
 			remove(1);
 		}
-	}	
+	}
+
+	void Keys::remove(int parity) {
+		const KeyPair pair = _key[parity].front();
+		dvbcsa_bs_key_free(pair.second);
+		_key[parity].pop();
+	}
 
 } // namespace dvbapi
 } // namespace decrypt

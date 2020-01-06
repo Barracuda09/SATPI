@@ -168,10 +168,10 @@ namespace dvb {
 			StreamSpVector &streamVector,
 			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
-			const std::string &dvbAdapterpath) {
+			const std::string &dvbAdapterPath) {
 		const StreamSpVector::size_type beginSize = streamVector.size();
-		SI_LOG_INFO("Detecting frontends in: %s", dvbAdapterpath.c_str());
-		getAttachedFrontends(streamVector, appDataPath, decrypt, dvbAdapterpath, dvbAdapterpath);
+		SI_LOG_INFO("Detecting frontends in: %s", dvbAdapterPath.c_str());
+		getAttachedFrontends(streamVector, appDataPath, decrypt, dvbAdapterPath, dvbAdapterPath);
 		const StreamSpVector::size_type endSize = streamVector.size();
 		SI_LOG_INFO("Frontends found: %u", endSize - beginSize);
 	}

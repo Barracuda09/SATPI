@@ -73,7 +73,7 @@ namespace dvbapi {
 
 			/// This function will decrypt the batch upon success it will clear scramble flag
 			/// on failure it will make a NULL TS Packet and clear scramble flag
-			void decryptBatch(bool final);
+			void decryptBatch();
 
 			/// Set the 'next' key for the requested parity
 			void setKey(const unsigned char *cw, int parity, int index) {

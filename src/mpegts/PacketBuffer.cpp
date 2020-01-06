@@ -25,53 +25,61 @@
 
 namespace mpegts {
 
-	static_assert(PacketBuffer::MTU_MAX_TS_PACKET_SIZE < PacketBuffer::MTU, "TS Packet size bigger then MTU");
-	static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
+static_assert(PacketBuffer::MTU_MAX_TS_PACKET_SIZE < PacketBuffer::MTU, "TS Packet size bigger then MTU");
+static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
 
-	PacketBuffer::PacketBuffer() :
-			_writeIndex(0),
-			_initialized(false),
-			_decryptPending(false) {}
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
 
-	PacketBuffer::~PacketBuffer() {}
+PacketBuffer::PacketBuffer() :
+	_writeIndex(0),
+	_initialized(false),
+	_decryptPending(false) {}
 
-	void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
-		// initialize RTP header
-		_buffer[0]  = 0x80;                         // version: 2, padding: 0, extension: 0, CSRC: 0
-		_buffer[1]  = 33;                           // marker: 0, payload type: 33 (MP2T)
-		_buffer[2]  = (0 >> 8) & 0xff;              // sequence number
-		_buffer[3]  = (0 >> 0) & 0xff;              // sequence number
-		_buffer[4]  = (timestamp >> 24) & 0xff;     // timestamp
-		_buffer[5]  = (timestamp >> 16) & 0xff;     // timestamp
-		_buffer[6]  = (timestamp >>  8) & 0xff;     // timestamp
-		_buffer[7]  = (timestamp >>  0) & 0xff;     // timestamp
-		_buffer[8]  = (ssrc >> 24) & 0xff;          // synchronization source
-		_buffer[9]  = (ssrc >> 16) & 0xff;          // synchronization source
-		_buffer[10] = (ssrc >>  8) & 0xff;          // synchronization source
-		_buffer[11] = (ssrc >>  0) & 0xff;          // synchronization source
+PacketBuffer::~PacketBuffer() {}
 
-		_initialized = true;
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
+
+void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
+	// initialize RTP header
+	_buffer[0]  = 0x80;                     // version: 2, padding: 0, extension: 0, CSRC: 0
+	_buffer[1]  = 33;                       // marker: 0, payload type: 33 (MP2T)
+	_buffer[2]  = (0 >> 8) & 0xff;          // sequence number
+	_buffer[3]  = (0 >> 0) & 0xff;          // sequence number
+	_buffer[4]  = (timestamp >> 24) & 0xff; // timestamp
+	_buffer[5]  = (timestamp >> 16) & 0xff; // timestamp
+	_buffer[6]  = (timestamp >>  8) & 0xff; // timestamp
+	_buffer[7]  = (timestamp >>  0) & 0xff; // timestamp
+	_buffer[8]  = (ssrc >> 24) & 0xff;      // synchronization source
+	_buffer[9]  = (ssrc >> 16) & 0xff;      // synchronization source
+	_buffer[10] = (ssrc >>  8) & 0xff;      // synchronization source
+	_buffer[11] = (ssrc >>  0) & 0xff;      // synchronization source
+
+	_initialized = true;
+}
+
+bool PacketBuffer::trySyncing() {
+	if (isSynced()) {
+		return true;
 	}
-
-	bool PacketBuffer::trySyncing() {
-		if (isSynced()) {
+	for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
+		const unsigned char *cData = _buffer + i;
+		if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
+			cData[TS_PACKET_SIZE * 1] == 0x47 &&
+			cData[TS_PACKET_SIZE * 2] == 0x47) {
+			// found sync, now move it to begin of buffer
+			const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
+			_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
+			std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
 			return true;
 		}
-		for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
-			const unsigned char *cData = _buffer + i;
-			if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
-			    cData[TS_PACKET_SIZE * 1] == 0x47 &&
-			    cData[TS_PACKET_SIZE * 2] == 0x47) {
-				// found sync, now move it to begin of buffer
-				const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
-				_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
-				std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
-				return true;
-			}
-		}
-		// did not find a sync, so flush buffer
-		reset();
-		return false;
 	}
+	// did not find a sync, so flush buffer
+	reset();
+	return false;
+}
 
 } // namespace mpegts

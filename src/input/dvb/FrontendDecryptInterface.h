@@ -30,77 +30,81 @@ FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 namespace input {
 namespace dvb {
 
-	/// The class @c FrontendDecryptInterface is an interface to an @c Stream for decrypting
-	class FrontendDecryptInterface {
-		public:
-			// =======================================================================
-			// -- Constructors and destructor ----------------------------------------
-			// =======================================================================
-			FrontendDecryptInterface() {}
+/// The class @c FrontendDecryptInterface is an interface to an @c Stream for decrypting
+class FrontendDecryptInterface {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
 
-			virtual ~FrontendDecryptInterface() {}
+		FrontendDecryptInterface() {}
 
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
+		virtual ~FrontendDecryptInterface() {}
 
-			/// Get the streamID of this stream
-			virtual int getStreamID() const = 0;
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
+	public:
 
-			///
-			virtual int getBatchCount() const = 0;
+		/// Get the streamID of this stream
+		virtual int getStreamID() const = 0;
 
-			///
-			virtual int getBatchParity() const = 0;
+		///
+		virtual int getBatchCount() const = 0;
 
-			///
-			virtual int getMaximumBatchSize() const = 0;
+		///
+		virtual int getBatchParity() const = 0;
 
-			///
-			virtual void decryptBatch(bool final) = 0;
+		///
+		virtual int getMaximumBatchSize() const = 0;
 
-			///
-			virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) = 0;
+		///
+		virtual void decryptBatch() = 0;
 
-			///
-			virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
+		///
+		virtual void setBatchData(unsigned char *ptr, int len, int parity,
+			unsigned char *originalPtr) = 0;
 
-			///
-			virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
+		///
+		virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
 
-			///
-			virtual void startOSCamFilterData(int pid, int demux, int filter,
-			           const unsigned char *filterData, const unsigned char *filterMask) = 0;
+		///
+		virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
 
-			///
-			virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
+		///
+		virtual void startOSCamFilterData(int pid, int demux, int filter,
+				   const unsigned char *filterData, const unsigned char *filterMask) = 0;
 
-			///
-			virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
-				int &filter, int &demux, mpegts::TSData &filterData) = 0;
+		///
+		virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
 
-			///
-			virtual void stopOSCamFilters(int streamID) = 0;
+		///
+		virtual bool findOSCamFilterData(int streamID, int pid,
+			const unsigned char *tsPacket, int &tableID,
+			int &filter, int &demux, mpegts::TSData &filterData) = 0;
 
-			///
-			virtual void setECMInfo(
-				int pid,
-				int serviceID,
-				int caID,
-				int provID,
-				int emcTime,
-				const std::string &cardSystem,
-				const std::string &readerName,
-				const std::string &sourceName,
-				const std::string &protocolName,
-				int hops) = 0;
+		///
+		virtual void stopOSCamFilters(int streamID) = 0;
 
-			///
-			virtual bool isMarkedAsPMT(int pid) const = 0;
+		///
+		virtual void setECMInfo(
+			int pid,
+			int serviceID,
+			int caID,
+			int provID,
+			int emcTime,
+			const std::string &cardSystem,
+			const std::string &readerName,
+			const std::string &sourceName,
+			const std::string &protocolName,
+			int hops) = 0;
 
-			///
-			virtual mpegts::SpPMT getPMTData() const = 0;
-	};
+		///
+		virtual bool isMarkedAsActivePMT(int pid) const = 0;
+
+		///
+		virtual mpegts::SpPMT getPMTData() const = 0;
+};
 
 } // namespace dvb
 } // namespace input

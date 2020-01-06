@@ -81,7 +81,7 @@ class Frontend :
 			StreamSpVector &streamVector,
 			const std::string &appDataPath,
 			decrypt::dvbapi::SpClient decrypt,
-			const std::string &dvbAdapterpath);
+			const std::string &dvbAdapterPath);
 
 		// =======================================================================
 		// -- base::XMLSupport ---------------------------------------------------
@@ -108,7 +108,7 @@ class Frontend :
 
 		virtual int getMaximumBatchSize() const final;
 
-		virtual void decryptBatch(bool final) final;
+		virtual void decryptBatch() final;
 
 		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) final;
 
@@ -138,7 +138,7 @@ class Frontend :
 			const std::string &protocolName,
 			int hops) final;
 
-		virtual bool isMarkedAsPMT(int pid) const final;
+		virtual bool isMarkedAsActivePMT(int pid) const final;
 
 		virtual mpegts::SpPMT getPMTData() const final;
 #endif
