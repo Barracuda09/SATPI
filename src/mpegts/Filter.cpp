@@ -1,6 +1,6 @@
 /* Filter.cpp
 
-   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -87,6 +87,11 @@ namespace mpegts {
 				// Did we finish collecting PMT
 				if (_pmt->isCollected()) {
 					_pmt->parse(streamID);
+					const int pcrPID = _pmt->getPCRPid();
+					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
+						// Probably not the correct PMT, so clear it and try again
+						_pmt = std::make_shared<PMT>();
+					}
 				}
 			}
 		} else if (pid == 17) {
@@ -129,39 +134,16 @@ namespace mpegts {
 		}
 	}
 
-	bool Filter::isMarkedAsActivePMT(int pid) const {
+	bool Filter::isMarkedAsActivePMT(const int pid) const {
 		if (isMarkedAsPMT(pid)) {
 			const int pcrPID = _pmt->getPCRPid();
-			if (_pidTable.isPIDUsed(pcrPID)) {
+			if (_pidTable.isPIDOpened(pcrPID) || _pidTable.getPacketCounter(pcrPID) != 0) {
 				return true;
 			}
 			// Probably not the correct PMT, so clear it and try again
 			_pmt = std::make_shared<PMT>();
 		}
 		return false;
-	}
-
-	void Filter::setDMXFileDescriptor(int pid, int fd) {
-		base::MutexLock lock(_mutex);
-		return _pidTable.setDMXFileDescriptor(pid, fd);
-	}
-
-	int Filter::getDMXFileDescriptor(int pid) const {
-		base::MutexLock lock(_mutex);
-		return _pidTable.getDMXFileDescriptor(pid);
-	}
-
-	void Filter::closeDMXFileDescriptor(int pid) {
-		base::MutexLock lock(_mutex);
-		if (pid == 0) {
-//			_pat = std::make_shared<PAT>();
-		} else if (_pat->isMarkedAsPMT(pid)) {
-			_pmt = std::make_shared<PMT>();
-			_pcr = std::make_shared<PCR>();
-		} else if (pid == 17) {
-			_sdt = std::make_shared<SDT>();
-		}
-		_pidTable.closeDMXFileDescriptor(pid);
 	}
 
 	void Filter::resetPIDTableChanged() {
@@ -174,7 +156,7 @@ namespace mpegts {
 		return _pidTable.hasPIDTableChanged();
 	}
 
-	uint32_t Filter::getPacketCounter(int pid) const {
+	uint32_t Filter::getPacketCounter(const int pid) const {
 		base::MutexLock lock(_mutex);
 		return _pidTable.getPacketCounter(pid);
 	}
@@ -184,22 +166,40 @@ namespace mpegts {
 		return _pidTable.getPidCSV();
 	}
 
-	void Filter::setPID(int pid, bool val) {
+	void Filter::setPID(const int pid, const bool val) {
 		base::MutexLock lock(_mutex);
 		_pidTable.setPID(pid, val);
 	}
 
-	bool Filter::shouldPIDClose(int pid) const {
+	bool Filter::shouldPIDClose(const int pid) const {
 		base::MutexLock lock(_mutex);
 		return _pidTable.shouldPIDClose(pid);
 	}
 
-	bool Filter::isPIDUsed(int pid) const {
+	void Filter::setPIDClosed(const int pid) {
 		base::MutexLock lock(_mutex);
-		return _pidTable.isPIDUsed(pid);
+		_pidTable.setPIDClosed(pid);
+		if (pid == 0) {
+//			_pat = std::make_shared<PAT>();
+		} else if (_pat->isMarkedAsPMT(pid)) {
+			_pmt = std::make_shared<PMT>();
+			_pcr = std::make_shared<PCR>();
+		} else if (pid == 17) {
+			_sdt = std::make_shared<SDT>();
+		}
 	}
 
-	void Filter::setAllPID(bool val) {
+	bool Filter::shouldPIDOpen(const int pid) const {
+		base::MutexLock lock(_mutex);
+		return _pidTable.shouldPIDOpen(pid);
+	}
+
+	void Filter::setPIDOpened(const int pid) {
+		base::MutexLock lock(_mutex);
+		_pidTable.setPIDOpened(pid);
+	}
+
+	void Filter::setAllPID(const bool val) {
 		base::MutexLock lock(_mutex);
 		_pidTable.setAllPID(val);
 	}

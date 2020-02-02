@@ -1,6 +1,6 @@
 /* Log.cpp
 
-   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -30,7 +30,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define LOG_SIZE 350
+#ifdef NDEBUG
+#define LOG_SIZE 400
+#else
+#define LOG_SIZE 550
+#endif
 
 int syslog_on = 1;
 static base::Mutex logMutex;

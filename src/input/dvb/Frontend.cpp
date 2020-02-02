@@ -1,6 +1,6 @@
 /* Frontend.cpp
 
-   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ namespace dvb {
 		Device(streamID),
 		_tuned(false),
 		_fd_fe(-1),
-		_fd_dvr(-1),
+		_fd_dmx(-1),
 		_path_to_fe(fe),
 		_path_to_dvr(dvr),
 		_path_to_dmx(dmx),
@@ -236,7 +236,7 @@ namespace dvb {
 
 	bool Frontend::isDataAvailable() {
 		pollfd pfd[1];
-		pfd[0].fd = _fd_dvr;
+		pfd[0].fd = _fd_dmx;
 		pfd[0].events = POLLIN;
 		pfd[0].revents = 0;
 		const int pollRet = ::poll(pfd, 1, 180);
@@ -251,8 +251,8 @@ namespace dvb {
 	}
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
-		// try read maximum amount of bytes from DVR
-		const int bytes = ::read(_fd_dvr, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		// try read maximum amount of bytes from DMX
+		const int bytes = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
 			buffer.addAmountOfBytesWritten(bytes);
 			if (buffer.full()) {
@@ -418,7 +418,7 @@ namespace dvb {
 				closePid(i);
 			}
 			closeFE();
-			closeDVR();
+			closeDMX();
 			// After close wait a moment before opening it again
 			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 		}
@@ -444,7 +444,7 @@ namespace dvb {
 		}
 		_tuned = false;
 		closeFE();
-		closeDVR();
+		closeDMX();
 		_frontendData.initialize();
 		_transform.resetTransformFlag();
 		return true;
@@ -651,35 +651,14 @@ namespace dvb {
 		return fd;
 	}
 
-	int Frontend::openDVR(const std::string &path) const {
-		const int fd = ::open(path.c_str(), O_RDONLY | O_NONBLOCK);
-		if (fd < 0) {
-			PERROR("DVR DEVICE");
+	void Frontend::closeDMX() {
+		if (_fd_dmx != -1) {
+			SI_LOG_INFO("Stream: %d, Closing %s fd: %d", _streamID, _path_to_dmx.c_str(), _fd_dmx);
+			if (::ioctl(_fd_dmx, DMX_STOP) != 0) {
+				PERROR("DMX_STOP");
+			}
+			CLOSE_FD(_fd_dmx);
 		}
-		return fd;
-	}
-
-	void Frontend::closeDVR() {
-		if (_fd_dvr != -1) {
-			SI_LOG_INFO("Stream: %d, Closing %s fd: %d", _streamID, _path_to_dvr.c_str(), _fd_dvr);
-			CLOSE_FD(_fd_dvr);
-		}
-	}
-
-	bool Frontend::setDMXFilter(const int fd, const uint16_t pid) {
-		struct dmx_pes_filter_params pesFilter;
-
-		pesFilter.pid      = pid;
-		pesFilter.input    = DMX_IN_FRONTEND;
-		pesFilter.output   = DMX_OUT_TS_TAP;
-		pesFilter.pes_type = DMX_PES_OTHER;
-		pesFilter.flags    = DMX_IMMEDIATE_START;
-
-		if (::ioctl(fd, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-			PERROR("DMX_SET_PES_FILTER (PID %04d)", pid);
-			return false;
-		}
-		return true;
 	}
 
 	bool Frontend::tune() {
@@ -729,92 +708,86 @@ namespace dvb {
 				++timeout;
 			}
 		}
-		// Check if we have already a DVR open and are tuned
-		if (_fd_dvr == -1 && _tuned) {
-			// try opening DVR, try again if fails
+		return _tuned;
+	}
+
+	void Frontend::openPid(const int pid) {
+		if (!_frontendData.getFilterData().shouldPIDOpen(pid)) {
+			return;
+		}
+		// Check if we have already a DMX open
+		if (_fd_dmx == -1) {
+			// try opening DMX, try again if fails
 			std::size_t timeout = 0;
-			while ((_fd_dvr = openDVR(_path_to_dvr)) == -1) {
+			while ((_fd_dmx = openDMX(_path_to_dmx)) == -1) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 				++timeout;
 				if (timeout > 3) {
-					return false;
+					return;
 				}
 			}
-			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_dvr.c_str(), _fd_dvr);
-
 			{
 				base::MutexLock lock(_mutex);
 				if (_dvrBufferSizeMB > 0) {
 					const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
-					if (::ioctl(_fd_dvr, DMX_SET_BUFFER_SIZE, size) != 0) {
-						PERROR("DVR - DMX_SET_BUFFER_SIZE failed");
+					if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
+						PERROR("DMX - DMX_SET_BUFFER_SIZE failed");
 					} else {
-						SI_LOG_INFO("Stream: %d, Set DVR buffer size to %d Bytes", _streamID, size);
+						SI_LOG_INFO("Stream: %d, Set DMX buffer size to %d Bytes", _streamID, size);
 					}
 				}
 			}
-		}
-		return (_fd_dvr != -1) && _tuned;
-	}
-
-	bool Frontend::openPid(const int pid) {
-		if (_frontendData.getFilterData().getDMXFileDescriptor(pid) == -1) {
-			const int fd = openDMX(_path_to_dmx);
-			_frontendData.getFilterData().setDMXFileDescriptor(pid, fd);
-			std::size_t timeout = 0;
-			while (setDMXFilter(fd, pid) != 1) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(350));
-				++timeout;
-				if (timeout > 3) {
-					return false;
-				}
+			struct dmx_pes_filter_params pesFilter;
+			pesFilter.pid      = pid;
+			pesFilter.input    = DMX_IN_FRONTEND;
+			pesFilter.output   = DMX_OUT_TSDEMUX_TAP;
+			pesFilter.pes_type = DMX_PES_OTHER;
+			pesFilter.flags    = DMX_IMMEDIATE_START;
+			if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
+				PERROR("Stream: %d, DMX_SET_PES_FILTER (PID %04d)", _streamID, 0);
+				return;
 			}
-			SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d - fd: %03d%s", _streamID, pid, fd,
-					_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
+			SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_dmx.c_str(), _fd_dmx);
+		} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
+			PERROR("Stream: %d, DMX_ADD_PID: PID %04d", _streamID, pid);
+			return;
 		}
-		return true;
+		_frontendData.getFilterData().setPIDOpened(pid);
+		SI_LOG_DEBUG("Stream: %d, Set filter PID: %04d%s", _streamID, pid,
+				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 	}
 
 	void Frontend::closePid(const int pid) {
-		const int fd = _frontendData.getFilterData().getDMXFileDescriptor(pid);
-		if (fd != -1) {
-			SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - fd: %03d - Packet Count: %d%s",
-					_streamID, pid, fd, _frontendData.getFilterData().getPacketCounter(pid),
-					_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
-			if (::ioctl(fd, DMX_STOP) != 0) {
-				PERROR("DMX_STOP");
-			}
-			_frontendData.getFilterData().closeDMXFileDescriptor(pid);
+		if (!_frontendData.getFilterData().shouldPIDClose(pid)) {
+			return;
 		}
+		if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
+			PERROR("Stream: %d, DMX_REMOVE_PID: PID %04d", _streamID, pid);
+			return;
+		}
+		_frontendData.getFilterData().setPIDClosed(pid);
+		SI_LOG_DEBUG("Stream: %d, Remove filter PID: %04d - Packet Count: %d%s",
+				_streamID, pid, _frontendData.getFilterData().getPacketCounter(pid),
+				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 	}
 
-	bool Frontend::updatePIDFilters() {
+	void Frontend::updatePIDFilters() {
 		base::MutexLock lock(_mutex);
-		if (_frontendData.getFilterData().hasPIDTableChanged()) {
-			if (isTuned()) {
-				_frontendData.getFilterData().resetPIDTableChanged();
-				SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
-				// Check should we close PIDs first
-				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-					if (_frontendData.getFilterData().shouldPIDClose(i)) {
-						closePid(i);
-					}
-				}
-				// Check which PID should be openend (again)
-				for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-					if (_frontendData.getFilterData().isPIDUsed(i)) {
-						// Check if we have no DMX for this PID, then open one
-						if (!openPid(i)) {
-							return false;
-						}
-					}
-				}
-			} else {
-				SI_LOG_INFO("Stream: %d, Update PID filters requested, but frontend not tuned!",
-							_streamID);
-			}
+		if (!_frontendData.getFilterData().hasPIDTableChanged()) {
+			return;
 		}
-		return true;
+		if (!isTuned()) {
+			SI_LOG_INFO("Stream: %d, Update PID filters requested, but frontend not tuned!",
+						_streamID);
+			return;
+		}
+		_frontendData.getFilterData().resetPIDTableChanged();
+		SI_LOG_INFO("Stream: %d, Updating PID filters...", _streamID);
+		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
+			// Check should we close PIDs first then open again
+			closePid(i);
+			openPid(i);
+		}
 	}
 
 } // namespace dvb

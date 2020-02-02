@@ -1,6 +1,6 @@
 /* Filter.h
 
-   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -87,15 +87,6 @@ class Filter {
 		// =====================================================================
 		// =====================================================================
 
-		/// Set DMX file descriptor
-		void setDMXFileDescriptor(int pid, int fd);
-
-		/// Get DMX file descriptor
-		int getDMXFileDescriptor(int pid) const;
-
-		/// Close DMX file descriptor and reset data, but keep used flag
-		void closeDMXFileDescriptor(int pid);
-
 		/// Reset 'PID has changed' flag
 		void resetPIDTableChanged();
 
@@ -114,8 +105,14 @@ class Filter {
 		/// Check if this pid should be closed
 		bool shouldPIDClose(int pid) const;
 
-		/// Check if PID is used
-		bool isPIDUsed(int pid) const;
+		/// Set that this pid is closed
+		void setPIDClosed(int pid);
+
+		/// Check if PID should be opened
+		bool shouldPIDOpen(int pid) const;
+
+		/// Set that this pid is opened
+		void setPIDOpened(int pid);
 
 		/// Set all PID
 		void setAllPID(bool val);

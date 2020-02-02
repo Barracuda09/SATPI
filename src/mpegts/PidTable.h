@@ -1,6 +1,6 @@
 /* PidTable.h
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -51,15 +51,6 @@ namespace mpegts {
 			/// Check if the PID has changed
 			bool hasPIDTableChanged() const;
 
-			/// Set DMX file descriptor
-			void setDMXFileDescriptor(int pid, int fd);
-
-			/// Get DMX file descriptor
-			int getDMXFileDescriptor(int pid) const;
-
-			/// Close DMX file descriptor and reset data, but keep used flag
-			void closeDMXFileDescriptor(int pid);
-
 			/// Get the amount of packet that were received of this pid
 			uint32_t getPacketCounter(int pid) const;
 
@@ -72,11 +63,20 @@ namespace mpegts {
 			/// Set pid used or not
 			void setPID(int pid, bool use);
 
-			/// Check if this PID should be closed
+			/// Check if this pid is opened
+			bool isPIDOpened(int pid) const;
+
+			/// Check if this pid should be closed
 			bool shouldPIDClose(int pid) const;
 
-			/// Check if PID is used
-			bool isPIDUsed(int pid) const;
+			/// Set that this pid is closed
+			void setPIDClosed(int pid);
+
+			/// Check if PID should be opened
+			bool shouldPIDOpen(int pid) const;
+
+			/// Set that this pid is opened
+			void setPIDOpened(int pid);
 
 			/// Set all PID
 			void setAllPID(bool use);
@@ -98,11 +98,16 @@ namespace mpegts {
 
 		private:
 
-			// PID and DMX file descriptor
+			enum class State {
+				ShouldOpen,
+				Opened,
+				ShouldClose,
+				Closed
+			};
+
+			// PID State
 			struct PidData {
-				int fd_dmx;        /// used DMX file descriptor for PID
-				bool used;         /// used pid (0 = not used, 1 = in use)
-				bool shouldClose;  /// indicate that this PID should close
+				State state;
 				uint8_t cc;        /// continuity counter (0 - 15) of this PID
 				uint32_t cc_error; /// cc error count
 				uint32_t count;    /// the number of times this pid occurred

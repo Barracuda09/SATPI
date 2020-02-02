@@ -1,6 +1,6 @@
 /* PidTable.cpp
 
-   Copyright (C) 2014 - 2018 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -27,7 +27,6 @@ namespace mpegts {
 
 	PidTable::PidTable() {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			_data[i].fd_dmx = -1;
 			resetPidData(i);
 		}
 		_changed = false;
@@ -38,9 +37,9 @@ namespace mpegts {
 	void PidTable::clear() {
 		_changed = false;
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
-			// Check still open File Descriptor.
+			// Check PID still open.
 			// Then set PID not used, to handle and close them later
-			if (getDMXFileDescriptor(i) != -1) {
+			if (_data[i].state != State::Closed) {
 				setPID(i, false);
 			} else {
 				resetPidData(i);
@@ -48,31 +47,15 @@ namespace mpegts {
 		}
 	}
 
-	void PidTable::resetPidData(int pid) {
-		_data[pid].used        = false;
-		_data[pid].shouldClose = false;
+	void PidTable::resetPidData(const int pid) {
+		_data[pid].state       = State::Closed;
 		_data[pid].cc          = 0x80;
 		_data[pid].cc_error    = 0;
 		_data[pid].count       = 0;
 	}
 
-	uint32_t PidTable::getPacketCounter(int pid) const {
+	uint32_t PidTable::getPacketCounter(const int pid) const {
 		return _data[pid].count;
-	}
-
-	void PidTable::setDMXFileDescriptor(int pid, int fd) {
-		_data[pid].fd_dmx = fd;
-	}
-
-	int PidTable::getDMXFileDescriptor(int pid) const {
-		return _data[pid].fd_dmx;
-	}
-
-	void PidTable::closeDMXFileDescriptor(int pid) {
-		CLOSE_FD(_data[pid].fd_dmx);
-		const bool used = _data[pid].used;
-		resetPidData(pid);
-		_data[pid].used = used;
 	}
 
 	void PidTable::resetPIDTableChanged() {
@@ -85,11 +68,11 @@ namespace mpegts {
 
 	std::string PidTable::getPidCSV() const {
 		std::string csv;
-		if (_data[ALL_PIDS].used) {
+		if (_data[ALL_PIDS].state == State::Opened) {
 			csv = "all";
 		} else {
 			for (size_t i = 0; i < MAX_PIDS; ++i) {
-				if (_data[i].used) {
+				if (_data[i].state == State::Opened) {
 					csv += StringConverter::stringFormat("%1,", i);
 				}
 			}
@@ -102,7 +85,7 @@ namespace mpegts {
 		return csv;
 	}
 
-	void PidTable::addPIDData(int pid, uint8_t cc) {
+	void PidTable::addPIDData(const int pid, const uint8_t cc) {
 		PidData &data = _data[pid];
 		++data.count;
 		if (data.cc == 0x80) {
@@ -121,24 +104,38 @@ namespace mpegts {
 		}
 	}
 
-	void PidTable::setPID(int pid, bool use) {
-		_data[pid].used = use;
-		// Check PID not used anymore, so set "shouldClose" flag
-		if (!use && getDMXFileDescriptor(pid) != -1) {
-			_data[pid].shouldClose = true;
+	void PidTable::setPID(const int pid, const bool use) {
+		// Check PID not used anymore, so set ShouldClose state
+		if (!use && _data[pid].state == State::Opened) {
+			_data[pid].state = State::ShouldClose;
+			_changed = true;
+		} else if (use && _data[pid].state == State::Closed) {
+			_data[pid].state = State::ShouldOpen;
+			_changed = true;
 		}
-		_changed = true;
 	}
 
-	bool PidTable::shouldPIDClose(int pid) const {
-		return _data[pid].shouldClose;
+	bool PidTable::isPIDOpened(int pid) const {
+		return _data[pid].state == State::Opened;
 	}
 
-	bool PidTable::isPIDUsed(int pid) const {
-		return _data[pid].used;
+	bool PidTable::shouldPIDClose(const int pid) const {
+		return _data[pid].state == State::ShouldClose;
 	}
 
-	void PidTable::setAllPID(bool use) {
+	void PidTable::setPIDClosed(const int pid) {
+		_data[pid].state = State::Closed;
+	}
+
+	bool PidTable::shouldPIDOpen(const int pid) const {
+		return _data[pid].state == State::ShouldOpen;
+	}
+
+	void PidTable::setPIDOpened(const int pid) {
+		_data[pid].state = State::Opened;
+	}
+
+	void PidTable::setAllPID(const bool use) {
 		setPID(ALL_PIDS, use);
 	}
 

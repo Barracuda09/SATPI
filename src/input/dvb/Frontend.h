@@ -1,6 +1,6 @@
 /* Frontend.h
 
-   Copyright (C) 2014 - 2019 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -189,26 +189,20 @@ class Frontend :
 		void closeFE();
 
 		///
-		int openDVR(const std::string &path) const;
-
-		///
-		void closeDVR();
-
-		///
 		int openDMX(const std::string &path) const;
 
 		///
-		bool setDMXFilter(int fd, uint16_t pid);
+		void closeDMX();
 
 		///
 		bool tune();
 
 		///
 		bool isTuned() const {
-			return (_fd_dvr != -1) && _tuned;
+			return _tuned;
 		}
 
-		bool updatePIDFilters();
+		void updatePIDFilters();
 
 		///
 		bool setupAndTune();
@@ -217,7 +211,7 @@ class Frontend :
 		void closePid(int pid);
 
 		///
-		bool openPid(int pid);
+		void openPid(int pid);
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
@@ -226,7 +220,7 @@ class Frontend :
 
 		bool _tuned;
 		int _fd_fe;
-		int _fd_dvr;
+		int _fd_dmx;
 		std::string _path_to_fe;
 		std::string _path_to_dvr;
 		std::string _path_to_dmx;
