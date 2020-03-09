@@ -109,8 +109,8 @@ namespace input {
 		return _filter;
 	}
 
-	void DeviceData::addFilterData(const int streamID, const unsigned char *ptr) {
-		_filter.addData(streamID, ptr);
+	void DeviceData::addFilterData(const int streamID, const mpegts::PacketBuffer &buffer) {
+		_filter.addData(streamID, buffer);
 	}
 
 	fe_delivery_system DeviceData::convertDeliverySystem() const {

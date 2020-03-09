@@ -20,11 +20,14 @@
 #ifndef INPUT_DEVICE_DATA_H_INCLUDE
 #define INPUT_DEVICE_DATA_H_INCLUDE INPUT_DEVICE_DATA_H_INCLUDE
 
+#include <FwDecl.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
 #include <mpegts/Filter.h>
+
+FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
 
@@ -110,7 +113,7 @@ class DeviceData :
 		mpegts::Filter &getFilterData();
 
 		///
-		void addFilterData(int streamID, const unsigned char *ptr);
+		void addFilterData(int streamID, const mpegts::PacketBuffer &buffer);
 
 		///
 		fe_delivery_system convertDeliverySystem() const;

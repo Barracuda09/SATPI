@@ -56,16 +56,16 @@ void StreamThreadTSWriter::doStartStreaming(int UNUSED(clientID)) {
 bool StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
 	const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
-	const unsigned int size = buffer.getBufferSize();
+	static constexpr size_t dataSize = buffer.getBufferSize();
 
 	const long timestamp = base::TimeCounter::getTicks() * 90;
 
 	// RTP packet octet count (Bytes)
-	_stream.addRtpData(size, timestamp);
+	_stream.addRtpData(dataSize, timestamp);
 
 	// write TS packets to file
 	if (_file.is_open()) {
-		_file.write(reinterpret_cast<const char *>(tsBuffer), size);
+		_file.write(reinterpret_cast<const char *>(tsBuffer), dataSize);
 	}
 	return true;
 }

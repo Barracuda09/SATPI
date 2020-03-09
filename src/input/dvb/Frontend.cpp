@@ -235,13 +235,13 @@ namespace dvb {
 	}
 
 	bool Frontend::isDataAvailable() {
-		pollfd pfd[1];
-		pfd[0].fd = _fd_dmx;
-		pfd[0].events = POLLIN;
-		pfd[0].revents = 0;
-		const int pollRet = ::poll(pfd, 1, 180);
+		pollfd pfd;
+		pfd.fd = _fd_dmx;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		const int pollRet = ::poll(&pfd, 1, 180);
 		if (pollRet > 0) {
-			return pfd[0].revents & POLLIN;
+			return (pfd.revents & POLLIN) == POLLIN;
 		} else if (pollRet < 0) {
 			PERROR("Error during polling frontend for data");
 			return false;
@@ -256,12 +256,8 @@ namespace dvb {
 		if (bytes > 0) {
 			buffer.addAmountOfBytesWritten(bytes);
 			if (buffer.full()) {
-				static constexpr std::size_t size = buffer.getNumberOfTSPackets();
-				for (std::size_t i = 0; i < size; ++i) {
-					const unsigned char *ptr = buffer.getTSPacketPtr(i);
-					// Add data to Filter
-					_frontendData.addFilterData(_streamID, ptr);
-				}
+				// Add data to Filter
+				_frontendData.addFilterData(_streamID, buffer);
 				return true;
 			}
 		} else if (bytes < 0) {
@@ -415,6 +411,7 @@ namespace dvb {
 			_tuned = false;
 			// Close active PIDs
 			for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
+				_frontendData.getFilterData().setPID(i, false);
 				closePid(i);
 			}
 			closeFE();
@@ -440,6 +437,7 @@ namespace dvb {
 	bool Frontend::teardown() {
 		// Close active PIDs
 		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
+			_frontendData.getFilterData().setPID(i, false);
 			closePid(i);
 		}
 		_tuned = false;

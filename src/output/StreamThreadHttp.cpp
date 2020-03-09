@@ -68,18 +68,15 @@ int StreamThreadHttp::getStreamSocketPort(const int clientID) const {
 }
 
 bool StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
-	unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
-
-	const unsigned int size = buffer.getBufferSize();
-
+	static constexpr unsigned int dataSize = buffer.getBufferSize();
 	const long timestamp = base::TimeCounter::getTicks() * 90;
 
 	// RTP packet octet count (Bytes)
-	_stream.addRtpData(size, timestamp);
+	_stream.addRtpData(dataSize, timestamp);
 
 	iovec iov[1];
-	iov[0].iov_base = tsBuffer;
-	iov[0].iov_len = size;
+	iov[0].iov_base = buffer.getTSReadBufferPtr();
+	iov[0].iov_len = dataSize;
 
 	// send the HTTP packet
 	if (!client.writeHttpData(iov, 1)) {

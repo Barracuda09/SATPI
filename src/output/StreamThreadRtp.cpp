@@ -25,9 +25,6 @@
 #include <InterfaceAttr.h>
 #include <base/TimeCounter.h>
 
-#include <chrono>
-#include <thread>
-
 namespace output {
 
 // =============================================================================
@@ -85,28 +82,21 @@ int StreamThreadRtp::getStreamSocketPort(const int clientID) const {
 }
 
 bool StreamThreadRtp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
-	unsigned char *rtpBuffer = buffer.getReadBufferPtr();
-
-	// update sequence number
-	++_cseq;
-	rtpBuffer[2] = ((_cseq >> 8) & 0xFF); // sequence number
-	rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
-
-	// update timestamp
+	// update sequence number and timestamp
 	const long timestamp = base::TimeCounter::getTicks() * 90;
-	rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
-	rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
-	rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
-	rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+	++_cseq;
+	buffer.tagRTPHeaderWith(_cseq, timestamp);
 
-	const size_t size = buffer.getBufferSize();
+	static constexpr size_t dataSize = buffer.getBufferSize();
+	static constexpr size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 	// RTP packet octet count (Bytes)
-	_stream.addRtpData(size, timestamp);
+	_stream.addRtpData(dataSize, timestamp);
 
 	// send the RTP/UDP packet
+	const unsigned char *rtpBuffer = buffer.getReadBufferPtr();
 	SocketAttr &rtp = client.getRtpSocketAttr();
-	if (!rtp.sendDataTo(rtpBuffer, size + mpegts::PacketBuffer::RTP_HEADER_LEN, MSG_DONTWAIT)) {
+	if (!rtp.sendDataTo(rtpBuffer, len, MSG_DONTWAIT)) {
 		if (!client.isSelfDestructing()) {
 			SI_LOG_ERROR("Stream: %d, Error sending RTP/UDP data to %s:%d", _stream.getStreamID(),
 				rtp.getIPAddressOfSocket().c_str(), rtp.getSocketPort());

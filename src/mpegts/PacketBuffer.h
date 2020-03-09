@@ -58,6 +58,9 @@ class PacketBuffer {
 		/// try to sync this buffer
 		bool trySyncing();
 
+		/// This will tag the RTP header with sequence number and timestamp
+		void tagRTPHeaderWith(uint16_t cseq, long timestamp);
+
 		/// This function will return the number of TS Packets that are
 		/// in this TS Packet
 		static constexpr std::size_t getNumberOfTSPackets() {

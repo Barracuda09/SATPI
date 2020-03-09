@@ -120,14 +120,8 @@ namespace file {
 		if (!buffer.full()) {
 			return false;
 		}
-		const std::size_t size = buffer.getNumberOfTSPackets();
-		for (std::size_t i = 0; i < size; ++i) {
-			// Get TS packet from the buffer
-			const unsigned char *data = buffer.getTSPacketPtr(i);
-
-			// Add data to Filter
-			_deviceData.addFilterData(_streamID, data);
-		}
+		// Add data to Filter
+		_deviceData.addFilterData(_streamID, buffer);
 		return true;
 	}
 

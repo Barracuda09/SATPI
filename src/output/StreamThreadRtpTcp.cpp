@@ -25,9 +25,6 @@
 #include <InterfaceAttr.h>
 #include <base/TimeCounter.h>
 
-#include <chrono>
-#include <thread>
-
 namespace output {
 
 // =============================================================================
@@ -79,26 +76,16 @@ int StreamThreadRtpTcp::getStreamSocketPort(const int clientID) const {
 }
 
 bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
-	unsigned char *rtpBuffer = buffer.getReadBufferPtr();
-
-	// update sequence number
-	++_cseq;
-	rtpBuffer[2] = ((_cseq >> 8) & 0xFF); // sequence number
-	rtpBuffer[3] =  (_cseq & 0xFF);       // sequence number
-
-	// update timestamp
+	// update sequence number and timestamp
 	const long timestamp = base::TimeCounter::getTicks() * 90;
-	rtpBuffer[4] = (timestamp >> 24) & 0xFF; // timestamp
-	rtpBuffer[5] = (timestamp >> 16) & 0xFF; // timestamp
-	rtpBuffer[6] = (timestamp >>  8) & 0xFF; // timestamp
-	rtpBuffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+	++_cseq;
+	buffer.tagRTPHeaderWith(_cseq, timestamp);
 
-	const size_t bufSize = buffer.getBufferSize();
+	static constexpr size_t dataSize = buffer.getBufferSize();
+	static constexpr size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 	// RTP packet octet count (Bytes)
-	_stream.addRtpData(bufSize, timestamp);
-
-	const size_t len = bufSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
+	_stream.addRtpData(dataSize, timestamp);
 
 	unsigned char header[4];
 	header[0] = 0x24;
@@ -109,7 +96,7 @@ bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, S
 	iovec iov[2];
 	iov[0].iov_base = header;
 	iov[0].iov_len = 4;
-	iov[1].iov_base = rtpBuffer;
+	iov[1].iov_base = buffer.getReadBufferPtr();
 	iov[1].iov_len = len;
 
 	// send the RTP/TCP packet

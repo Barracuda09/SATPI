@@ -179,7 +179,6 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 
 void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	const input::SpDevice inputDevice = _stream.getInputDevice();
-
 	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;
@@ -201,18 +200,11 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			_tsBuffer[_writeIndex].reset();
 		}
 	}
-
 	// calculate interval
 	_t2 = std::chrono::steady_clock::now();
 	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
 	if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
-		//
 		_t1 = _t2;
-
-		if (!_tsBuffer[_readIndex].isSynced()) {
-			SI_LOG_ERROR("Stream: %d, PacketBuffer not in sync!", _stream.getStreamID());
-		}
-
 		if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 			// inc read index only when send is successful
 			++_readIndex;

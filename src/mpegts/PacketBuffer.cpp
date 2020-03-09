@@ -82,4 +82,16 @@ bool PacketBuffer::trySyncing() {
 	return false;
 }
 
+void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
+	// update sequence number
+	_buffer[2] = ((cseq >> 8) & 0xFF); // sequence number
+	_buffer[3] =  (cseq & 0xFF);       // sequence number
+
+	// update timestamp
+	_buffer[4] = (timestamp >> 24) & 0xFF; // timestamp
+	_buffer[5] = (timestamp >> 16) & 0xFF; // timestamp
+	_buffer[6] = (timestamp >>  8) & 0xFF; // timestamp
+	_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+}
+
 } // namespace mpegts
