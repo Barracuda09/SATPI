@@ -12,6 +12,9 @@ RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /de
 # Includes needed for proper compilation
 INCLUDES +=
 
+LDFLAGS += $(CPU_FLAGS)
+CFLAGS += $(CPU_FLAGS)
+
 # Libraries needed for linking
 LDFLAGS += -pthread -lrt
 # RESULT_HAS_ATOMIC_FUNCTIONS = 1 if compile fails
