@@ -115,19 +115,15 @@ function addTableLineEntry(labelstring, xmlDoc, tagPath) {
 	var data = xmlDoc.querySelector(tagPath);
 	if (data) {
 		page += "<tr>";
-		page += addTableLabel(labelstring);
+		page += "<td class=\"col-xs-1\" align=\"left\">" + labelstring + "</td>";
 		page += addTableEntry(xmlDoc, tagPath);
 		page += "<tr>";
 	}
 	return page;
 }
 
-function addTableLabel(labelstring) {
-	return "<td align=\"left\" class=\"col-md-1\">" + labelstring + "</td>";
-}
-
 function addTableEntry(xmlDoc, tagPath) {
-	var entry = "<td align=\"left\" class=\"col-md-4\">";
+	var entry = "<td align=\"left\">";
 	var input = xmlDoc.querySelector(tagPath);
 	if (input) {
 		var inputtype = xmlDoc.querySelector(tagPath + " inputtype");

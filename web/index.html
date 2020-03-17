@@ -16,16 +16,14 @@
 
 	function buildcontent(xmlDoc) {
 		var page = "";
-
 		appdata = xmlDoc.getElementsByTagName("appdata");
 		ssdpdata = xmlDoc.getElementsByTagName("ssdp");
-		page +=  "<table class='table table-bordered table-striped' border='5'>";
-		page +=  "<tr>";
+		page +=  "<table class=\"table table-bordered table-striped\">";
 			page +=  "<tr>";
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-1\">";
 			page +=  "Version";
 			page +=  "</td>";
-			page +=  "<td colspan=1>";
+			page +=  "<td class=\"col-xs-2\">";
 			page +=  appdata[0].getElementsByTagName("appversion")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
@@ -37,11 +35,10 @@
 			sec = uptime % 60;
 			min -= (hours * 60);
 			hours -= (days * 24);
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-1\">";
 			page +=  "Uptime";
 			page +=  "</td>";
-
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-2\">";
 			page +=  days + " days ";
 			page +=  hours + " hours ";
 			page +=  min + " min ";
@@ -49,28 +46,28 @@
 			page +=  "</td></tr>";
 
 			page +=  "<tr>";
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-1\">";
 			page +=  "UUID";
 			page +=  "</td>";
-			page +=  "<td colspan=2>";
+			page +=  "<td class=\"col-xs-2\">";
 			page +=  appdata[0].getElementsByTagName("uuid")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
 
 			page +=  "<tr>";
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-1\">";
 			page +=  "Boot ID";
 			page +=  "</td>";
-			page +=  "<td colspan=2>";
+			page +=  "<td class=\"col-xs-2\">";
 			page +=  ssdpdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
 			page +=  "<tr>";
 
-			page +=  "<td>";
+			page +=  "<td class=\"col-xs-1\">";
 			page +=  "Device ID";
 			page +=  "</td>";
-			page +=  "<td colspan=2>";
+			page +=  "<td class=\"col-xs-2\">";
 			page +=  ssdpdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
 			page +=  "</td>";
 			page +=  "</tr>";
@@ -93,10 +90,9 @@
 
 <div class="container-fluid">
 	<div class="start">
-		<h3>Main SAT>IP Page</h3>
+		<h3>SAT>IP Info Page</h3>
 		<div class="table-responsive">
 			<div id="content"></div>
-
 			<script>
 				// make menu
 				document.getElementById("menu").innerHTML = buildmenu();

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+
+<title>SAT>IP - Frontend Overview</title>
+
+<script src="assets/js/menu.js"></script>
+<script src="assets/js/loadxmldoc.js"></script>
+<script src="assets/js/postxmldoc.js"></script>
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/addtableentry.js"></script>
+<script>
+	var filename;
+	var autoload = 1;
+	var xmlLoaded;
+
+	function buildcontent(xmlDoc) {
+		var page = "";
+
+		page += "<table class=\"table table-responsive table-bordered\">";
+		page += "<thead><tr>";
+		page += "<th class=\"col-xs-1\"\">#</th>";
+		page += "<th class=\"col-xs-1\">Name</th>";
+		page += "<th class=\"col-xs-1\">Owner</th>";
+		page += "<th class=\"col-xs-1\"># Packets</th>";
+		page += "<th class=\"col-xs-1\">Delivery System</th>";
+		page += "<th class=\"col-xs-3\">Network Name</th>";
+		page += "<th class=\"col-xs-3\">Channel Name</th>";
+		page += "</tr></thead>";
+		var streams = xmlDoc.getElementsByTagName("streamindex");
+		if (streams.length > 0) {
+			var size = streams.length;
+			for (index = 0; index < size; index++) {
+				var streamID = "stream" + index + " ";
+				var visibleStream = xmlDoc.getElementsByTagName("stream" + index)[0];
+				var attached = xmlDoc.querySelector(streamID + "attached").childNodes[0].nodeValue;;
+				if (attached == "yes") {
+					page += "<tbody><tr class=\"info\">";
+				} else {
+					page += "<tbody><tr>";
+				}
+				page += addTableEntry(xmlDoc, streamID + "streamindex");
+				page += addTableEntry(xmlDoc, streamID + "frontendname");
+				page += addTableEntry(xmlDoc, streamID + "owner");
+				page += addTableEntry(xmlDoc, streamID + "spc");
+				page += addTableEntry(xmlDoc, streamID + "delsys");
+				page += addTableEntry(xmlDoc, streamID + "networkname");
+				page += addTableEntry(xmlDoc, streamID + "channelname");
+				page += "</tr></tbody>";
+			}
+		}
+		page += "</table><br>";
+		return page;
+	}
+
+	function updatePage() {
+		loadXMLDoc(filename);
+	}
+
+	// function called when xml is loaded
+	function xmlloaded(xml) {
+		if (autoload == 1) {
+			xmlLoaded = xml;
+			document.getElementById("content").innerHTML = buildcontent(xml);
+		}
+	}
+</script>
+
+</head>
+<body>
+<div id="menu"></div>
+<div id="footer"></div>
+
+<div class="container-fluid">
+	<div class="start">
+		<h3>SAT>IP Frontend Overview</h3>
+		<div id="content"></div>
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			document.getElementById("footer").innerHTML = buildfooter();
+			setMenuItemActive("frontendoverview");
+
+			filename = "SatPI.xml";
+
+			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 2000;
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+		</script>
+	</div>
+</div>
+
+</body>
+</html>
