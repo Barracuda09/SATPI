@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP Log Page</title>
 
@@ -53,25 +53,26 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>Main Log Page</h3>
-		<div id="content" class="log">
-			<textarea id="txt" style="font-family:monospace;" class="form-control logtext" onmouseover="stopScroll = 1" onmouseout="stopScroll = 0" readOnly></textarea>
-		</div>
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("log");
-
-			// Call the ajax refresh each refresh_time seconds
-			var refresh_time = 2000;
-			updatePage();
-			setInterval("updatePage()", refresh_time);
-		</script>
+<div class="p-1">
+<div class="window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>Main Log</p>
 	</div>
-</div>
+	<div class="p-1 container-log">
+		<textarea id="txt" wrap="off" class="form-control logtext" onmouseover="stopScroll = 1" onmouseout="stopScroll = 0" readOnly></textarea>
+	</div>
+	<script>
+		// make menu
+		document.getElementById("menu").innerHTML = buildmenu();
+		document.getElementById("footer").innerHTML = buildfooter();
+		setMenuItemActive("log");
 
+		// Call the ajax refresh each refresh_time seconds
+		var refresh_time = 2000;
+		updatePage();
+		setInterval("updatePage()", refresh_time);
+	</script>
+</div>
+</div>
 </body>
 </html>

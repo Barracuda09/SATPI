@@ -117,7 +117,7 @@ function addTableLineEntry(labelstring, xmlDoc, tagPath) {
 		page += "<tr>";
 		page += "<td class=\"col-xs-1\" align=\"left\">" + labelstring + "</td>";
 		page += addTableEntry(xmlDoc, tagPath);
-		page += "<tr>";
+		page += "</tr>";
 	}
 	return page;
 }

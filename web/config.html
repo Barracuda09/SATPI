@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP Config Page</title>
 
@@ -17,14 +17,16 @@
 <script>
 	var filename;
 	var autoload = 1;
-	var xmlLoaded;
 	var content;
+	var once = 0;
 
 	function buildcontent(xmlDoc) {
 		var length = 1;
-		var page = "<table class=\"table table-bordered table-striped\">";
+		var page = "";
+		page += "<table class=\"table table-bordered table-sm\">";
+		page += "<thead></thead>";
+		page += "<tbody>";
 		if (content == "general") {
-			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
 			page += addTableLineEntry("HTTP Port", xmlDoc, "httpport");
 			page += addTableLineEntry("RTSP Port", xmlDoc, "rtspport");
 			page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
@@ -32,8 +34,7 @@
 			page += addTableLineEntry("Satip Description XML", xmlDoc, "xmldesc");
 			page += addTableLineEntry("Path to the Web-GUI", xmlDoc, "webPath");
 			page += addTableLineEntry("Path to store Application Data", xmlDoc, "appDataPath");
-		} else if (content == "oscam" && xmlDoc.getElementsByTagName("OSCamEnabled").length != 0) {
-			page += "<tr class=\"separator\"><th colspan=\"" + length + 1  + "\"></th></tr>";
+		} else if (content == "oscam"/* && xmlDoc.getElementsByTagName("OSCamEnabled").length != 0*/) {
 			page += addTableLineEntry("OSCam server Enabled", xmlDoc, "OSCamEnabled");
 			page += addTableLineEntry("OSCam server name", xmlDoc, "OSCamServerName");
 			page += addTableLineEntry("OSCam server IP", xmlDoc, "OSCamIP");
@@ -41,7 +42,8 @@
 			page += addTableLineEntry("OSCam Aadapter offset", xmlDoc, "AdapterOffset");
 			page += addTableLineEntry("Rewrite PMT", xmlDoc, "RewritePMT");
 		}
-		page +=	 "</table><br>";
+		page += "</tbody>";
+		page += "</table>";
 		return page;
 	}
 	function updatePage() {
@@ -49,9 +51,23 @@
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
+		if (once == 0) {
+			once = 1;
+			// Catch events from Tab
+			$(".nav-tabs a").click(function() {
+				$(this).tab('show');
+			});
+			$('.nav-tabs a').on('shown.bs.tab', function(event) {
+				var href = $(event.target).attr("href");
+				// remove # from href
+				content = href.substr(1, href.length)
+				updatePage();
+			});
+		}
+
 		if (autoload == 1) {
-			xmlLoaded = xml;
-			document.getElementById(content).innerHTML = buildcontent(xml);
+			var page = buildcontent(xml)
+			document.getElementById(content).innerHTML = page;
 		}
 	}
 </script>
@@ -61,56 +77,36 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>Configure Page</h3>
-
+<div class="p-1">
+<div class="window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>Configuration</p>
+	</div>
+	<div class="p-1">
 		<ul class="nav nav-tabs">
-			<li class="active"><a data-toggle="tab" href="#generalTab">General</a></li>
-			<li>               <a data-toggle="tab" href="#oscamTab">OSCam</a></li>
+			<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#general">General</a></li>
+			<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#oscam">OSCam</a></li>
 		</ul>
 		<div class="tab-content">
-			<div id="generalTab" class="tab-pane fade in active">
-				<div class="table-responsive"><div id="general"></div></div>
-			</div>
-			<div id="oscamTab" class="tab-pane fade">
-				<div class="table-responsive"><div id="oscam"></div></div>
-			</div>
+			<div id="general" class="tab-pane fade show active"></div>
+			<div id="oscam" class="tab-pane fade"></div>
 		</div>
-
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("config");
-
-			filename = "SatPI.xml";
-			content = "general";
-
-			// Call the ajax refresh each refresh_time seconds
-			var refresh_time = 3000;
-			updatePage();
-			setInterval("updatePage()", refresh_time);
-
-			// Catch events from Tab
-			$(document).ready(function() {
-				$(".nav-tabs a").click(function() {
-					$(this).tab('show');
-				});
-				$('.nav-tabs a').on('shown.bs.tab', function(event) {
-					var menuName = $(event.target).attr("href");
-					if (menuName == "#generalTab") {
-						content = "general";
-					} else if (menuName == "#oscamTab") {
-						content = "oscam";
-					}
-					updatePage();
-				});
-			});
-
-		</script>
 	</div>
-</div>
+	<script>
+		// make menu
+		document.getElementById("menu").innerHTML = buildmenu();
+		document.getElementById("footer").innerHTML = buildfooter();
+		setMenuItemActive("config");
 
+		filename = "SatPI.xml";
+		content = "general";
+		updatePage();
+
+		// Call the ajax refresh each refresh_time seconds
+		var refresh_time = 3000;
+//		setInterval("updatePage()", refresh_time);
+	</script>
+</div>
+</div>
 </body>
 </html>

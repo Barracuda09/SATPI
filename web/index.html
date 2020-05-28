@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP Main Web Page</title>
 
@@ -13,74 +13,34 @@
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
 <script>
-
-	function buildcontent(xmlDoc) {
-		var page = "";
-		appdata = xmlDoc.getElementsByTagName("appdata");
-		ssdpdata = xmlDoc.getElementsByTagName("ssdp");
-		page +=  "<table class=\"table table-bordered table-striped\">";
-			page +=  "<tr>";
-			page +=  "<td class=\"col-xs-1\">";
-			page +=  "Version";
-			page +=  "</td>";
-			page +=  "<td class=\"col-xs-2\">";
-			page +=  appdata[0].getElementsByTagName("appversion")[0].childNodes[0].nodeValue;
-			page +=  "</td>";
-			page +=  "</tr>";
-
-			uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
-			min = Math.round((uptime/60) - 0.5);
-			hours = Math.round((min/60) - 0.5);
-			days = Math.round((hours/24) - 0.5);
-			sec = uptime % 60;
-			min -= (hours * 60);
-			hours -= (days * 24);
-			page +=  "<td class=\"col-xs-1\">";
-			page +=  "Uptime";
-			page +=  "</td>";
-			page +=  "<td class=\"col-xs-2\">";
-			page +=  days + " days ";
-			page +=  hours + " hours ";
-			page +=  min + " min ";
-			page +=  sec + " sec";
-			page +=  "</td></tr>";
-
-			page +=  "<tr>";
-			page +=  "<td class=\"col-xs-1\">";
-			page +=  "UUID";
-			page +=  "</td>";
-			page +=  "<td class=\"col-xs-2\">";
-			page +=  appdata[0].getElementsByTagName("uuid")[0].childNodes[0].nodeValue;
-			page +=  "</td>";
-			page +=  "</tr>";
-
-			page +=  "<tr>";
-			page +=  "<td class=\"col-xs-1\">";
-			page +=  "Boot ID";
-			page +=  "</td>";
-			page +=  "<td class=\"col-xs-2\">";
-			page +=  ssdpdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
-			page +=  "</td>";
-			page +=  "</tr>";
-			page +=  "<tr>";
-
-			page +=  "<td class=\"col-xs-1\">";
-			page +=  "Device ID";
-			page +=  "</td>";
-			page +=  "<td class=\"col-xs-2\">";
-			page +=  ssdpdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
-			page +=  "</td>";
-			page +=  "</tr>";
-		page +=  "</table><br>";
-		return page;
-	}
+	// ajax refresh callback
 	function updatePage() {
 		loadXMLDoc("SatPI.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
-		document.getElementById("content").innerHTML = buildcontent(xml);
+		appdata = xml.getElementsByTagName("appdata");
+		ssdpdata = xml.getElementsByTagName("ssdp");
+		var uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
+		var sec = uptime % 60;
+		var min = Math.round((uptime/60) - 0.5);
+		var hours = Math.round((min/60) - 0.5);
+		var days = Math.round((hours/24) - 0.5);
+		min -= (hours * 60);
+		hours -= (days * 24);
+
+		var InfoPage = document.getElementById("InfoPage");
+		InfoPage.rows[0].cells[1].innerHTML = appdata[0].getElementsByTagName("appversion")[0].childNodes[0].nodeValue;;
+		InfoPage.rows[1].cells[1].innerHTML = days + " days " + hours + " hours " + min + " min " + sec + " sec";
+		InfoPage.rows[2].cells[1].innerHTML = appdata[0].getElementsByTagName("uuid")[0].childNodes[0].nodeValue;
+		InfoPage.rows[3].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
+		InfoPage.rows[4].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
 	}
+	
+	function stopSatPI() {
+		$("#StopDialog").modal();
+	}
+
 </script>
 
 </head>
@@ -88,24 +48,55 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>SAT>IP Info Page</h3>
-		<div class="table-responsive">
-			<div id="content"></div>
-			<script>
-				// make menu
-				document.getElementById("menu").innerHTML = buildmenu();
-				document.getElementById("footer").innerHTML = buildfooter();
-				setMenuItemActive("index");
+<!-- Stop Dialog -->
+<div class="modal fade" id="StopDialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Stop SatPI Server?</h4>
+				<button type="button" class="close" data-dismiss="modal">×</button>
+			</div>
+			<div class="modal-body">
+				Are you sure?
+			</div>
 
-				// Call the ajax refresh each refresh_time seconds
-				var refresh_time = 2000;
-				updatePage();
-				setInterval("updatePage()", refresh_time);
-			</script>
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<a href="STOP" class="btn btn-danger" role="button">Yes</a>
+				<button type="button" class="btn btn-success" data-dismiss="modal">No</button>
+			</div>
+
 		</div>
 	</div>
+</div>
+
+<div class="p-1">
+<div class=" window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>Server Info Page</p>
+	</div>
+	<div class="p-1 table-responsive">
+		<table id="InfoPage" class="table table-bordered table-sm">
+			<tr><td class=\"col-xs-1\">Version</td><td class="col-xs-2">...</td> </tr>
+			<tr><td class=\"col-xs-1\">Uptime</td><td class="col-xs-2">...</td> </tr>
+			<tr><td class=\"col-xs-1\">UUID</td><td class="col-xs-2">...</td> </tr>
+			<tr><td class=\"col-xs-1\">Boot ID</td><td class="col-xs-2">...</td> </tr>
+			<tr><td class=\"col-xs-1\">Device ID</td><td class="col-xs-2">...</td> </tr>
+		</table>
+		<button class="btn btn-danger" type="button" onclick="stopSatPI()"><i class="fas fa-power-off"></i> Stop</button>
+		<script>
+			// make menu
+			document.getElementById("menu").innerHTML = buildmenu();
+			document.getElementById("footer").innerHTML = buildfooter();
+			setMenuItemActive("index");
+
+			// Call the ajax refresh each refresh_time seconds
+			var refresh_time = 2000;
+			updatePage();
+			setInterval("updatePage()", refresh_time);
+		</script>
+	</div>
+</div>
 </div>
 
 </body>

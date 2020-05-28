@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP About Page</title>
 
@@ -17,27 +17,29 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>About</h3>
-
-		<div id="content">SatPI is an SAT>IP server which supports:</div>
-		<div>DVB-C DVB-T/T2 and DVB-S/S2</div>
-		<div>==============================================</div>
-		<div>Thanks go out to:</div>
-		<div>Baris Altuncay for his contributions</div>
-		<div>Axel Hartmann for kindly suppling hardware</div>
-		<div>APfutura for kindly suppling hardware</div>
-		<div>All who have tested this Software and gave feedback</div>
-
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("about");
-		</script>
-
+<div class="p-1">
+<div class=" window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>About</p>
 	</div>
+	<div class="p-1">
+		<p>SatPI is an SAT>IP server which supports:<br>
+		DVB-C DVB-T/T2 and DVB-S/S2<br><br>
+		==============================================<br><br>
+		Thanks go out to:<br>
+		Baris Altuncay for his contributions<br>
+		Axel Hartmann for kindly suppling hardware<br>
+		APfutura for kindly suppling hardware<br>
+		All who have tested this Software and gave feedback</p>
+	</div>
+
+	<script>
+		// make menu
+		document.getElementById("menu").innerHTML = buildmenu();
+		document.getElementById("footer").innerHTML = buildfooter();
+		setMenuItemActive("about");
+	</script>
+</div>
 </div>
 
 </body>

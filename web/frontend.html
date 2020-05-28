@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP - Frontend info Page</title>
 
@@ -15,23 +15,22 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/addtableentry.js"></script>
 <script>
-	var filename;
 	var autoload = 1;
-	var xmlLoaded;
-	var streamID = 0;
 	var content;
 	var once = 0;
 
-	function buildcontent(xmlDoc, id) {
+	function buildNavContent(xmlDoc) {
 		var page = "";
-		var streamID = "stream" + id + " ";
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
-			var visibleStreamid = "stream" + id;
-			var visibleStream = xmlDoc.getElementsByTagName(visibleStreamid)[0];
+			var visibleStream = xmlDoc.getElementsByTagName(content)[0];
+			var streamID = content + " ";
 
-			page += "<table class=\"table table-bordered table-striped \">";
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length + 1) + "\">Frontend Info</th></tr>";
+			page += "<table class=\"table table-bordered table-sm\">";
+			page += "<thead></thead>";
+			page += "<tbody>";
+
+			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length + 1) + "\">Frontend Info</th></tr>";
 
 			page += addTableLineEntry("Stream Index", xmlDoc, streamID + "streamindex");
 
@@ -43,20 +42,20 @@
 			page += addTableLineEntry("Freq Range", xmlDoc, streamID + "freq");
 			page += addTableLineEntry("Symbol Rate Range", xmlDoc, streamID + "symbol");
 
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
+			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
 			page += addTableLineEntry("Owner", xmlDoc, streamID + "owner");
 			page += addTableLineEntry("Session ID", xmlDoc, streamID + "ownerSessionID");
 			page += addTableLineEntry("User-Agent", xmlDoc, streamID + "userAgent");
 			page += addTableLineEntry("RTP packet count", xmlDoc, streamID + "spc");
 			page += addTableLineEntry("RTP streamed (MB)", xmlDoc, streamID + "payload");
 
-			page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
+			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
 			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 
 			var transformation = visibleStream.getElementsByTagName("transformation");
 			if (transformation.length > 0) {
-				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Transformation Info</th></tr>";
+				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Transformation Info</th></tr>";
 				page += addTableLineEntry("Transformation enable", xmlDoc, streamID + "transformEnable");
 				page += addTableLineEntry("Advertise as", xmlDoc, streamID + "advertiseAsType");
 				page += addTableLineEntry("Transformation Mapping M3U", xmlDoc, streamID + "transformM3U");
@@ -64,18 +63,17 @@
 
 			var diseqc = visibleStream.getElementsByTagName("diseqc");
 			if (diseqc.length > 0) {
-
-//				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">LNB Configuration</th></tr>";
+//				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">LNB Configuration</th></tr>";
 				var lnb = visibleStream.getElementsByTagName("lnbtype");
 				for (var i = 0; i < lnb.length; i++) {
-					page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">LNB " + i + " Configuration</th></tr>";
+					page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">LNB " + i + " Configuration</th></tr>";
 					var lnbt = streamID + "lnb" + i + " ";
 					page += addTableLineEntry("Lof High (MHz)", xmlDoc, lnbt + "lofHigh");
 					page += addTableLineEntry("Lof Low (MHz)", xmlDoc, lnbt + "lofLow");
 					page += addTableLineEntry("Lof Switch (MHz)", xmlDoc, lnbt + "lofSwitch");
 				}
 
-				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
+				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
 				page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
 				page += addTableLineEntry("DiSEqC", xmlDoc, streamID + "diseqcType");
 				page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
@@ -85,7 +83,7 @@
 
 			var freq = visibleStream.getElementsByTagName("tunefreq");
 			if (freq.length > 0) {
-				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
+				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Channel Info</th></tr>";
 
 				page += addTableLineEntry("Network Name", xmlDoc, streamID + "networkname");
 				page += addTableLineEntry("Channel Name", xmlDoc, streamID + "channelname");
@@ -101,39 +99,34 @@
 				page += addTableLineEntry("Source", xmlDoc, streamID + "src");
 				page += addTableLineEntry("Polarization", xmlDoc, streamID + "pol");
 
-				page += "<tr class=\"separator\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
+				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Monitor Info</th></tr>";
 				page += addTableLineEntry("Status", xmlDoc, streamID + "status");
 				page += addTableLineEntry("Signal Strength", xmlDoc, streamID + "signal");
 				page += addTableLineEntry("snr", xmlDoc, streamID + "snr");
 				page += addTableLineEntry("ber", xmlDoc, streamID + "ber");
 				page += addTableLineEntry("unc", xmlDoc, streamID + "unc");
 			}
-
-			page +=	 "</table><br>";
+			page += "</tbody>";
+			page +=	 "</table>";
 		}
 		return page;
 	}
 
-	function makeTabContent(xmlDoc, id) {
+	function createNavTab(xmlDoc) {
 		var tab = "";
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
 			var len = streams.length;
 			tab += "<ul class=\"nav nav-tabs\">";
-			for (en = 0; en < len; en++) {
-				if (en == 0) {
-					tab += "<li class=\"active\">";
-				} else {
-					tab += "<li>";
-				}
-				tab += "<a data-toggle=\"tab\" href=\"#FrontendTab" + en + "\">Frontend " + en + "</a></li>";
+			tab += "<li class=\"nav-item\"><a class=\"nav-link active\" data-toggle=\"tab\" href=\"#stream" + 0 + "\">Frontend " + 0 + "</a></li>"
+			for (en = 1; en < len; en++) {
+				tab += "<li class=\"nav-item\"><a class=\"nav-link\" data-toggle=\"tab\" href=\"#stream" + en + "\">Frontend " + en + "</a></li>"
 			}
 			tab += "</ul>";
 			tab += "<div class=\"tab-content\">";
-			for (en = 0; en < len; en++) {
-				tab += "<div id=\"FrontendTab" + en + "\" class=\"tab-pane fade in active\">";
-				tab += 		"<div class=\"table-responsive\"><div id=\"frontend" + en + "\"></div></div>";
-				tab += "</div>";
+			tab += "<div id=\"stream" + 0 + "\" class=\"tab-pane fade show active\"></div>";
+			for (en = 1; en < len; en++) {
+				tab += "<div id=\"stream" + en + "\" class=\"tab-pane fade\"></div>";
 			}
 			tab += "</div>";
 		}
@@ -141,29 +134,26 @@
 	}
 
 	function updatePage() {
-		loadXMLDoc(filename);
+		loadXMLDoc("SatPI.xml");
 	}
 
 	// function called when xml is loaded
 	function xmlloaded(xml) {
+		if (once == 0) {
+			once = 1;
+			document.getElementById("tableContent").innerHTML = createNavTab(xml);
+			$(".nav-tabs a").click(function() {
+				$(this).tab("show");
+			});
+			$(".nav-tabs a").on("shown.bs.tab", function(event) {
+				var href = $(event.target).attr("href");
+				// remove # from href
+				content = href.substr(1, href.length);
+				updatePage();
+			});
+		}
 		if (autoload == 1) {
-			xmlLoaded = xml;
-			if (once == 0) {
-				document.getElementById("tabContent").innerHTML = makeTabContent(xml, streamID);
-				$(".nav-tabs a").click(function() {
-					$(this).tab('show');
-				});
-				$('.nav-tabs a').on('shown.bs.tab', function(event) {
-					var href = $(event.target).attr("href");
-					var id = href.substr(12);
-					filename = "SatPI.xml";
-					content = "frontend" + id;
-					streamID = id;
-					updatePage();
-				});
-				once = 1;
-			}
-			document.getElementById(content).innerHTML = buildcontent(xml, streamID);
+			document.getElementById(content).innerHTML = buildNavContent(xml);
 		}
 	}
 </script>
@@ -173,27 +163,24 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>SAT>IP Frontend Info Page</h3>
-		<div id="tabContent"></div>
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("frontend");
-
-			filename = "SatPI.xml";
-			content = "frontend0";
-			streamID = 0;
-
-			// Call the ajax refresh each refresh_time seconds
-			var refresh_time = 2000;
-			updatePage();
-			setInterval("updatePage()", refresh_time);
-
-		</script>
+<div class="window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>Frontend Info</p>
 	</div>
+	<div class="p-1" id="tableContent"></div>
+	<script>
+		// make menu
+		document.getElementById("menu").innerHTML = buildmenu();
+		document.getElementById("footer").innerHTML = buildfooter();
+		setMenuItemActive("frontend");
+
+		content = "stream0";
+		updatePage();
+
+		// Call the ajax refresh each refresh_time seconds
+		var refresh_time = 2000;
+		setInterval("updatePage()", refresh_time);
+	</script>
 </div>
 
 </body>

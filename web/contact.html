@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
 
 <title>SAT>IP Contact Page</title>
 
@@ -17,21 +17,23 @@
 <div id="menu"></div>
 <div id="footer"></div>
 
-<div class="container-fluid">
-	<div class="start">
-		<h3>Contact</h3>
-
-		<div id="content">If you like to contact me, you can do so by sending an email to:</div>
-		<div>mpostema09 -at- gmail.com</div>
-
-		<script>
-			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
-			setMenuItemActive("contact");
-		</script>
-
+<div class="p-1">
+<div class=" window-start container border rounded-bottom">
+	<div class="window-name">
+		<p>Contact</p>
 	</div>
+	<div class="p-1">
+		<p>If you like to contact me, you can do so by sending an email to:<br><br>
+		mpostema09 -at- gmail.com</p>
+	</div>
+
+	<script>
+		// make menu
+		document.getElementById("menu").innerHTML = buildmenu();
+		document.getElementById("footer").innerHTML = buildfooter();
+		setMenuItemActive("contact");
+	</script>
+</div>
 </div>
 
 </body>
