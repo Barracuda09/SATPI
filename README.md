@@ -9,12 +9,16 @@ An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, Beagle
 <a href="https://github.com/Barracuda09/SATPI/wiki/02.-Build-SatPI">See wiki on how to build SatPI</a>
 
 Currently supporting:
+
 - DVB-S(2), DVB-T(2) and DVB-C
+- Web Interface for monitoring and configuring various things (http port 8875)
+	- http://ip.of.your.box:8875
 - Transform for example DVB-S(2) requests to DVB-C
 - RTP/AVP over UDP and TCP
 - Decrypting of channels via DVB-API protocol implemented by OSCam, therefore you need the dvbcsa library and an official subscription
-- Web Interface for monitoring and configuring various things (http port 8875)
-	- http://ip.of.your.box:8875
+- FILE input, reading from an TS File
+- STREAMER input, reading from an multicast/unicast input
+- CHILDPIPE input, reading from an PIPE input for example wget
 -------
 - The Description xml can be found like:
 	- http://ip.of.your.box:8875/desc.xml
@@ -70,54 +74,51 @@ Tested Hardware
 
 Build
 -----
-Build Status: <a href="https://travis-ci.org/Barracuda09/SATPI"><img src="https://travis-ci.org/Barracuda09/SATPI.svg"/></a>
+- To build SatPI just run these commands:
 
-Coverity Scan Build Status <a href="https://scan.coverity.com/projects/4842">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/4842/badge.svg"/></a>
+    `git clone git://github.com/Barracuda09/satpi.git`<br/>
+    `cd satpi/`<br/>
+    `make`<br/>
 
-To build SatPI just run these commands:
+- See some new commits/changes you need, rebuild with:
 
-    git clone git://github.com/Barracuda09/satpi.git
-    cd satpi/
-    make
+    `cd satpi`<br/>
+    `git pull`<br/>
+    `make`<br/>
 
-See some new commits/changes you need, rebuild with:
+- If you need to make a debug version to help with testing, use:
 
-    cd satpi
-    git pull
-    make
+    `make debug`<br/>
 
-If you need to make a debug version to help with testing, use:
+- If you need to clean the project (because there was something wrong), use:
 
-    make debug
+    `make clean`<br/>
 
-If you need to clean the project (because there was something wrong), use:
+- If you like to try OSCam with DVBAPI, use:
 
-    make clean
+    `make debug LIBDVBCSA=yes`<br/>
 
-If you like to try DVBAPI (OSCam), use:
+- If you like to run it on an Enigma2 box **_(With the correct toolchain)_**, use:
 
-    make debug LIBDVBCSA=yes
+    `make debug ENIGMA=yes`<br/>
 
-If you like to run it on an Enigma2 box, use:
+- Here is an toolchain I use for Vu+ Receivers (Broadcom CPU) it has MIPS and ARM cross-compiler:
 
-    make debug ENIGMA=yes
+    `https://github.com/Broadcom/stbgcc-6.3/releases`<br/>
 
-For Cross Compiling, here are some tips you can try (I did not try this myself):
+- For Cross Compiling, here are some tips you can try _**(I did not try this myself)**_:
 
-    export INCLUDES=--sysroot=dir         (get the sys root like headers and libraries for your device and copy it to dir)
-    export CXXPREFIX=arm-linux-gnueabihf- (for pointing to a different compiler for your device)
-    export CXXSUFFIX=                     (for pointing to a different compiler for your device, if it needs it!)
-    make debug                            (Or some other build you like)
+    - get the sys root like headers and libraries for your device and copy it to dir<br/>
+    `export INCLUDES=--sysroot=dir`<br/>
+    - for pointing to a different compiler for your device<br/>
+    `export CXXPREFIX=arm-linux-gnueabihf-`<br/>
+    `export CXXSUFFIX=`<br/>
+    - To buils just run (Or some other build you like)<br/>
+    `make debug`<br/>
 
-If you like to build the documentation, use:
+- If you like to build the documentation, use:
 
-    make docu   (!! you need Doxygen and Graphviz/dot !!)
-
-If you like to build the UML documentation, use:
-
-    make plantuml   (!! you need PlantUML !!)
+    `make docu   (!! you need Doxygen and Graphviz/dot !!)`<br/>
 
 Usage
 -----
