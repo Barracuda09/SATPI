@@ -15,7 +15,6 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/addtableentry.js"></script>
 <script>
-	var filename;
 	var autoload = 1;
 	var content;
 	var once = 0;
@@ -47,7 +46,7 @@
 		return page;
 	}
 	function updatePage() {
-		loadXMLDoc(filename);
+		loadXMLDoc("SatPI.xml");
 	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
@@ -98,7 +97,6 @@
 		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("config");
 
-		filename = "SatPI.xml";
 		content = "general";
 		updatePage();
 
