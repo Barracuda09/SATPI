@@ -1,4 +1,6 @@
-function loadXMLDoc(filename) {
+var xmlLoaded;
+var filename;
+function loadXMLDoc(file) {
 	if (window.XMLHttpRequest) {
 		xmlhttp = new XMLHttpRequest();
 	} else if (window.ActiveXObject) {
@@ -10,11 +12,13 @@ function loadXMLDoc(filename) {
 	// callback function
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			filename = file;
+			xmlLoaded = xmlhttp.responseXML;
 			xmlloaded(xmlhttp.responseXML);
 		}
 	}
 
-	xmlhttp.open("GET", filename, true);
+	xmlhttp.open("GET", file, true);
 	xmlhttp.send();
 }
 
