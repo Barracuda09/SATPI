@@ -39,7 +39,7 @@ namespace mpegts {
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
 			// Check PID still open.
 			// Then set PID not used, to handle and close them later
-			if (_data[i].state != State::Closed) {
+			if (_data[i].state != State::Closed && _data[i].state != State::ShouldOpen) {
 				setPID(i, false);
 			} else {
 				resetPidData(i);
