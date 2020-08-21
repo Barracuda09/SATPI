@@ -151,7 +151,7 @@ namespace dvb {
 			}
 		}
 		const int src = StringConverter::getIntParameter(msg, method, "src=");
-		if (src != -1) {
+		if (src >= 1) {
 			_src = src;
 		}
 		const std::string plts = StringConverter::getStringParameter(msg, method, "plts=");
