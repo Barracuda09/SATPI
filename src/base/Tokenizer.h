@@ -52,18 +52,17 @@ namespace base {
 			/// @param token is the new token found in the tokenizing string
 			/// @retval true we found an new token
 			bool isNextToken(STRING_TYPE &token) {
-				if (!_atEnd) {
-					_end = _string.find_first_of(_delimiters, _begin);
-					if (STRING_TYPE::npos == _end) {
-					_end = _string.size();
-					_atEnd = true;
-					}
-					token = _string.substr(_begin, _end - _begin);
-					_begin = _end + 1;
-					return true;
-				} else {
+				if (_atEnd) {
 					return false;
 				}
+				_end = _string.find_first_of(_delimiters, _begin);
+				if (_end == STRING_TYPE::npos) {
+					_end = _string.size();
+					_atEnd = true;
+				}
+				token = _string.substr(_begin, _end - _begin);
+				_begin = _end + 1;
+				return true;
 			}
 
 			/// This function removes the requested token

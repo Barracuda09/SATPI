@@ -73,7 +73,7 @@ namespace base {
 											if (exist(freq)) {
 												SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
 											} else {
-												line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());												
+												line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 												_transformationMap[freq] = StringConverter::getPercentDecoding(line);
 											}
 										}
