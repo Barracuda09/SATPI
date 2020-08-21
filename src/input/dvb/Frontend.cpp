@@ -425,6 +425,7 @@ namespace dvb {
 			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			++timeout;
 			if (timeout > 1) {
+				SI_LOG_INFO("Stream: %d, Updating frontend (Failed)", _streamID);
 				return false;
 			}
 		}
@@ -774,7 +775,7 @@ namespace dvb {
 		if (!_frontendData.getFilterData().hasPIDTableChanged()) {
 			return;
 		}
-		if (!isTuned()) {
+		if (!_tuned) {
 			SI_LOG_INFO("Stream: %d, Update PID filters requested, but frontend not tuned!",
 						_streamID);
 			return;

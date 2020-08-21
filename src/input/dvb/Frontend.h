@@ -197,11 +197,6 @@ class Frontend :
 		///
 		bool tune();
 
-		///
-		bool isTuned() const {
-			return _tuned;
-		}
-
 		void updatePIDFilters();
 
 		///
