@@ -36,6 +36,7 @@
 
 			page += addTableLineEntry("Enable", xmlDoc, streamID + "enable");
 			page += addTableLineEntry("Attached", xmlDoc, streamID + "attached");
+			page += addTableLineEntry("Type", xmlDoc, streamID + "type");
 			page += addTableLineEntry("Name", xmlDoc, streamID + "frontendname");
 
 			page += addTableLineEntry("Path", xmlDoc, streamID + "pathname");
@@ -87,13 +88,22 @@
 				page += addTableLineEntry("Transformation Mapping M3U", xmlDoc, streamID + "transformM3U");
 			}
 
+			var fbc = visibleStream.getElementsByTagName("fbc");
+			if (fbc.length > 0) {
+				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">FBC Configuration</th></tr>";
+				page += addTableLineEntry("FBC Connection", xmlDoc, streamID + "fbcConnection");
+				page += addTableLineEntry("FBC Linked", xmlDoc, streamID + "fbcLinked");
+			}
+
 			var diseqc = visibleStream.getElementsByTagName("diseqc");
 			if (diseqc.length > 0) {
 				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
 				page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
 				page += addTableLineEntry("DiSEqC", xmlDoc, streamID + "diseqcType");
 				page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
-				page += addTableLineEntry("Channel Slot", xmlDoc, streamID + "chSlot");
+				page += addTableLineEntry("Channel Slot (0-32)", xmlDoc, streamID + "chSlot");
+				page += addTableLineEntry("Delay before write", xmlDoc, streamID + "delayBeforeWrite");
+				page += addTableLineEntry("Delay after write", xmlDoc, streamID + "delayAfterWrite");
 				page += addTableLineEntry("PIN (256 disabled)", xmlDoc, streamID + "pin");
 			}
 			var lnb = visibleStream.getElementsByTagName("lnbtype");
