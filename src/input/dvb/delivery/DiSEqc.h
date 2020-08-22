@@ -21,8 +21,8 @@
 #define INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE
 
 #include <base/XMLSupport.h>
-#include <input/dvb/delivery/Lnb.h>
 #include <Unused.h>
+#include <input/dvb/delivery/Lnb.h>
 
 namespace input {
 namespace dvb {
@@ -57,6 +57,11 @@ namespace delivery {
 		public:
 
 			///
+			/// @param feFD
+			/// @param streamID
+			/// @param freq
+			/// @param src specifies the DiSEqc src starting from 0
+			/// @param pol
 			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
 				int src, Lnb::Polarization pol) = 0;
 
@@ -78,8 +83,6 @@ namespace delivery {
 		protected:
 
 			unsigned int _diseqcRepeat;
-			Lnb _lnb[MAX_LNB];    // LNB properties
-
 	};
 
 } // namespace delivery

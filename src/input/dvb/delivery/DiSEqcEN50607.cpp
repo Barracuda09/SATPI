@@ -40,7 +40,9 @@ namespace delivery {
 		DiSEqc(),
 		_pin(256),
 		_chSlot(0),
-		_chFreq(1210) {}
+		_chFreq(1210),
+		_delayBeforeWrite(8),
+		_delayAfterWrite(15) {}
 
 	DiSEqcEN50607::~DiSEqcEN50607() {}
 
@@ -50,21 +52,16 @@ namespace delivery {
 
 	bool DiSEqcEN50607::sendDiseqc(int feFD, int streamID, uint32_t &freq,
                 int src, Lnb::Polarization pol) {
-		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
-			PERROR("FE_SET_VOLTAGE failed");
-		}
-		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-			PERROR("FE_SET_TONE failed");
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(900));
-
 		return sendDiseqcJess(feFD, streamID, freq, src, pol);
 	}
 
 	void DiSEqcEN50607::doNextAddToXML(std::string &xml) const {
 		ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
-		ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 40);
+		ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 31);
 		ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
+		ADD_XML_NUMBER_INPUT(xml, "delayBeforeWrite", _delayBeforeWrite, 0, 2000);
+		ADD_XML_NUMBER_INPUT(xml, "delayAfterWrite", _delayAfterWrite, 0, 2000);
+		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
 	}
 
 	void DiSEqcEN50607::doNextFromXML(const std::string &xml) {
@@ -78,43 +75,66 @@ namespace delivery {
 		if (findXMLElement(xml, "pin.value", element)) {
 			_pin = std::stoi(element);
 		}
+		if (findXMLElement(xml, "delayBeforeWrite.value", element)) {
+			_delayBeforeWrite = std::stoi(element);
+		}
+		if (findXMLElement(xml, "delayAfterWrite.value", element)) {
+			_delayAfterWrite = std::stoi(element);
+		}
+		if (findXMLElement(xml, "lnb0", element)) {
+			_lnb.fromXML(element);
+		}
 	}
 
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const int streamID, uint32_t &freq,
-		const int src, const Lnb::Polarization pol) {
-		// Digital Satellite Equipment Control, specification is available from http://www.eutelsat.com/
-		dvb_diseqc_master_cmd cmd = {
-			{0x70, 0x00, 0x00, 0x00, 0x00}, 4
-		};
-
+	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const int streamID,
+		uint32_t &freq,	const int src, const Lnb::Polarization pol) {
 		bool hiband = false;
-		_lnb[src % MAX_LNB].getIntermediateFrequency(freq, hiband, pol);
-		freq /= 1000;
-		const uint32_t t = freq - 100;
+		_lnb.getIntermediateFrequency(freq, hiband, pol);
+
+		// Calulate T
+		const uint32_t t = (freq / 1000.0) - 100.0;
+		// Change tuning frequency to 'Channel Freq'
 		freq = _chFreq * 1000;
 
-		cmd.msg[1] = _chSlot << 3 | ((t >> 8) & 0x07);
-		cmd.msg[2] = (t & 0xff);
-		cmd.msg[3] = (((src << 2) & 0x0f) | ((pol == Lnb::Polarization::Vertical) ? 0 : 2) | (hiband ? 1 : 0));
+		// Framing 0x70: Command from Master, Unicable II/Jess tuning command
+		// Data 1  0x00: see below
+		// Data 2  0x00: see below
+		// Data 3  0x00: see below
+		dvb_diseqc_master_cmd cmd = {{0x70, 0x00, 0x00, 0x00, 0x00, 0x00}, 4};
 
-		for (size_t i = 0; i < _diseqcRepeat; ++i) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-			SI_LOG_INFO("Stream: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x] [%02x]", streamID, cmd.msg[0],
-					cmd.msg[1], cmd.msg[2], cmd.msg[3], cmd.msg[4]);
+		// UB [4:0] (1-32) and T [10:8]
+		cmd.msg[1] = _chSlot << 3 | ((t >> 8) & 0x07);
+		// T [7:0]
+		cmd.msg[2] = (t & 0xff);
+
+		// param: high nibble: "uncommitted switches"
+		//        low nibble: "committed switches"
+		// bits are: option, position, polarizaion, band
+		cmd.msg[3]  = (src << 2) & 0x0f;
+		cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
+		cmd.msg[3] |= hiband ? 0x1 : 0x0;
+
+		for (size_t i = 0; i < _diseqcRepeat + 1; ++i) {
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
+			SI_LOG_INFO("Stream: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d - UB: %d",
+				streamID, cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src, _chSlot);
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(70));
+			std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
 				PERROR("FE_SET_VOLTAGE failed");
+			}
+			// Should we repeat message
+			if (_diseqcRepeat > 0) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 		}
 		return true;

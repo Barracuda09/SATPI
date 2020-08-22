@@ -23,6 +23,7 @@
 #include <FwDecl.h>
 #include <input/dvb/dvbfix.h>
 #include <input/dvb/delivery/DiSEqc.h>
+#include <input/dvb/delivery/Lnb.h>
 
 #include <stdint.h>
 
@@ -64,14 +65,15 @@ namespace delivery {
 		private:
 
 			///
-			bool diseqcSwitch(int feFD, fe_sec_voltage_t v, dvb_diseqc_master_cmd &cmd,
-				fe_sec_tone_mode_t t, fe_sec_mini_cmd_t b);
+			bool diseqcSwitch(int feFD, int streamID, uint32_t &freq,
+				int src, Lnb::Polarization pol);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 
 		private:
+			Lnb _lnb[MAX_LNB];
 	};
 
 } // namespace delivery

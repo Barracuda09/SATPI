@@ -23,6 +23,7 @@
 #include <FwDecl.h>
 #include <input/dvb/delivery/Lnb.h>
 #include <input/dvb/delivery/DiSEqc.h>
+#include <input/dvb/delivery/Lnb.h>
 
 #include <stdint.h>
 
@@ -75,6 +76,9 @@ namespace delivery {
 			int _pin;
 			int _chSlot;
 			uint32_t _chFreq;
+			unsigned int _delayBeforeWrite;
+			unsigned int _delayAfterWrite;
+			Lnb _lnb;
 	};
 
 } // namespace delivery

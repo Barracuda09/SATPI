@@ -33,7 +33,7 @@ namespace delivery {
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
 	DiSEqc::DiSEqc() :
-		_diseqcRepeat(2) {}
+		_diseqcRepeat(0) {}
 
 	DiSEqc::~DiSEqc() {}
 
@@ -42,23 +42,12 @@ namespace delivery {
 	// =======================================================================
 
 	void DiSEqc::doAddToXML(std::string &xml) const {
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			ADD_XML_N_ELEMENT(xml, "lnb", i, _lnb[i].toXML());
-		}
-
-		ADD_XML_NUMBER_INPUT(xml, "diseqc_repeat", _diseqcRepeat, 1, 10);
+		ADD_XML_NUMBER_INPUT(xml, "diseqc_repeat", _diseqcRepeat, 0, 10);
 		doNextAddToXML(xml);
 	}
 
 	void DiSEqc::doFromXML(const std::string &xml) {
 		std::string element;
-		for (std::size_t i = 0u; i < MAX_LNB; ++i) {
-			const std::string lnb = StringConverter::stringFormat("lnb%1", i);
-			if (findXMLElement(xml, lnb, element)) {
-				_lnb[i].fromXML(element);
-			}
-		}
-
 		if (findXMLElement(xml, "diseqc_repeat.value", element)) {
 			_diseqcRepeat = std::stoi(element);
 		}
