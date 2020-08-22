@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
+#include <map>
 
 FW_DECL_UP_NS3(input, dvb, delivery, DiSEqc);
 
@@ -79,6 +80,18 @@ class DVBS :
 		bool setProperties(int feFD, uint32_t freq, const input::dvb::FrontendData &frontendData);
 
 		// =======================================================================
+		// -- FBC member functions -----------------------------------------------
+		// =======================================================================
+		///
+		int readProcData(int streamID, const std::string &procEntry) const;
+
+		///
+		void writeProcData(int streamID, const std::string &procEntry, int value);
+
+		///
+		void readConnectionChoices(int streamID);
+
+		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
 	private:
@@ -86,10 +99,22 @@ class DVBS :
 		enum class DiseqcType {
 			Switch,
 			EN50494,
-			EN50607
+			EN50607,
+			None
 		};
 		DiseqcType _diseqcType;
 		UpDiSEqc _diseqc;
+
+		// =======================================================================
+		// -- FBC Data members ---------------------------------------------------
+		// =======================================================================
+		using ConnectionChoices = std::map<int, std::string>;
+		ConnectionChoices _choices;
+		bool _fbcTuner;
+		bool _fbcRoot;
+		int _fbcSetID;
+		int _fbcConnect;
+		bool _fbcLinked;
 
 };
 
