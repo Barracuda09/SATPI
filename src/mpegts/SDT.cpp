@@ -60,8 +60,8 @@ namespace mpegts {
 				SI_LOG_INFO("Stream: %d, SDT - Section Length: %d  Transport Stream ID: %d  Version: %d  secNr: %d  lastSecNr: %d  NetworkID: %04d  CRC: 0x%04X",
 							streamID, tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, _networkID, tableData.crc);
 
-				// 4 = CRC   9 = SDT Header from section length
-				const std::size_t len = tableData.sectionLength - 4u - 9u;
+				// 4 = CRC   8 = SDT Header from section length
+				const std::size_t len = tableData.sectionLength - 4u - 8u;
 
 				// Skip to Service Description Table begin and iterate over entries
 				const unsigned char *ptr = &data[16u];
