@@ -24,6 +24,7 @@
 #include <Stream.h>
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>
+#include <input/dvb/dvbfix.h>
 #include <input/dvb/FrontendData.h>
 #include <input/dvb/delivery/DVBC.h>
 #include <input/dvb/delivery/DVBS.h>
@@ -42,8 +43,6 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <linux/dvb/dmx.h>
-#include <linux/dvb/frontend.h>
 
 namespace input {
 namespace dvb {
@@ -603,17 +602,21 @@ namespace dvb {
 		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
 		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
-#if defined(DMX_SET_SOURCE) && defined(ENIGMA)
-		{
+		// Do we run on an Set-Top Box with Enigma2
+		const std::string filePath = StringConverter::stringFormat(
+			"/proc/stb/frontend/dvr_source_offset");
+		std::ifstream file(filePath);
+		if (file.is_open()) {
+			int value;
+			file >> value;
 			const int fdDMX = openDMX(_path_to_dmx);
 			int n = _streamID;
 			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
 				PERROR("DMX_SET_SOURCE");
 			}
-			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d", _streamID);
+			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d (Offset: %d)", _streamID, value);
 			::close(fdDMX);
 		}
-#endif
 
 		// Set delivery systems
 		if (_dvbs2 > 0) {
