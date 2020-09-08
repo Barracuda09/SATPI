@@ -603,18 +603,23 @@ namespace dvb {
 		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
 		// Do we run on an Set-Top Box with Enigma2
-		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/dvr_source_offset");
-		std::ifstream file(filePath);
-		if (file.is_open()) {
-			int value;
-			file >> value;
+		const std::string infoVersionPath = StringConverter::stringFormat(
+			"/proc/stb/info/version");
+		std::ifstream infoVersionFile(infoVersionPath);
+		if (infoVersionFile.is_open()) {
+			int offset = 0;
+			const std::string offsetFilePath = StringConverter::stringFormat(
+				"/proc/stb/frontend/dvr_source_offset");
+			std::ifstream offsetFile(offsetFilePath);
+			if (offsetFile.is_open()) {
+				offsetFile >> offset;
+			}
 			const int fdDMX = openDMX(_path_to_dmx);
 			int n = _streamID;
 			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
 				PERROR("DMX_SET_SOURCE");
 			}
-			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d (Offset: %d)", _streamID, value);
+			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d (Offset: %d)", _streamID, offset);
 			::close(fdDMX);
 		}
 
