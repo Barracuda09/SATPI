@@ -20,41 +20,46 @@
 #ifndef LOG_H_INCLUDE
 #define LOG_H_INCLUDE LOG_H_INCLUDE
 
-#include <errno.h>
-#include <string.h>
-#include <syslog.h>
-
 #include <string>
 #include <deque>
 
-	/// The class @c Log.
-	class Log {
-		public:
-			// =======================================================================
-			// -- Static functions ---------------------------------------------------
-			// =======================================================================
-			static void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...);
+#include <sys/types.h>
+#include <syslog.h>
+#include <string.h>
 
-			static void applog(int priority, const char *fmt, ...);
+/// The class @c Log.
+class Log {
+	public:
+		// =======================================================================
+		// -- Static functions ---------------------------------------------------
+		// =======================================================================
+		static void openAppLog(const char *deamonName);
 
-			static std::string makeJSON();
+		static void closeAppLog();
 
-			static void open_app_log();
+		static void startSysLog(bool start);
 
-			static void close_app_log();
+		static bool getSysLogState();
 
-		private:
+		static void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...);
 
-			struct LogElem {
-				int priority;
-				std::string msg;
-				std::string timestamp;
-			};
+		static void applog(int priority, const char *fmt, ...);
 
-			using LogBuffer = std::deque<LogElem>;
+		static std::string makeJSON();
 
-			static LogBuffer appLogBuffer;
-	};
+	private:
+
+		struct LogElem {
+			int priority;
+			std::string msg;
+			std::string timestamp;
+		};
+
+		using LogBuffer = std::deque<LogElem>;
+
+		static LogBuffer _appLogBuffer;
+		static bool _syslogOn;
+};
 
 
 #ifdef NDEBUG

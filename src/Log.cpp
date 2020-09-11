@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #ifdef NDEBUG
 #define LOG_SIZE 400
@@ -36,14 +37,28 @@
 #define LOG_SIZE 550
 #endif
 
-int syslog_on = 1;
 static base::Mutex logMutex;
 
-Log::LogBuffer Log::appLogBuffer;
+bool Log::_syslogOn = false;
+Log::LogBuffer Log::_appLogBuffer;
 
-void Log::open_app_log() {}
+void Log::openAppLog(const char *deamonName) {
+	// initialize the logging interface
+	openlog(deamonName, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+}
 
-void Log::close_app_log() {}
+void Log::closeAppLog() {
+	// close logging interface
+	closelog();
+}
+
+void Log::startSysLog(bool start) {
+	_syslogOn = start;
+}
+
+bool Log::getSysLogState() {
+	return _syslogOn;
+}
 
 void Log::binlog(const int priority, const unsigned char *p, const int length, const char *fmt, ...) {
 	const std::string strData = StringConverter::convertToHexASCIITable(p, length, 16);
@@ -92,20 +107,20 @@ void Log::applog(const int priority, const char *fmt, ...) {
 		char time[150];
 		if (snprintf(time, sizeof(time), "%s.%04lu %s", &ascTime[0], time_stamp.tv_nsec/100000, &ascTime[20]) < 0) {
 			continue;
-		};
+		}
 		elem.timestamp = time;
 
 		// set message
 		elem.msg = line;
 
 		// save to deque
-		if (appLogBuffer.size() == LOG_SIZE) {
-			appLogBuffer.pop_front();
+		if (_appLogBuffer.size() == LOG_SIZE) {
+			_appLogBuffer.pop_front();
 		}
-		appLogBuffer.push_back(elem);
+		_appLogBuffer.push_back(elem);
 
 		// log to syslog
-		if (syslog_on != 0) {
+		if (_syslogOn) {
 			syslog(priority, "%s", elem.msg.c_str());
 		}
 #ifdef DEBUG
@@ -122,8 +137,8 @@ std::string Log::makeJSON() {
 	json.startArrayWithName("log");
 	{
 		base::MutexLock lock(logMutex);
-		if (!appLogBuffer.empty()) {
-			for (const LogElem &elem : appLogBuffer) {
+		if (!_appLogBuffer.empty()) {
+			for (const LogElem &elem : _appLogBuffer) {
 				json.startObject();
 				json.addValueString("timestamp", elem.timestamp);
 				json.addValueString("msg", elem.msg);

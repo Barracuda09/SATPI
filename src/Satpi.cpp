@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define DAEMON_NAME "SatPI"
 #define LOCK_FILE   "SatPI.lock"
 
 #define EXIT_SUCCESS 0
@@ -442,11 +441,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	// initialize the logging interface
-	openlog(DAEMON_NAME, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-
-	// open our logging
-	Log::open_app_log();
+	// Open logging
+	Log::openAppLog("SatPI");
 
 	// Daemonize
 	if (daemon) {
@@ -481,10 +477,7 @@ int main(int argc, char *argv[]) {
 	} while (restartApp);
 	SI_LOG_INFO("--- stopped ---");
 
-	// close logging interface
-	closelog();
-
-	Log::close_app_log();
+	Log::closeAppLog();
 
 	return EXIT_SUCCESS;
 }

@@ -85,6 +85,10 @@ void Properties::doFromXML(const std::string &xml) {
 		_appdataPath = _appdataPathOpt.empty() ? element : _appdataPathOpt;
 		SI_LOG_INFO("Setting App Data Path to: %s", _appdataPath.c_str());
 	}
+	if (findXMLElement(xml, "syslog.value", element)) {
+		const bool start = (element == "true") ? true : false;
+		Log::startSysLog(start);
+	}
 }
 
 void Properties::doAddToXML(std::string &xml) const {
@@ -95,6 +99,7 @@ void Properties::doAddToXML(std::string &xml) const {
 	ADD_XML_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile);
 	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
 	ADD_XML_TEXT_INPUT(xml, "appDataPath", _appdataPath);
+	ADD_XML_CHECKBOX(xml, "syslog", (Log::getSysLogState() ? "true" : "false"));
 }
 
 // =============================================================================
