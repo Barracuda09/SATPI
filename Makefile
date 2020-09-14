@@ -148,7 +148,7 @@ ifneq ($(wildcard .git),)
   # Parse
   VER = $(shell echo $(VER1) | sed "s/^v//" | sed "s/-\([0-9]*\)-\(g[0-9a-f]*\)/.\1~\2/")
 else
-  VER = "1.5.0~unknown"
+  VER = "1.6.2~unknown"
 endif
 
 # Do we build for ENIGMA, then add it to version string
