@@ -154,9 +154,9 @@ bool HttpServer::methodGet(SocketClient &client) {
 							const std::string presentationURL = StringConverter::stringFormat("http://%1:%2/",
 									_bindIPAddress,
 									std::to_string(_properties.getHttpPort()));
-
+							const std::string modelName = StringConverter::stringFormat("SatPI Server (%1)", _bindIPAddress);
 							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
-								_properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
+								modelName, _properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
 							docType = newDocType;
 							docTypeSize = docType.size();
