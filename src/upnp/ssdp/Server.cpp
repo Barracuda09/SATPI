@@ -74,6 +74,11 @@ void Server::doAddToXML(std::string &xml) const {
 	ADD_XML_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
 	ADD_XML_ELEMENT(xml, "bootID", _bootID);
 	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
+	size_t i = 0;
+	for (auto server : servers) {
+		ADD_XML_N_ELEMENT(xml, "satipserver", i, server.second);
+		++i;
+	}
 }
 
 void Server::doFromXML(const std::string &xml) {
@@ -215,8 +220,9 @@ void Server::checkDefendDeviceID(
 		if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 			SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 		}
-	} else {
+	} else if (servers.find(otherDeviceID) == servers.end()) {
 		SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr.c_str(), otherDeviceID);
+		servers[otherDeviceID] = ip_addr;
 	}
 }
 
