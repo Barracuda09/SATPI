@@ -125,9 +125,6 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 				client.getCSeq());
 			return;
 	};
-
-// @TODO  check return of update();
-	stream.update(clientID, true);
 }
 
 void RtspServer::methodPlay(

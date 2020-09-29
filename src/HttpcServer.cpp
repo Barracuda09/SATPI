@@ -184,6 +184,9 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpcReply);
 
+				// @TODO  check return of update();
+				stream->update(clientID, true);
+
 			} else if (method == "PLAY") {
 				methodPlay(sessionID, cseq, stream->getStreamID(), httpcReply);
 
