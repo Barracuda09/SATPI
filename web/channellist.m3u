@@ -31,10 +31,10 @@ rtsp://%1/?src=2&fe=2&freq=11361.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=23&
 rtsp://%1/?src=3&fe=2&freq=12363&sr=29500&msys=dvbs2&mtype=8psk&pol=v&fec=34&pids=0,1,16,17,18,3234,5504,5514,5524
 
 #EXTINF:0,11. Astra 23.5E Canal Digitaal Infokanal
-rtsp://%1/?src=3&fe=2&freq=11739&sr=29900&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,82,562,2462
+rtsp://%1/?fe=1&src=1&freq=11739&sr=29900&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,82,562,2462
 
 #EXTINF:0,12. Astra 23.5E SES UHD Demo
-rtsp://%1/?src=3&fe=2&freq=11778&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,511,512,1200
+rtsp://%1/?fe=1&src=1&freq=11778&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,511,512,1200
 
 #EXTINF:0,13. RTL 4 HD (DVB-C)
 rtsp://%1/?fe=1&freq=458&sr=6900&msys=dvbc&mtype=256qam&fec=35&pids=0,1,16,17,18,103,2000,2001,2011,2012,2051,2101,2102,2103,8187
