@@ -194,6 +194,7 @@ namespace base {
 		} catch (...) {
 			SI_LOG_ERROR("%s: Catched an exception", _name.c_str());
 			_state = State::Stopped;
+			throw;
 		}
 	}
 

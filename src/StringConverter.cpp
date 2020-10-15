@@ -339,6 +339,41 @@ std::string StringConverter::getPercentDecoding(const std::string &msg) {
 	return decoded;
 }
 
+StringVector StringConverter::parseCommandArgumentString(const std::string &cmd) {
+     std::string arg;
+     StringVector argVector;
+     size_t quoteCount = 0;
+     bool inQuote = false;
+     for (size_t i = 0; i < cmd.size(); ++i) {
+       if (cmd[i] == '"') {
+         ++quoteCount;
+         if (quoteCount == 3) {
+           quoteCount = 0;
+           arg += cmd[i];
+         }
+         continue;
+       }
+       if (quoteCount > 0) {
+         if (quoteCount == 1) {
+           inQuote = !inQuote;
+         }
+         quoteCount = 0;
+       }
+       if (!inQuote && cmd[i] == ' ') {
+         if (!arg.empty()) {
+           argVector.push_back(arg);
+           arg.clear();
+         }
+       } else {
+         arg += cmd[i];
+       }
+     }
+     if (!arg.empty()) {
+       argVector.push_back(arg);
+     }
+     return argVector;
+}
+
 double StringConverter::getDoubleParameter(const std::string &msg,
 	const std::string &header_field, const std::string &parameter) {
 	const std::string val = StringConverter::getStringParameter(msg, header_field, parameter);

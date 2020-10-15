@@ -146,10 +146,12 @@ namespace base {
 #endif
 		try {
 			threadEntry();
+			_exit = true;
 		} catch (...) {
 			SI_LOG_ERROR("%s: Catched an exception", _name.c_str());
+			_exit = true;
+			throw;
 		}
-		_exit = true;
 	}
 
 } // namespace base
