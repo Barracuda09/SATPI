@@ -21,12 +21,17 @@
 
 #include <Log.h>
 
+#include <string>
 #include <cassert>
 
 namespace base {
 
+// =============================================================================
+// -- Other member functions ---------------------------------------------------
+// =============================================================================
 
-bool XMLSupport::findXMLElement(const std::string &xml, const std::string &elementToFind, std::string &element) {
+bool XMLSupport::findXMLElement(const std::string &xml,
+		const std::string &elementToFind, std::string &element) {
 	std::string tag;
 	std::string::const_iterator it = xml.begin();
 	std::string::const_iterator itEndElement;

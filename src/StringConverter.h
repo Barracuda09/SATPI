@@ -96,9 +96,6 @@ class StringConverter  {
 		static std::string getline(const std::string &msg, std::string::size_type &begin, const char *line_delim);
 
 		///
-		static std::string makeXMLString(const std::string &msg);
-
-		///
 		static void addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist);
 
 		///

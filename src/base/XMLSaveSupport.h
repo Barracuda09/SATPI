@@ -52,9 +52,6 @@ class XMLSaveSupport {
 		/// Get the file name for this XML
 		std::string getFileName() const;
 
-		///
-		std::string makeXMLString(const std::string &msg);
-
 		/// Save XML file
 		bool saveXML(const std::string &xml) const;
 

@@ -24,10 +24,32 @@
 #include <StringConverter.h>
 #include <Unused.h>
 
-#include <string>
 #include <functional>
+#include <string>
+#include <sstream>
 
 namespace base {
+
+class XMLString : private std::string {
+		// =====================================================================
+		// -- Constructors and destructor --------------------------------------
+		// =====================================================================
+	public:
+
+		XMLString(std::string &str) : std::string(str) {}
+
+		virtual ~XMLString() {}
+
+		// =====================================================================
+		// -- Other member functions -------------------------------------------
+		// =====================================================================
+	public:
+
+		///
+		std::string getString() const {
+		    return substr(0);
+		}
+};
 
 /// The class @c XMLSupport has some basic functions to handle XML strings
 class XMLSupport {
@@ -41,15 +63,49 @@ class XMLSupport {
 		virtual ~XMLSupport() {}
 
 		// =====================================================================
+		// -- Other static member functions ------------------------------------
+		// =====================================================================
+	public:
+
+		///
+		static std::string makeXMLString(const XMLString &str) {
+			return str.getString();
+		}
+
+		///
+		template <typename Type>
+		static std::string makeXMLString(const Type &type) {
+			std::ostringstream stream;
+			stream.setf(std::ios::fixed);
+			stream.precision(4);
+			stream << type;
+			std::string xml;
+			for (const char c : stream.str()) {
+				if (c == '&') {
+					xml += "&amp;";
+				} else if (c == '"') {
+					xml += "&quot;";
+				} else if (c == '>') {
+					xml += "&gt;";
+				} else if (c == '<') {
+					xml += "&lt;";
+				} else {
+					xml += c;
+				}
+			}
+			return xml;
+		}
+
+		// =====================================================================
 		// -- Other member functions -------------------------------------------
 		// =====================================================================
 	public:
 
 		/// Add data to an XML for storing or web interface
-		std::string toXML() const {
+		XMLString toXML() const {
 			std::string xml;
 			addToXML(xml);
-			return xml;
+			return XMLString(xml);
 		}
 
 		/// Add data to an XML for storing or web interface
@@ -110,22 +166,22 @@ class XMLSupport {
 #define ADD_XML_END_ELEMENT(XML, ELEMENTNAME) \
 	XML += StringConverter::stringFormat("</%1>", ELEMENTNAME)
 
-#define ADD_XML_ELEMENT(XML, ELEMENTNAME, CODE) \
-	XML += StringConverter::stringFormat("<%1>%2</%1>", ELEMENTNAME, CODE)
+#define ADD_XML_ELEMENT(XML, ELEMENTNAME, VALUE) \
+	XML += StringConverter::stringFormat("<%1>%2</%1>", ELEMENTNAME, base::XMLSupport::makeXMLString(VALUE))
 
-#define ADD_XML_N_ELEMENT(XML, ELEMENTNAME, N, CODE) \
-	XML += StringConverter::stringFormat("<%1%2>%3</%1%2>", ELEMENTNAME, N, CODE)
+#define ADD_XML_N_ELEMENT(XML, ELEMENTNAME, N, VALUE) \
+	XML += StringConverter::stringFormat("<%1%2>%3</%1%2>", ELEMENTNAME, N, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_CHECKBOX(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>checkbox</inputtype><value>%2</value></%1>", VARNAME, VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>checkbox</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
-	XML += StringConverter::stringFormat("<%1><inputtype>number</inputtype><value>%2</value><minvalue>%3</minvalue><maxvalue>%4</maxvalue></%1>", VARNAME, VALUE, MIN, MAX)
+	XML += StringConverter::stringFormat("<%1><inputtype>number</inputtype><value>%2</value><minvalue>%3</minvalue><maxvalue>%4</maxvalue></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE), MIN, MAX)
 
 #define ADD_XML_TEXT_INPUT(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>text</inputtype><value>%2</value></%1>", VARNAME, VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>text</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_IP_INPUT(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>ip</inputtype><value>%2</value></%1>", VARNAME, VALUE)
+	XML += StringConverter::stringFormat("<%1><inputtype>ip</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #endif // BASE_XML_SUPPORT_H_INCLUDE

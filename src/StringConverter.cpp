@@ -409,26 +409,6 @@ input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, con
 	return input::InputSystem::UNDEFINED;
 }
 
-std::string StringConverter::makeXMLString(const std::string &msg) {
-	std::string xml;
-	std::string::const_iterator it = msg.begin();
-	while (it != msg.end()) {
-		if (*it == '&') {
-			xml += "&amp;";
-		} else if (*it == '"') {
-			xml += "&quot;";
-		} else if (*it == '>') {
-			xml += "&gt;";
-		} else if (*it == '<') {
-			xml += "&lt;";
-		} else {
-			xml += *it;
-		}
-		++it;
-	}
-	return xml;
-}
-
 const char *StringConverter::fec_to_string(int fec) {
 	switch (fec) {
 	case FEC_1_2:
