@@ -1,4 +1,4 @@
-/* ChildPIPEReader.h
+/* CharPointerArray.h
 
    Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
 
