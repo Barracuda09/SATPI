@@ -39,6 +39,7 @@ class Properties :
 			const std::string &currentPathOpt,
 			const std::string &appdataPathOpt,
 			const std::string &webPathOpt,
+			const std::string &ipAddress,
 			unsigned int httpPortOpt,
 			unsigned int rtspPortOpt);
 
@@ -90,6 +91,9 @@ class Properties :
 		/// Get RtspPort
 		unsigned int getRtspPort() const;
 
+		/// Get IP Adress
+		std::string getIpAddress() const;
+
 		/// Get application start time
 		std::time_t getApplicationStartTime() const;
 
@@ -113,6 +117,7 @@ class Properties :
 		std::string _xmlDeviceDescriptionFile;
 		std::string _webPath;
 		std::string _appdataPath;
+		std::string _ipAddress;
 		unsigned int _httpPort;
 		unsigned int _rtspPort;
 		std::string _webPathOpt;
