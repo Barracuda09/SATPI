@@ -77,7 +77,7 @@ class SatPI :
 			XMLSaveSupport((appdataPath.empty() ? currentPath : appdataPath) + "/" + "SatPI.xml"),
 			_interface(ifaceName),
 			_streamManager(),
-			_properties(_interface.getUUID(), currentPath, appdataPath, webPath, httpPort, rtspPort),
+			_properties(_interface.getUUID(), currentPath, appdataPath, webPath, _interface.getIPAddress(), httpPort, rtspPort),
 			_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
 			_rtspServer(_streamManager, _interface.getIPAddress()),
 			_ssdpServer(_interface.getIPAddress(), _properties) {

@@ -31,6 +31,7 @@ Properties::Properties(
 		const std::string &currentPathOpt,
 		const std::string &appdataPathOpt,
 		const std::string &webPathOpt,
+		const std::string &ipAddress,
 		const unsigned int httpPortOpt,
 		const unsigned int rtspPortOpt) :
 	XMLSupport(),
@@ -45,6 +46,7 @@ Properties::Properties(
 	_rtspPort = rtspPortOpt == 0 ? 554 : rtspPortOpt;
 	_httpPortOpt = httpPortOpt;
 	_rtspPortOpt = rtspPortOpt;
+	_ipAddress = ipAddress;
 
 	_webPath = webPathOpt.empty() ? (currentPathOpt + "/" + "web") : webPathOpt;
 	_appdataPath = appdataPathOpt.empty() ? currentPathOpt : appdataPathOpt;
@@ -95,6 +97,7 @@ void Properties::doAddToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
 	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
 	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
+	ADD_XML_TEXT_INPUT(xml, "ipaddress", _ipAddress);
 	ADD_XML_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U);
 	ADD_XML_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile);
 	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
@@ -159,6 +162,11 @@ void Properties::setRtspPort(const unsigned int rtspPort) {
 unsigned int Properties::getRtspPort() const {
 	base::MutexLock lock(_mutex);
 	return _rtspPort;
+}
+
+std::string Properties::getIpAddress() const {
+	base::MutexLock lock(_mutex);
+	return _ipAddress;
 }
 
 std::time_t Properties::getApplicationStartTime() const {
