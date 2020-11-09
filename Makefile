@@ -48,6 +48,7 @@ SOURCES = Version.cpp \
 	Log.cpp \
 	Properties.cpp \
 	RtspServer.cpp \
+	main.cpp \
 	Satpi.cpp \
 	Stream.cpp \
 	StreamClient.cpp \
