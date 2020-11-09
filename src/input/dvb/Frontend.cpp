@@ -419,14 +419,9 @@ namespace dvb {
 			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 		}
 
-		std::size_t timeout = 0;
-		while (!setupAndTune()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(150));
-			++timeout;
-			if (timeout > 1) {
-				SI_LOG_INFO("Stream: %d, Updating frontend (Failed)", _streamID);
-				return false;
-			}
+		if (!setupAndTune()) {
+			SI_LOG_INFO("Stream: %d, Updating frontend (Failed)", _streamID);
+			return false;
 		}
 		updatePIDFilters();
 #endif
@@ -686,19 +681,13 @@ namespace dvb {
 				SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
 			}
 			// try tuning
-			std::size_t timeout = 0;
-			while (!tune()) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(450));
-				++timeout;
-				if (timeout > 2) {
-					return false;
-				}
+			if (!tune()) {
+				return false;
 			}
 			SI_LOG_INFO("Stream: %d, Waiting on lock...", _streamID);
 
 			// check if frontend is locked, if not try a few times
-			timeout = 0;
-			while (timeout < 4) {
+			for (int i = 0; i < 4; ++i) {
 				fe_status_t status = FE_TIMEDOUT;
 				// first read status
 				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
@@ -711,8 +700,7 @@ namespace dvb {
 						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 					}
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(150));
-				++timeout;
+				std::this_thread::sleep_for(std::chrono::milliseconds(75));
 			}
 		}
 		return _tuned;

@@ -39,59 +39,66 @@ namespace base {
 	bool M3UParser::parse(const std::string &filePath) {
 		std::ifstream file;
 		file.open(filePath);
-		std::string line;
-		if (file.is_open()) {
-			_transformationMap.clear();
-			// first line should be '#EXTM3U'
-			if (std::getline(file, line) && line.find("#EXTM3U") != std::string::npos) {
-				// seems we are dealing with an M3U file
-				while (std::getline(file, line)) {
-					if (line.empty()) {
-						continue;
-					}
-					// try to split line into track info an title
-					base::StringTokenizer tokenizerTrackInfo(line, ",");
-					std::string info;
-					// parse info part
-					if (tokenizerTrackInfo.isNextToken(info) && !info.empty()) {
-						base::StringTokenizer tokenizerInfo(info, ": ");
-						std::string token;
-						// first token should be '#EXTINF'
-						if (tokenizerInfo.isNextToken(token) && token.find("#EXTINF") != std::string::npos) {
-							// now find 'satip-freq'
-							const std::string satipFreq("satip-freq=\"");
-							while (tokenizerInfo.isNextToken(token)) {
-								std::string::size_type begin = token.find(satipFreq);
-								if (begin != std::string::npos && begin == 0) {
-									begin += satipFreq.size();
-									std::string::size_type end = token.find_first_of("\"", begin);
-									if (end != std::string::npos && begin != end) {
-										const std::string freqStr = token.substr(begin, end - begin);
-										const double freq = std::atof(freqStr.c_str());
-										// next line should be
-										if (std::getline(file, line) && !line.empty()) {
-											if (exist(freq)) {
-												SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
-											} else {
-												line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-												_transformationMap[freq] = StringConverter::getPercentDecoding(line);
-											}
-										}
-										// do next one
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			file.close();
-			return !_transformationMap.empty();
-		} else {
+		if (!file.is_open()) {
 			SI_LOG_ERROR("Error: could not open file: %s", filePath.c_str());
 			return false;
 		}
+		_transformationMap.clear();
+
+		// get first line from file
+		std::string lineEXTM3U;
+		std::getline(file, lineEXTM3U);
+		// first line should be '#EXTM3U'
+		if (lineEXTM3U.find("#EXTM3U") == std::string::npos) {
+			SI_LOG_ERROR("Error: Seems not a valid M3U file: %s", filePath.c_str());
+			return false;
+		}
+		// seems we are dealing with an M3U file
+		for (std::string line; std::getline(file, line); ) {
+			if (line.empty()) {
+				continue;
+			}
+			// try to split line into track info an title
+			base::StringTokenizer tokenizerInfo(line, ",");
+			const std::string trackInfo = tokenizerInfo.getNextToken();
+			if (trackInfo.empty()) {
+				continue;
+			}
+			// parse info part
+			base::StringTokenizer tokenizerTrackInfo(trackInfo, ": ");
+			const std::string tokenEXTINF = tokenizerTrackInfo.getNextToken();
+			// first token should be '#EXTINF'
+			if (tokenEXTINF.find("#EXTINF") == std::string::npos) {
+				continue;
+			}
+			// now find 'satip-freq'
+			const std::string satipFreq("satip-freq=\"");
+			for (std::string token; tokenizerTrackInfo.isNextToken(token); ) {
+				std::string::size_type begin = token.find(satipFreq);
+				if (begin != std::string::npos && begin == 0) {
+					begin += satipFreq.size();
+					std::string::size_type end = token.find_first_of("\"", begin);
+					if (end != std::string::npos && begin != end) {
+						const std::string freqStr = token.substr(begin, end - begin);
+						const double freq = std::atof(freqStr.c_str());
+						// next line should be
+						std::getline(file, line);
+						if (line.empty()) {
+							break;
+						}
+						if (exist(freq)) {
+							SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
+						} else {
+							line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+							_transformationMap[freq] = StringConverter::getPercentDecoding(line);
+						}
+						// do next one
+						break;
+					}
+				}
+			}
+		}
+		return !_transformationMap.empty();
 	}
 
 	std::string M3UParser::findURIFor(double freq) const {

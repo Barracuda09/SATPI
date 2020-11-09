@@ -104,7 +104,7 @@ namespace childpipe {
 			_t1 = std::chrono::steady_clock::now();
 			_deviceData.getFilterData().getPCRData()->clearPCRDelta();
 		} else {
-			std::this_thread::sleep_for(std::chrono::microseconds(1000));
+			std::this_thread::sleep_for(std::chrono::microseconds(150));
 		}
 		return true;
 	}
@@ -113,11 +113,8 @@ namespace childpipe {
 		if (!_exec.isOpen()) {
 			return false;
 		}
-		const auto sizeFree = buffer.getAmountOfBytesToWrite();
-
-		_exec.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), sizeFree);
-
-		buffer.addAmountOfBytesWritten(sizeFree);
+		const int bytes = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		buffer.addAmountOfBytesWritten(bytes);
 		buffer.trySyncing();
 		if (!buffer.full()) {
 			return false;

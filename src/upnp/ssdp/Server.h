@@ -26,6 +26,8 @@
 #include <socket/SocketClient.h>
 #include <socket/UdpSocket.h>
 
+#include <map>
+
 FW_DECL_NS0(Properties);
 
 namespace upnp {
@@ -115,6 +117,9 @@ class Server :
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
 	private:
+		using ServerMap = std::map<int, std::string>;
+
+		ServerMap servers;
 
 		base::Mutex _mutex;
 		const Properties &_properties;

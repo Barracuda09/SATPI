@@ -41,7 +41,7 @@ namespace childpipe {
 	// =======================================================================
 
 	void TSReaderData::doNextAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "pathname", _filePath);
+		ADD_XML_ELEMENT(xml, "pathname", base::XMLSupport::makeXMLString(_filePath));
 	}
 
 	void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}

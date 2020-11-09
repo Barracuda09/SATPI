@@ -20,10 +20,15 @@
 #ifndef BASE_CHILD_PIPE_READER
 #define BASE_CHILD_PIPE_READER BASE_CHILD_PIPE_READER
 
-#include <memory>
-#include <string>
+#include <Log.h>
+#include <Utils.h>
+#include <StringConverter.h>
+#include <base/CharPointerArray.h>
 
-#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/types.h>
 
 namespace base {
 
@@ -32,12 +37,12 @@ class ChildPIPEReader {
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
 	public:
-		ChildPIPEReader() :
-			_pipe(::popen("", "r"), ::pclose) {
-			_pipe.reset();
-		}
 
-		virtual ~ChildPIPEReader() {}
+		ChildPIPEReader()  {}
+
+		virtual ~ChildPIPEReader() {
+			close();
+		}
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
@@ -45,19 +50,57 @@ class ChildPIPEReader {
 	public:
 
 		void open(const std::string &cmd) {
-			_pipe.reset(::popen(cmd.c_str(), "r"));
+			popen2(cmd);
 		}
 
 		void close() {
-			_pipe.reset();
+			if (_open) {
+				CLOSE_FD(_stdout);
+				::kill(_pid, SIGKILL);
+				_open = false;
+			}
 		}
 
 		bool isOpen() const {
-			return _pipe ? true : false;
+			return _open;
 		}
 
-		std::size_t read(char *buffer, std::size_t size) {
-			return std::fread(buffer, 1, size, _pipe.get());
+		std::size_t read(unsigned char *buffer, std::size_t size) {
+			return ::read(_stdout, buffer, size);
+		}
+
+	private:
+
+		void popen2(const std::string &cmd) {
+			int pipefd[2] = { -1, -1 };
+			if (::pipe2(pipefd, 0) != 0) {
+				return;
+			}
+			StringVector argumentVector = StringConverter::parseCommandArgumentString(cmd);
+			const CharPointerArray charPtrArray(argumentVector);
+			char * const* argv = charPtrArray.getData();
+
+			// Prevent children going into 'zombie' mode
+			signal(SIGCHLD, SIG_IGN);
+
+			_pid = ::fork();
+
+			if (_pid < 0) {
+				// Something wrong here
+				return;
+			} else if (_pid == 0) {
+				// This is the child process
+				CLOSE_FD(pipefd[READ]);
+				::dup2(pipefd[WRITE], WRITE);
+
+				::execvp(argv[0], argv);
+				perror("execvp");
+				exit(1);
+			}
+			// This is the parent process
+			CLOSE_FD(pipefd[WRITE]);
+			_stdout = pipefd[READ];
+			_open = true;
 		}
 
 		// =====================================================================
@@ -65,7 +108,11 @@ class ChildPIPEReader {
 		// =====================================================================
 	private:
 
-		std::unique_ptr<std::FILE, decltype(&::pclose)> _pipe;
+		static constexpr int READ = 0;
+		static constexpr int WRITE = 1;
+		int _stdout = -1;
+		pid_t _pid = -1;
+		bool _open = false;
 };
 
 } // namespace base

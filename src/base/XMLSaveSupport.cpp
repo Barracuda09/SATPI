@@ -30,29 +30,18 @@
 
 namespace base {
 
-XMLSaveSupport::XMLSaveSupport(const std::string &filePath) : _filePath(filePath) {}
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
+
+XMLSaveSupport::XMLSaveSupport(const std::string &filePath) :
+	_filePath(filePath) {}
 
 XMLSaveSupport::~XMLSaveSupport() {}
 
-std::string XMLSaveSupport::makeXMLString(const std::string &msg) {
-	std::string xml;
-	std::string::const_iterator it = msg.begin();
-	while (it != msg.end()) {
-		if (*it == '&') {
-			xml += "&amp;";
-		} else if (*it == '"') {
-			xml += "&quot;";
-		} else if (*it == '>') {
-			xml += "&gt;";
-		} else if (*it == '<') {
-			xml += "&lt;";
-		} else {
-			xml += *it;
-		}
-		++it;
-	}
-	return xml;
-}
+// =============================================================================
+// -- Other member functions ---------------------------------------------------
+// =============================================================================
 
 std::string XMLSaveSupport::getFileName() const {
 	std::string file("");

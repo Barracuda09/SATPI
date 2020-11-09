@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 HttpServer::HttpServer(
 	base::XMLSupport &xml,
@@ -102,17 +103,17 @@ bool HttpServer::methodGet(SocketClient &client) {
 
 	// Parse what to get
 	if (StringConverter::isRootFile(client.getMessage())) {
-		const std::string HTML_MOVED = "<html>\r\n"                            \
+		static const char *HTML_MOVED = "<html>\r\n"                           \
 		                               "<head>\r\n"                            \
 		                               "<title>Page is moved</title>\r\n"      \
 		                               "</head>\r\n"                           \
 		                               "<body>\r\n"                            \
 		                               "<h1>Moved</h1>\r\n"                    \
 		                               "<p>This page is moved:\r\n"            \
-		                               "<a href=\"%s:%d%s\">link</a>.</p>\r\n" \
+		                               "<a href=\"%1:%2/%3\">link</a>.</p>\r\n"\
 		                               "</body>\r\n"                           \
 		                               "</html>";
-		StringConverter::addFormattedString(docType, HTML_MOVED.c_str(), _bindIPAddress.c_str(), _properties.getHttpPort(), "/index.html");
+		docType = StringConverter::stringFormat(HTML_MOVED, _bindIPAddress, _properties.getHttpPort(), "index.html");
 		docTypeSize = docType.size();
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
@@ -154,9 +155,9 @@ bool HttpServer::methodGet(SocketClient &client) {
 							const std::string presentationURL = StringConverter::stringFormat("http://%1:%2/",
 									_bindIPAddress,
 									std::to_string(_properties.getHttpPort()));
-
+							const std::string modelName = StringConverter::stringFormat("SatPI Server (%1)", _bindIPAddress);
 							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
-								_properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
+								modelName, _properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
 							docType = newDocType;
 							docTypeSize = docType.size();
@@ -172,12 +173,27 @@ bool HttpServer::methodGet(SocketClient &client) {
 				} else if (file.find(".css") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_CSS, docTypeSize, 0);
 				} else if (file.find(".m3u") != std::string::npos) {
-					// check did we get our *.m3u (we assume there are some %1 in there, we should fill in IP Address)
+					SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
+					// did we read our *.m3u, we assume there are some %1
 					if (docType.find("%1") != std::string::npos) {
-						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
-						const std::string newDocType = StringConverter::stringFormat(
-								docType.c_str(), _bindIPAddress);
-						docType = newDocType;
+						const std::string rtsp = StringConverter::stringFormat("%1:%2",
+								_bindIPAddress,	std::to_string(_properties.getRtspPort()));
+						const std::string http = StringConverter::stringFormat("%1:%2",
+								_bindIPAddress,	std::to_string(_properties.getHttpPort()));
+						std::stringstream docTypeStream(docType);
+						docType.clear();
+						for (std::string line; std::getline(docTypeStream, line); ) {
+							line += "\n";
+							if (line.find("%1") == std::string::npos) {
+								docType += line;
+								continue;
+							}
+							if (line.find("rtsp://") != std::string::npos) {
+								docType += StringConverter::stringFormat(line.c_str(), rtsp);
+							} else if (line.find("http://") != std::string::npos) {
+								docType += StringConverter::stringFormat(line.c_str(), http);
+							}
+						}
 						docTypeSize = docType.size();
 					}
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_VIDEO, docTypeSize, 0);

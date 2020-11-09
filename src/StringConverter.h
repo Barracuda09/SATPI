@@ -27,6 +27,8 @@
 #include <cstring>
 #include <vector>
 
+using StringVector = std::vector<std::string>;
+
 /// The class @c StringConverter has some string manipulation functions
 class StringConverter  {
 
@@ -65,7 +67,11 @@ class StringConverter  {
 						}
 						const std::size_t digitCnt = formatDigit - format;
 						const std::size_t index = std::stoul(std::string(format, digitCnt));
-						line += vectArgs[(index < vectArgs.size()) ? index : 0];
+						if (index < vectArgs.size()) {
+							line += vectArgs[index];
+						} else {
+							line += std::string(format - 1, digitCnt + 1);
+						}
 						// -1 because of ++format in for statement
 						format += digitCnt - 1;
 					} else if (*(format + 1) == '%') {
@@ -88,9 +94,6 @@ class StringConverter  {
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c line or empty line
 		static std::string getline(const std::string &msg, std::string::size_type &begin, const char *line_delim);
-
-		///
-		static std::string makeXMLString(const std::string &msg);
 
 		///
 		static void addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist);
@@ -150,6 +153,9 @@ class StringConverter  {
 
 		///
 		static std::string getPercentDecoding(const std::string &msg);
+
+		///
+		static StringVector parseCommandArgumentString(const std::string &cmd);
 
 		///
 		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);

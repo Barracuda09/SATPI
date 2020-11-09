@@ -48,7 +48,7 @@ namespace base {
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
 
-			/// This function gets an character string that is the new token found in the tokenizing string
+			/// This function gets an string that is the new token found in the tokenizing string
 			/// @param token is the new token found in the tokenizing string
 			/// @retval true we found an new token
 			bool isNextToken(STRING_TYPE &token) {
@@ -63,6 +63,22 @@ namespace base {
 				token = _string.substr(_begin, _end - _begin);
 				_begin = _end + 1;
 				return true;
+			}
+
+			/// This function gets an string that is the new token found in the tokenizing string
+			/// @retval the new token found in the tokenizing string
+			STRING_TYPE getNextToken() {
+				if (_atEnd) {
+					return STRING_TYPE();
+				}
+				_end = _string.find_first_of(_delimiters, _begin);
+				if (_end == STRING_TYPE::npos) {
+					_end = _string.size();
+					_atEnd = true;
+				}
+				STRING_TYPE token = _string.substr(_begin, _end - _begin);
+				_begin = _end + 1;
+				return token;
 			}
 
 			/// This function removes the requested token

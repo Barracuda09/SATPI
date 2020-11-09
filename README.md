@@ -46,6 +46,8 @@ Thank You.
 
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
 
+And Many thanks to all who donated already.
+
 Contact
 -------
 If you like to contact me, you can do so by sending an email to:
@@ -71,6 +73,9 @@ Tested Hardware
 - HMP-Combo DVB-T2/C
 - <a href="http://www.vuplus.de">VU+ Zero 4K with DVB-S2X Tuner</a>
 - <a href="http://www.vuplus.de/produkt_uno4k.php">VU+ Uno 4K with DVB-C FBC Tuner</a>
+- <a href="https://gigablue.de/products/">GigaBlue UHD Quad 4K with DVB-S2X FBC Tuner</a> - Thanks to <a href="https://store.impex-sat.de/">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
+- <a href="https://gigablue.de/products/">GigaBlue Ultra SCR-LNB / 24 SCR - 2 Legacy UHD 4K LNB</a> - Thanks to <a href="https://store.impex-sat.de/">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
+- <a href="https://www.durasat.de/LNB/DUR-line/DUR-line-UK-124-Unicable-LNB.html">DUR-line UK 124 - Unicable LNB</a>
 
 Build
 -----

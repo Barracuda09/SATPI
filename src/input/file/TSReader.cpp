@@ -104,7 +104,7 @@ namespace file {
 			_t1 = std::chrono::steady_clock::now();
 			_deviceData.getFilterData().getPCRData()->clearPCRDelta();
 		} else {
-			std::this_thread::sleep_for(std::chrono::microseconds(1000));
+			std::this_thread::sleep_for(std::chrono::microseconds(150));
 		}
 		return true;
 	}
@@ -113,9 +113,9 @@ namespace file {
 		if (!_file.is_open()) {
 			return false;
 		}
-		const auto sizeFree = buffer.getAmountOfBytesToWrite();
-		_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()), sizeFree);
-		buffer.addAmountOfBytesWritten(sizeFree);
+		_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()),
+				buffer.getAmountOfBytesToWrite());
+		buffer.addAmountOfBytesWritten(_file.gcount());
 		buffer.trySyncing();
 		if (!buffer.full()) {
 			return false;
