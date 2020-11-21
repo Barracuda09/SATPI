@@ -3,7 +3,7 @@
 ###############################################################################
 
 # Set the compiler being used.
-CXX = $(CXXPREFIX)g++$(CXXSUFFIX)
+CXX ?= $(CXXPREFIX)g++$(CXXSUFFIX)
 
 # Check compiler support for some functions
 RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf npfunc)
