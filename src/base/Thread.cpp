@@ -29,7 +29,10 @@
 #define _GNU_SOURCE _GNU_SOURCE
 #endif
 
+#ifdef __linux__
 #include <sys/prctl.h>
+#endif
+
 #include <unistd.h>
 
 namespace base {

@@ -26,7 +26,10 @@
 
 #include <pthread.h>
 #include <unistd.h>
+
+#ifdef __linux__
 #include <sys/prctl.h>
+#endif
 
 namespace base {
 
