@@ -85,8 +85,8 @@ bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, S
 	++_cseq;
 	buffer.tagRTPHeaderWith(_cseq, timestamp);
 
-	static constexpr size_t dataSize = buffer.getBufferSize();
-	static constexpr size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
+	static size_t dataSize = buffer.getBufferSize();
+	static size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 	// RTP packet octet count (Bytes)
 	_stream.addRtpData(dataSize, timestamp);
