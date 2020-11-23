@@ -25,6 +25,8 @@
 #include <InterfaceAttr.h>
 #include <base/TimeCounter.h>
 
+#include <sys/socket.h>
+
 namespace output {
 
 // =============================================================================

@@ -25,6 +25,8 @@
 
 #include <cstring>
 
+#include <sys/socket.h>
+
 namespace output {
 
 // =========================================================================
