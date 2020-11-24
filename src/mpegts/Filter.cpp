@@ -50,7 +50,7 @@ namespace mpegts {
 
 	void Filter::addData(const int streamID, const mpegts::PacketBuffer &buffer) {
 		base::MutexLock lock(_mutex);
-		static std::size_t size = buffer.getNumberOfTSPackets();
+		static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
 		for (std::size_t i = 0; i < size; ++i) {
 			const unsigned char *ptr = buffer.getTSPacketPtr(i);
 			// Check is this the beginning of the TS and no Transport error indicator
