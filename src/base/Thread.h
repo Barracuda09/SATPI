@@ -27,7 +27,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#ifdef __linux__
+#ifndef HAS_NP_FUNCTIONS
 #include <sys/prctl.h>
 #endif
 

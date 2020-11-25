@@ -28,7 +28,7 @@
 #define _GNU_SOURCE _GNU_SOURCE
 #endif
 
-#ifdef __linux__
+#ifndef HAS_NP_FUNCTIONS
 #include <sys/prctl.h>
 #endif
 
