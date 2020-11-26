@@ -28,6 +28,7 @@
 
 #include <arpa/inet.h>
 #include <sys/uio.h>
+#include <sys/socket.h>
 
 	// ===================================================================
 	//  -- Constructors and destructor -----------------------------------
