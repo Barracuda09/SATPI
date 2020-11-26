@@ -29,12 +29,15 @@ CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 ifeq "$(BUILD)" "debug"
   # "Debug" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+  LDFLAGS += -rdynamic
 else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
   CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+  LDFLAGS += -rdynamic
 else ifeq "$(BUILD)" "simu"
   # "Debug Simu" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
+  LDFLAGS += -rdynamic
 else
   # "Release" build - optimization, and no debug symbols
   CFLAGS += -O2 -s -DNDEBUG
