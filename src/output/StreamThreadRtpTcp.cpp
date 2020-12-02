@@ -25,6 +25,10 @@
 #include <InterfaceAttr.h>
 #include <base/TimeCounter.h>
 
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+
 namespace output {
 
 // =============================================================================
@@ -81,7 +85,7 @@ bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, S
 	++_cseq;
 	buffer.tagRTPHeaderWith(_cseq, timestamp);
 
-	static constexpr size_t dataSize = buffer.getBufferSize();
+	static constexpr size_t dataSize = mpegts::PacketBuffer::getBufferSize();
 	static constexpr size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 	// RTP packet octet count (Bytes)

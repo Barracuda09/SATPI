@@ -21,9 +21,12 @@
 #include <Satpi.h>
 #include <StringConverter.h>
 #include <Utils.h>
+#include <base/ChildPIPEReader.h>
 
 #include <atomic>
 #include <iostream>
+#include <fstream>
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +37,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <execinfo.h>
 
 #define LOCK_FILE   "SatPI.lock"
 
@@ -41,9 +45,54 @@
 #define EXIT_FAILURE 1
 
 static std::atomic_bool exitApp;
-std::atomic_bool restartApp;
+static std::atomic_bool restartApp;
 static int retval;
 static int otherSig;
+static std::string appName;
+
+static void createBackTrace(const char *app) {
+	// DO NOT alloc memory!!
+	void *array[25];
+	const size_t size = backtrace(array, 25);
+
+	// Log all the frames to Backtrace File
+	char file[256];
+	snprintf(file, sizeof(file), "/tmp/%s.bt", app);
+	int backtraceFile = open(file, O_CREAT|O_WRONLY|O_TRUNC, 0664);
+	if (backtraceFile > 0) {
+		backtrace_symbols_fd(array, size, backtraceFile);
+	} else {
+		backtrace_symbols_fd(array, size, STDOUT_FILENO);
+	}
+	exit(1);
+}
+
+static void annotateBackTrace(const char *app, const char *file) {
+	std::ifstream bt(file, std::ios::in);
+	int i = 0;
+	for (std::string line; std::getline(bt, line); ++i) {
+		const auto begin = line.find('[');
+		const auto end = line.find(']');
+		if (begin != std::string::npos && end != std::string::npos) {
+			const std::string addr = line.substr(begin + 1, end - begin - 1);
+
+			char file[256];
+			snprintf(file, sizeof(file),"addr2line %s -e %s", addr.c_str(), app);
+
+			base::ChildPIPEReader exec;
+			exec.open(file);
+			std::string code;
+			char buffer[256];
+			std::size_t s;
+			while ((s = exec.read(reinterpret_cast<unsigned char *>(buffer), 255)) > 0) {
+				code.append(buffer, s);
+				code.erase(std::find(code.begin(), code.end(), '\n'));
+			}
+
+			std::cout << "[bt] #" << i << " " << code << " -- " << line << std::endl;
+		}
+	}
+}
 
 static void child_handler(int signum) {
 	switch(signum) {
@@ -56,7 +105,7 @@ static void child_handler(int signum) {
 			exitApp = true;
 			break;
 		case SIGKILL:
-			SI_LOG_INFO("stopping (KILL)" );
+			SI_LOG_INFO("stopping (KILL)");
 		// fall-through
 		case SIGUSR1:
 		// fall-through
@@ -66,7 +115,11 @@ static void child_handler(int signum) {
 			retval = EXIT_SUCCESS;
 			exitApp = true;
 			break;
+		case SIGSEGV:
+			createBackTrace(appName.c_str());
+			break;
 		default:
+			SI_LOG_ERROR("Handle 'Other' signal");
 			otherSig = 1;
 			break;
 	}
@@ -116,6 +169,7 @@ static void daemonize(const std::string &lockfile, const char *user) {
 	signal(SIGHUP,  child_handler);
 	signal(SIGKILL, child_handler);
 	signal(SIGINT,  child_handler);
+	signal(SIGSEGV, child_handler);
 
 	// fork off the parent process
 	pid = fork();
@@ -176,18 +230,19 @@ static void daemonize(const std::string &lockfile, const char *user) {
 
 static void printUsage(const char *prog_name) {
 	printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
-	       "\t--help           show this help and exit\r\n" \
-	       "\t--version        show the version number\r\n" \
-	       "\t--user xx        run as user\r\n" \
-	       "\t--dvb-path       set path were to find dvb devices default /dev/dvb\r\n" \
-	       "\t--app-data-path  set path for application state data eg. xml files etc\r\n" \
-	       "\t--iface-name     set the network interface to bind to (eg. eth0)\r\n" \
-	       "\t--http-path      set root path of web/http pages\r\n" \
-	       "\t--http-port      set http port default 8875 (1024 - 65535)\r\n" \
-	       "\t--rtsp-port      set rtsp port default 554  ( 554 - 65535)\r\n" \
-	       "\t--childpipe      enabled Frontend 'Child PIPE - TS Reader'\r\n" \
-	       "\t--no-daemon      do NOT daemonize\r\n" \
-	       "\t--no-ssdp        do NOT advertise server\r\n", prog_name);
+	       "\t--help              show this help and exit\r\n" \
+	       "\t--version           show the version number\r\n" \
+	       "\t--user xx           run as user\r\n" \
+	       "\t--dvb-path          set path were to find dvb devices default /dev/dvb\r\n" \
+	       "\t--app-data-path     set path for application state data eg. xml files etc\r\n" \
+	       "\t--iface-name        set the network interface to bind to (eg. eth0)\r\n" \
+	       "\t--http-path         set root path of web/http pages\r\n" \
+	       "\t--http-port         set http port default 8875 (1024 - 65535)\r\n" \
+	       "\t--rtsp-port         set rtsp port default 554  ( 554 - 65535)\r\n" \
+	       "\t--backtrace <file>  backtrace 'file'\r\n" \
+	       "\t--childpipe         enabled Frontend 'Child PIPE - TS Reader'\r\n" \
+	       "\t--no-daemon         do NOT daemonize\r\n" \
+	       "\t--no-ssdp           do NOT advertise server\r\n", prog_name);
 }
 
 int main(int argc, char *argv[]) {
@@ -198,7 +253,6 @@ int main(int argc, char *argv[]) {
 	char *user = nullptr;
 	extern const char *satpi_version;
 	exitApp = false;
-	restartApp = false;
 
 	// Defaults in Properties
 	unsigned int httpPort = 0;
@@ -209,9 +263,9 @@ int main(int argc, char *argv[]) {
 	std::string appdataPath;
 	std::string webPath;
 	std::string dvbPath;
-	std::string file;
+
 	//
-	StringConverter::splitPath(argv[0], currentPath, file);
+	StringConverter::splitPath(argv[0], currentPath, appName);
 	dvbPath = "/dev/dvb";
 
 	// Check options
@@ -286,6 +340,14 @@ int main(int argc, char *argv[]) {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
 			}
+		} else if (strcmp(argv[i], "--backtrace") == 0) {
+			if (i + 1 < argc) {
+				++i;
+				annotateBackTrace(appName.c_str(), argv[i]);
+				return EXIT_SUCCESS;
+			}
+			printUsage(argv[0]);
+			return EXIT_FAILURE;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			std::cout << "SatPI version: " << satpi_version << "\r\n";
 			return EXIT_SUCCESS;
@@ -306,6 +368,8 @@ int main(int argc, char *argv[]) {
 		daemonize("/var/lock/" LOCK_FILE, user);
 	}
 
+	// trap signals that we expect to receive
+	signal(SIGSEGV, child_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	// notify we are alive
@@ -314,6 +378,8 @@ int main(int argc, char *argv[]) {
 	SI_LOG_INFO("Default network buffer size: %d KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {
 		try {
+			restartApp = false;
+
 #ifdef ADDDVBCA
 			DVBCA dvbca;
 			dvbca.startThread();

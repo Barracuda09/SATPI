@@ -28,6 +28,10 @@
 #include <chrono>
 #include <thread>
 
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+
 namespace output {
 
 // =========================================================================
@@ -68,7 +72,7 @@ int StreamThreadHttp::getStreamSocketPort(const int clientID) const {
 }
 
 bool StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
-	static constexpr unsigned int dataSize = buffer.getBufferSize();
+	static constexpr unsigned int dataSize = mpegts::PacketBuffer::getBufferSize();
 	const long timestamp = base::TimeCounter::getTicks() * 90;
 
 	// RTP packet octet count (Bytes)

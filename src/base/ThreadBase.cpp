@@ -28,7 +28,10 @@
 #define _GNU_SOURCE _GNU_SOURCE
 #endif
 
+#ifndef HAS_NP_FUNCTIONS
 #include <sys/prctl.h>
+#endif
+
 #include <unistd.h>
 
 namespace base {

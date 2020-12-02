@@ -26,7 +26,10 @@
 
 #include <pthread.h>
 #include <unistd.h>
+
+#ifndef HAS_NP_FUNCTIONS
 #include <sys/prctl.h>
+#endif
 
 namespace base {
 
