@@ -4,7 +4,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
-<link rel="stylesheet" type="text/css" href="assets/css/fontawesome-free-5.13.0.css">
+<link rel="stylesheet" type="text/css" href="assets/css/fontawesome.min.css">
 
 <title>SAT>IP Log Page</title>
 
@@ -13,16 +13,32 @@
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
 <script>
-	var stopScroll = 0;
+	var stopScroll = false;
+	var reverse;
+	var checkbox;
+
+	document.addEventListener("DOMContentLoaded", function(event){
+		checkbox = document.getElementById('reverselog');
+		reverse = checkbox.checked;
+	});
+
+	function reverseLog() {
+		reverse = checkbox.checked;
+	}
+
 	function buildcontent(jsonString) {
 		var json = JSON.parse(jsonString);
 		var page = "";
-		if (stopScroll == 0) {
-			var textarea = document.getElementById('txt');
-			textarea.scrollTop = textarea.scrollHeight;
+		var textarea = document.getElementById('txt');
+
+		if (stopScroll == false & reverse == true) {
+			textarea.scrollTop = 0;
+		} else if(stopScroll == false & reverse == false) {
+			scrollToBottom();
 		}
+
 		for (i = 0; i < json.log.length; i++) {
-			page +=  i;
+			//page +=  i;
 			page += "&nbsp;&nbsp;";
 			page +=  json.log[i].timestamp;
 			page += "&nbsp;&nbsp;";
@@ -31,7 +47,13 @@
 			page +=  json.log[i].msg;
 			page += "\n";
 		}
-		return page;
+
+		if(reverse == true){
+			reversedLog = page.split("\n").reverse().join("\n");
+			return reversedLog;
+		} else {
+			return page;
+		}
 	}
 	function updatePage() {
 		loadJSONDoc("log.json");
@@ -58,8 +80,12 @@
 	<div class="window-name">
 		<p>Main Log</p>
 	</div>
+		<div class="custom-control custom-switch">
+			<input type="checkbox" class="custom-control-input" id="reverselog" onclick="reverseLog();">
+			<label class="custom-control-label" for="reverselog">Reverse log</label>
+		</div>
 	<div class="p-1 container-log">
-		<textarea id="txt" wrap="off" class="form-control logtext" onmouseover="stopScroll = 1" onmouseout="stopScroll = 0" readOnly></textarea>
+		<textarea id="txt" wrap="off" class="form-control logtext" onmouseover="stopScroll = true" onmouseout="stopScroll = false" readOnly></textarea>
 	</div>
 	<script>
 		// make menu
