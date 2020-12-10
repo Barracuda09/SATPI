@@ -12,33 +12,40 @@
 <script src="assets/js/loadxmldoc.js"></script>
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/cookies.js"></script>
 <script>
 	var stopScroll = false;
 	var reverse;
 	var checkbox;
 
 	document.addEventListener("DOMContentLoaded", function(event){
-		checkbox = document.getElementById('reverselog');
+		checkbox = document.getElementById("reverselog");
+		var reverselogCookieValue = getCookie("reverselog");
+		if (reverselogCookieValue == "" && reverselogCookieValue == null) {
+			setCookie("reverselog", checkbox.checked, 365);
+		} else {
+			checkbox.checked = reverselogCookieValue == "true" ? true : false;
+		}
 		reverse = checkbox.checked;
 	});
 
-	function reverseLog() {
+	function reverseLogHanlde() {
+		setCookie("reverselog", checkbox.checked, 365);
 		reverse = checkbox.checked;
 	}
 
 	function buildcontent(jsonString) {
 		var json = JSON.parse(jsonString);
 		var page = "";
-		var textarea = document.getElementById('txt');
+		var textarea = document.getElementById("txt");
 
-		if (stopScroll == false & reverse == true) {
+		if (stopScroll == false && reverse == true) {
 			textarea.scrollTop = 0;
-		} else if(stopScroll == false & reverse == false) {
+		} else if(stopScroll == false && reverse == false) {
 			scrollToBottom();
 		}
 
 		for (i = 0; i < json.log.length; i++) {
-			//page +=  i;
 			page += "&nbsp;&nbsp;";
 			page +=  json.log[i].timestamp;
 			page += "&nbsp;&nbsp;";
@@ -63,7 +70,7 @@
 		document.getElementById("txt").innerHTML = buildcontent(jsonString);
 	}
 	function scrollToBottom() {
-		$('#txt').scrollTop($('#txt')[0].scrollHeight);
+		$("#txt").scrollTop($("#txt")[0].scrollHeight);
 	}
 	$("#txt").change(function() {
 		scrollToBottom();
@@ -81,8 +88,8 @@
 		<p>Main Log</p>
 	</div>
 		<div class="custom-control custom-switch">
-			<input type="checkbox" class="custom-control-input" id="reverselog" onclick="reverseLog();">
-			<label class="custom-control-label" for="reverselog">Reverse log</label>
+			<input type="checkbox" class="custom-control-input" id="reverselog" onclick="reverseLogHanlde();">
+			<label class="custom-control-label" id="reverseloglabel" for="reverselog">Reverse log</label>
 		</div>
 	<div class="p-1 container-log">
 		<textarea id="txt" wrap="off" class="form-control logtext" onmouseover="stopScroll = true" onmouseout="stopScroll = false" readOnly></textarea>
