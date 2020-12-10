@@ -116,7 +116,7 @@ namespace dvb {
 		streamVector.push_back(std::make_shared<Stream>(1, frontend1, decrypt));
 #else
 		dirent **file_list;
-		const int n = scandir(path.c_str(), &file_list, nullptr, alphasort);
+		const int n = scandir(path.c_str(), &file_list, nullptr, versionsort);
 		if (n > 0) {
 			for (int i = 0; i < n; ++i) {
 				const std::string full_path = StringConverter::stringFormat("%1/%2", path, file_list[i]->d_name);
