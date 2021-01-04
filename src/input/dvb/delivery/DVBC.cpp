@@ -1,6 +1,6 @@
 /* DVBC.cpp
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -20,9 +20,10 @@
 #include <input/dvb/delivery/DVBC.h>
 
 #include <Log.h>
-#include <Unused.h>
 #include <StringConverter.h>
+#include <Unused.h>
 #include <input/dvb/FrontendData.h>
+
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
