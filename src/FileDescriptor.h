@@ -1,6 +1,6 @@
 /* FileDescriptor.h
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -25,12 +25,16 @@
 /// The class @c FileDescriptor can be used to make handling file descriptors
 /// easier
 class FileDescriptor {
+		// =======================================================================
+		//  -- Constructors and destructor ---------------------------------------
+		// =======================================================================
 	public:
-		// =======================================================================
-		// Constructors and destructor
-		// =======================================================================
-		FileDescriptor(int fd = -1) : _fd(fd) {;}
-		virtual ~FileDescriptor() { close(); }
+
+		FileDescriptor(int fd = -1) : _fd(fd) {}
+
+		virtual ~FileDescriptor() {
+			close();
+		}
 
 		/// Conversion operator to int
 //		operator int() const { return _fd; }
@@ -45,23 +49,36 @@ class FileDescriptor {
 		}
 
 		/// Equality operator
-		bool operator==(int rhs_fd) const { return _fd == rhs_fd; }
+		bool operator==(int rhs_fd) const {
+			return _fd == rhs_fd;
+		}
+
+		// =======================================================================
+		// -- Other member functions ---------------------------------------------
+		// =======================================================================
+	public:
 
 		/// Is File descriptor opened
-		bool isOpen() const { return _fd > 0; }
+		bool isOpen() const {
+			return _fd > 0;
+		}
 
 		/// Get File descriptor
-		int  get() const    { return _fd; }
+		int  get() const {
+			return _fd;
+		}
 
 		/// close the file descriptor
-		void close()        { ::close(_fd); }
-	protected:
+		void close() {
+			::close(_fd);
+		}
 
+		// =======================================================================
+		// -- Data members -------------------------------------------------------
+		// =======================================================================
 	private:
-		// =======================================================================
-		// Data members
-		// =======================================================================
+
 		int _fd;
-}; // class FileDescriptor
+};
 
 #endif // FILE_DESCRIPTOR_H_INCLUDE
