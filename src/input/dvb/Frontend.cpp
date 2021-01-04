@@ -1,6 +1,6 @@
 /* Frontend.cpp
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -276,8 +276,7 @@ namespace dvb {
 
 	bool Frontend::capableToTransform(const std::string &msg,
 			const std::string &method) const {
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		const input::InputSystem system = _transform.getTransformationSystemFor(freq);
+		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
 		return capableOf(system);
 	}
 
@@ -678,7 +677,7 @@ namespace dvb {
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
 				_fd_fe = openFE(_path_to_fe, false);
-				SI_LOG_INFO("Stream: %d, Opened %s fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
+				SI_LOG_INFO("Stream: %d, Opened %s for Read/Write with fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
 			}
 			// try tuning
 			if (!tune()) {

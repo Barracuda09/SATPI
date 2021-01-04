@@ -1,6 +1,6 @@
 /* M3UParser.cpp
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -31,6 +31,22 @@ namespace base {
 	M3UParser::M3UParser() {}
 
 	M3UParser::~M3UParser() {}
+
+	// =======================================================================
+	//  -- Static functions --------------------------------------------------
+	// =======================================================================
+
+	static std::string findAndParseToken(const std::string &str, const std::string &findToken) {
+		std::string::size_type begin = str.find(findToken);
+		if (begin != std::string::npos && begin == 0) {
+			begin += findToken.size();
+			std::string::size_type end = str.find_first_of("\"", begin);
+			if (end != std::string::npos && begin != end) {
+				return str.substr(begin, end - begin);
+			}
+		}
+		return "";
+	}
 
 	// =======================================================================
 	//  -- Other member functions --------------------------------------------
@@ -71,42 +87,45 @@ namespace base {
 			if (tokenEXTINF.find("#EXTINF") == std::string::npos) {
 				continue;
 			}
-			// now find 'satip-freq'
-			const std::string satipFreq("satip-freq=\"");
+			TransformationElement element;
+			// now find 'satip-freq' and 'satip-src'
 			for (std::string token; tokenizerTrackInfo.isNextToken(token); ) {
-				std::string::size_type begin = token.find(satipFreq);
-				if (begin != std::string::npos && begin == 0) {
-					begin += satipFreq.size();
-					std::string::size_type end = token.find_first_of("\"", begin);
-					if (end != std::string::npos && begin != end) {
-						const std::string freqStr = token.substr(begin, end - begin);
-						const double freq = std::atof(freqStr.c_str());
-						// next line should be
-						std::getline(file, line);
-						if (line.empty()) {
-							break;
-						}
-						if (exist(freq)) {
-							SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
-						} else {
-							line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-							_transformationMap[freq] = StringConverter::getPercentDecoding(line);
-						}
-						// do next one
+				const std::string srcStr = findAndParseToken(token, "satip-src=\"");
+				if (!srcStr.empty()) {
+					element.src = std::atof(srcStr.c_str());
+				}
+				const std::string freqStr = findAndParseToken(token, "satip-freq=\"");
+				if (!freqStr.empty()) {
+					const double freq = std::atof(freqStr.c_str());
+					if (exist(freq)) {
+						SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
 						break;
 					}
+					element.freq = freq;
+				}
+			}
+			// Now check if we found something we could add
+			if (element.freq != -1.0) {
+				// next line should be URI
+				std::getline(file, line);
+				if (!line.empty()) {
+					line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+					element.uri = StringConverter::getPercentDecoding(line);
+					_transformationMap[element.freq] = element;
 				}
 			}
 		}
 		return !_transformationMap.empty();
 	}
 
-	std::string M3UParser::findURIFor(double freq) const {
+	M3UParser::TransformationElement M3UParser::findTransformationElementFor(
+			double freq) const {
 		const auto uriMap = _transformationMap.find(freq);
 		if(uriMap != _transformationMap.end()) {
 			return uriMap->second;
 		}
-		return "";
+		TransformationElement tmp;
+		return tmp;
 	}
 
 	bool M3UParser::exist(const double freq) const {

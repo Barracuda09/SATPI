@@ -1,6 +1,6 @@
 /* Transformation.h
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -75,8 +75,9 @@ class Transformation :
 		void resetTransformFlag();
 
 		/// This function may return the input system for the
-		/// requested input frequency.
-		input::InputSystem getTransformationSystemFor(double frequency) const;
+		/// requested input frequency and src input.
+		input::InputSystem getTransformationSystemFor(const std::string &msg,
+			const std::string &method) const;
 
 		/// This function may return the transformed input message
 		std::string transformStreamString(int streamID,

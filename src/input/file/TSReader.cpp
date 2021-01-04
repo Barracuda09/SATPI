@@ -1,6 +1,6 @@
 /* TSReader.cpp
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -131,8 +131,7 @@ namespace file {
 
 	bool TSReader::capableToTransform(const std::string &msg,
 			const std::string &method) const {
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
-		const input::InputSystem system = _transform.getTransformationSystemFor(freq);
+		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
 		return capableOf(system);
 	}
 

@@ -1,6 +1,6 @@
 /* Transformation.cpp
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -125,16 +125,21 @@ namespace input {
 	}
 
 	input::InputSystem Transformation::getTransformationSystemFor(
-			const double frequency) const {
+			const std::string &msg,
+			const std::string &method) const {
 		base::MutexLock lock(_mutex);
-		input::InputSystem system = input::InputSystem::UNDEFINED;
 		if (_enabled && _fileParsed) {
-			if (frequency > 0.0) {
-				const std::string uri = _m3u.findURIFor(frequency);
-				system = StringConverter::getMSYSParameter(uri, "");
+			const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+			if (freq > 0.0) {
+				const int src = StringConverter::getIntParameter(msg, method, "src=");
+				const base::M3UParser::TransformationElement element =
+					_m3u.findTransformationElementFor(freq);
+				if (element.src == -1 || (element.src >= 0 && element.src == src)) {
+					return StringConverter::getMSYSParameter(element.uri, "");
+				}
 			}
 		}
-		return system;
+		return input::InputSystem::UNDEFINED;
 	}
 
 	std::string Transformation::transformStreamString(
@@ -146,12 +151,14 @@ namespace input {
 		if (_enabled && _fileParsed) {
 			const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
 			if (freq > 0.0) {
-				const std::string uriMain = _m3u.findURIFor(freq);
-				if (!uriMain.empty()) {
+				const int src = StringConverter::getIntParameter(msg, method, "src=");
+				const base::M3UParser::TransformationElement element =
+					_m3u.findTransformationElementFor(freq);
+				if (!element.uri.empty() && (element.src == -1 || (element.src >= 0 && element.src == src))) {
 					_transform = true;
 
 					// remove '*pids' from uri
-					base::StringTokenizer tokenizer(uriMain, "?& ");
+					base::StringTokenizer tokenizer(element.uri, "?& ");
 					tokenizer.removeToken("addpids=");
 					tokenizer.removeToken("delpids=");
 					const std::string uri = tokenizer.removeToken("pids=");

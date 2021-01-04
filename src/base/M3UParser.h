@@ -1,6 +1,6 @@
 /* M3UParser.h
 
-   Copyright (C) 2014 - 2020 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -28,10 +28,16 @@
 
 namespace base {
 
-	/// The class @c M3UParser can be used to parse M3U files with 'satip-freq' extensions.
+	/// The class @c M3UParser can be used to parse M3U files with
+	///	'satip-freq' and 'satip-src' extensions.
 	class M3UParser {
 		public:
-			using TransformationMap = std::map<double, std::string>;
+			struct TransformationElement {
+				std::string uri;
+				double freq = -1.0;
+				int src = -1;
+			};
+			using TransformationMap = std::map<double, TransformationElement>;
 
 			// =======================================================================
 			//  -- Constructors and destructor ---------------------------------------
@@ -54,8 +60,8 @@ namespace base {
 
 			/// Get the uri for the requested frequency
 			/// @param freq  requested frequency to transform
-			/// @retval the uri of freq if available
-			std::string findURIFor(double freq) const;
+			/// @retval the Transformation Element of this freq if available
+			TransformationElement findTransformationElementFor(double freq) const;
 
 			/// Check if the requested frequency can be transformed
 			/// @retval true means the frequency can be used for
