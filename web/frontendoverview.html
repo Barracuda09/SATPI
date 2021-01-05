@@ -33,6 +33,7 @@
 					page += "<tr>";
 				}
 				page += addTableEntry(xmlDoc, streamID + "streamindex");
+				page += addTableEntry(xmlDoc, streamID + "enable");
 				page += addTableEntry(xmlDoc, streamID + "frontendname");
 				page += addTableEntry(xmlDoc, streamID + "owner");
 				page += addTableEntry(xmlDoc, streamID + "spc");
@@ -74,6 +75,7 @@
 		<table class="table table-bordered table-sm">
 			<thead class="thead-light"><tr>
 				<th class="col-xs-1">#</th>
+				<th class="col-xs-1">Enable</th>
 				<th class="col-xs-1">Name</th>
 				<th class="col-xs-1">Owner</th>
 				<th class="col-xs-1"># Packets</th>
