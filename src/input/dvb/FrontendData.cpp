@@ -220,11 +220,15 @@ namespace dvb {
 				_modtype = PSK_8;
 			} else if (mtype == "qpsk") {
 				_modtype = QPSK;
-			} else if (mtype == "16qam") {
+			} else if (mtype == "16qam" || mtype == "qam16") {
 				_modtype = QAM_16;
-			} else if (mtype == "64qam") {
+			} else if (mtype == "32qam" || mtype == "qam32") {
+				_modtype = QAM_32;
+			} else if (mtype == "64qam" || mtype == "qam64") {
 				_modtype = QAM_64;
-			} else if (mtype == "256qam") {
+			} else if (mtype == "128qam" || mtype == "qam128") {
+				_modtype = QAM_128;
+			} else if (mtype == "256qam" || mtype == "qam256") {
 				_modtype = QAM_256;
 			} else {
 				SI_LOG_ERROR("Stream: %d, Unknown modulation type [%s]", streamID, mtype.c_str());
