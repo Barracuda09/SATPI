@@ -43,7 +43,7 @@ class DVBS :
 		// =======================================================================
 	public:
 
-		explicit DVBS(int streamID);
+		explicit DVBS(int streamID, const std::string &fePath);
 		virtual ~DVBS();
 
 		// =======================================================================
@@ -115,6 +115,7 @@ class DVBS :
 		int _fbcSetID;
 		int _fbcConnect;
 		bool _fbcLinked;
+		bool _sendDiSEqcViaRootTuner;
 
 };
 

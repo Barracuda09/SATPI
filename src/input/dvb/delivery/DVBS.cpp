@@ -36,6 +36,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+#include <unistd.h>
+#include <dirent.h>
+
 namespace input {
 namespace dvb {
 namespace delivery {
@@ -44,8 +47,8 @@ namespace delivery {
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 
-	DVBS::DVBS(int streamID) :
-		input::dvb::delivery::System(streamID),
+	DVBS::DVBS(int streamID, const std::string &fePath) :
+		input::dvb::delivery::System(streamID, fePath),
 		_diseqcType(DiseqcType::Switch),
 		_diseqc(new DiSEqcSwitch) {
 
@@ -55,6 +58,7 @@ namespace delivery {
 		_fbcConnect = 0;
 		_fbcLinked = false;
 		_fbcRoot = false;
+		_sendDiSEqcViaRootTuner = false;
 		if (_fbcTuner) {
 			readConnectionChoices(streamID);
 			_fbcRoot = _choices.find(streamID) != _choices.end();
@@ -87,6 +91,7 @@ namespace delivery {
 					ADD_XML_END_ELEMENT(xml, "list");
 				ADD_XML_END_ELEMENT(xml, "fbcConnection");
 				ADD_XML_CHECKBOX(xml, "fbcLinked", (_fbcLinked ? "true" : "false"));
+				ADD_XML_CHECKBOX(xml, "sendDiSEqcViaRootTuner", (_sendDiSEqcViaRootTuner ? "true" : "false"));
 			ADD_XML_END_ELEMENT(xml, "fbc");
 		} else {
 			ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
@@ -144,6 +149,9 @@ namespace delivery {
 			_fbcConnect = std::stoi(element);
 			writeProcData(_streamID, "fbc_connect", _fbcConnect);
 		}
+		if (findXMLElement(xml, "sendDiSEqcViaRootTuner.value", element)) {
+			_sendDiSEqcViaRootTuner =  (element == "true") ? true : false;
+		}
 	}
 
 	// =========================================================================
@@ -158,9 +166,51 @@ namespace delivery {
 		const Lnb::Polarization pol = frontendData.getPolarization();
 		uint32_t freq = frontendData.getFrequency();
 
+		std::string fePathDiseqc(_fePath);
+		int feFDDiseqc = feFD;
+		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
+			// Replace Frontend number with Root Frontend Number
+			fePathDiseqc.replace(fePathDiseqc.end()-1, fePathDiseqc.end(), std::to_string(_fbcConnect));
+			feFDDiseqc = ::open(fePathDiseqc.c_str(), O_RDWR | O_NONBLOCK);
+			if (feFDDiseqc  < 0) {
+				// Probably already open, try to find it and duplicate fd
+				dirent **fileList;
+				const std::string procSelfFD("/proc/self/fd");
+				const int n = scandir(procSelfFD.c_str(), &fileList, nullptr, versionsort);
+				if (n > 0) {
+					for (int i = 0; i < n; ++i) {
+						// Check do we have a digit
+						if (std::isdigit(fileList[i]->d_name[0]) == 0) {
+							continue;
+						}
+						// Get the link the fd points to
+						const int fd = std::atoi(fileList[i]->d_name);
+						const std::string procSelfFDNr = procSelfFD + "/" + std::to_string(fd);
+						char buf[255];
+						const auto s = readlink(procSelfFDNr.c_str(), buf, sizeof(buf));
+						if (s > 0) {
+							buf[s] = 0;
+							if (fePathDiseqc == buf) {
+								// Found it so duplicate and stop;
+								feFDDiseqc = ::dup(fd);
+								break;
+							}
+						}
+					}
+					free(fileList);
+				}
+			}
+		}
+		SI_LOG_INFO("Stream: %d, Opened %s for Writing DiSEqC command with fd: %d", _streamID, fePathDiseqc.c_str(), feFDDiseqc);
+
 		// send diseqc
-		if (!_diseqc || !_diseqc->sendDiseqc(feFD, _streamID, freq, src, pol)) {
+		if (!_diseqc || !_diseqc->sendDiseqc(feFDDiseqc, _streamID, freq, src, pol)) {
 			return false;
+		}
+
+		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
+			SI_LOG_INFO("Stream: %d, Closing %s with fd: %d", _streamID, fePathDiseqc.c_str(), feFDDiseqc);
+			::close(feFDDiseqc);
 		}
 
 		// Now tune by setting properties

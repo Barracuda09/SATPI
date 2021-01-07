@@ -93,6 +93,7 @@
 				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">FBC Configuration</th></tr>";
 				page += addTableLineEntry("FBC Connection", xmlDoc, streamID + "fbcConnection");
 				page += addTableLineEntry("FBC Linked", xmlDoc, streamID + "fbcLinked");
+				page += addTableLineEntry("Send DiSEqC Via Linked Root Tuner", xmlDoc, streamID + "sendDiSEqcViaRootTuner");
 			}
 
 			var diseqc = visibleStream.getElementsByTagName("diseqc");

@@ -619,13 +619,13 @@ namespace dvb {
 
 		// Set delivery systems
 		if (_dvbs2 > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_streamID)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_streamID, _path_to_fe)));
 		}
 		if (_dvbt > 0 || _dvbt2 > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_streamID)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_streamID, _path_to_fe)));
 		}
 		if (_dvbc > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_streamID)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_streamID, _path_to_fe)));
 		}
 	}
 

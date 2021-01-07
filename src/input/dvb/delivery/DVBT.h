@@ -37,7 +37,7 @@ class DVBT :
 		// =======================================================================
 	public:
 
-		explicit DVBT(int streamID);
+		explicit DVBT(int streamID, const std::string &fePath);
 		virtual ~DVBT();
 
 		// =======================================================================

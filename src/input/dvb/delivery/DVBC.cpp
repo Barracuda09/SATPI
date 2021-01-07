@@ -35,8 +35,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBC::DVBC(int streamID) :
-		input::dvb::delivery::System(streamID) {}
+	DVBC::DVBC(int streamID, const std::string &fePath) :
+		input::dvb::delivery::System(streamID, fePath) {}
 
 	DVBC::~DVBC() {}
 

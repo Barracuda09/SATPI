@@ -42,7 +42,9 @@ class System :
 		// =======================================================================
 	public:
 
-		explicit System(int streamID) : _streamID(streamID) {}
+		explicit System(int streamID, const std::string &fePath) :
+			_streamID(streamID),
+			_fePath(fePath) {}
 
 		virtual ~System() {}
 
@@ -65,6 +67,7 @@ class System :
 	protected:
 
 		int _streamID;
+		std::string _fePath;
 
 };
 

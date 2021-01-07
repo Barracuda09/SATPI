@@ -37,7 +37,7 @@ class DVBC :
 		// =======================================================================
 	public:
 
-		explicit DVBC(int streamID);
+		explicit DVBC(int streamID, const std::string &fePath);
 		virtual ~DVBC();
 
 		// =======================================================================

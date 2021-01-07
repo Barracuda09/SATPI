@@ -33,8 +33,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBT::DVBT(int streamID) :
-		input::dvb::delivery::System(streamID),
+	DVBT::DVBT(int streamID, const std::string &fePath) :
+		input::dvb::delivery::System(streamID, fePath),
 		_lna(1) {}
 
 	DVBT::~DVBT() {}
