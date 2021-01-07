@@ -35,18 +35,17 @@ contribute to the project, like:
 - ideas / feature requests
 - test reports
 - spread the word!
+- donate
 
 Donate
 ------
 
 If you like and use SatPI then please consider making a donation, to support my effort in
 developing SatPI.<br>
+Many thanks to all who donated already.<br>
 <br>
-Thank You.
-
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
-
-And Many thanks to all who donated already.
+Please find the Sponsor button here:
+<a href="https://github.com/Barracuda09/SATPI"><img src="https://www.paypalobjects.com/en_US/NL/i/btn/btn_donateCC_LG.gif"/></a>
 
 Contact
 -------
@@ -66,15 +65,15 @@ Tested Hardware
 - <a href="http://www.raspberrypi.org">Raspberry Pi</a>
 - <a href="http://www.beagleboard.org">BeagleBone Black</a>
 - <a href="http://www.orangepi.org">Orange Pi One with armbian</a>
-- <a href="http://www.sundtek.co">Sundtek DVB-C/T/T2</a>
+- <a href="https://shop.sundtek.de">Sundtek DVB-C/T/T2</a>
 - <a href="http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf">Schwaiger DSR41IP</a> - Thanks to Axel Hartmann for kindly suppling this to me
-- <a href="https://www.digitalbox.de/de_DE/HD-6i/490-1460-10080/">DIGITALBOX IMPERIAL HD 6i</a> - Thanks to <a href="http://www.apfutura.net/en">APfutura</a> for kindly suppling this to me
+- DIGITALBOX IMPERIAL HD 6i - Thanks to <a href="https://www.apfutura.com">APfutura</a> for kindly suppling this to me
 - Anysee-S2(LP) STV090x Multistandard
 - HMP-Combo DVB-T2/C
 - <a href="http://www.vuplus.de">VU+ Zero 4K with DVB-S2X Tuner</a>
-- <a href="http://www.vuplus.de/produkt_uno4k.php">VU+ Uno 4K with DVB-C FBC Tuner</a>
-- <a href="https://gigablue.de/products/">GigaBlue UHD Quad 4K with DVB-S2X FBC Tuner</a> - Thanks to <a href="https://store.impex-sat.de/">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
-- <a href="https://gigablue.de/products/">GigaBlue Ultra SCR-LNB / 24 SCR - 2 Legacy UHD 4K LNB</a> - Thanks to <a href="https://store.impex-sat.de/">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
+- <a href="http://www.vuplus.de">VU+ Uno 4K with DVB-C FBC Tuner</a>
+- <a href="https://gigablue.de/produkte">GigaBlue UHD Quad 4K with DVB-S2X FBC Tuner</a> - Thanks to <a href="https://store.impex-sat.de">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
+- <a href="https://gigablue.de/produkte">GigaBlue Ultra SCR-LNB / 24 SCR - 2 Legacy UHD 4K LNB</a> - Thanks to <a href="https://store.impex-sat.de">Impex-Sat GmbH & Co. KG</a> for kindly suppling this to me
 - <a href="https://www.durasat.de/LNB/DUR-line/DUR-line-UK-124-Unicable-LNB.html">DUR-line UK 124 - Unicable LNB</a>
 
 Build
@@ -83,6 +82,9 @@ Build
 
     `git clone git://github.com/Barracuda09/satpi.git`<br/>
     `cd satpi/`<br/>
+    `git branch -a` -> see all available branches<br/>
+    `git branch` -> see on which branch you are working/building<br/>
+    `git checkout V1.6.2` -> to checkout (switch to) branch 'V1.6.2'<br/>
     `make`<br/>
 
 - See some new commits/changes you need, rebuild with:
