@@ -1,7 +1,7 @@
 function buildmenu() {
 	var menu = "";
 	menu += "<nav class=\"navbar navbar-expand-sm bg-dark navbar-dark fixed-top\">";
-	menu +=   "<a class=\"navbar-brand\" href=\"#\">SatPI</a>";
+	menu +=   "<a class=\"navbar-brand\" href=\"https://github.com/Barracuda09/SATPI\">SatPI</a>";
 	menu +=   "<button class=\"navbar-toggler\" type=\"button\" data-toggle=\"collapse\" data-target=\"#SatPINavbar\">";
 	menu +=     "<span class=\"navbar-toggler-icon\"></span>";
 	menu +=   "</button>";
@@ -24,7 +24,7 @@ function buildfooter() {
 	var menu = "";
 	menu += "<nav class=\"navbar navbar-expand-sm bg-dark navbar-dark fixed-bottom\">";
 	menu += "  <span class=\"navbar-text\">";
-	menu += "    <p class=\"\">Copyright &#169; 2014 - 2020 Marc Postema</p>";
+	menu += "    <p class=\"\">Copyright &#169; 2014 - 2021 Marc Postema</p>";
 	menu += "  </span>";
 	menu += "</nav>";
 	return menu;
