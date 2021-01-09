@@ -391,16 +391,16 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 		} else {
 			const std::string transport = StringConverter::getHeaderFieldParameter(msg, "Transport:");
 			if (transport.find("unicast") != std::string::npos) {
-				// First check 'RTP/AVP/TCP' then 'RTP/AVP'
-				if (transport.find("RTP/AVP/TCP") != std::string::npos) {
-					_streamingType = StreamingType::RTP_TCP;
-				} else if (transport.find("RTP/AVP") != std::string::npos) {
+				if (transport.find("RTP/AVP") != std::string::npos) {
 					_streamingType = StreamingType::RTSP_UNICAST;
 				}
 				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::WATCHDOG);
 			} else if (transport.find("multicast") != std::string::npos) {
 				_streamingType = StreamingType::RTSP_MULTICAST;
 				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::TEARDOWN);
+			} else if (transport.find("RTP/AVP/TCP") != std::string::npos) {
+				_streamingType = StreamingType::RTP_TCP;
+				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::WATCHDOG);
 			}
 		}
 	}
