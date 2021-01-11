@@ -1,8 +1,11 @@
 [Unit]
 Description="SATIP server SATPI."
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 ExecStart=/usr/bin/satpi --no-daemon --app-data-path /var/lib/satpi --http-path /usr/share/satpi/web
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
