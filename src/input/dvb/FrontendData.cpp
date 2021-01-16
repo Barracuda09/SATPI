@@ -76,7 +76,7 @@ namespace dvb {
 
 	void FrontendData::doInitialize() {
 		_freq = 0;
-		_modtype = QAM_64;
+		_modtype = QAM_AUTO;
 		_srate = 0;
 		_fec = FEC_AUTO;
 		_rolloff = ROLLOFF_AUTO;
