@@ -2,6 +2,9 @@
 ## Makefile for compiling code
 ###############################################################################
 
+# prefix set to /usr -> remove when ./configure is introduced
+PREFIX=/usr
+
 # Set the compiler being used.
 CXX ?= $(CXXPREFIX)g++$(CXXSUFFIX)
 
@@ -258,3 +261,23 @@ clean:
 	@rm -rf testcode.c testcode ./obj $(EXECUTABLE) src/Version.cpp /web/*.*~
 	@rm -rf src/*.*~ src/*~
 	@echo ...Done
+
+.PHONY: install
+install: $(EXECUTABLE)
+# install binary
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp $< $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+# install systemd file
+	mkdir -p $(DESTDIR)/lib/systemd/system
+	cp data/satpi.service $(DESTDIR)/lib/systemd/system
+# install web data
+	mkdir -p $(DESTDIR)/usr/share/satpi/web
+	cp -r web/*  $(DESTDIR)/usr/share/satpi/web
+# create data dir
+	mkdir -p $(DESTDIR)/var/lib/satpi
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+	rm -f $(DESTDIR)/lib/systemd/system/satpi.service
+	rm -f $(DESTDIR)/usr/share/satpi
