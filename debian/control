@@ -1,0 +1,13 @@
+Source: satpi
+Section: misc
+Priority: optional
+Maintainer: Marc Postema <mpostema09@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.5.0
+Homepage: https://github.com/Barracuda09/SATPI
+Rules-Requires-Root: no
+
+Package: satpi
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, BeagleBone or any other linux box.
