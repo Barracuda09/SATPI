@@ -48,6 +48,7 @@ namespace childpipe {
 
 	void TSReaderData::doInitialize() {
 		_filePath = "None";
+		_pcrTimer = 0;
 	}
 
 	void TSReaderData::doParseStreamString(
@@ -61,6 +62,12 @@ namespace childpipe {
 		initialize();
 		_changed = true;
 		_filePath = filePath;
+		// when 'pcrtimer=' is not set or zero the PCR from the stream is used, else this timer
+		// will be used as read interval.
+		const int pcrTimer = StringConverter::getIntParameter(msg, method, "pcrtimer=");
+		if (pcrTimer != -1) {
+			_pcrTimer = pcrTimer;
+		}
 	}
 
 	std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
@@ -87,6 +94,11 @@ namespace childpipe {
 	bool TSReaderData::hasFilePath() const {
 		base::MutexLock lock(_mutex);
 		return _filePath != "None";
+	}
+
+	int TSReaderData::getPCRTimer() const {
+		base::MutexLock lock(_mutex);
+		return _pcrTimer;
 	}
 
 } // namespace childpipe

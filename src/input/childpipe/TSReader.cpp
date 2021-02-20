@@ -92,8 +92,9 @@ namespace childpipe {
 	}
 
 	bool TSReader::isDataAvailable() {
+		const int pcrTimer = _deviceData.getPCRTimer();
 		const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
-		if (pcrDelta != 0) {
+		if (pcrDelta != 0 && pcrTimer == 0) {
 			_t2 = _t1;
 			_t1 = std::chrono::steady_clock::now();
 
@@ -104,7 +105,7 @@ namespace childpipe {
 			_t1 = std::chrono::steady_clock::now();
 			_deviceData.getFilterData().getPCRData()->clearPCRDelta();
 		} else {
-			std::this_thread::sleep_for(std::chrono::microseconds(150));
+			std::this_thread::sleep_for(std::chrono::microseconds(150 + pcrTimer));
 		}
 		return true;
 	}
