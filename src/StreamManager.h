@@ -65,11 +65,13 @@ class StreamManager :
 		/// @param appDataPath specifies the path were to store application data
 		/// @param dvbPath specifies the path were to find dvb devices eg. /dev/dvb
 		/// @param enableChildPIPE to enable frontend 'Child PIPE - TS Reader'
+		/// @param enableUnsecureFrontends to enable to use 'Child PIPE - TS Reader' in command directly
 		void enumerateDevices(
 			const std::string &bindIPAddress,
 			const std::string &appDataPath,
 			const std::string &dvbPath,
-			bool enableChildPIPE);
+			bool enableChildPIPE,
+			bool enableUnsecureFrontends);
 
 		///
 		SpStream findStreamAndClientIDFor(

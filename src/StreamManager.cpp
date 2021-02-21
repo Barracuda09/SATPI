@@ -60,7 +60,8 @@ void StreamManager::enumerateDevices(
 		const std::string &bindIPAddress,
 		const std::string &appDataPath,
 		const std::string &dvbPath,
-		const bool enableChildPIPE) {
+		const bool enableChildPIPE,
+		const bool enableUnsecureFrontends) {
 	base::MutexLock lock(_mutex);
 
 #ifdef NOT_PREFERRED_DVB_API
@@ -71,10 +72,10 @@ void StreamManager::enumerateDevices(
 
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
-	input::file::TSReader::enumerate(_stream, appDataPath);
+	input::file::TSReader::enumerate(_stream, appDataPath, enableUnsecureFrontends);
 	input::stream::Streamer::enumerate(_stream, bindIPAddress, appDataPath);
 	if (enableChildPIPE) {
-		input::childpipe::TSReader::enumerate(_stream, appDataPath);
+		input::childpipe::TSReader::enumerate(_stream, appDataPath, enableUnsecureFrontends);
 	}
 }
 

@@ -36,9 +36,11 @@ namespace childpipe {
 	// =========================================================================
 	TSReader::TSReader(
 			int streamID,
-			const std::string &appDataPath) :
+			const std::string &appDataPath,
+			const bool enableUnsecureFrontends) :
 			Device(streamID),
-			_transform(appDataPath, _transformDeviceData) {}
+			_transform(appDataPath, _transformDeviceData),
+			_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
 	TSReader::~TSReader() {}
 
@@ -48,10 +50,12 @@ namespace childpipe {
 
 	void TSReader::enumerate(
 			StreamSpVector &streamVector,
-			const std::string &appDataPath) {
+			const std::string &appDataPath,
+			const bool enableUnsecureFrontends) {
 		SI_LOG_INFO("Setting up Child PIPE - TS Reader using path: %s", appDataPath.c_str());
 		const StreamSpVector::size_type size = streamVector.size();
-		const input::childpipe::SpTSReader tsreader = std::make_shared<input::childpipe::TSReader>(size, appDataPath);
+		const input::childpipe::SpTSReader tsreader =
+			std::make_shared<input::childpipe::TSReader>(size, appDataPath, enableUnsecureFrontends);
 		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
 	}
 
@@ -126,7 +130,10 @@ namespace childpipe {
 	}
 
 	bool TSReader::capableOf(const input::InputSystem system) const {
-		return system == input::InputSystem::CHILDPIPE;
+		if (_enableUnsecureFrontends) {
+			return system == input::InputSystem::CHILDPIPE;
+		}
+		return false;
 	}
 
 	bool TSReader::capableToTransform(const std::string &msg,

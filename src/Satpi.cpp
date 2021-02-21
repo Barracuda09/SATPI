@@ -28,19 +28,13 @@
 // =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
 // =============================================================================
-SatPI::SatPI(bool ssdp,
-	const std::string &ifaceName,
-	const std::string &currentPath,
-	const std::string &appdataPath,
-	const std::string &webPath,
-	const std::string &dvbPath,
-	unsigned int httpPort,
-	unsigned int rtspPort,
-	const bool enableChildPIPE) :
-	XMLSaveSupport((appdataPath.empty() ? currentPath : appdataPath) + "/" + "SatPI.xml"),
-	_interface(ifaceName),
+SatPI::SatPI(const SatPI::Params &params) :
+	XMLSaveSupport((params.appdataPath.empty() ?
+			params.currentPath : params.appdataPath) + "/" + "SatPI.xml"),
+	_interface(params.ifaceName),
 	_streamManager(),
-	_properties(_interface.getUUID(), currentPath, appdataPath, webPath, _interface.getIPAddress(), httpPort, rtspPort),	
+	_properties(_interface.getUUID(), params.currentPath, params.appdataPath, params.webPath,
+		_interface.getIPAddress(), params.httpPort, params.rtspPort),
 	_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
 	_rtspServer(_streamManager, _interface.getIPAddress()),
 	_ssdpServer(_interface.getIPAddress(), _properties) {
@@ -48,7 +42,8 @@ SatPI::SatPI(bool ssdp,
 	_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	//
 	_streamManager.enumerateDevices(_interface.getIPAddress(),
-		_properties.getAppDataPath(), dvbPath, enableChildPIPE);
+		_properties.getAppDataPath(), params.dvbPath, params.enableChildPIPE,
+		params.enableUnsecureFrontends);
 	//
 	std::string xml;
 	if (restoreXML(xml)) {
@@ -59,7 +54,7 @@ SatPI::SatPI(bool ssdp,
 
 	_httpServer.initialize(_properties.getHttpPort(), true);
 	_rtspServer.initialize(_properties.getRtspPort(), true);
-	if (ssdp) {
+	if (params.ssdp) {
 		_ssdpServer.startThread();
 	}
 }

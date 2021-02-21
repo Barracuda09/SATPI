@@ -36,9 +36,11 @@ namespace file {
 	// =========================================================================
 	TSReader::TSReader(
 			int streamID,
-			const std::string &appDataPath) :
+			const std::string &appDataPath,
+			const bool enableUnsecureFrontends) :
 			Device(streamID),
-			_transform(appDataPath, _transformDeviceData) {}
+			_transform(appDataPath, _transformDeviceData),
+			_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
 	TSReader::~TSReader() {}
 
@@ -48,10 +50,12 @@ namespace file {
 
 	void TSReader::enumerate(
 			StreamSpVector &streamVector,
-			const std::string &appDataPath) {
+			const std::string &appDataPath,
+			const bool enableUnsecureFrontends) {
 		SI_LOG_INFO("Setting up TS Reader using path: %s", appDataPath.c_str());
 		const StreamSpVector::size_type size = streamVector.size();
-		const input::file::SpTSReader tsreader = std::make_shared<input::file::TSReader>(size, appDataPath);
+		const input::file::SpTSReader tsreader =
+			std::make_shared<input::file::TSReader>(size, appDataPath, enableUnsecureFrontends);
 		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
 	}
 
@@ -126,7 +130,10 @@ namespace file {
 	}
 
 	bool TSReader::capableOf(const input::InputSystem system) const {
-		return system == input::InputSystem::FILE;
+		if (_enableUnsecureFrontends) {
+			return system == input::InputSystem::FILE;
+		}
+		return false;
 	}
 
 	bool TSReader::capableToTransform(const std::string &msg,

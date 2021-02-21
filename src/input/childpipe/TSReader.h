@@ -48,7 +48,8 @@ class TSReader :
 
 		TSReader(
 			int streamID,
-			const std::string &appDataPath);
+			const std::string &appDataPath,
+			bool enableUnsecureFrontends);
 
 		virtual ~TSReader();
 
@@ -60,7 +61,8 @@ class TSReader :
 		///
 		static void enumerate(
 			StreamSpVector &streamVector,
-			const std::string &appDataPath);
+			const std::string &appDataPath,
+			bool enableUnsecureFrontends);
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
@@ -120,6 +122,7 @@ class TSReader :
 		TSReaderData _deviceData;
 		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
+		const bool _enableUnsecureFrontends;
 
 		std::chrono::steady_clock::time_point _t1;
 		std::chrono::steady_clock::time_point _t2;

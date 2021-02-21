@@ -34,20 +34,30 @@
 class SatPI :
 	public base::XMLSaveSupport,
 	public base::XMLSupport {
+		// =======================================================================
+		// -- Object Data --------------------------------------------------------
+		// =======================================================================
+	public:
+
+		struct Params {
+			bool ssdp = true;
+			std::string ifaceName;
+			std::string currentPath;
+			std::string appdataPath;
+			std::string webPath;
+			std::string dvbPath;
+			unsigned int httpPort = 0;
+			unsigned int rtspPort = 0;
+			bool enableChildPIPE = false;
+			bool enableUnsecureFrontends = false;
+		};
+
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
 	public:
 
-		SatPI(bool ssdp,
-			const std::string &ifaceName,
-			const std::string &currentPath,
-			const std::string &appdataPath,
-			const std::string &webPath,
-			const std::string &dvbPath,
-			unsigned int httpPort,
-			unsigned int rtspPort,
-			const bool enableChildPIPE);
+		SatPI(const SatPI::Params &params);
 
 		virtual ~SatPI();
 

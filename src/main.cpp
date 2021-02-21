@@ -230,48 +230,38 @@ static void daemonize(const std::string &lockfile, const char *user) {
 
 static void printUsage(const char *prog_name) {
 	printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
-	       "\t--help              show this help and exit\r\n" \
-	       "\t--version           show the version number\r\n" \
-	       "\t--user xx           run as user\r\n" \
-	       "\t--dvb-path          set path were to find dvb devices default /dev/dvb\r\n" \
-	       "\t--app-data-path     set path for application state data eg. xml files etc\r\n" \
-	       "\t--iface-name        set the network interface to bind to (eg. eth0)\r\n" \
-	       "\t--http-path         set root path of web/http pages\r\n" \
-	       "\t--http-port         set http port default 8875 (1024 - 65535)\r\n" \
-	       "\t--rtsp-port         set rtsp port default 554  ( 554 - 65535)\r\n" \
-	       "\t--backtrace <file>  backtrace 'file'\r\n" \
-	       "\t--childpipe         enabled Frontend 'Child PIPE - TS Reader'\r\n" \
-	       "\t--no-daemon         do NOT daemonize\r\n" \
-	       "\t--no-ssdp           do NOT advertise server\r\n", prog_name);
+		"\t--help                        show this help and exit\r\n" \
+		"\t--version                     show the version number\r\n" \
+		"\t--user xx                     run as user\r\n" \
+		"\t--dvb-path                    set path were to find dvb devices default /dev/dvb\r\n" \
+		"\t--app-data-path               set path for application state data eg. xml files etc\r\n" \
+		"\t--iface-name                  set the network interface to bind to (eg. eth0)\r\n" \
+		"\t--http-path                   set root path of web/http pages\r\n" \
+		"\t--http-port                   set http port default 8875 (1024 - 65535)\r\n" \
+		"\t--rtsp-port                   set rtsp port default 554  ( 554 - 65535)\r\n" \
+		"\t--backtrace <file>            backtrace 'file'\r\n" \
+		"\t--childpipe                   enabled Frontend 'Child PIPE - TS Reader'\r\n" \
+		"\t--enable-unsecure-frontends   enable to use 'Child PIPE - TS Reader' in command directly\r\n" \
+		"\t--no-daemon                   do NOT daemonize\r\n" \
+		"\t--no-ssdp                     do NOT advertise server\r\n", prog_name);
 }
 
 int main(int argc, char *argv[]) {
-	bool ssdp = true;
 	bool daemon = true;
-	bool enableChildPIPE = false;
-	int i;
 	char *user = nullptr;
 	extern const char *satpi_version;
 	exitApp = false;
 
-	// Defaults in Properties
-	unsigned int httpPort = 0;
-	unsigned int rtspPort = 0;
-
-	std::string ifaceName;
-	std::string currentPath;
-	std::string appdataPath;
-	std::string webPath;
-	std::string dvbPath;
+	SatPI::Params params;
 
 	//
-	StringConverter::splitPath(argv[0], currentPath, appName);
-	dvbPath = "/dev/dvb";
+	StringConverter::splitPath(argv[0], params.currentPath, appName);
+	params.dvbPath = "/dev/dvb";
 
 	// Check options
-	for (i = 1; i < argc; ++i) {
+	for (int i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--no-ssdp") == 0) {
-			ssdp = false;
+			params.ssdp = false;
 		} else if (strcmp(argv[i], "--user") == 0) {
 			if (i + 1 < argc) {
 				++i;
@@ -285,17 +275,19 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--dvb-path") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				dvbPath = argv[i];
+				params.dvbPath = argv[i];
 			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
 			}
 		} else if (strcmp(argv[i], "--childpipe") == 0) {
-			enableChildPIPE = true;
+			params.enableChildPIPE = true;
+		} else if (strcmp(argv[i], "enable-unsecure-frontends") == 0) {
+			params.enableUnsecureFrontends = true;
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				appdataPath = argv[i];
+				params.appdataPath = argv[i];
 			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
@@ -303,7 +295,7 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--iface-name") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				ifaceName = argv[i];
+				params.ifaceName = argv[i];
 			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
@@ -311,7 +303,7 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--http-path") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				webPath = argv[i];
+				params.webPath = argv[i];
 			} else {
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
@@ -319,8 +311,8 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--http-port") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				httpPort = std::stoi(argv[i]);
-				if (httpPort < 1024 || httpPort > 65535) {
+				params.httpPort = std::stoi(argv[i]);
+				if (params.httpPort < 1024 || params.httpPort > 65535) {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
 				}
@@ -331,8 +323,8 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
 			if (i + 1 < argc) {
 				++i;
-				rtspPort = std::stoi(argv[i]);
-				if (rtspPort <  554 || rtspPort > 65535) {
+				params.rtspPort = std::stoi(argv[i]);
+				if (params.rtspPort <  554 || params.rtspPort > 65535) {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
 				}
@@ -384,8 +376,7 @@ int main(int argc, char *argv[]) {
 			DVBCA dvbca;
 			dvbca.startThread();
 #endif
-			SatPI satpi(ssdp, ifaceName, currentPath, appdataPath,
-					webPath, dvbPath, httpPort, rtspPort, enableChildPIPE);
+			SatPI satpi(params);
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {
