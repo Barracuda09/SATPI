@@ -139,7 +139,7 @@ namespace childpipe {
 	bool TSReader::capableToTransform(const std::string &msg,
 			const std::string &method) const {
 		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
-		return capableOf(system);
+		return system == input::InputSystem::CHILDPIPE;
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {

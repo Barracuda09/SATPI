@@ -139,7 +139,7 @@ namespace file {
 	bool TSReader::capableToTransform(const std::string &msg,
 			const std::string &method) const {
 		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
-		return capableOf(system);
+		return system == input::InputSystem::FILE;
 	}
 
 	void TSReader::monitorSignal(bool UNUSED(showStatus)) {
