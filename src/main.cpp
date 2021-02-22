@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (strcmp(argv[i], "--childpipe") == 0) {
 			params.enableChildPIPE = true;
-		} else if (strcmp(argv[i], "enable-unsecure-frontends") == 0) {
+		} else if (strcmp(argv[i], "--enable-unsecure-frontends") == 0) {
 			params.enableUnsecureFrontends = true;
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {
 			if (i + 1 < argc) {
