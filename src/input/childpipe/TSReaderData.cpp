@@ -26,80 +26,81 @@
 namespace input {
 namespace childpipe {
 
-	// =======================================================================
-	// -- Constructors and destructor ----------------------------------------
-	// =======================================================================
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
 
-	TSReaderData::TSReaderData() {
-		doInitialize();
+TSReaderData::TSReaderData() {
+	doInitialize();
+}
+
+TSReaderData::~TSReaderData() {}
+
+// =============================================================================
+// -- input::DeviceData --------------------------------------------------------
+// =============================================================================
+
+void TSReaderData::doNextAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "pathname", base::XMLSupport::makeXMLString(_filePath));
+}
+
+void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
+
+void TSReaderData::doInitialize() {
+	_filePath = "None";
+	_pcrTimer = 0;
+}
+
+void TSReaderData::doParseStreamString(
+		const int UNUSED(streamID),
+		const std::string &msg,
+		const std::string &method) {
+	const std::string filePath = StringConverter::getURIParameter(msg, method, "exec=");
+	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
+		return;
 	}
-
-	TSReaderData::~TSReaderData() {}
-
-	// =======================================================================
-	// -- input::DeviceData --------------------------------------------------
-	// =======================================================================
-
-	void TSReaderData::doNextAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "pathname", base::XMLSupport::makeXMLString(_filePath));
+	initialize();
+	_changed = true;
+	_filePath = filePath;
+	// when 'pcrtimer=' is not set or zero the PCR from the stream is used, else this timer
+	// will be used as read interval.
+	const int pcrTimer = StringConverter::getIntParameter(msg, method, "pcrtimer=");
+	if (pcrTimer != -1) {
+		_pcrTimer = pcrTimer;
 	}
+}
 
-	void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
+std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
+	std::string desc;
+	// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;exec=<file>
+	StringConverter::addFormattedString(desc,
+			"ver=1.5;tuner=%d,%d,%d,%d;exec=%s",
+			streamID + 1,
+			getSignalStrength(),
+			hasLock(),
+			getSignalToNoiseRatio(),
+			_filePath.c_str());
+	return desc;
+}
 
-	void TSReaderData::doInitialize() {
-		_filePath = "None";
-		_pcrTimer = 0;
-	}
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
-	void TSReaderData::doParseStreamString(
-			const int UNUSED(streamID),
-			const std::string &msg,
-			const std::string &method) {
-		const std::string filePath = StringConverter::getURIParameter(msg, method, "exec=");
-		if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
-			return;
-		}
-		initialize();
-		_changed = true;
-		_filePath = filePath;
-		// when 'pcrtimer=' is not set or zero the PCR from the stream is used, else this timer
-		// will be used as read interval.
-		const int pcrTimer = StringConverter::getIntParameter(msg, method, "pcrtimer=");
-		if (pcrTimer != -1) {
-			_pcrTimer = pcrTimer;
-		}
-	}
+std::string TSReaderData::getFilePath() const {
+	base::MutexLock lock(_mutex);
+	return _filePath;
+}
 
-	std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
-		std::string desc;
-		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;exec=<file>
-		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;exec=%s",
-				streamID + 1,
-				getSignalStrength(),
-				hasLock(),
-				getSignalToNoiseRatio(),
-				_filePath.c_str());
-		return desc;
-	}
+bool TSReaderData::hasFilePath() const {
+	base::MutexLock lock(_mutex);
+	return _filePath != "None";
+}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
-
-	std::string TSReaderData::getFilePath() const {
-		base::MutexLock lock(_mutex);
-		return _filePath;
-	}
-
-	bool TSReaderData::hasFilePath() const {
-		base::MutexLock lock(_mutex);
-		return _filePath != "None";
-	}
-
-	int TSReaderData::getPCRTimer() const {
-		base::MutexLock lock(_mutex);
-		return _pcrTimer;
-	}
+int TSReaderData::getPCRTimer() const {
+	base::MutexLock lock(_mutex);
+	return _pcrTimer;
+}
 
 } // namespace childpipe
 } // namespace input

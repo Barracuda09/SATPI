@@ -31,174 +31,175 @@
 namespace input {
 namespace file {
 
-	// =========================================================================
-	//  -- Constructors and destructor -----------------------------------------
-	// =========================================================================
-	TSReader::TSReader(
-			int streamID,
-			const std::string &appDataPath,
-			const bool enableUnsecureFrontends) :
-			Device(streamID),
-			_transform(appDataPath, _transformDeviceData),
-			_enableUnsecureFrontends(enableUnsecureFrontends) {}
+// =============================================================================
+//  -- Constructors and destructor ---------------------------------------------
+// =============================================================================
 
-	TSReader::~TSReader() {}
+TSReader::TSReader(
+		int streamID,
+		const std::string &appDataPath,
+		const bool enableUnsecureFrontends) :
+		Device(streamID),
+		_transform(appDataPath, _transformDeviceData),
+		_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
-	// =========================================================================
-	//  -- Static member functions ---------------------------------------------
-	// =========================================================================
+TSReader::~TSReader() {}
 
-	void TSReader::enumerate(
-			StreamSpVector &streamVector,
-			const std::string &appDataPath,
-			const bool enableUnsecureFrontends) {
-		SI_LOG_INFO("Setting up TS Reader using path: %s", appDataPath.c_str());
-		const StreamSpVector::size_type size = streamVector.size();
-		const input::file::SpTSReader tsreader =
-			std::make_shared<input::file::TSReader>(size, appDataPath, enableUnsecureFrontends);
-		streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
+// =============================================================================
+//  -- Static member functions -------------------------------------------------
+// =============================================================================
+
+void TSReader::enumerate(
+		StreamSpVector &streamVector,
+		const std::string &appDataPath,
+		const bool enableUnsecureFrontends) {
+	SI_LOG_INFO("Setting up TS Reader using path: %s", appDataPath.c_str());
+	const StreamSpVector::size_type size = streamVector.size();
+	const input::file::SpTSReader tsreader =
+		std::make_shared<input::file::TSReader>(size, appDataPath, enableUnsecureFrontends);
+	streamVector.push_back(std::make_shared<Stream>(size, tsreader, nullptr));
+}
+
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
+
+void TSReader::doAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "frontendname", "TS Reader");
+	ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
+
+	_deviceData.addToXML(xml);
+}
+
+void TSReader::doFromXML(const std::string &xml) {
+	std::string element;
+	if (findXMLElement(xml, "transformation", element)) {
+		_transform.fromXML(element);
 	}
+	_deviceData.fromXML(xml);
+}
 
-	// =========================================================================
-	//  -- base::XMLSupport ----------------------------------------------------
-	// =========================================================================
+// =============================================================================
+//  -- input::Device -----------------------------------------------------------
+// =============================================================================
 
-	void TSReader::doAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "frontendname", "TS Reader");
-		ADD_XML_ELEMENT(xml, "transformation", _transform.toXML());
+void TSReader::addDeliverySystemCount(
+		std::size_t &dvbs2,
+		std::size_t &dvbt,
+		std::size_t &dvbt2,
+		std::size_t &dvbc,
+		std::size_t &dvbc2) {
+	dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
+	dvbt  += 0;
+	dvbt2 += 0;
+	dvbc  += _transform.advertiseAsDVBC() ? 1 : 0;
+	dvbc2 += 0;
+}
 
-		_deviceData.addToXML(xml);
-	}
+bool TSReader::isDataAvailable() {
+	const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
+	if (pcrDelta != 0) {
+		_t2 = _t1;
+		_t1 = std::chrono::steady_clock::now();
 
-	void TSReader::doFromXML(const std::string &xml) {
-		std::string element;
-		if (findXMLElement(xml, "transformation", element)) {
-			_transform.fromXML(element);
+		const long interval = pcrDelta - std::chrono::duration_cast<std::chrono::microseconds>(_t1 - _t2).count();
+		if (interval > 0) {
+			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}
-		_deviceData.fromXML(xml);
+		_t1 = std::chrono::steady_clock::now();
+		_deviceData.getFilterData().getPCRData()->clearPCRDelta();
+	} else {
+		std::this_thread::sleep_for(std::chrono::microseconds(150));
 	}
+	return true;
+}
 
-	// =========================================================================
-	//  -- input::Device -------------------------------------------------------
-	// =========================================================================
-
-	void TSReader::addDeliverySystemCount(
-			std::size_t &dvbs2,
-			std::size_t &dvbt,
-			std::size_t &dvbt2,
-			std::size_t &dvbc,
-			std::size_t &dvbc2) {
-		dvbs2 += _transform.advertiseAsDVBS2() ? 1 : 0;
-		dvbt  += 0;
-		dvbt2 += 0;
-		dvbc  += _transform.advertiseAsDVBC() ? 1 : 0;
-		dvbc2 += 0;
-	}
-
-	bool TSReader::isDataAvailable() {
-		const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
-		if (pcrDelta != 0) {
-			_t2 = _t1;
-			_t1 = std::chrono::steady_clock::now();
-
-			const long interval = pcrDelta - std::chrono::duration_cast<std::chrono::microseconds>(_t1 - _t2).count();
-			if (interval > 0) {
-				std::this_thread::sleep_for(std::chrono::microseconds(interval));
-			}
-			_t1 = std::chrono::steady_clock::now();
-			_deviceData.getFilterData().getPCRData()->clearPCRDelta();
-		} else {
-			std::this_thread::sleep_for(std::chrono::microseconds(150));
-		}
-		return true;
-	}
-
-	bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
-		if (!_file.is_open()) {
-			return false;
-		}
-		_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()),
-				buffer.getAmountOfBytesToWrite());
-		buffer.addAmountOfBytesWritten(_file.gcount());
-		buffer.trySyncing();
-		if (!buffer.full()) {
-			return false;
-		}
-		// Add data to Filter
-		_deviceData.addFilterData(_streamID, buffer);
-		return true;
-	}
-
-	bool TSReader::capableOf(const input::InputSystem system) const {
-		if (_enableUnsecureFrontends) {
-			return system == input::InputSystem::FILE;
-		}
+bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+	if (!_file.is_open()) {
 		return false;
 	}
+	_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()),
+			buffer.getAmountOfBytesToWrite());
+	buffer.addAmountOfBytesWritten(_file.gcount());
+	buffer.trySyncing();
+	if (!buffer.full()) {
+		return false;
+	}
+	// Add data to Filter
+	_deviceData.addFilterData(_streamID, buffer);
+	return true;
+}
 
-	bool TSReader::capableToTransform(const std::string &msg,
-			const std::string &method) const {
-		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
+bool TSReader::capableOf(const input::InputSystem system) const {
+	if (_enableUnsecureFrontends) {
 		return system == input::InputSystem::FILE;
 	}
+	return false;
+}
 
-	void TSReader::monitorSignal(bool UNUSED(showStatus)) {
-		_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
-	}
+bool TSReader::capableToTransform(const std::string &msg,
+		const std::string &method) const {
+	const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
+	return system == input::InputSystem::FILE;
+}
 
-	bool TSReader::hasDeviceDataChanged() const {
-		return _deviceData.hasDeviceDataChanged();
-	}
+void TSReader::monitorSignal(bool UNUSED(showStatus)) {
+	_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
+}
 
-	void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+bool TSReader::hasDeviceDataChanged() const {
+	return _deviceData.hasDeviceDataChanged();
+}
 
-		// Do we need to transform this request?
-		const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
+void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
+	SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
-		_deviceData.parseStreamString(_streamID, msgTrans, method);
-		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
-	}
+	// Do we need to transform this request?
+	const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
 
-	bool TSReader::update() {
-		SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
-		if (_deviceData.hasDeviceDataChanged()) {
-			_deviceData.resetDeviceDataChanged();
-			_file.close();
-			if (!_file.is_open()) {
-				const std::string filePath = _deviceData.getFilePath();
-				_file.open(filePath, std::ifstream::binary | std::ifstream::in);
-				if (_file.is_open()) {
-					SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
-					_t1 = std::chrono::steady_clock::now();
-					_t2 = _t1;
-				} else {
-					SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
-				}
+	_deviceData.parseStreamString(_streamID, msgTrans, method);
+	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
+}
+
+bool TSReader::update() {
+	SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+	if (_deviceData.hasDeviceDataChanged()) {
+		_deviceData.resetDeviceDataChanged();
+		_file.close();
+		if (!_file.is_open()) {
+			const std::string filePath = _deviceData.getFilePath();
+			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
+			if (_file.is_open()) {
+				SI_LOG_INFO("Stream: %d, TS Reader using path: %s", _streamID, filePath.c_str());
+				_t1 = std::chrono::steady_clock::now();
+				_t2 = _t1;
+			} else {
+				SI_LOG_ERROR("Stream: %d, TS Reader unable to open path: %s", _streamID, filePath.c_str());
 			}
 		}
-		SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
-		return true;
 	}
+	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
+	return true;
+}
 
-	bool TSReader::teardown() {
-		_deviceData.initialize();
-		_transform.resetTransformFlag();
-		_file.close();
-		return true;
+bool TSReader::teardown() {
+	_deviceData.initialize();
+	_transform.resetTransformFlag();
+	_file.close();
+	return true;
+}
+
+std::string TSReader::attributeDescribeString() const {
+	if (_file.is_open()) {
+		const DeviceData &data = _transform.transformDeviceData(_deviceData);
+		return data.attributeDescribeString(_streamID);
 	}
+	return "";
+}
 
-	std::string TSReader::attributeDescribeString() const {
-		if (_file.is_open()) {
-			const DeviceData &data = _transform.transformDeviceData(_deviceData);
-			return data.attributeDescribeString(_streamID);
-		}
-		return "";
-	}
-
-	// =========================================================================
-	//  -- Other member functions ----------------------------------------------
-	// =========================================================================
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
 } // namespace file
 } // namespace input

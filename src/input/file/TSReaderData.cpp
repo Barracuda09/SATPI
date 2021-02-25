@@ -26,68 +26,69 @@
 namespace input {
 namespace file {
 
-	// =======================================================================
-	// -- Constructors and destructor ----------------------------------------
-	// =======================================================================
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
 
-	TSReaderData::TSReaderData() {
-		doInitialize();
+TSReaderData::TSReaderData() {
+	doInitialize();
+}
+
+TSReaderData::~TSReaderData() {}
+
+// =============================================================================
+// -- input::DeviceData --------------------------------------------------------
+// =============================================================================
+
+void TSReaderData::doNextAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "pathname", _filePath);
+}
+
+void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
+
+void TSReaderData::doInitialize() {
+	_filePath = "None";
+}
+
+void TSReaderData::doParseStreamString(
+		const int UNUSED(streamID),
+		const std::string &msg,
+		const std::string &method) {
+	const std::string filePath = StringConverter::getURIParameter(msg, method, "uri=");
+	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
+		return;
 	}
+	initialize();
+	_changed = true;
+	_filePath = filePath;
+}
 
-	TSReaderData::~TSReaderData() {}
+std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
+	std::string desc;
+	// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
+	StringConverter::addFormattedString(desc,
+			"ver=1.5;tuner=%d,%d,%d,%d;uri=%s",
+			streamID + 1,
+			getSignalStrength(),
+			hasLock(),
+			getSignalToNoiseRatio(),
+			_filePath.c_str());
+	return desc;
+}
 
-	// =======================================================================
-	// -- input::DeviceData --------------------------------------------------
-	// =======================================================================
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
-	void TSReaderData::doNextAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "pathname", _filePath);
-	}
+std::string TSReaderData::getFilePath() const {
+	base::MutexLock lock(_mutex);
+	return _filePath;
+}
 
-	void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
-
-	void TSReaderData::doInitialize() {
-		_filePath = "None";
-	}
-
-	void TSReaderData::doParseStreamString(
-			const int UNUSED(streamID),
-			const std::string &msg,
-			const std::string &method) {
-		const std::string filePath = StringConverter::getURIParameter(msg, method, "uri=");
-		if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
-			return;
-		}
-		initialize();
-		_changed = true;
-		_filePath = filePath;
-	}
-
-	std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
-		std::string desc;
-		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
-		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;uri=%s",
-				streamID + 1,
-				getSignalStrength(),
-				hasLock(),
-				getSignalToNoiseRatio(),
-				_filePath.c_str());
-		return desc;
-	}
-
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
-
-	std::string TSReaderData::getFilePath() const {
-		base::MutexLock lock(_mutex);
-		return _filePath;
-	}
-
-	bool TSReaderData::hasFilePath() const {
-		base::MutexLock lock(_mutex);
-		return _filePath != "None";
-	}
+bool TSReaderData::hasFilePath() const {
+	base::MutexLock lock(_mutex);
+	return _filePath != "None";
+}
 
 } // namespace file
 } // namespace input

@@ -389,13 +389,13 @@ namespace dvb {
 		return _frontendData.hasDeviceDataChanged();
 	}
 
-	void Frontend::parseStreamString(const std::string &msg1, const std::string &method) {
+	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
 		SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
 
 		// Do we need to transform this request?
-		const std::string msg = _transform.transformStreamString(_streamID, msg1, method);
+		const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
 
-		_frontendData.parseStreamString(_streamID, msg, method);
+		_frontendData.parseStreamString(_streamID, msgTrans, method);
 
 		SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
 	}
