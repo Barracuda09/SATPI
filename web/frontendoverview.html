@@ -37,7 +37,13 @@
 				page += addTableEntry(xmlDoc, streamID + "frontendname");
 				page += addTableEntry(xmlDoc, streamID + "owner");
 				page += addTableEntry(xmlDoc, streamID + "spc");
-				page += addTableEntry(xmlDoc, streamID + "tunefreq");
+				var input = xmlDoc.querySelector(streamID + "tunefreq");
+				if (input) {
+					page += addTableEntry(xmlDoc, streamID + "tunefreq");
+				} else {
+					page += addTableEntry(xmlDoc, streamID + " transformation " + "transformFreq");
+				}
+
 				page += addTableEntry(xmlDoc, streamID + "delsys");
 				page += addTableEntry(xmlDoc, streamID + "pathname");
 				page += addTableEntry(xmlDoc, streamID + "networkname");

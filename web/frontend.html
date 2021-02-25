@@ -86,6 +86,7 @@
 				page += addTableLineEntry("Transformation enable", xmlDoc, streamID + "transformEnable");
 				page += addTableLineEntry("Advertise as", xmlDoc, streamID + "advertiseAsType");
 				page += addTableLineEntry("Transformation Mapping M3U", xmlDoc, streamID + "transformM3U");
+				page += addTableLineEntry("Transformation Frequency", xmlDoc, streamID + "transformFreq");
 			}
 
 			var fbc = visibleStream.getElementsByTagName("fbc");
@@ -135,7 +136,7 @@
 				tab += "<li class=\"nav-item\"><a class=\"nav-link\" data-toggle=\"tab\" href=\"#stream" + en + "\">Frontend " + en + "</a></li>"
 			}
 			tab += "</ul>";
-			tab += "<div class=\"tab-content\">";
+			tab += "<div class=\"tab-content border rounded-bottom\" >";
 			tab += "<div id=\"stream" + 0 + "\" class=\"tab-pane fade show active\"></div>";
 			for (en = 1; en < len; en++) {
 				tab += "<div id=\"stream" + en + "\" class=\"tab-pane fade\"></div>";

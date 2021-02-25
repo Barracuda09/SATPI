@@ -5,6 +5,12 @@ body {
 	margin-bottom: 60px;
 }
 
+.tab-content {
+	height: 70vh;
+	padding: 0px;
+	overflow: scroll;
+}
+
 .container-log {
 	height: 500px;
 	font-size: 10px;
