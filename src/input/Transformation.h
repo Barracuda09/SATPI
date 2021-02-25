@@ -88,6 +88,15 @@ class Transformation :
 		const DeviceData &transformDeviceData(
 			const DeviceData &deviceData) const;
 
+	private:
+
+		/// This function will check if transformation is possible and returns
+		/// the URI to use for the transformation
+		bool transformStreamPossible(int streamID,
+			const std::string &msg,
+			const std::string &method,
+			std::string &uriTransform);
+
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
@@ -108,6 +117,7 @@ class Transformation :
 		std::string _appDataPath;
 		std::string _transformFileM3U;
 		input::DeviceData &_transformedDeviceData;
+		uint32_t _transformFreq;
 };
 
 } // namespace input
