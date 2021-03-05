@@ -257,109 +257,113 @@ int main(int argc, char *argv[]) {
 	//
 	StringConverter::splitPath(argv[0], params.currentPath, appName);
 	params.dvbPath = "/dev/dvb";
-
-	// Check options
-	for (int i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "--no-ssdp") == 0) {
-			params.ssdp = false;
-		} else if (strcmp(argv[i], "--user") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				user = argv[i];
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--no-daemon") == 0) {
-			daemon = false;
-		} else if (strcmp(argv[i], "--dvb-path") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.dvbPath = argv[i];
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--childpipe") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.numberOfChildPIPE = std::stoi(argv[i]);
-				if (params.numberOfChildPIPE < 0 || params.numberOfChildPIPE > 25) {
+	try {
+		// Check options
+		for (int i = 1; i < argc; ++i) {
+			if (strcmp(argv[i], "--no-ssdp") == 0) {
+				params.ssdp = false;
+			} else if (strcmp(argv[i], "--user") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					user = argv[i];
+				} else {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
 				}
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--enable-unsecure-frontends") == 0) {
-			params.enableUnsecureFrontends = true;
-		} else if (strcmp(argv[i], "--app-data-path") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.appdataPath = argv[i];
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--iface-name") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.ifaceName = argv[i];
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--http-path") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.webPath = argv[i];
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--http-port") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.httpPort = std::stoi(argv[i]);
-				if (params.httpPort < 1024 || params.httpPort > 65535) {
+			} else if (strcmp(argv[i], "--no-daemon") == 0) {
+				daemon = false;
+			} else if (strcmp(argv[i], "--dvb-path") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.dvbPath = argv[i];
+				} else {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
 				}
-			} else {
-				printUsage(argv[0]);
-				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--rtsp-port") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				params.rtspPort = std::stoi(argv[i]);
-				if (params.rtspPort <  554 || params.rtspPort > 65535) {
+			} else if (strcmp(argv[i], "--childpipe") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.numberOfChildPIPE = std::stoi(argv[i]);
+					if (params.numberOfChildPIPE < 0 || params.numberOfChildPIPE > 25) {
+						printUsage(argv[0]);
+						return EXIT_FAILURE;
+					}
+				} else {
 					printUsage(argv[0]);
 					return EXIT_FAILURE;
 				}
-			} else {
+			} else if (strcmp(argv[i], "--enable-unsecure-frontends") == 0) {
+				params.enableUnsecureFrontends = true;
+			} else if (strcmp(argv[i], "--app-data-path") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.appdataPath = argv[i];
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp(argv[i], "--iface-name") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.ifaceName = argv[i];
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp(argv[i], "--http-path") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.webPath = argv[i];
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp(argv[i], "--http-port") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.httpPort = std::stoi(argv[i]);
+					if (params.httpPort < 1024 || params.httpPort > 65535) {
+						printUsage(argv[0]);
+						return EXIT_FAILURE;
+					}
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp(argv[i], "--rtsp-port") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.rtspPort = std::stoi(argv[i]);
+					if (params.rtspPort <  554 || params.rtspPort > 65535) {
+						printUsage(argv[0]);
+						return EXIT_FAILURE;
+					}
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else if (strcmp(argv[i], "--backtrace") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					annotateBackTrace(appName.c_str(), argv[i]);
+					return EXIT_SUCCESS;
+				}
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
-			}
-		} else if (strcmp(argv[i], "--backtrace") == 0) {
-			if (i + 1 < argc) {
-				++i;
-				annotateBackTrace(appName.c_str(), argv[i]);
+			} else if (strcmp(argv[i], "--version") == 0) {
+				std::cout << "SatPI version: " << satpi_version << "\r\n";
 				return EXIT_SUCCESS;
+			} else if (strcmp(argv[i], "--help") == 0) {
+				printUsage(argv[0]);
+				return EXIT_SUCCESS;
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
 			}
-			printUsage(argv[0]);
-			return EXIT_FAILURE;
-		} else if (strcmp(argv[i], "--version") == 0) {
-			std::cout << "SatPI version: " << satpi_version << "\r\n";
-			return EXIT_SUCCESS;
-		} else if (strcmp(argv[i], "--help") == 0) {
-			printUsage(argv[0]);
-			return EXIT_SUCCESS;
-		} else {
-			printUsage(argv[0]);
-			return EXIT_FAILURE;
 		}
+	} catch (...) {
+		printUsage(argv[0]);
+		return EXIT_FAILURE;
 	}
 
 	// Open logging
