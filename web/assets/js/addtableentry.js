@@ -122,6 +122,19 @@ function addTableLineEntry(labelstring, xmlDoc, tagPath) {
 	return page;
 }
 
+function addTableLineText(labelstring, xmlDoc, tagPath) {
+	var page = "";
+	var data = xmlDoc.querySelector(tagPath);
+	if (data) {
+		page += "<tr>";
+		page += "<td class=\"col-xs-1\" align=\"left\">" + labelstring + "</td>";
+		page += "<td align=\"left\">";
+		page += data.getElementsByTagName("value")[0].innerHTML
+		page += "</tr></td>";
+	}
+	return page;
+}
+
 function addTableEntry(xmlDoc, tagPath) {
 	var entry = "<td align=\"left\">";
 	var input = xmlDoc.querySelector(tagPath);

@@ -26,6 +26,7 @@
 		page += "<thead></thead>";
 		page += "<tbody>";
 		if (content == "general") {
+			page += addTableLineText("IP Address", xmlDoc, "ipaddress");
 			page += addTableLineEntry("HTTP Port", xmlDoc, "httpport");
 			page += addTableLineEntry("RTSP Port", xmlDoc, "rtspport");
 			page += addTableLineEntry("SSDP Interval (sec)", xmlDoc, "input1");
