@@ -6,8 +6,8 @@ body {
 }
 
 .tab-content {
-	height: 70vh;
-	padding: 0px;
+	height: 60vh;
+#	padding: 0px;
 	overflow: scroll;
 }
 

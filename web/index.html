@@ -23,7 +23,7 @@
 		ssdpdata = xml.getElementsByTagName("ssdp");
 		configdata = xml.getElementsByTagName("configdata");
 
-		var uptime = appdata[0].getElementsByTagName("uptime")[0].childNodes[0].nodeValue;
+		var uptime = appdata[0].getElementsByTagName("uptime")[0].innerHTML;
 		var sec = uptime % 60;
 		var min = Math.round((uptime/60) - 0.5);
 		var hours = Math.round((min/60) - 0.5);
@@ -32,13 +32,13 @@
 		hours -= (days * 24);
 
 		var InfoPage = document.getElementById("InfoPage");
-		InfoPage.rows[0].cells[1].innerHTML = appdata[0].getElementsByTagName("appversion")[0].childNodes[0].nodeValue;;
+		InfoPage.rows[0].cells[1].innerHTML = appdata[0].getElementsByTagName("appversion")[0].innerHTML;;
 		InfoPage.rows[1].cells[1].innerHTML = days + " days " + hours + " hours " + min + " min " + sec + " sec";
-		InfoPage.rows[2].cells[1].innerHTML = appdata[0].getElementsByTagName("uuid")[0].childNodes[0].nodeValue;
-		InfoPage.rows[3].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("bootID")[0].childNodes[0].nodeValue;
-		InfoPage.rows[4].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("deviceID")[0].childNodes[0].nodeValue;
-		InfoPage.rows[5].cells[1].innerHTML = configdata[0].getElementsByTagName("ipaddress")[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
-		InfoPage.rows[6].cells[1].innerHTML = configdata[0].getElementsByTagName("rtspport")[0].getElementsByTagName("value")[0].childNodes[0].nodeValue;
+		InfoPage.rows[2].cells[1].innerHTML = appdata[0].getElementsByTagName("uuid")[0].innerHTML;
+		InfoPage.rows[3].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("bootID")[0].innerHTML;
+		InfoPage.rows[4].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("deviceID")[0].innerHTML;
+		InfoPage.rows[5].cells[1].innerHTML = configdata[0].getElementsByTagName("ipaddress")[0].getElementsByTagName("value")[0].innerHTML;
+		InfoPage.rows[6].cells[1].innerHTML = configdata[0].getElementsByTagName("rtspport")[0].getElementsByTagName("value")[0].innerHTML;
 	}
 	
 	function stopSatPI() {

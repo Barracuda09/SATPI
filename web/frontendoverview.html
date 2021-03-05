@@ -26,7 +26,7 @@
 			for (index = 0; index < size; index++) {
 				var streamID = "stream" + index + " ";
 				var visibleStream = xmlDoc.getElementsByTagName("stream" + index)[0];
-				var attached = xmlDoc.querySelector(streamID + "attached").childNodes[0].nodeValue;
+				var attached = xmlDoc.querySelector(streamID + "attached").innerHTML;
 				if (attached == "yes") {
 					page += "<tr class=\"table-info\">";
 				} else {

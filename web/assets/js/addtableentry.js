@@ -27,13 +27,13 @@ function myOnkeyPressPostIp(tagPath, value, event) {
 
 function changeXMLAndPost(tagPath, value) {
 	var valuePath = tagPath + " value";
-	xmlLoaded.querySelector(valuePath).childNodes[0].nodeValue = value
+	xmlLoaded.querySelector(valuePath).innerHTML = value
 	postData(filename, xmlLoaded);
 }
 
 function addCheckboxInput(tagPath, input) {
 	var entry = "<input type='checkbox'";
-	if (input.getElementsByTagName("value")[0].childNodes[0].nodeValue == "true") {
+	if (input.getElementsByTagName("value")[0].innerHTML == "true") {
 		entry += "checked=\"true\"";
 	}
 	entry += "name=\"" + tagPath + "\"";
@@ -44,10 +44,10 @@ function addCheckboxInput(tagPath, input) {
 }
 
 function addNumberInput(tagPath, input) {
-	var entry = "<input type=\""+ input.getElementsByTagName("inputtype")[0].childNodes[0].nodeValue + "\"";
-	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
-	entry += "min=\"" + input.getElementsByTagName("minvalue")[0].childNodes[0].nodeValue + "\"";
-	entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].childNodes[0].nodeValue + "\"";
+	var entry = "<input type=\""+ input.getElementsByTagName("inputtype")[0].innerHTML + "\"";
+	entry += "value=\"" + input.getElementsByTagName("value")[0].innerHTML + "\"";
+	entry += "min=\"" + input.getElementsByTagName("minvalue")[0].innerHTML + "\"";
+	entry += "max=\"" + input.getElementsByTagName("maxvalue")[0].innerHTML + "\"";
 
 	entry += "name=\"" + tagPath + "\"";
 	entry += "id=\"" + tagPath + "\"";
@@ -60,7 +60,7 @@ function addNumberInput(tagPath, input) {
 
 function addTextInput(tagPath, input) {
 	var entry = "<input type='text'";
-	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
+	entry += "value=\"" + input.getElementsByTagName("value")[0].innerHTML + "\"";
 	entry += "name=\"" + tagPath + "\"";
 	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
@@ -73,7 +73,7 @@ function addTextInput(tagPath, input) {
 
 function addIPInput(tagPath, input) {
 	var entry = "<input type='text'";
-	entry += "value=\"" + input.getElementsByTagName("value")[0].childNodes[0].nodeValue + "\"";
+	entry += "value=\"" + input.getElementsByTagName("value")[0].innerHTML + "\"";
 	entry += "name=\"" + tagPath + "\"";
 	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
@@ -87,7 +87,7 @@ function addIPInput(tagPath, input) {
 function addSelectionListInput(tagPath, input) {
 	var list = input.getElementsByTagName("list")[0];
 	var optlen = list.getElementsByTagName("*").length;
-	var optsel = input.getElementsByTagName("value")[0].childNodes[0].nodeValue;
+	var optsel = input.getElementsByTagName("value")[0].innerHTML;
 
 	var entry = "<select ";
 	entry += "name=\"" + tagPath + "\"";
@@ -103,7 +103,7 @@ function addSelectionListInput(tagPath, input) {
 			entry += " selected=\"selected\"";
 		}
 		entry += ">";
-		entry += list.getElementsByTagName("*")[en].childNodes[0].nodeValue;
+		entry += list.getElementsByTagName("*")[en].innerHTML;
 		entry += "</option>";
 	}
 	entry += "</select>";
@@ -128,7 +128,7 @@ function addTableEntry(xmlDoc, tagPath) {
 	if (input) {
 		var inputtype = xmlDoc.querySelector(tagPath + " inputtype");
 		if (inputtype) {
-			var inputTypeName = inputtype.childNodes[0].nodeValue;
+			var inputTypeName = inputtype.innerHTML;
 			if (inputTypeName == "checkbox") {
 				entry += addCheckboxInput(tagPath, input);
 			} else if (inputTypeName == "ip") {
@@ -140,10 +140,10 @@ function addTableEntry(xmlDoc, tagPath) {
 			} else if (inputTypeName == "number") {
 				entry += addNumberInput(tagPath, input);
 			} else {
-				alert("Not supported input type! (" + inputtype.childNodes[0].nodeValue + ")");
+				alert("Not supported input type! (" + inputtype.innerHTML + ")");
 			}
 		} else {
-			entry += input.childNodes[0].nodeValue;
+			entry += input.innerHTML;
 		}
 	}
 	entry += "</td>";
