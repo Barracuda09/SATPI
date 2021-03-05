@@ -64,13 +64,13 @@ class StreamManager :
 		/// @param bindIPAddress specifies the IP address to bind to
 		/// @param appDataPath specifies the path were to store application data
 		/// @param dvbPath specifies the path were to find dvb devices eg. /dev/dvb
-		/// @param enableChildPIPE to enable frontend 'Child PIPE - TS Reader'
+		/// @param numberOfChildPIPE to enable the requested amount of frontends 'Child PIPE - TS Reader'
 		/// @param enableUnsecureFrontends to enable to use 'Child PIPE - TS Reader' in command directly
 		void enumerateDevices(
 			const std::string &bindIPAddress,
 			const std::string &appDataPath,
 			const std::string &dvbPath,
-			bool enableChildPIPE,
+			int numberOfChildPIPE,
 			bool enableUnsecureFrontends);
 
 		///

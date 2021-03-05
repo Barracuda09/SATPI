@@ -48,7 +48,7 @@ class SatPI :
 			std::string dvbPath;
 			unsigned int httpPort = 0;
 			unsigned int rtspPort = 0;
-			bool enableChildPIPE = false;
+			int numberOfChildPIPE = 0;
 			bool enableUnsecureFrontends = false;
 		};
 

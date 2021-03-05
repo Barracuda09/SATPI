@@ -233,14 +233,14 @@ static void printUsage(const char *prog_name) {
 		"\t--help                        show this help and exit\r\n" \
 		"\t--version                     show the version number\r\n" \
 		"\t--user xx                     run as user\r\n" \
-		"\t--dvb-path                    set path were to find dvb devices default /dev/dvb\r\n" \
-		"\t--app-data-path               set path for application state data eg. xml files etc\r\n" \
+		"\t--dvb-path <path>             set path were to find dvb devices default /dev/dvb\r\n" \
+		"\t--app-data-path <path>        set path for application state data eg. xml files etc\r\n" \
 		"\t--iface-name                  set the network interface to bind to (eg. eth0)\r\n" \
-		"\t--http-path                   set root path of web/http pages\r\n" \
-		"\t--http-port                   set http port default 8875 (1024 - 65535)\r\n" \
-		"\t--rtsp-port                   set rtsp port default 554  ( 554 - 65535)\r\n" \
+		"\t--http-path <path>            set root path of web/http pages\r\n" \
+		"\t--http-port <port>            set http port default 8875 (1024 - 65535)\r\n" \
+		"\t--rtsp-port <port>            set rtsp port default 554  ( 554 - 65535)\r\n" \
 		"\t--backtrace <file>            backtrace 'file'\r\n" \
-		"\t--childpipe                   enabled Frontend 'Child PIPE - TS Reader'\r\n" \
+		"\t--childpipe <number>          enabled number amount of Frontends 'Child PIPE - TS Reader' (0 - 25)\r\n" \
 		"\t--enable-unsecure-frontends   enable to use 'Child PIPE - TS Reader' in command directly\r\n" \
 		"\t--no-daemon                   do NOT daemonize\r\n" \
 		"\t--no-ssdp                     do NOT advertise server\r\n", prog_name);
@@ -281,7 +281,17 @@ int main(int argc, char *argv[]) {
 				return EXIT_FAILURE;
 			}
 		} else if (strcmp(argv[i], "--childpipe") == 0) {
-			params.enableChildPIPE = true;
+			if (i + 1 < argc) {
+				++i;
+				params.numberOfChildPIPE = std::stoi(argv[i]);
+				if (params.numberOfChildPIPE < 0 || params.numberOfChildPIPE > 25) {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
+			} else {
+				printUsage(argv[0]);
+				return EXIT_FAILURE;
+			}
 		} else if (strcmp(argv[i], "--enable-unsecure-frontends") == 0) {
 			params.enableUnsecureFrontends = true;
 		} else if (strcmp(argv[i], "--app-data-path") == 0) {

@@ -42,7 +42,7 @@ SatPI::SatPI(const SatPI::Params &params) :
 	_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	//
 	_streamManager.enumerateDevices(_interface.getIPAddress(),
-		_properties.getAppDataPath(), params.dvbPath, params.enableChildPIPE,
+		_properties.getAppDataPath(), params.dvbPath, params.numberOfChildPIPE,
 		params.enableUnsecureFrontends);
 	//
 	std::string xml;
