@@ -105,13 +105,28 @@ namespace mpegts {
 	}
 
 	void PidTable::setPID(const int pid, const bool use) {
-		// Check PID not used anymore, so set ShouldClose state
-		if (!use && _data[pid].state == State::Opened) {
-			_data[pid].state = State::ShouldClose;
-			_changed = true;
-		} else if (use && _data[pid].state == State::Closed) {
-			_data[pid].state = State::ShouldOpen;
-			_changed = true;
+		switch (_data[pid].state) {
+			case State::Closed:
+				if (use) {
+					_data[pid].state = State::ShouldOpen;
+					_changed = true;
+				}
+				break;
+			case State::ShouldClose:
+				if (use) {
+					_data[pid].state = State::ShouldCloseReopen;
+					_changed = true;
+				}
+				break;
+			case State::Opened:
+				if (!use) {
+					_data[pid].state = State::ShouldClose;
+					_changed = true;
+				}
+				break;
+			default:
+				// Nothing todo here
+				break;
 		}
 	}
 
@@ -120,11 +135,20 @@ namespace mpegts {
 	}
 
 	bool PidTable::shouldPIDClose(const int pid) const {
-		return _data[pid].state == State::ShouldClose;
+		return _data[pid].state == State::ShouldClose ||
+			_data[pid].state == State::ShouldCloseReopen;
 	}
 
 	void PidTable::setPIDClosed(const int pid) {
-		_data[pid].state = State::Closed;
+		switch (_data[pid].state) {
+			case State::ShouldCloseReopen:
+				_data[pid].state = State::ShouldOpen;
+				_changed = true;
+				break;
+			default:
+				_data[pid].state = State::Closed;
+				break;
+		}
 	}
 
 	bool PidTable::shouldPIDOpen(const int pid) const {

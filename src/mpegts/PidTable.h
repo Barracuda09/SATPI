@@ -102,6 +102,7 @@ namespace mpegts {
 				ShouldOpen,
 				Opened,
 				ShouldClose,
+				ShouldCloseReopen,
 				Closed
 			};
 
