@@ -206,11 +206,11 @@ void Server::checkDefendDeviceID(
 		// send message back
 		const char *UPNP_M_SEARCH =
 				"M-SEARCH * HTTP/1.1\r\n" \
-				"HOST: %1:%2\r\n" \
+				"HOST: @#1:@#2\r\n" \
 				"MAN: \"ssdp:discover\"\r\n" \
 				"ST: urn:ses-com:device:SatIPServer:1\r\n" \
-				"USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-				"DEVICEID.SES.COM: %4\r\n" \
+				"USER-AGENT: Linux/1.0 UPnP/1.1 SatPI/@#3\r\n" \
+				"DEVICEID.SES.COM: @#4\r\n" \
 				"\r\n";
 		const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
 			_bindIPAddress,
@@ -234,15 +234,15 @@ void Server::sendGiveUpDeviceID(
 	// send message back
 	const char *UPNP_M_SEARCH_OK =
 			"HTTP/1.1 200 OK\r\n" \
-			"CACHE-CONTROL: max-age=%1\r\n" \
+			"CACHE-CONTROL: max-age=@#1\r\n" \
 			"EXT:\r\n" \
-			"LOCATION: %2\r\n" \
-			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
+			"LOCATION: @#2\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/@#3\r\n" \
 			"ST: urn:ses-com:device:SatIPServer:1\r\n" \
-			"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-			"BOOTID.UPNP.ORG: %5\r\n" \
+			"USN: uuid:@#4::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: @#5\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
-			"DEVICEID.SES.COM: %6\r\n" \
+			"DEVICEID.SES.COM: @#6\r\n" \
 			"\r\n";
 
 	const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH_OK,
@@ -287,13 +287,13 @@ void Server::sendDiscoverResponse(
 	// send message back
 	const char *UPNP_M_SEARCH_OK =
 			"HTTP/1.1 200 OK\r\n" \
-			"CACHE-CONTROL: max-age=%1\r\n" \
+			"CACHE-CONTROL: max-age=@#1\r\n" \
 			"EXT:\r\n" \
-			"LOCATION: %2\r\n" \
-			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-			"ST: %4\r\n" \
-			"USN: uuid:%5::urn:ses-com:device:SatIPServer:1\r\n" \
-			"BOOTID.UPNP.ORG: %6\r\n" \
+			"LOCATION: @#2\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/@#3\r\n" \
+			"ST: @#4\r\n" \
+			"USN: uuid:@#5::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: @#6\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 
@@ -317,15 +317,15 @@ void Server::sendAnnounce() {
 	const char *UPNP_ROOTDEVICE =
 			"NOTIFY * HTTP/1.1\r\n" \
 			"HOST: 239.255.255.250:1900\r\n" \
-			"CACHE-CONTROL: max-age=%1\r\n" \
-			"LOCATION: %2\r\n" \
+			"CACHE-CONTROL: max-age=@#1\r\n" \
+			"LOCATION: @#2\r\n" \
 			"NT: upnp:rootdevice\r\n" \
 			"NTS: ssdp:alive\r\n" \
-			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-			"USN: uuid:%4::upnp:rootdevice\r\n" \
-			"BOOTID.UPNP.ORG: %5\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/@#3\r\n" \
+			"USN: uuid:@#4::upnp:rootdevice\r\n" \
+			"BOOTID.UPNP.ORG: @#5\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
-			"DEVICEID.SES.COM: %6\r\n" \
+			"DEVICEID.SES.COM: @#6\r\n" \
 			"\r\n";
 	const std::string msgRoot = StringConverter::stringFormat(UPNP_ROOTDEVICE,
 		_announceTimeSec,
@@ -344,15 +344,15 @@ void Server::sendAnnounce() {
 	const char *UPNP_ALIVE =
 			"NOTIFY * HTTP/1.1\r\n" \
 			"HOST: 239.255.255.250:1900\r\n" \
-			"CACHE-CONTROL: max-age=%1\r\n" \
-			"LOCATION: %2\r\n" \
-			"NT: uuid:%3\r\n" \
+			"CACHE-CONTROL: max-age=@#1\r\n" \
+			"LOCATION: @#2\r\n" \
+			"NT: uuid:@#3\r\n" \
 			"NTS: ssdp:alive\r\n" \
-			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%4\r\n" \
-			"USN: uuid:%3\r\n" \
-			"BOOTID.UPNP.ORG: %5\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/@#4\r\n" \
+			"USN: uuid:@#3\r\n" \
+			"BOOTID.UPNP.ORG: @#5\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
-			"DEVICEID.SES.COM: %6\r\n" \
+			"DEVICEID.SES.COM: @#6\r\n" \
 			"\r\n";
 	const std::string msgAlive = StringConverter::stringFormat(UPNP_ALIVE,
 		_announceTimeSec,
@@ -371,15 +371,15 @@ void Server::sendAnnounce() {
 	const char *UPNP_DEVICE =
 			"NOTIFY * HTTP/1.1\r\n" \
 			"HOST: 239.255.255.250:1900\r\n" \
-			"CACHE-CONTROL: max-age=%1\r\n" \
-			"LOCATION: %2\r\n" \
+			"CACHE-CONTROL: max-age=@#1\r\n" \
+			"LOCATION: @#2\r\n" \
 			"NT: urn:ses-com:device:SatIPServer:1\r\n" \
 			"NTS: ssdp:alive\r\n" \
-			"SERVER: Linux/1.0 UPnP/1.1 SatPI/%3\r\n" \
-			"USN: uuid:%4::urn:ses-com:device:SatIPServer:1\r\n" \
-			"BOOTID.UPNP.ORG: %5\r\n" \
+			"SERVER: Linux/1.0 UPnP/1.1 SatPI/@#3\r\n" \
+			"USN: uuid:@#4::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: @#5\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
-			"DEVICEID.SES.COM: %6\r\n" \
+			"DEVICEID.SES.COM: @#6\r\n" \
 			"\r\n";
 	const std::string msgDevice = StringConverter::stringFormat(UPNP_DEVICE,
 		_announceTimeSec,
@@ -403,8 +403,8 @@ bool Server::sendByeBye(
 			"HOST: 239.255.255.250:1900\r\n" \
 			"NT: upnp:rootdevice\r\n" \
 			"NTS: ssdp:byebye\r\n" \
-			"USN: uuid:%1::upnp:rootdevice\r\n" \
-			"BOOTID.UPNP.ORG: %2\r\n" \
+			"USN: uuid:@#1::upnp:rootdevice\r\n" \
+			"BOOTID.UPNP.ORG: @#2\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgRoot = StringConverter::stringFormat(UPNP_ROOTDEVICE_BB, uuid, bootId);
@@ -419,10 +419,10 @@ bool Server::sendByeBye(
 	const char *UPNP_BYEBYE =
 			"NOTIFY * HTTP/1.1\r\n" \
 			"HOST: 239.255.255.250:1900\r\n" \
-			"NT: uuid:%1\r\n" \
+			"NT: uuid:@#1\r\n" \
 			"NTS: ssdp:byebye\r\n" \
-			"USN: uuid:%1\r\n" \
-			"BOOTID.UPNP.ORG: %2\r\n" \
+			"USN: uuid:@#1\r\n" \
+			"BOOTID.UPNP.ORG: @#2\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgByeBye = StringConverter::stringFormat(UPNP_BYEBYE, uuid, bootId);
@@ -439,8 +439,8 @@ bool Server::sendByeBye(
 			"HOST: 239.255.255.250:1900\r\n" \
 			"NT: urn:ses-com:device:SatIPServer:1\r\n" \
 			"NTS: ssdp:byebye\r\n" \
-			"USN: uuid:%1::urn:ses-com:device:SatIPServer:1\r\n" \
-			"BOOTID.UPNP.ORG: %2\r\n" \
+			"USN: uuid:@#1::urn:ses-com:device:SatIPServer:1\r\n" \
+			"BOOTID.UPNP.ORG: @#2\r\n" \
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgDevice = StringConverter::stringFormat(UPNP_DEVICE_BB, uuid, bootId);
@@ -465,7 +465,7 @@ void Server::incrementBootID() {
 
 void Server::constructLocation() {
 	_xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
-	_location = StringConverter::stringFormat("http://%1:%2/%3",
+	_location = StringConverter::stringFormat("http://@#1:@#2/@#3",
 		_bindIPAddress,
 		_properties.getHttpPort(),
 		_xmlDeviceDescriptionFile);

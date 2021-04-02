@@ -37,7 +37,7 @@ class StringConverter  {
 		/// Returns a copy of the string where all specified markers are replaced
 		/// with the specified arguments.<br>
 		/// <b>Example:</b> @c std::string s = StringConverter::stringFormat(
-		///   "Stream: %1, Close StreamClient[%2] with SessionID %3", 1, 0, "12345");
+		///   "Stream: @#1, Close StreamClient[@#2] with SessionID @#3", 1, 0, "12345");
 		/// @return A copy of the string where all specified markers are replaced
 		/// with the specified arguments.
 		template <typename... Args>
@@ -54,11 +54,13 @@ class StringConverter  {
 			for (std::size_t i = 1; i < vectArgs.size(); ++i) {
 				size += vectArgs[i].size();
 			}
-			size -= (vectArgs.size() - 1) * 2; // remove %-tags
+			// remove @#-tags from size (-1 because of always '?' arg)
+			size -= (vectArgs.size() - 1) * 2;
 			line.reserve(size);
 
-			for ( ; *format != '\0'; ++format) {
-				if (*format == '%') {
+			for (; *format != '\0'; ++format) {
+				if (*format == '@' && *(format + 1) != '\0' && *(format + 1) == '#') {
+					++format;
 					if (*(format + 1) != '\0' && std::isdigit(*(format + 1))) {
 						++format;
 						const char *formatDigit = format;
@@ -70,17 +72,13 @@ class StringConverter  {
 						if (index < vectArgs.size()) {
 							line += vectArgs[index];
 						} else {
-							line += std::string(format - 1, digitCnt + 1);
+							line += std::string(format - 2, digitCnt + 2);
 						}
 						// -1 because of ++format in for statement
 						format += digitCnt - 1;
-					} else if (*(format + 1) == '%') {
-						// Escape sequence
-						++format;
-						line += *format;
 					} else {
-						// Error % near end of line
-						line += "%E";
+						// Error @# near end of line
+						line += "@#E";
 					}
 				} else {
 					line += *format;

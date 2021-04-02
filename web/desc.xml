@@ -7,20 +7,20 @@
 	<device>
 		<deviceType>urn:ses-com:device:SatIPServer:1</deviceType>
 		<!-- filled in by server -->
-		<friendlyName>%1</friendlyName>
+		<friendlyName>@#1</friendlyName>
 		<!-- filled in by server -->
 		<manufacturer>Marc Postema</manufacturer>
 		<manufacturerURL>https://github.com/Barracuda09/SATPI</manufacturerURL>
 		<modelDescription>SatPI is a SAT&gt;IP Server for Linux</modelDescription>
 		<!-- filled in by server -->
-		<modelName>%1</modelName>
+		<modelName>@#1</modelName>
 		<!-- filled in by server -->
-		<modelNumber>%2</modelNumber>
+		<modelNumber>@#2</modelNumber>
 		<!-- filled in by server -->
 		<modelURL>https://github.com/Barracuda09/SATPI</modelURL>
 		<serialNumber>1S81A31231000007</serialNumber>
 		<!-- filled in by server -->
-		<UDN>uuid:%3</UDN>
+		<UDN>uuid:@#3</UDN>
 		<!-- filled in by server -->
 		<UPC>123456789012</UPC>
 		<iconList>
@@ -54,13 +54,13 @@
 			</icon>
 		</iconList>
 		<!-- filled in by server -->
-		<presentationURL>%4</presentationURL>
+		<presentationURL>@#4</presentationURL>
 		<!-- filled in by server -->
 		<!-- filled in by server -->
-		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">%5</satip:X_SATIPCAP>
+		<satip:X_SATIPCAP xmlns:satip="urn:ses-com:satip">@#5</satip:X_SATIPCAP>
 		<!-- filled in by server -->
 		<!-- filled in by server -->
-		<satip:X_SATIPM3U xmlns:satip="urn:ses-com:satip">%6</satip:X_SATIPM3U>
+		<satip:X_SATIPM3U xmlns:satip="urn:ses-com:satip">@#6</satip:X_SATIPM3U>
 		<!-- filled in by server -->
 	</device>
 </root>

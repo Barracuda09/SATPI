@@ -90,19 +90,19 @@ std::string StreamManager::getXMLDeliveryString() const {
 	}
 	std::vector<std::string> strArry;
 	if (dvb_s2 > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBS2-%1", dvb_s2));
+		strArry.push_back(StringConverter::stringFormat("DVBS2-@#1", dvb_s2));
 	}
 	if (dvb_t > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBT-%1", dvb_t));
+		strArry.push_back(StringConverter::stringFormat("DVBT-@#1", dvb_t));
 	}
 	if (dvb_t2 > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBT2-%1", dvb_t2));
+		strArry.push_back(StringConverter::stringFormat("DVBT2-@#1", dvb_t2));
 	}
 	if (dvb_c > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBC-%1", dvb_c));
+		strArry.push_back(StringConverter::stringFormat("DVBC-@#1", dvb_c));
 	}
 	if (dvb_c2 > 0) {
-		strArry.push_back(StringConverter::stringFormat("DVBC2-%1", dvb_c2));
+		strArry.push_back(StringConverter::stringFormat("DVBC2-@#1", dvb_c2));
 	}
 
 	std::string delSysStr;
@@ -125,7 +125,7 @@ std::string StreamManager::getRTSPDescribeString() const {
 	for (SpStream stream : _stream) {
 		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
-	return StringConverter::stringFormat("%1,%2,%3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
+	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
 
 
@@ -236,7 +236,7 @@ void StreamManager::doFromXML(const std::string &xml) {
 	std::size_t i = 0;
 	for (SpStream stream : _stream) {
 		std::string element;
-		const std::string find = StringConverter::stringFormat("stream%1", i);
+		const std::string find = StringConverter::stringFormat("stream@#1", i);
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}

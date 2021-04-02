@@ -142,7 +142,7 @@ std::string Log::makeJSON() {
 				json.startObject();
 				json.addValueString("timestamp", elem.timestamp);
 				json.addValueString("msg", elem.msg);
-				json.addValueNumber("prio", StringConverter::stringFormat("%1", elem.priority));
+				json.addValueNumber("prio", StringConverter::stringFormat("@#1", elem.priority));
 				json.endObject();
 			}
 		}

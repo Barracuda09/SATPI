@@ -59,7 +59,7 @@ namespace delivery {
 	void DiSEqcSwitch::doNextFromXML(const std::string &xml) {
 		std::string element;
 		for (std::size_t i = 0; i < MAX_LNB; ++i) {
-			const std::string lnb = StringConverter::stringFormat("lnb%1", i);
+			const std::string lnb = StringConverter::stringFormat("lnb@#1", i);
 			if (findXMLElement(xml, lnb, element)) {
 				_lnb[i].fromXML(element);
 			}

@@ -127,11 +127,11 @@ std::string Stream::attributeDescribeString() const {
 
 std::string Stream::getDescribeMediaLevelString() const {
 	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
-		"m=video %1 RTP/AVP 33\r\n" \
-		"c=IN IP4 %2\r\n" \
-		"a=control:stream=%3\r\n" \
-		"a=fmtp:33 %4\r\n" \
-		"a=%5\r\n";
+		"m=video @#1 RTP/AVP 33\r\n" \
+		"c=IN IP4 @#2\r\n" \
+		"a=control:stream=@#3\r\n" \
+		"a=fmtp:33 @#4\r\n" \
+		"a=@#5\r\n";
 	const std::string desc_attr = _device->attributeDescribeString();
 	if (desc_attr.size() > 5) {
 		if (_streamingType == StreamingType::RTSP_MULTICAST) {

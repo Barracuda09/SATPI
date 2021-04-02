@@ -1,429 +1,429 @@
 #EXTM3U
 #EXTINF:0,1. Das Erste HD
-rtsp://%1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5100,5101,5102,5104
+rtsp://@#1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5100,5101,5102,5104
 #EXTINF:0,2. ZDF HD
-rtsp://%1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6100,6110,6120,6130
+rtsp://@#1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6100,6110,6120,6130
 #EXTINF:0,3. RTL Television
-rtsp://%1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,163,104,44,105
+rtsp://@#1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,163,104,44,105
 #EXTINF:0,4. Sat.1
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,255,256,96,32
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,255,256,96,32
 #EXTINF:0,5. RTL 2
-rtsp://%1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,166,128,46,68
+rtsp://@#1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,166,128,46,68
 #EXTINF:0,6. Pro Sieben
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,97,511,512,33
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,97,511,512,33
 #EXTINF:0,7. Vox
-rtsp://%1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,167,136,47,71
+rtsp://@#1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,167,136,47,71
 #EXTINF:0,8. Kabel Eins
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,767,768,98,34
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,767,768,98,34
 #EXTINF:0,10. WDR HD
-rtsp://%1/?src=1&freq=12604&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5601,5602,5600,5604
+rtsp://@#1/?src=1&freq=12604&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5601,5602,5600,5604
 #EXTINF:0,11. BR HD
-rtsp://%1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5201,5202,5210,5204
+rtsp://@#1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5201,5202,5210,5204
 #EXTINF:0,12. HR HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5350,5351,5352,5354
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5350,5351,5352,5354
 #EXTINF:0,13. NDR HD
-rtsp://%1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5221,5222,5240,5224
+rtsp://@#1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5221,5222,5240,5224
 #EXTINF:0,14. SWR HD
-rtsp://%1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5121,5122,5120,5124
+rtsp://@#1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5121,5122,5120,5124
 #EXTINF:0,15. SR Fernsehen
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1300,1301,1302,1304
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1300,1301,1302,1304
 #EXTINF:0,16. MDR HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5330,5331,5332,5334
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5330,5331,5332,5334
 #EXTINF:0,17. rbb Berlin HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5310,5311,5312,5314
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5310,5311,5312,5314
 #EXTINF:0,18. arte HD
-rtsp://%1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5110,5111,5112
+rtsp://@#1/?src=1&freq=11494&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5110,5111,5112
 #EXTINF:0,19. 3sat HD
-rtsp://%1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6500,6510,6520,6530
+rtsp://@#1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6500,6510,6520,6530
 #EXTINF:0,20. Phoenix
-rtsp://%1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5260,5261,5262
+rtsp://@#1/?src=1&freq=11583&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5260,5261,5262
 #EXTINF:0,21. ARD alpha
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1400,1401,1402
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1400,1401,1402
 #EXTINF:0,22. Eins Plus HD
-rtsp://%1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5420,5421,5422
+rtsp://@#1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5420,5421,5422
 #EXTINF:0,23. Eins Festival HD
-rtsp://%1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5410,5411,5412
+rtsp://@#1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5410,5411,5412
 #EXTINF:0,24. Tagesschau 24 HD
-rtsp://%1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5400,5401,5402
+rtsp://@#1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5400,5401,5402
 #EXTINF:0,25. ZDF neo HD
-rtsp://%1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6300,6310,6320,6330
+rtsp://@#1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6300,6310,6320,6330
 #EXTINF:0,26. zdf.kultur HD
-rtsp://%1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6400,6410,6420,6430
+rtsp://@#1/?src=1&freq=11362&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6400,6410,6420,6430
 #EXTINF:0,27. ZDF info HD
-rtsp://%1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6700,6710,6720,6730
+rtsp://@#1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6700,6710,6720,6730
 #EXTINF:0,28. RTL Nitro
-rtsp://%1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,173,146,53,84
+rtsp://@#1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,173,146,53,84
 #EXTINF:0,29. Sat 1 Gold
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1279,1280,100,36
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1279,1280,100,36
 #EXTINF:0,30. Pro7 MAXX
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,101,1535,1536
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,101,1535,1536
 #EXTINF:0,31. Tele 5
-rtsp://%1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,99,1535,1536
+rtsp://@#1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,99,1535,1536
 #EXTINF:0,32. ANIXE HD
-rtsp://%1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,255,259,96
+rtsp://@#1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,255,259,96
 #EXTINF:0,33. DMAX
-rtsp://%1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,3327,3328,108,44
+rtsp://@#1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,3327,3328,108,44
 #EXTINF:0,34. Sixx
-rtsp://%1/?src=1&freq=12461&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,767,768,99,35
+rtsp://@#1/?src=1&freq=12461&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,767,768,99,35
 #EXTINF:0,35. Comedy Central
-rtsp://%1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,416,4061,4062,8190
+rtsp://@#1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,416,4061,4062,8190
 #EXTINF:0,60. ORF1
-rtsp://%1/?src=1&freq=11303&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,107,1920,1921
+rtsp://@#1/?src=1&freq=11303&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,107,1920,1921
 #EXTINF:0,61. ORF2 Europe
-rtsp://%1/?src=1&freq=12693&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1004,170,171
+rtsp://@#1/?src=1&freq=12693&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1004,170,171
 #EXTINF:0,62. Schau TV
-rtsp://%1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,225,2250,2251
+rtsp://@#1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,225,2250,2251
 #EXTINF:0,63. ServusTV
-rtsp://%1/?src=1&freq=11303&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,3583,3584,109,3588
+rtsp://@#1/?src=1&freq=11303&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,3583,3584,109,3588
 #EXTINF:0,64. RTL Oesterreich
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,200,201,202,203
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,200,201,202,203
 #EXTINF:0,65. Sat 1 Oesterreich
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1028,800,801
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1028,800,801
 #EXTINF:0,66. RTL2 Oesterreich
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,400,401,402,403
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,400,401,402,403
 #EXTINF:0,67. ProSieben Oesterreich
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1025,161,84
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1025,161,84
 #EXTINF:0,68. VOX Oesterreich
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601,602,603
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601,602,603
 #EXTINF:0,69. Kabel 1 Oesterreich
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1027,166,167
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1027,166,167
 #EXTINF:0,70. SuperRTL Oesterreich
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,500,501,502,503
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,500,501,502,503
 #EXTINF:0,80. RTL Schweiz
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,610,611,612,613,614
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,610,611,612,613,614
 #EXTINF:0,81. Sat 1 Schweiz
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,101,1535,1536
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,101,1535,1536
 #EXTINF:0,82. RTL2 Schweiz
-rtsp://%1/?src=1&freq=11391&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,96,255,256
+rtsp://@#1/?src=1&freq=11391&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,96,255,256
 #EXTINF:0,83. ProSieben Schweiz
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,32,289,290
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,32,289,290
 #EXTINF:0,84. VOX Schweiz
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601,602,603
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601,602,603
 #EXTINF:0,85. Kabel 1 Schweiz
-rtsp://%1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1026,162,163
+rtsp://@#1/?src=1&freq=12051&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1026,162,163
 #EXTINF:0,86. SuperRTL Schweiz
-rtsp://%1/?src=1&freq=12187&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,52,172,145
+rtsp://@#1/?src=1&freq=12187&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,52,172,145
 #EXTINF:0,200. Tagesschau24 HD
-rtsp://%1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5400,5401,5402
+rtsp://@#1/?src=1&freq=11053&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,5400,5401,5402
 #EXTINF:0,201. n-tv
-rtsp://%1/?src=1&freq=12187&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,48,169,73
+rtsp://@#1/?src=1&freq=12187&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,48,169,73
 #EXTINF:0,202. N24
-rtsp://%1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,99,1023,1024
+rtsp://@#1/?src=1&freq=12545&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,99,1023,1024
 #EXTINF:0,203. DW-TV
-rtsp://%1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,273,529,785
+rtsp://@#1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,273,529,785
 #EXTINF:0,204. Euronews D
-rtsp://%1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,260,2432,2433,2434,2435,2436
+rtsp://@#1/?src=1&freq=12226&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,260,2432,2433,2434,2435,2436
 #EXTINF:0,220. BBC World News
-rtsp://%1/?src=1&freq=11229&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,212,2091,2092
+rtsp://@#1/?src=1&freq=11229&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,212,2091,2092
 #EXTINF:0,221. CNN
-rtsp://%1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3946,165,100
+rtsp://@#1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3946,165,100
 #EXTINF:0,222. Sky News International
-rtsp://%1/?src=1&freq=12604&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7290,1290,2290
+rtsp://@#1/?src=1&freq=12604&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7290,1290,2290
 #EXTINF:0,223. Bloomberg
-rtsp://%1/?src=1&freq=11597&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1360,1320,1090,37
+rtsp://@#1/?src=1&freq=11597&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1360,1320,1090,37
 #EXTINF:0,224. CNBC Europe
-rtsp://%1/?src=1&freq=11597&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1838,307,308
+rtsp://@#1/?src=1&freq=11597&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1838,307,308
 #EXTINF:0,230. KIKA HD
-rtsp://%1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6600,6610,6620,6630
+rtsp://@#1/?src=1&freq=11347&pol=v&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,6600,6610,6620,6630
 #EXTINF:0,231. SuperRTL
-rtsp://%1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,165,120,45,65
+rtsp://@#1/?src=1&freq=12188&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,165,120,45,65
 #EXTINF:0,232. Nickelodeon HD
-rtsp://%1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,420,4101,4102,8190
+rtsp://@#1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,420,4101,4102,8190
 #EXTINF:0,233. Disney Channel
-rtsp://%1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,115,2047,2048
+rtsp://@#1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,115,2047,2048
 #EXTINF:0,250. EUROSPORT Deutschland
-rtsp://%1/?src=1&freq=12227&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,101,103,280,102
+rtsp://@#1/?src=1&freq=12227&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,101,103,280,102
 #EXTINF:0,251. SPORT1 HD
-rtsp://%1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1023,1024,103,39
+rtsp://@#1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1023,1024,103,39
 #EXTINF:0,270. VIVA
-rtsp://%1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,416,4061,4062,8190
+rtsp://@#1/?src=1&freq=11973&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,416,4061,4062,8190
 #EXTINF:0,271. Deluxe Music
-rtsp://%1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,99,3327,3328
+rtsp://@#1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,99,3327,3328
 #EXTINF:0,274. Volksmusik TV
-rtsp://%1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,222,2220,2221
+rtsp://@#1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,222,2220,2221
 #EXTINF:0,275. Melodie Express
-rtsp://%1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,229,2290,2291
+rtsp://@#1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,229,2290,2291
 #EXTINF:0,276. Deutsches Musik Fernsehen
-rtsp://%1/?src=1&freq=12633&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,105,53,54
+rtsp://@#1/?src=1&freq=12633&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,105,53,54
 #EXTINF:0,277. Hitradio OE3
-rtsp://%1/?src=1&freq=12693&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,130,131,1003
+rtsp://@#1/?src=1&freq=12693&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,130,131,1003
 #EXTINF:0,450. Bibel TV
-rtsp://%1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,224,2240,2241
+rtsp://@#1/?src=1&freq=11244&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,224,2240,2241
 #EXTINF:0,451. K-TV Fernsehen
-rtsp://%1/?src=1&freq=12633&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,102,202,302
+rtsp://@#1/?src=1&freq=12633&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,102,202,302
 #EXTINF:0,452. DIE NEUE ZEIT TV
-rtsp://%1/?src=1&freq=11421&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,109,3583,3584
+rtsp://@#1/?src=1&freq=11421&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,109,3583,3584
 #EXTINF:0,453. Hope Channel TV
-rtsp://%1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,105,511,512
+rtsp://@#1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,105,511,512
 #EXTINF:0,454. EWTN Europe
-rtsp://%1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,100,1023,1024
+rtsp://@#1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,100,1023,1024
 #EXTINF:0,460. Astro TV
-rtsp://%1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,98,2559,2560
+rtsp://@#1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,98,2559,2560
 #EXTINF:0,461. Dr Dish
-rtsp://%1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,107,3071,3072
+rtsp://@#1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,107,3071,3072
 #EXTINF:0,500. 1-2-3.tv HD
-rtsp://%1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,98,767,771,34
+rtsp://@#1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,98,767,771,34
 #EXTINF:0,501. HSE24 HD
-rtsp://%1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1279,1283,100,36
+rtsp://@#1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1279,1283,100,36
 #EXTINF:0,502. HSE24 Extra HD
-rtsp://%1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,97,511,515,
+rtsp://@#1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,97,511,515,
 #EXTINF:0,503. HSE24 Trend
-rtsp://%1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,110,3071,3072
+rtsp://@#1/?src=1&freq=12480&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,110,3071,3072
 #EXTINF:0,504. QVC HD
-rtsp://%1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1023,1027,99,35
+rtsp://@#1/?src=1&freq=10774&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1023,1027,99,35
 #EXTINF:0,505. QVC Plus HD
-rtsp://%1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1279,1283,100,36
+rtsp://@#1/?src=1&freq=10803&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=34&pids=0,17,18,1279,1283,100,36
 #EXTINF:0,506. QVC Beauty and Style
-rtsp://%1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,102,1791,1792
+rtsp://@#1/?src=1&freq=12460&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,102,1791,1792
 #EXTINF:0,507. SonnenklarTV HD
-rtsp://%1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,96,255,259
+rtsp://@#1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,96,255,259
 #EXTINF:0,508. Pearl.tv HD
-rtsp://%1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,100,1279,1280
+rtsp://@#1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=off&sr=22000&fec=23&pids=0,17,18,100,1279,1280
 #EXTINF:0,509. Juwelo HD
-rtsp://%1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,1023,1024,99
+rtsp://@#1/?src=1&freq=12574&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,1023,1024,99
 #EXTINF:0,600. WDR HD Aachen
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5600,5601,5602,3804
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5600,5601,5602,3804
 #EXTINF:0,601. WDR HD Koeln
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5500,5501,5502,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5500,5501,5502,504
 #EXTINF:0,602. WDR HD Bielefeld
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5510,5511,5512,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5510,5511,5512,504
 #EXTINF:0,603. WDR HD Bonn
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5620,5621,5622,3804
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5620,5621,5622,3804
 #EXTINF:0,604. WDR HD Dortmund
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5520,5521,5522,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5520,5521,5522,504
 #EXTINF:0,605. WDR HD Duisburg
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5630,5631,5632,3804
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5630,5631,5632,3804
 #EXTINF:0,606. WDR HD Duesseldorf
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5501,5530,5532,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5501,5530,5532,504
 #EXTINF:0,607. WDR HD Essen
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5540,5541,5542,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5540,5541,5542,504
 #EXTINF:0,608. WDR HD Muenster
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5550,5551,5552,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5550,5551,5552,504
 #EXTINF:0,609. WDR HD Siegen
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5560,5561,5562,504
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,5560,5561,5562,504
 #EXTINF:0,610. WDR HD Wuppertal
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5610,5611,5612,3804
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,5610,5611,5612,3804
 #EXTINF:0,615. Radio Bremen TV
-rtsp://%1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1200,1201,1202,1204
+rtsp://@#1/?src=1&freq=12421.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1200,1201,1202,1204
 #EXTINF:0,616. rbb Brandenburg HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5300,5311,5312,5314
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5300,5311,5312,5314
 #EXTINF:0,617. rbb Berlin HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5310,5311,5312,5314
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5310,5311,5312,5314
 #EXTINF:0,618. MDR Sachsen HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5320,5331,5332,5334
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5320,5331,5332,5334
 #EXTINF:0,619. MDR S-Anhalt HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5330,5332,5331,5334
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5330,5332,5331,5334
 #EXTINF:0,620. MDR Thueringen HD
-rtsp://%1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5340,5332,5331,5334
+rtsp://@#1/?src=1&freq=10891&pol=h&ro=0.35&msys=dvbs2&mtype=8psk&plts=on&sr=22000&fec=23&pids=0,17,18,5340,5332,5331,5334
 #EXTINF:0,640. Rheinmain TV
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,108,208,308,508
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,108,208,308,508
 #EXTINF:0,641. Rhein-Neckar Fernsehen
-rtsp://%1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,122,1104,1105
+rtsp://@#1/?src=1&freq=12148&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,122,1104,1105
 #EXTINF:0,642. Muenchen TV
-rtsp://%1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,100,1279,1280
+rtsp://@#1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,100,1279,1280
 #EXTINF:0,643. Franken Fernsehen
-rtsp://%1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,97,511,512
+rtsp://@#1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,97,511,512
 #EXTINF:0,644. Ulm-Allgaeu
-rtsp://%1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,99,1023,1024
+rtsp://@#1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,99,1023,1024
 #EXTINF:0,645. intv
-rtsp://%1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,98,767,768
+rtsp://@#1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,98,767,768
 #EXTINF:0,646. a.tv
-rtsp://%1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,96,255,256
+rtsp://@#1/?src=1&freq=11523&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,96,255,256
 #EXTINF:0,700. NHK World
-rtsp://%1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,764,714,734
+rtsp://@#1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,764,714,734
 #EXTINF:0,701. CCTV News
-rtsp://%1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,664,614,634
+rtsp://@#1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,664,614,634
 #EXTINF:0,702. Russia Today
-rtsp://%1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,654,604,624
+rtsp://@#1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,654,604,624
 #EXTINF:0,703. Al Jazeera Satellite Channel
-rtsp://%1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,759,709,729
+rtsp://@#1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,759,709,729
 #EXTINF:0,704. Al Jazeera English
-rtsp://%1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,762,712,732
+rtsp://@#1/?src=1&freq=11508&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,762,712,732
 #EXTINF:0,705. France 24 English
-rtsp://%1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,202,606,626
+rtsp://@#1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,202,606,626
 #EXTINF:0,720. ARTE France
-rtsp://%1/?src=1&freq=12402&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1200,1210,1221,1241
+rtsp://@#1/?src=1&freq=12402&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1200,1210,1221,1241
 #EXTINF:0,721. TV5 Monde Europe
-rtsp://%1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,665,615,635
+rtsp://@#1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,665,615,635
 #EXTINF:0,722. BFM TV
-rtsp://%1/?src=1&freq=12552&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,2170,2171,2172
+rtsp://@#1/?src=1&freq=12552&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,2170,2171,2172
 #EXTINF:0,723. i>Tele
-rtsp://%1/?src=1&freq=11856&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,200,210,221,241
+rtsp://@#1/?src=1&freq=11856&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,200,210,221,241
 #EXTINF:0,724. LCP La chaine parlementaire
-rtsp://%1/?src=1&freq=12402&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,700,710,721,741
+rtsp://@#1/?src=1&freq=12402&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,700,710,721,741
 #EXTINF:0,725. BFM Business
-rtsp://%1/?src=1&freq=12552&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1059,38,39
+rtsp://@#1/?src=1&freq=12552&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1059,38,39
 #EXTINF:0,726. France 24
-rtsp://%1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,201,605,625
+rtsp://@#1/?src=1&freq=11538&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,201,605,625
 #EXTINF:0,730. BVN Best van Vlaanderen
-rtsp://%1/?src=1&freq=11186&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,2116,525,122
+rtsp://@#1/?src=1&freq=11186&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,2116,525,122
 #EXTINF:0,740. TVE International
-rtsp://%1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3520,3521,3522
+rtsp://@#1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3520,3521,3522
 #EXTINF:0,741. Canal 24 Horas
-rtsp://%1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3568,3569,3570
+rtsp://@#1/?src=1&freq=11626&pol=v&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,3568,3569,3570
 #EXTINF:0,800. Bayern 1
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,100,101
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,100,101
 #EXTINF:0,801. Bayern 2
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,110,111
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,110,111
 #EXTINF:0,802. Bayern 3
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,120,121
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,120,121
 #EXTINF:0,803. BR-KLASSIK
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,130,131
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,130,131
 #EXTINF:0,804. B5 aktuell
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,140,141
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,140,141
 #EXTINF:0,805. BAYERN plus
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,150,151
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,150,151
 #EXTINF:0,806. PULS
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,160,161
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,160,161
 #EXTINF:0,807. B5 plus
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,180,181
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,180,181
 #EXTINF:0,808. hr1
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,400,401
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,400,401
 #EXTINF:0,809. hr2
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,410,411
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,410,411
 #EXTINF:0,810. hr3
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,420,421
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,420,421
 #EXTINF:0,811. hr4
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,430,431
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,430,431
 #EXTINF:0,812. YOU FM
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,450,451
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,450,451
 #EXTINF:0,813. hr-iNFO
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,460,461
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,460,461
 #EXTINF:0,814. MDR1 SACHSEN
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,500,501
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,500,501
 #EXTINF:0,815. MDR S-ANHALT
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,510,511
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,510,511
 #EXTINF:0,816. MDR THÜRINGEN
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,520,521
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,520,521
 #EXTINF:0,817. MDR FIGARO
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,530,531
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,530,531
 #EXTINF:0,818. MDR JUMP
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,540,541
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,540,541
 #EXTINF:0,819. MDR SPUTNIK
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,550,551
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,550,551
 #EXTINF:0,820. MDR INFO
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,560,561
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,560,561
 #EXTINF:0,821. MDR KLASSIK
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,570,571
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,570,571
 #EXTINF:0,822. NDR 2
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,600,601
 #EXTINF:0,823. NDR Kultur
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,610,611
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,610,611
 #EXTINF:0,824. NDR Info
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,620,621
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,620,621
 #EXTINF:0,825. N-JOY
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,630,631
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,630,631
 #EXTINF:0,826. NDR 90.3
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,640,641
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,640,641
 #EXTINF:0,827. NDR1WelleNord
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,650,651
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,650,651
 #EXTINF:0,828. NDR 1 Radio MV
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,660,661
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,660,661
 #EXTINF:0,829. NDR 1 Nieders.
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,670,671
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,670,671
 #EXTINF:0,830. NDR Info Spez.
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,680,681
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,680,681
 #EXTINF:0,831. NDR Blue
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,690,691
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,690,691
 #EXTINF:0,832. Bremen Eins
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,700,701
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,700,701
 #EXTINF:0,833. Nordwestradio
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,710,711
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,710,711
 #EXTINF:0,834. Bremen Vier
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,720,721
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,720,721
 #EXTINF:0,835. InfoRadio
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,800,801
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,800,801
 #EXTINF:0,836. kulturradio
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,810,811
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,810,811
 #EXTINF:0,837. Antenne Brandenburg
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,820,821
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,820,821
 #EXTINF:0,838. radioBERLIN 88.8
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,830,831
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,830,831
 #EXTINF:0,839. radioeins
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,840,841
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,840,841
 #EXTINF:0,840. Fritz
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,850,851
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,850,851
 #EXTINF:0,841. SR 1 Europawelle
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,900,901
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,900,901
 #EXTINF:0,842. SR 2 KulturRadio
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,910,911
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,910,911
 #EXTINF:0,843. SR 3 Saarlandwelle
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,920,921
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,920,921
 #EXTINF:0,844. SWR1 BW
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1000,1001
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1000,1001
 #EXTINF:0,845. SWR1 RP
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1010,1011
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1010,1011
 #EXTINF:0,846. SWR2
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1020,1021
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1020,1021
 #EXTINF:0,847. SWR3
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1030,1031
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1030,1031
 #EXTINF:0,848. SWR4 BW
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1040,1041
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1040,1041
 #EXTINF:0,849. SWR4 RP
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1050,1051
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1050,1051
 #EXTINF:0,850. DASDING
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1060,1061
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1060,1061
 #EXTINF:0,851. SWRinfo
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1070,1071
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1070,1071
 #EXTINF:0,852. 1LIVE
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1100,1101
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1100,1101
 #EXTINF:0,853. WDR 2
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1110,1111
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1110,1111
 #EXTINF:0,854. WDR 3
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1120,1121
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1120,1121
 #EXTINF:0,855. WDR 4
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1130,1131
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1130,1131
 #EXTINF:0,856. WDR 5
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1140,1141
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1140,1141
 #EXTINF:0,857. WDR Funkhaus Europa
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1150,1151
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1150,1151
 #EXTINF:0,858. 1LIVE diggi
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1160,1161
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1160,1161
 #EXTINF:0,859. KIRAKA
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1170,1171
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1170,1171
 #EXTINF:0,860. WDR Event
-rtsp://%1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1180,1181
+rtsp://@#1/?src=1&freq=12266&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,1180,1181
 #EXTINF:0,870. OE1
-rtsp://%1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1121,421
+rtsp://@#1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1121,421
 #EXTINF:0,871. OE2
-rtsp://%1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1128,428
+rtsp://@#1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1128,428
 #EXTINF:0,872. OE3
-rtsp://%1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1133,433
+rtsp://@#1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1133,433
 #EXTINF:0,874. RTL Radio
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7931,7932
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7931,7932
 #EXTINF:0,875. Klassik Radio
-rtsp://%1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,133,336
+rtsp://@#1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,133,336
 #EXTINF:0,876. Radio Horeb
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7289,1289
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7289,1289
 #EXTINF:0,877. domradio
-rtsp://%1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,104,368
+rtsp://@#1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,104,368
 #EXTINF:0,878. Radio Maria
-rtsp://%1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1140,440
+rtsp://@#1/?src=1&freq=12663&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,1140,440
 #EXTINF:0,879. Radio neue Hoffnung
-rtsp://%1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7292,1292
+rtsp://@#1/?src=1&freq=12603.75&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,7292,1292
 #EXTINF:0,880. Hope Channel Radio
-rtsp://%1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,135,400
+rtsp://@#1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,135,400
 #EXTINF:0,881. JAM FM
-rtsp://%1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,119,528
+rtsp://@#1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,119,528
 #EXTINF:0,882. egoFM
-rtsp://%1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,132,384
+rtsp://@#1/?src=1&freq=12460.5&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=27500&fec=34&pids=0,17,18,132,384
 #EXTINF:0,884. Inselradio
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,152,702
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,152,702
 #EXTINF:0,885. radio top40
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,153,353
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,153,353
 #EXTINF:0,886. ffn digital
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,154,354
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,154,354
 #EXTINF:0,887. Radio Paloma
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,155,355
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,155,355
 #EXTINF:0,888. SCHLAGERPARADIES
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,158,358
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,158,358
 #EXTINF:0,889. Radio Gloria
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,159,359
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,159,359
 #EXTINF:0,890. HIT RADIO FFH
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,109,1024
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,109,1024
 #EXTINF:0,891. planet radio
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,110,1030
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,110,1030
 #EXTINF:0,892. harmony.fm
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,111,1036
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,111,1036
 #EXTINF:0,893. Radio Regenbogen
-rtsp://%1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,163,363
+rtsp://@#1/?src=1&freq=12633.25&pol=h&ro=0.35&msys=dvbs&mtype=qpsk&plts=off&sr=22000&fec=56&pids=0,17,18,163,363

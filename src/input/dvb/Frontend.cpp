@@ -95,10 +95,10 @@ namespace dvb {
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &path,
 			const std::string &startPath) {
-		const std::string ADAPTER = startPath + "/adapter%1";
-		const std::string DMX = ADAPTER + "/demux%2";
-		const std::string DVR = ADAPTER + "/dvr%2";
-		const std::string FRONTEND = ADAPTER + "/frontend%2";
+		const std::string ADAPTER = startPath + "/adapter@#1";
+		const std::string DMX = ADAPTER + "/demux@#2";
+		const std::string DVR = ADAPTER + "/dvr@#2";
+		const std::string FRONTEND = ADAPTER + "/frontend@#2";
 #if SIMU
 		// unused var
 		(void)path;
@@ -119,7 +119,7 @@ namespace dvb {
 		const int n = scandir(path.c_str(), &file_list, nullptr, versionsort);
 		if (n > 0) {
 			for (int i = 0; i < n; ++i) {
-				const std::string full_path = StringConverter::stringFormat("%1/%2", path, file_list[i]->d_name);
+				const std::string full_path = StringConverter::stringFormat("@#1/@#2", path, file_list[i]->d_name);
 				struct stat stat_buf;
 				if (stat(full_path.c_str(), &stat_buf) == 0) {
 					switch (stat_buf.st_mode & S_IFMT) {
@@ -182,8 +182,8 @@ namespace dvb {
 	void Frontend::doAddToXML(std::string &xml) const {
 		ADD_XML_ELEMENT(xml, "frontendname", _fe_info.name);
 		ADD_XML_ELEMENT(xml, "pathname", _path_to_fe);
-		ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("%1 Hz to %2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
-		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("%1 symbols/s to %2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
+		ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("@#1 Hz to @#2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
+		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("@#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
 
 		ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 
@@ -206,7 +206,7 @@ namespace dvb {
 
 		}
 		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
-			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem%1", i);
+			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem@#1", i);
 			if (findXMLElement(xml, deliverySystem, element)) {
 				_deliverySystem[i]->fromXML(element);
 			}
@@ -695,9 +695,8 @@ namespace dvb {
 						_tuned = true;
 						SI_LOG_INFO("Stream: %d, Tuned and locked (FE status 0x%X)", _streamID, status);
 						break;
-					} else {
-						SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 					}
+					SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(75));
 			}

@@ -110,7 +110,7 @@ bool HttpServer::methodGet(SocketClient &client) {
 		                               "<body>\r\n"                            \
 		                               "<h1>Moved</h1>\r\n"                    \
 		                               "<p>This page is moved:\r\n"            \
-		                               "<a href=\"%1:%2/%3\">link</a>.</p>\r\n"\
+		                               "<a href=\"@#1:@#2/@#3\">link</a>.</p>\r\n"\
 		                               "</body>\r\n"                           \
 		                               "</html>";
 		docType = StringConverter::stringFormat(HTML_MOVED, _bindIPAddress, _properties.getHttpPort(), "index.html");
@@ -149,13 +149,13 @@ bool HttpServer::methodGet(SocketClient &client) {
 					// XSatipM3U, presentationURL and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
 						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
-						// check did we get our desc.xml (we assume there are some %1 in there)
-						if (docType.find("%1") != std::string::npos) {
+						// check did we get our desc.xml (we assume there are some @#1 in there)
+						if (docType.find("@#1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
-							const std::string presentationURL = StringConverter::stringFormat("http://%1:%2/",
+							const std::string presentationURL = StringConverter::stringFormat("http://@#1:@#2/",
 									_bindIPAddress,
 									std::to_string(_properties.getHttpPort()));
-							const std::string modelName = StringConverter::stringFormat("SatPI Server (%1)", _bindIPAddress);
+							const std::string modelName = StringConverter::stringFormat("SatPI Server (@#1)", _bindIPAddress);
 							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
 								modelName, _properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
@@ -174,17 +174,17 @@ bool HttpServer::methodGet(SocketClient &client) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_CSS, docTypeSize, 0);
 				} else if (file.find(".m3u") != std::string::npos) {
 					SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
-					// did we read our *.m3u, we assume there are some %1
-					if (docType.find("%1") != std::string::npos) {
-						const std::string rtsp = StringConverter::stringFormat("%1:%2",
+					// did we read our *.m3u, we assume there are some @#1
+					if (docType.find("@#1") != std::string::npos) {
+						const std::string rtsp = StringConverter::stringFormat("@#1:@#2",
 								_bindIPAddress,	std::to_string(_properties.getRtspPort()));
-						const std::string http = StringConverter::stringFormat("%1:%2",
+						const std::string http = StringConverter::stringFormat("@#1:@#2",
 								_bindIPAddress,	std::to_string(_properties.getHttpPort()));
 						std::stringstream docTypeStream(docType);
 						docType.clear();
 						for (std::string line; std::getline(docTypeStream, line); ) {
 							line += "\n";
-							if (line.find("%1") == std::string::npos) {
+							if (line.find("@#1") == std::string::npos) {
 								docType += line;
 								continue;
 							}

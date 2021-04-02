@@ -269,7 +269,7 @@ namespace delivery {
 
 	int DVBS::readProcData(int streamID, const std::string &procEntry) const {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/%1/%2", streamID, procEntry);
+			"/proc/stb/frontend/@#1/@#2", streamID, procEntry);
 		std::ifstream file(filePath);
 		if (file.is_open()) {
 			int value;
@@ -281,7 +281,7 @@ namespace delivery {
 
 	void DVBS::writeProcData(int streamID, const std::string &procEntry, int value) {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/%1/%2", streamID, procEntry);
+			"/proc/stb/frontend/@#1/@#2", streamID, procEntry);
 		std::ofstream file(filePath);
 		if (file.is_open()) {
 			file << value;
@@ -291,7 +291,7 @@ namespace delivery {
 	void DVBS::readConnectionChoices(int streamID) {
 		// File looks something like: 0=A, 1=B
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/%1/fbc_connect_choices", streamID);
+			"/proc/stb/frontend/@#1/fbc_connect_choices", streamID);
 		std::ifstream file(filePath);
 		if (!file.is_open()) {
 			return;

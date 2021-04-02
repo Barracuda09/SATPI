@@ -138,5 +138,5 @@
 	}
 
 	std::string InterfaceAttr::getUUID() const {
-		return StringConverter::stringFormat("50c958a8-e839-4b96-b7ae-%1", _macAddr);
+		return StringConverter::stringFormat("50c958a8-e839-4b96-b7ae-@#1", _macAddr);
 	}

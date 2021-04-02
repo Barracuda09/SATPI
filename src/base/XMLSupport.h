@@ -161,27 +161,27 @@ class XMLSupport {
 } // namespace base
 
 #define ADD_XML_BEGIN_ELEMENT(XML, ELEMENTNAME) \
-	XML += StringConverter::stringFormat("<%1>", ELEMENTNAME)
+	XML += StringConverter::stringFormat("<@#1>", ELEMENTNAME)
 
 #define ADD_XML_END_ELEMENT(XML, ELEMENTNAME) \
-	XML += StringConverter::stringFormat("</%1>", ELEMENTNAME)
+	XML += StringConverter::stringFormat("</@#1>", ELEMENTNAME)
 
 #define ADD_XML_ELEMENT(XML, ELEMENTNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1>%2</%1>", ELEMENTNAME, base::XMLSupport::makeXMLString(VALUE))
+	XML += StringConverter::stringFormat("<@#1>@#2</@#1>", ELEMENTNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_N_ELEMENT(XML, ELEMENTNAME, N, VALUE) \
-	XML += StringConverter::stringFormat("<%1%2>%3</%1%2>", ELEMENTNAME, N, base::XMLSupport::makeXMLString(VALUE))
+	XML += StringConverter::stringFormat("<@#1@#2>@#3</@#1@#2>", ELEMENTNAME, N, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_CHECKBOX(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>checkbox</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
+	XML += StringConverter::stringFormat("<@#1><inputtype>checkbox</inputtype><value>@#2</value></@#1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_NUMBER_INPUT(XML, VARNAME, VALUE, MIN, MAX) \
-	XML += StringConverter::stringFormat("<%1><inputtype>number</inputtype><value>%2</value><minvalue>%3</minvalue><maxvalue>%4</maxvalue></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE), MIN, MAX)
+	XML += StringConverter::stringFormat("<@#1><inputtype>number</inputtype><value>@#2</value><minvalue>@#3</minvalue><maxvalue>@#4</maxvalue></@#1>", VARNAME, base::XMLSupport::makeXMLString(VALUE), MIN, MAX)
 
 #define ADD_XML_TEXT_INPUT(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>text</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
+	XML += StringConverter::stringFormat("<@#1><inputtype>text</inputtype><value>@#2</value></@#1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #define ADD_XML_IP_INPUT(XML, VARNAME, VALUE) \
-	XML += StringConverter::stringFormat("<%1><inputtype>ip</inputtype><value>%2</value></%1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
+	XML += StringConverter::stringFormat("<@#1><inputtype>ip</inputtype><value>@#2</value></@#1>", VARNAME, base::XMLSupport::makeXMLString(VALUE))
 
 #endif // BASE_XML_SUPPORT_H_INCLUDE

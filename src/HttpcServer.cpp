@@ -32,23 +32,23 @@
 #include <fcntl.h>
 
 const char *HttpcServer::HTML_BODY_WITH_CONTENT =
-	"%1 %2\r\n" \
+	"@#1 @#2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
-	"Location: %3\r\n" \
-	"CSeq: %4\r\n" \
+	"Location: @#3\r\n" \
+	"CSeq: @#4\r\n" \
 	"cache-control: no-cache\r\n" \
-	"Content-Type: %5\r\n" \
-	"Content-Length: %6\r\n" \
-	"%7" \
+	"Content-Type: @#5\r\n" \
+	"Content-Length: @#6\r\n" \
+	"@#7" \
 	"\r\n";
 
 const char *HttpcServer::HTML_BODY_NO_CONTENT =
-	"%1 %2\r\n" \
+	"@#1 @#2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
-	"Location: %3\r\n" \
-	"CSeq: %4\r\n" \
+	"Location: @#3\r\n" \
+	"CSeq: @#4\r\n" \
 	"cache-control: no-cache\r\n" \
-	"Content-Type: %5\r\n" \
+	"Content-Type: @#5\r\n" \
 	"\r\n";
 
 const std::string HttpcServer::HTML_PROTOCOL_RTSP_VERSION = "RTSP/1.0";
@@ -101,7 +101,7 @@ void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody,
 		std::size_t cseq, const unsigned int rtspPort) const {
 	// Check do we need to add TvHeadend specific "X-SATIP-RTSP-Port"
 	const std::string satipRtspPort = (rtspPort == 0) ? "" :
-		StringConverter::stringFormat("X-SATIP-RTSP-Port: %1\r\n", rtspPort);
+		StringConverter::stringFormat("X-SATIP-RTSP-Port: @#1\r\n", rtspPort);
 
 	htmlBody = StringConverter::stringFormat(HTML_BODY_WITH_CONTENT,
 		getProtocolVersionString(), html, location, cseq, contentType,
