@@ -679,6 +679,7 @@ namespace dvb {
 				_fd_fe = openFE(_path_to_fe, false);
 				SI_LOG_INFO("Stream: %d, Opened %s for Read/Write with fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
 			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 			// try tuning
 			if (!tune()) {
 				return false;
@@ -686,7 +687,7 @@ namespace dvb {
 			SI_LOG_INFO("Stream: %d, Waiting on lock...", _streamID);
 
 			// check if frontend is locked, if not try a few times
-			for (int i = 0; i < 4; ++i) {
+			for (int i = 0; i < 10; ++i) {
 				fe_status_t status = FE_TIMEDOUT;
 				// first read status
 				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
@@ -698,7 +699,7 @@ namespace dvb {
 					}
 					SI_LOG_INFO("Stream: %d, Not locked yet   (FE status 0x%X)...", _streamID, status);
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(75));
+				std::this_thread::sleep_for(std::chrono::milliseconds(60));
 			}
 		}
 		return _tuned;
