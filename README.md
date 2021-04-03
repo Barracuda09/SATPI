@@ -78,6 +78,8 @@ Tested Hardware
 
 Build
 -----
+- Always Update the Web folder as well, as it may contain new features
+
 - To build SatPI just run these commands:
 
     `git clone git://github.com/Barracuda09/satpi.git`<br/>
