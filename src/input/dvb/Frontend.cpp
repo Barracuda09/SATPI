@@ -49,6 +49,8 @@ namespace dvb {
 
 	const unsigned int Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
 	const unsigned int Frontend::MAX_DVR_BUFFER_SIZE     = 18 * 10;
+	static const unsigned int MAX_WAIT_ON_LOCK_RETRY = 15;
+	static const unsigned int DEFAULT_WAIT_ON_LOCK_RETRY = 10;
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -73,7 +75,8 @@ namespace dvb {
 		_dvbt2(0),
 		_dvbc(0),
 		_dvbc2(0),
-		_dvrBufferSizeMB(DEFAULT_DVR_BUFFER_SIZE) {
+		_dvrBufferSizeMB(DEFAULT_DVR_BUFFER_SIZE),
+		_waitOnLockRetry(DEFAULT_WAIT_ON_LOCK_RETRY) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		setupFrontend();
 #if FULL_DVB_API_VERSION >= 0x050A
@@ -186,6 +189,7 @@ namespace dvb {
 		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("@#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
 
 		ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
+		ADD_XML_NUMBER_INPUT(xml, "waitOnLockRetry", _waitOnLockRetry, 0, MAX_WAIT_ON_LOCK_RETRY);
 
 		// Channel
 		_frontendData.addToXML(xml);
@@ -203,7 +207,10 @@ namespace dvb {
 			const unsigned int newSize = std::stoi(element);
 			_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
 				newSize : DEFAULT_DVR_BUFFER_SIZE;
-
+		}
+		if (findXMLElement(xml, "waitOnLockRetry.value", element)) {
+			const unsigned int c = std::stoi(element);
+			_waitOnLockRetry = (c < MAX_WAIT_ON_LOCK_RETRY) ? c : MAX_WAIT_ON_LOCK_RETRY;
 		}
 		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem@#1", i);
@@ -677,9 +684,13 @@ namespace dvb {
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
 				_fd_fe = openFE(_path_to_fe, false);
+				if (_fd_fe < 0) {
+					_fd_fe = -1;
+					return false;
+				}
 				SI_LOG_INFO("Stream: %d, Opened %s for Read/Write with fd: %d", _streamID, _path_to_fe.c_str(), _fd_fe);
+				std::this_thread::sleep_for(std::chrono::milliseconds(25));
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 			// try tuning
 			if (!tune()) {
 				return false;
@@ -687,7 +698,7 @@ namespace dvb {
 			SI_LOG_INFO("Stream: %d, Waiting on lock...", _streamID);
 
 			// check if frontend is locked, if not try a few times
-			for (int i = 0; i < 10; ++i) {
+			for (unsigned int i = 0; i < _waitOnLockRetry; ++i) {
 				fe_status_t status = FE_TIMEDOUT;
 				// first read status
 				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {

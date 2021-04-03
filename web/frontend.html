@@ -76,9 +76,10 @@
 				page += addTableLineEntry("unc", xmlDoc, streamID + "unc");
 			}
 
-			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Stream Configuration</th></tr>";
+			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Configuration</th></tr>";
 			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
+			page += addTableLineEntry("Wait On Lock Retry", xmlDoc, streamID + "waitOnLockRetry");
 
 			var transformation = visibleStream.getElementsByTagName("transformation");
 			if (transformation.length > 0) {
