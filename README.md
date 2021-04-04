@@ -84,6 +84,9 @@ Build
 
     `git clone git://github.com/Barracuda09/satpi.git`<br/>
     `cd satpi/`<br/>
+    `git branch -f devtmp 9c4b71d` -> _will make a branch devtmp of commit 9c4b71d_<br/>
+    `git checkout devtmp` -> _this will checkout devtmp_<br/>
+    <br/>
     `git branch -a` -> see all available branches<br/>
     `git branch` -> see on which branch you are working/building<br/>
     `git checkout V1.6.2` -> to checkout (switch to) branch 'V1.6.2'<br/>
