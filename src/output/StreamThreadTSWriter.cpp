@@ -56,9 +56,8 @@ void StreamThreadTSWriter::doStartStreaming(int UNUSED(clientID)) {
 bool StreamThreadTSWriter::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &UNUSED(client)) {
 	const unsigned char *tsBuffer = buffer.getTSReadBufferPtr();
 
-	static constexpr size_t dataSize = mpegts::PacketBuffer::getBufferSize();
-
 	const long timestamp = base::TimeCounter::getTicks() * 90;
+	const size_t dataSize = buffer.getBufferSize();
 
 	// RTP packet octet count (Bytes)
 	_stream.addRtpData(dataSize, timestamp);

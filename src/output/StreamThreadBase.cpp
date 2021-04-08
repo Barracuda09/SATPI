@@ -51,6 +51,7 @@ StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface 
 	// Initialize all TS packets
 	uint32_t ssrc = _stream.getSSRC();
 	long timestamp = _stream.getTimestamp();
+	_tsEmpty.initialize(ssrc, timestamp);
 	for (size_t i = 0; i < MAX_BUF; ++i) {
 		_tsBuffer[i].initialize(ssrc, timestamp);
 	}
@@ -203,12 +204,16 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	// calculate interval
 	_t2 = std::chrono::steady_clock::now();
 	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
-	if (interval > _sendInterval && _tsBuffer[_readIndex].isReadyToSend()) {
+	if (interval > _sendInterval) {
 		_t1 = _t2;
-		if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
-			// inc read index only when send is successful
-			++_readIndex;
-			_readIndex %= MAX_BUF;
+		if (_tsBuffer[_readIndex].isReadyToSend()) {
+			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
+				// inc read index only when send is successful
+				++_readIndex;
+				_readIndex %= MAX_BUF;
+			}
+		} else {
+			writeDataToOutputDevice(_tsEmpty, client);
 		}
 	}
 }

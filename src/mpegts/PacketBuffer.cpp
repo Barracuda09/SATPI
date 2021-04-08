@@ -58,6 +58,7 @@ void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
 	_buffer[10] = (ssrc >>  8) & 0xff;      // synchronization source
 	_buffer[11] = (ssrc >>  0) & 0xff;      // synchronization source
 
+	_writeIndex = RTP_HEADER_LEN;
 	_initialized = true;
 }
 

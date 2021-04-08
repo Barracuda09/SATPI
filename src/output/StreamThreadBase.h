@@ -125,6 +125,7 @@ class StreamThreadBase :
 
 		static constexpr size_t MAX_BUF = 100;
 		mpegts::PacketBuffer _tsBuffer[MAX_BUF];
+		mpegts::PacketBuffer _tsEmpty;
 		size_t _writeIndex;
 		size_t _readIndex;
 		unsigned long _sendInterval;
