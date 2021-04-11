@@ -87,14 +87,6 @@ void HttpcServer::initialize(
 	TcpSocket::initialize(_bindIPAddress, port, nonblock);
 }
 
-const std::string &HttpcServer::getProtocolVersionString() const {
-	if (getProtocolString() == "RTSP") {
-		return HTML_PROTOCOL_RTSP_VERSION;
-	} else {
-		return HTML_PROTOCOL_HTTP_VERSION;
-	}
-}
-
 void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody,
 		const std::string &html, const std::string &location,
 		const std::string &contentType, std::size_t docTypeSize,
@@ -166,6 +158,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const int streamID = StringConverter::getIntParameter(msg, method, "stream=");
 
 	std::string httpcReply;
+	bool replyAlreadySend = false;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
@@ -183,6 +176,9 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpcReply);
+
+				// Send SETUP Reply early, some clients are very eager to go on!
+				replyAlreadySend = sendDataToClient(client, httpcReply);
 
 				// @TODO  check return of update();
 				stream->update(clientID, true);
@@ -210,10 +206,26 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			getHtmlBodyNoContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, cseq);
 		}
 	}
-	SI_LOG_DEBUG("%s", httpcReply.c_str());
+	if (!replyAlreadySend) {
+		sendDataToClient(client, httpcReply);
+	}
+}
+
+const std::string &HttpcServer::getProtocolVersionString() const {
+	if (getProtocolString() == "RTSP") {
+		return HTML_PROTOCOL_RTSP_VERSION;
+	} else {
+		return HTML_PROTOCOL_HTTP_VERSION;
+	}
+}
+
+bool HttpcServer::sendDataToClient(SocketClient &client, std::string &data) {
+	SI_LOG_DEBUG("%s", data.c_str());
 
 	// send reply to client
-	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
+	if (!client.sendData(data.c_str(), data.size(), MSG_NOSIGNAL)) {
 		SI_LOG_ERROR("Send Streaming reply failed");
+		return false;
 	}
+	return true;
 }

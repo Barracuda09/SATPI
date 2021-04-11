@@ -117,6 +117,9 @@ class HttpcServer :
 		///
 		const std::string &getProtocolVersionString() const;
 
+		///
+		bool sendDataToClient(SocketClient &client, std::string &data);
+
 		// =======================================================================
 		// Data members
 		// =======================================================================
