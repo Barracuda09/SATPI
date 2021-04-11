@@ -113,12 +113,12 @@ bool Transformation::isEnabled() const {
 
 bool Transformation::advertiseAsDVBS2() const {
 	base::MutexLock lock(_mutex);
-	return _advertiseAs == AdvertiseAs::DVB_S2;
+	return _enabled && _advertiseAs == AdvertiseAs::DVB_S2;
 }
 
 bool Transformation::advertiseAsDVBC() const {
 	base::MutexLock lock(_mutex);
-	return _advertiseAs == AdvertiseAs::DVB_C;
+	return _enabled && _advertiseAs == AdvertiseAs::DVB_C;
 }
 
 void Transformation::resetTransformFlag() {
