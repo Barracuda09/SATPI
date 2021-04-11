@@ -51,8 +51,8 @@ namespace dvb {
 	// -- Static const data --------------------------------------------------
 	// =======================================================================
 
-	static const unsigned int Frontend::DEFAULT_DVR_BUFFER_SIZE = 18;
-	static const unsigned int Frontend::MAX_DVR_BUFFER_SIZE     = 18 * 10;
+	static const unsigned int DEFAULT_DVR_BUFFER_SIZE = 18;
+	static const unsigned int MAX_DVR_BUFFER_SIZE     = 18 * 10;
 	static const unsigned int MAX_WAIT_ON_LOCK_RETRY = 20;
 	static const unsigned int DEFAULT_WAIT_ON_LOCK_RETRY = 10;
 
