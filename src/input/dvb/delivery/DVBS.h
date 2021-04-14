@@ -21,7 +21,6 @@
 #define INPUT_DVB_DELIVERY_DVBS_H_INCLUDE INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
 
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <input/dvb/delivery/System.h>
 
 #include <stdlib.h>

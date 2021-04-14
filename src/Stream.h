@@ -23,6 +23,7 @@
 #include <FwDecl.h>
 #include <StreamClient.h>
 #include <StreamInterface.h>
+#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 #include <input/Device.h>
 

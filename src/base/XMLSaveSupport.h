@@ -20,8 +20,6 @@
 #ifndef BASE_XML_SAVE_SUPPORT_H_INCLUDE
 #define BASE_XML_SAVE_SUPPORT_H_INCLUDE BASE_XML_SAVE_SUPPORT_H_INCLUDE
 
-#include <base/Mutex.h>
-
 #include <string>
 
 namespace base {

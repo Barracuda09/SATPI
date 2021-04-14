@@ -196,7 +196,6 @@ TSReaderData --|> input::DeviceData
 
 input::Device <|-- input::dvb::Frontend
 class input::Device      #aaccaa {
-  Mutex _mutex
   --
   StreamID
   isDataAvailable() = 0

@@ -735,15 +735,12 @@ namespace dvb {
 					return;
 				}
 			}
-			{
-				base::MutexLock lock(_mutex);
-				if (_dvrBufferSizeMB > 0) {
-					const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
-					if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
-						PERROR("DMX - DMX_SET_BUFFER_SIZE failed");
-					} else {
-						SI_LOG_INFO("Stream: %d, Set DMX buffer size to %d Bytes", _streamID, size);
-					}
+			if (_dvrBufferSizeMB > 0) {
+				const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
+				if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
+					PERROR("DMX - DMX_SET_BUFFER_SIZE failed");
+				} else {
+					SI_LOG_INFO("Stream: %d, Set DMX buffer size to %d Bytes", _streamID, size);
 				}
 			}
 			struct dmx_pes_filter_params pesFilter;
@@ -781,7 +778,6 @@ namespace dvb {
 	}
 
 	void Frontend::updatePIDFilters() {
-		base::MutexLock lock(_mutex);
 		if (!_frontendData.getFilterData().hasPIDTableChanged()) {
 			return;
 		}

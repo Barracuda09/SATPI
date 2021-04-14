@@ -21,6 +21,7 @@
 #define UPNP_SSDP_SSDP_SERVER_H_INCLUDE UPNP_SSDP_SSDP_SERVER_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/Mutex.h>
 #include <base/ThreadBase.h>
 #include <base/XMLSupport.h>
 #include <socket/SocketClient.h>

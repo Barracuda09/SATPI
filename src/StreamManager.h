@@ -21,6 +21,7 @@
 #define STREAM_MANAGER_H_INCLUDE STREAM_MANAGER_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 
 #include <string>

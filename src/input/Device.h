@@ -23,7 +23,6 @@
 #include <FwDecl.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
-#include <base/Mutex.h>
 
 #include <string>
 
@@ -104,7 +103,6 @@ class Device :
 		// =======================================================================
 	protected:
 
-		base::Mutex _mutex;
 		int _streamID;
 };
 

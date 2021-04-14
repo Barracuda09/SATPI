@@ -21,6 +21,7 @@
 #define INPUT_TRANSFORMATION_H_INCLUDE INPUT_TRANSFORMATION_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/Mutex.h>
 #include <base/M3UParser.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
@@ -65,10 +66,10 @@ class Transformation :
 		/// Check if transformation is enabled
 		bool isEnabled() const;
 
-		///
+		/// Check if we advertise this 'Frontend' as DVB-S2 tuner
 		bool advertiseAsDVBS2() const;
 
-		///
+		/// Check if we advertise this 'Frontend' as DVB-C tuner
 		bool advertiseAsDVBC() const;
 
 		///
