@@ -60,6 +60,7 @@ SOURCES = Version.cpp \
 	StreamClient.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
+	Utils.cpp \
 	base/M3UParser.cpp \
 	base/Thread.cpp \
 	base/ThreadBase.cpp \

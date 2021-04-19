@@ -32,6 +32,20 @@ static constexpr int asInteger(Enumeration value) {
 	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 
+/// The class @c Utils has some utility functions
+class Utils  {
+	public:
+
+		/// Create a Backtrace (Stacktrace) and write it to 'file' in /tmp
+		/// @param file specifies the file name for the Backtrace
+		static void createBackTrace(const char *file);
+
+		///
+		/// @param app specifies this current application name to use for addr2line
+		/// @param file specifies the Backtrace file to annotate
+		static void annotateBackTrace(const char *app, const char *file);
+};
+
 #define ASSERT(EXPRESSION) assert(EXPRESSION)
 
 #define N_ELEMENTS(array) (sizeof(array) / sizeof(array[0]))

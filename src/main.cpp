@@ -50,50 +50,6 @@ static int retval;
 static int otherSig;
 static std::string appName;
 
-static void createBackTrace(const char *app) {
-	// DO NOT alloc memory!!
-	void *array[25];
-	const size_t size = backtrace(array, 25);
-
-	// Log all the frames to Backtrace File
-	char file[256];
-	snprintf(file, sizeof(file), "/tmp/%s.bt", app);
-	int backtraceFile = open(file, O_CREAT|O_WRONLY|O_TRUNC, 0664);
-	if (backtraceFile > 0) {
-		backtrace_symbols_fd(array, size, backtraceFile);
-	} else {
-		backtrace_symbols_fd(array, size, STDOUT_FILENO);
-	}
-	exit(1);
-}
-
-static void annotateBackTrace(const char *app, const char *file) {
-	std::ifstream bt(file, std::ios::in);
-	int i = 0;
-	for (std::string line; std::getline(bt, line); ++i) {
-		const auto begin = line.find('[');
-		const auto end = line.find(']');
-		if (begin != std::string::npos && end != std::string::npos) {
-			const std::string addr = line.substr(begin + 1, end - begin - 1);
-
-			char file[256];
-			snprintf(file, sizeof(file),"addr2line %s -e %s", addr.c_str(), app);
-
-			base::ChildPIPEReader exec;
-			exec.open(file);
-			std::string code;
-			char buffer[256];
-			std::size_t s;
-			while ((s = exec.read(reinterpret_cast<unsigned char *>(buffer), 255)) > 0) {
-				code.append(buffer, s);
-				code.erase(std::find(code.begin(), code.end(), '\n'));
-			}
-
-			std::cout << "[bt] #" << i << " " << code << " -- " << line << std::endl;
-		}
-	}
-}
-
 static void child_handler(int signum) {
 	switch(signum) {
 		case SIGCHLD:
@@ -116,7 +72,8 @@ static void child_handler(int signum) {
 			exitApp = true;
 			break;
 		case SIGSEGV:
-			createBackTrace(appName.c_str());
+			Utils::createBackTrace(appName.c_str());
+			exit(1);
 			break;
 		default:
 			SI_LOG_ERROR("Handle 'Other' signal");
@@ -345,7 +302,7 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "--backtrace") == 0) {
 				if (i + 1 < argc) {
 					++i;
-					annotateBackTrace(appName.c_str(), argv[i]);
+					Utils::annotateBackTrace(appName.c_str(), argv[i]);
 					return EXIT_SUCCESS;
 				}
 				printUsage(argv[0]);

@@ -21,6 +21,7 @@
 #define BASE_MUTEX_H_INCLUDE BASE_MUTEX_H_INCLUDE
 
 #include <Log.h>
+#include <Utils.h>
 #include <base/Thread.h>
 
 #include <chrono>
@@ -97,6 +98,7 @@ class MutexLock {
 			if (!_mutex.tryLock(timeout)) {
 				SI_LOG_ERROR("Mutex in %s did not lock within timeout?  !!DEADLOCK!!",
 					Thread::getThisThreadName().c_str());
+				Utils::createBackTrace("MutexLock");
 			}
 		}
 
