@@ -266,7 +266,6 @@ void Stream::checkForSessionTimeout() {
 							_streamID, i, _client[i].getSessionID().c_str());
 			}
 			teardown(i);
-			close(i);
 		}
 	}
 }
