@@ -41,7 +41,7 @@ class Device :
 		// =======================================================================
 	public:
 
-		Device(int streamID) : _streamID(streamID) {}
+		Device(int streamID) : _streamID(streamID + 1) {}
 
 		virtual ~Device() {}
 
@@ -97,6 +97,11 @@ class Device :
 
 		///
 		virtual std::string attributeDescribeString() const = 0;
+
+		///
+		int getStreamID() const {
+			return _streamID;
+		}
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

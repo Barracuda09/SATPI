@@ -23,7 +23,7 @@
 		var streams = xmlDoc.getElementsByTagName("streamindex");
 		if (streams.length > 0) {
 			var size = streams.length;
-			for (index = 0; index < size; index++) {
+			for (index = 1; index <= size; index++) {
 				var streamID = "stream" + index + " ";
 				var visibleStream = xmlDoc.getElementsByTagName("stream" + index)[0];
 				var attached = xmlDoc.querySelector(streamID + "attached").innerHTML;

@@ -64,7 +64,7 @@ class Stream :
 		// =======================================================================
 	public:
 
-		Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt);
+		Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt);
 
 		virtual ~Stream();
 

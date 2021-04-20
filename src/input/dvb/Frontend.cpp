@@ -146,7 +146,7 @@ namespace dvb {
 								// Make new frontend here
 								const StreamSpVector::size_type size = streamVector.size();
 								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
-								streamVector.push_back(std::make_shared<Stream>(size, frontend, decrypt));
+								streamVector.push_back(std::make_shared<Stream>(frontend, decrypt));
 							}
 							break;
 						case S_IFDIR:

@@ -103,6 +103,11 @@ class StreamManager :
 			int streamID);
 #endif
 
+	private:
+
+		///
+		int findStreamID(const std::string &msg, const std::string &method) const;
+
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================

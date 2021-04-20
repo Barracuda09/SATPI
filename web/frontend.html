@@ -132,14 +132,14 @@
 		if (streams.length > 0) {
 			var len = streams.length;
 			tab += "<ul class=\"nav nav-tabs\">";
-			tab += "<li class=\"nav-item\"><a class=\"nav-link active\" data-toggle=\"tab\" href=\"#stream" + 0 + "\">Frontend " + 0 + "</a></li>"
-			for (en = 1; en < len; en++) {
+			tab += "<li class=\"nav-item\"><a class=\"nav-link active\" data-toggle=\"tab\" href=\"#stream" + 1 + "\">Frontend " + 1 + "</a></li>"
+			for (en = 2; en <= len; en++) {
 				tab += "<li class=\"nav-item\"><a class=\"nav-link\" data-toggle=\"tab\" href=\"#stream" + en + "\">Frontend " + en + "</a></li>"
 			}
 			tab += "</ul>";
 			tab += "<div class=\"tab-content border rounded-bottom\" >";
-			tab += "<div id=\"stream" + 0 + "\" class=\"tab-pane fade show active\"></div>";
-			for (en = 1; en < len; en++) {
+			tab += "<div id=\"stream" + 1 + "\" class=\"tab-pane fade show active\"></div>";
+			for (en = 2; en <= len; en++) {
 				tab += "<div id=\"stream" + en + "\" class=\"tab-pane fade\"></div>";
 			}
 			tab += "</div>";
@@ -188,7 +188,7 @@
 		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("frontend");
 
-		content = "stream0";
+		content = "stream1";
 		updatePage();
 
 		// Call the ajax refresh each refresh_time seconds

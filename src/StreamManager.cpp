@@ -128,6 +128,14 @@ std::string StreamManager::getRTSPDescribeString() const {
 	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
 
+int StreamManager::findStreamID(const std::string &msg, const std::string &method) const {
+	int streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	const int fe_nr = StringConverter::getIntParameter(msg, method, "fe=");
+	if (streamID == -1 && fe_nr >= 1 && fe_nr <= static_cast<int>(_stream.size())) {
+		streamID = fe_nr - 1;
+	}
+	return streamID;
+}
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	base::MutexLock lock(_mutex);
@@ -137,11 +145,8 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	const std::string msg = socketClient.getPercentDecodedMessage();
 	const std::string method = StringConverter::getMethod(msg);
 
-	int streamID = StringConverter::getIntParameter(msg, method, "stream=");
-	const int fe_nr = StringConverter::getIntParameter(msg, method, "fe=");
-	if (streamID == -1 && fe_nr >= 1 && fe_nr <= static_cast<int>(_stream.size())) {
-		streamID = fe_nr - 1;
-	}
+	// Now find streamID in the message
+	const int streamID = findStreamID(msg, method);
 
 	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
 	bool newSession = false;
@@ -233,14 +238,12 @@ input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterfac
 
 void StreamManager::doFromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
-	std::size_t i = 0;
 	for (SpStream stream : _stream) {
 		std::string element;
-		const std::string find = StringConverter::stringFormat("stream@#1", i);
+		const std::string find = StringConverter::stringFormat("stream@#1", stream->getStreamID());
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
-		++i;
 	}
 #ifdef LIBDVBCSA
 	std::string element;
@@ -254,10 +257,8 @@ void StreamManager::doAddToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
 
-	std::size_t i = 0;
 	for (ScpStream stream : _stream) {
-		ADD_XML_N_ELEMENT(xml, "stream", i, stream->toXML());
-		++i;
+		ADD_XML_N_ELEMENT(xml, "stream", stream->getStreamID(), stream->toXML());
 	}
 #ifdef LIBDVBCSA
 	ADD_XML_ELEMENT(xml, "decrypt", _decrypt->toXML());

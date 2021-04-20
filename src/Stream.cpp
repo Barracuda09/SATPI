@@ -41,8 +41,7 @@ const unsigned int Stream::MAX_CLIENTS = 8;
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
-Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
-	_streamID(streamID),
+Stream::Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	_streamingType(StreamingType::NONE),
 	_enabled(true),
 	_streamInUse(false),
@@ -58,8 +57,9 @@ Stream::Stream(int streamID, input::SpDevice device, decrypt::dvbapi::SpClient d
 	_rtp_payload(0.0),
 	_rtcpSignalUpdate(1) {
 	ASSERT(device);
+	_streamID = device->getStreamID();
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		_client[i].setStreamIDandClientID(streamID, i);
+		_client[i].setStreamIDandClientID(_streamID, i);
 	}
 }
 
