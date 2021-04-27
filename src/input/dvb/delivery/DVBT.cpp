@@ -33,8 +33,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBT::DVBT(int streamID, const std::string &fePath) :
-		input::dvb::delivery::System(streamID, fePath),
+	DVBT::DVBT(FeID id, const std::string &fePath) :
+		input::dvb::delivery::System(id, fePath),
 		_lna(1) {}
 
 	DVBT::~DVBT() {}
@@ -60,7 +60,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DVBT::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-T(2)...", _streamID);
+		SI_LOG_INFO("Frontend: %d, Start tuning process for DVB-T(2)...", _feID);
 
 		// Now tune by setting properties
 		if (!setProperties(feFD, frontendData)) {

@@ -20,6 +20,7 @@
 #ifndef STREAMINTERFACE_H_INCLUDE
 #define STREAMINTERFACE_H_INCLUDE STREAMINTERFACE_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 
 FW_DECL_NS0(StreamClient);
@@ -43,7 +44,10 @@ class StreamInterface {
 	public:
 
 		/// Get the streamID of this stream
-		virtual int getStreamID() const = 0;
+		virtual StreamID getStreamID() const = 0;
+
+		/// Get the FeID of the Frontend used for this stream
+		virtual FeID getFeID() const = 0;
 
 		///
 		virtual StreamClient &getStreamClient(int clientID) const = 0;

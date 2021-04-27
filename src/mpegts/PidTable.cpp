@@ -67,22 +67,20 @@ namespace mpegts {
 	}
 
 	std::string PidTable::getPidCSV() const {
-		std::string csv;
 		if (_data[ALL_PIDS].state == State::Opened) {
-			csv = "all";
-		} else {
-			for (size_t i = 0; i < MAX_PIDS; ++i) {
-				if (_data[i].state == State::Opened) {
-					csv += StringConverter::stringFormat("@#1,", i);
-				}
-			}
-			if (csv.size() > 1) {
-				csv.erase(csv.end() - 1);
-			} else {
-				csv = " ";
+			return "all";
+		}
+		std::string csv;
+		for (size_t i = 0; i < MAX_PIDS; ++i) {
+			if (_data[i].state == State::Opened) {
+				csv += StringConverter::stringFormat("@#1,", i);
 			}
 		}
-		return csv;
+		if (csv.size() > 1) {
+			csv.erase(csv.end() - 1);
+			return csv;
+		}
+		return "";
 	}
 
 	void PidTable::addPIDData(const int pid, const uint8_t cc) {

@@ -53,7 +53,7 @@ class PAT :
 		// =====================================================================
 	public:
 
-		void parse(int streamID);
+		void parse(FeID id);
 
 		bool isMarkedAsPMT(int pid) const;
 

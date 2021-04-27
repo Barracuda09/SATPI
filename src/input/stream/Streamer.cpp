@@ -35,10 +35,10 @@ namespace stream {
 // =============================================================================
 
 Streamer::Streamer(
-	int streamID,
+	FeID id,
 	const std::string &bindIPAddress,
 	const std::string &appDataPath) :
-	Device(streamID),
+	Device(id),
 	_transform(appDataPath, _transformDeviceData),
 	_bindIPAddress(bindIPAddress) {
 	_pfd[0].events  = 0;
@@ -148,17 +148,17 @@ bool Streamer::hasDeviceDataChanged() const {
 // Client side
 // http://192.168.178.10:8875/?msys=streamer&uri="udp@224.0.1.3:1234"
 void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
-	SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+	SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
-	const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
+	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
-	_deviceData.parseStreamString(_streamID, msgTrans, method);
-	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
+	_deviceData.parseStreamString(_feID, msgTrans, method);
+	SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
 }
 
 bool Streamer::update() {
-	SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+	SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
 		_udpMultiListen.closeFD();
@@ -168,7 +168,7 @@ bool Streamer::update() {
 		const std::string multiAddr = _deviceData.getMultiAddr();
 		const int port = _deviceData.getPort();
 		if(initMutlicastUDPSocket(_udpMultiListen, multiAddr, _bindIPAddress, port)) {
-			SI_LOG_INFO("Stream: %d, Streamer reading from: %s:%d  fd %d", _streamID,
+			SI_LOG_INFO("Frontend: %d, Streamer reading from: %s:%d  fd %d", _feID,
 				multiAddr.c_str(), port, _udpMultiListen.getFD());
 			// set receive buffer to 8MB
 			constexpr int bufferSize =  1024 * 1024 * 8;
@@ -179,10 +179,10 @@ bool Streamer::update() {
 			_pfd[0].fd      = _udpMultiListen.getFD();
 
 		} else {
-			SI_LOG_ERROR("Stream: %d, Init UDP Multicast socket failed", _streamID);
+			SI_LOG_ERROR("Frontend: %d, Init UDP Multicast socket failed", _feID);
 		}
 	}
-	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
+	SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
 	return true;
 }
 
@@ -196,7 +196,7 @@ bool Streamer::teardown() {
 std::string Streamer::attributeDescribeString() const {
 	if (_udpMultiListen.getFD() != -1) {
 		const DeviceData &data = _transform.transformDeviceData(_deviceData);
-		return data.attributeDescribeString(_streamID);
+		return data.attributeDescribeString(_feID);
 	}
 	return "";
 }

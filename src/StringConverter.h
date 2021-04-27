@@ -37,7 +37,7 @@ class StringConverter  {
 		/// Returns a copy of the string where all specified markers are replaced
 		/// with the specified arguments.<br>
 		/// <b>Example:</b> @c std::string s = StringConverter::stringFormat(
-		///   "Stream: @#1, Close StreamClient[@#2] with SessionID @#3", 1, 0, "12345");
+		///   "Frontend: @#1, Close StreamClient[@#2] with SessionID @#3", 1, 0, "12345");
 		/// @return A copy of the string where all specified markers are replaced
 		/// with the specified arguments.
 		template <typename... Args>

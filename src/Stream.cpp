@@ -57,10 +57,6 @@ Stream::Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	_rtp_payload(0.0),
 	_rtcpSignalUpdate(1) {
 	ASSERT(device);
-	_streamID = device->getStreamID();
-	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		_client[i].setStreamIDandClientID(_streamID, i);
-	}
 }
 
 Stream::~Stream() {
@@ -71,8 +67,12 @@ Stream::~Stream() {
 // -- StreamInterface --------------------------------------------------------
 // ===========================================================================
 
-int Stream::getStreamID() const {
-	return _streamID;
+StreamID Stream::getStreamID() const {
+	return _device->getStreamID();
+}
+
+FeID Stream::getFeID() const {
+	return _device->getFeID();
 }
 
 StreamClient &Stream::getStreamClient(int clientID) const {
@@ -138,10 +138,10 @@ std::string Stream::getDescribeMediaLevelString() const {
 			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
 				_client[0].getRtpSocketAttr().getSocketPort(),
 				_client[0].getIPAddressOfStream() + "/0",
-				_streamID, desc_attr, (_streamActive) ? "sendonly" : "inactive");
+				_device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
 		} else {
 			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-				0, "0.0.0.0", _streamID, desc_attr, (_streamActive) ? "sendonly" : "inactive");
+				0, "0.0.0.0", _device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
 		}
 	}
 	return "";
@@ -153,7 +153,7 @@ std::string Stream::getDescribeMediaLevelString() const {
 
 void Stream::doAddToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
-	ADD_XML_ELEMENT(xml, "streamindex", _streamID);
+	ADD_XML_ELEMENT(xml, "streamindex", _device->getFeID().getID());
 
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
@@ -196,31 +196,31 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
                              const std::string &method,
                              int &clientID) {
 	base::MutexLock lock(_mutex);
-
+	const FeID id = _device->getFeID();
 	const std::string message = socketClient.getPercentDecodedMessage();
 	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
 
 	// Check if the input device is set, else this stream is not usable
 	if (!_device) {
-		SI_LOG_ERROR("Stream: %d, Input Device not set?...", _streamID);
+		SI_LOG_ERROR("Frontend: %d, Input Device not set?...", id);
 		return false;
 	}
 
 	// Do we have a new session then check some things
 	if (newSession) {
 		if (!_enabled) {
-			SI_LOG_INFO("Stream: %d, New session but this stream is not enabled, skipping...", _streamID);
+			SI_LOG_INFO("Frontend: %d, New session but this stream is not enabled, skipping...", id);
 			return false;
 		} else if (_streamInUse) {
-			SI_LOG_INFO("Stream: %d, New session but this stream is in use, skipping...", _streamID);
+			SI_LOG_INFO("Frontend: %d, New session but this stream is in use, skipping...", id);
 			return false;
 		} else if (!_device->capableOf(msys)) {
 			if (_device->capableToTransform(message, method)) {
-				SI_LOG_INFO("Stream: %d, Capable of transforming msys=%s",
-							_streamID, StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: %d, Capable of transforming msys=%s",
+							id, StringConverter::delsys_to_string(msys));
 			} else {
-				SI_LOG_INFO("Stream: %d, Not capable of handling msys=%s",
-							_streamID, StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: %d, Not capable of handling msys=%s",
+							id, StringConverter::delsys_to_string(msys));
 				return false;
 			}
 		}
@@ -231,11 +231,11 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		// If we have a new session we like to find an empty slot so '-1'
 		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != input::InputSystem::UNDEFINED) {
-				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s for %s",
-				            _streamID, i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: %d, StreamClient[%d] with SessionID %s for %s",
+				            id, i, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 			} else {
-				SI_LOG_INFO("Stream: %d, StreamClient[%d] with SessionID %s",
-				            _streamID, i, sessionID.c_str());
+				SI_LOG_INFO("Frontend: %d, StreamClient[%d] with SessionID %s",
+				            id, i, sessionID.c_str());
 			}
 			_client[i].setSocketClient(socketClient);
 			_streamInUse = true;
@@ -244,11 +244,10 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 		}
 	}
 	if (msys != input::InputSystem::UNDEFINED) {
-		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s for %s",
-		            _streamID, sessionID.c_str(), StringConverter::delsys_to_string(msys));
+		SI_LOG_INFO("Frontend: %d, No StreamClient with SessionID %s for %s",
+		            id, sessionID.c_str(), StringConverter::delsys_to_string(msys));
 	} else {
-		SI_LOG_INFO("Stream: %d, No StreamClient with SessionID %s",
-		            _streamID, sessionID.c_str());
+		SI_LOG_INFO("Frontend: %d, No StreamClient with SessionID %s", id, sessionID.c_str());
 	}
 	return false;
 }
@@ -259,11 +258,11 @@ void Stream::checkForSessionTimeout() {
 	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
 		if (_client[i].sessionTimeout() || !_enabled) {
 			if (_enabled) {
-				SI_LOG_INFO("Stream: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
-							_streamID, i, _client[i].getSessionID().c_str());
+				SI_LOG_INFO("Frontend: %d, Watchdog kicked in for StreamClient[%d] with SessionID %s",
+							_device->getFeID().getID(), i, _client[i].getSessionID().c_str());
 			} else {
-				SI_LOG_INFO("Stream: %d, Reclaiming StreamClient[%d] with SessionID %s",
-							_streamID, i, _client[i].getSessionID().c_str());
+				SI_LOG_INFO("Frontend: %d, Reclaiming StreamClient[%d] with SessionID %s",
+							_device->getFeID().getID(), i, _client[i].getSessionID().c_str());
 			}
 			teardown(i);
 		}
@@ -272,37 +271,37 @@ void Stream::checkForSessionTimeout() {
 
 bool Stream::update(int clientID, bool start) {
 	base::MutexLock lock(_mutex);
-
+	const FeID id = _device->getFeID();
 	// first time streaming?
 	if (!_streaming && start) {
 		switch (_streamingType) {
 			case StreamingType::NONE:
 				_streaming.reset(nullptr);
-				SI_LOG_ERROR("Stream: %d, No streaming type found!!", _streamID);
+				SI_LOG_ERROR("Frontend: %d, No streaming type found!!", id);
 				break;
 			case StreamingType::HTTP:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: HTTP", _streamID);
+				SI_LOG_DEBUG("Frontend: %d, Found Streaming type: HTTP", id);
 				_streaming.reset(new output::StreamThreadHttp(*this));
 				break;
 			case StreamingType::RTSP_UNICAST:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP Unicast", _streamID);
+				SI_LOG_DEBUG("Frontend: %d, Found Streaming type: RTSP Unicast", id);
 				_streaming.reset(new output::StreamThreadRtp(*this));
 				break;
 			case StreamingType::RTSP_MULTICAST:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTSP Multicast", _streamID);
+				SI_LOG_DEBUG("Frontend: %d, Found Streaming type: RTSP Multicast", id);
 				_streaming.reset(new output::StreamThreadRtp(*this));
 				break;
 			case StreamingType::RTP_TCP:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: RTP/TCP", _streamID);
+				SI_LOG_DEBUG("Frontend: %d, Found Streaming type: RTP/TCP", id);
 				_streaming.reset(new output::StreamThreadRtpTcp(*this));
 				break;
 			case StreamingType::FILE:
-				SI_LOG_DEBUG("Stream: %d, Found Streaming type: FILE", _streamID);
+				SI_LOG_DEBUG("Frontend: %d, Found Streaming type: FILE", id);
 				_streaming.reset(new output::StreamThreadTSWriter(*this, "test.ts"));
 				break;
 			default:
 				_streaming.reset(nullptr);
-				SI_LOG_ERROR("Stream: %d, Unknown streaming type!", _streamID);
+				SI_LOG_ERROR("Frontend: %d, Unknown streaming type!", id);
 		};
 		if (!_streaming) {
 			return false;
@@ -329,8 +328,8 @@ bool Stream::update(int clientID, bool start) {
 bool Stream::teardown(int clientID) {
 	base::MutexLock lock(_mutex);
 
-	SI_LOG_INFO("Stream: %d, Teardown StreamClient[%d] with SessionID %s",
-	            _streamID, clientID, _client[clientID].getSessionID().c_str());
+	SI_LOG_INFO("Frontend: %d, Teardown StreamClient[%d] with SessionID %s",
+	            _device->getFeID().getID(), clientID, _client[clientID].getSessionID().c_str());
 
 	// Stop streaming by deleting object
 	if (_streaming) {

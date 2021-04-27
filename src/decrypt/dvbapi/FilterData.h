@@ -20,6 +20,7 @@
 #ifndef DECRYPT_DVBAPI_FILTERDATA_H_INCLUDE
 #define DECRYPT_DVBAPI_FILTERDATA_H_INCLUDE DECRYPT_DVBAPI_FILTERDATA_H_INCLUDE
 
+#include <Defs.h>
 #include <mpegts/TableData.h>
 
 #include <cstring>
@@ -57,8 +58,8 @@ namespace dvbapi {
 			}
 
 			/// Collect Table data for tableID
-			void collectTableData(const int streamID, const int tableID, const unsigned char *data, bool raw) {
-				_tableData.collectData(streamID, tableID, data, raw);
+			void collectTableData(const FeID id, const int tableID, const unsigned char *data, bool raw) {
+				_tableData.collectData(id, tableID, data, raw);
 			}
 
 			/// Check if Table is collected for tableID

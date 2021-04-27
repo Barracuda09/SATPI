@@ -97,7 +97,7 @@ void Transformation::doFromXML(const std::string &xml) {
 				_advertiseAs = AdvertiseAs::DVB_T;
 				break;
 			default:
-				SI_LOG_ERROR("Stream: %d, Wrong AdvertiseAs type requested, not changing", 0);
+				SI_LOG_ERROR("Frontend: %d, Wrong AdvertiseAs type requested, not changing", 0);
 		}
 	}
 }
@@ -145,7 +145,8 @@ input::InputSystem Transformation::getTransformationSystemFor(
 	return input::InputSystem::UNDEFINED;
 }
 
-bool Transformation::transformStreamPossible(int streamID,
+bool Transformation::transformStreamPossible(
+		const FeID id,
 		const std::string &msg,
 		const std::string &method,
 		std::string &uriTransform) {
@@ -156,7 +157,7 @@ bool Transformation::transformStreamPossible(int streamID,
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);
 			if (!element.uri.empty() && (element.src == -1 || (element.src >= 0 && element.src == src))) {
-				SI_LOG_INFO("Stream: %d, Request can be Transformed with: %s", streamID, uriTransform.c_str());
+				SI_LOG_INFO("Frontend: %d, Request can be Transformed with: %s", id.getID(), uriTransform.c_str());
 				uriTransform = element.uri;
 				_transformFreq = freq * 1000.0;
 				return true;
@@ -167,13 +168,13 @@ bool Transformation::transformStreamPossible(int streamID,
 }
 
 std::string Transformation::transformStreamString(
-		const int streamID,
+		const FeID id,
 		const std::string &msg,
 		const std::string &method) {
 	base::MutexLock lock(_mutex);
 	// Transformation possible for this request
 	std::string uriTransform;
-	if (!transformStreamPossible(streamID, msg, method, uriTransform)) {
+	if (!transformStreamPossible(id, msg, method, uriTransform)) {
 		return msg;
 	}
 	// Transformation possible
@@ -209,7 +210,7 @@ std::string Transformation::transformStreamString(
 		msgTrans += delpidsList;
 	}
 	msgTrans += " RTSP/1.0";
-	SI_LOG_INFO("Stream: %d, Request Transformed to: %s", streamID, msgTrans.c_str());
+	SI_LOG_INFO("Frontend: %d, Request Transformed to: %s", id.getID(), msgTrans.c_str());
 	return msgTrans;
 }
 

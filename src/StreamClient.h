@@ -53,12 +53,6 @@ class StreamClient {
 	public:
 
 		///
-		void setStreamIDandClientID(int streamID, int id) {
-			_streamID = streamID;
-			_clientID = id;
-		}
-
-		///
 		void teardown();
 
 		/// Call this if the stream should stop because of some error
@@ -177,8 +171,6 @@ class StreamClient {
 		base::Mutex  _mutex;
 		SocketClient *_socketClient;
 		SessionTimeoutCheck _sessionTimeoutCheck;
-		int          _streamID;
-		int          _clientID;
 		std::string  _ipAddress;
 		std::time_t  _watchdog;
 		unsigned int _sessionTimeout;

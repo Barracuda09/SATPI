@@ -108,7 +108,7 @@ void FrontendData::doInitialize() {
 }
 
 void FrontendData::doParseStreamString(
-		const int streamID,
+		const FeID id,
 		const std::string &msg,
 		const std::string &method) {
 	// Save freq FIRST because of possible initializing of channel data
@@ -117,7 +117,7 @@ void FrontendData::doParseStreamString(
 	if (reqFreq != -1.0) {
 		if (reqFreq != oldFreq) {
 			// New frequency, so initialize FrontendData and 'remove' all used PIDS
-			SI_LOG_INFO("Stream: %d, New frequency requested, clearing old channel data...", streamID);
+			SI_LOG_INFO("Frontend: %d, New frequency requested, clearing old channel data...", id);
 			initialize();
 			_freq = reqFreq * 1000.0;
 			_changed = true;
@@ -126,10 +126,10 @@ void FrontendData::doParseStreamString(
 			if (msg.find("pids=") == std::string::npos) {
 				// TvHeadend Bug #4809
 				// Channel change within the same frequency and no 'xxxpids=', 'remove' all used PIDS
-				SI_LOG_INFO("Stream: %d, %s method with query and no pids=, clearing old pids...", streamID, method.c_str());
+				SI_LOG_INFO("Frontend: %d, %s method with query and no pids=, clearing old pids...", id, method.c_str());
 				_filter.clear();
 			} else if (!list.empty()) {
-				SI_LOG_INFO("Stream: %d, %s method with query and pids=, clearing old pids...", streamID, method.c_str());
+				SI_LOG_INFO("Frontend: %d, %s method with query and pids=, clearing old pids...", id, method.c_str());
 				_filter.clear();
 			}
 		}
@@ -164,7 +164,7 @@ void FrontendData::doParseStreamString(
 		} else if (plts == "auto") {
 			_pilot = PILOT_AUTO;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown Pilot Tone [%s]", streamID, plts.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown Pilot Tone [%s]", id, plts.c_str());
 			_pilot = PILOT_AUTO;
 		}
 	}
@@ -180,7 +180,7 @@ void FrontendData::doParseStreamString(
 		} else if (ro == "auto") {
 			_rolloff = ROLLOFF_AUTO;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown Rolloff [%s]", streamID, ro.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown Rolloff [%s]", id, ro.c_str());
 			_rolloff = ROLLOFF_AUTO;
 		}
 	}
@@ -210,7 +210,7 @@ void FrontendData::doParseStreamString(
 		} else if (fec == "auto") {
 			_fec = FEC_AUTO;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown forward error control [%s]", streamID, fec.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown forward error control [%s]", id, fec.c_str());
 			_fec = FEC_AUTO;
 		}
 	}
@@ -231,7 +231,7 @@ void FrontendData::doParseStreamString(
 		} else if (mtype == "256qam" || mtype == "qam256") {
 			_modtype = QAM_256;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown modulation type [%s]", streamID, mtype.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown modulation type [%s]", id, mtype.c_str());
 		}
 	} else if (msys != input::InputSystem::UNDEFINED) {
 		// no 'mtype' set, so guess one according to 'msys'
@@ -248,7 +248,7 @@ void FrontendData::doParseStreamString(
 				_modtype = QAM_AUTO;
 				break;
 			default:
-				SI_LOG_ERROR("Stream: %d, Not supported delivery system", streamID);
+				SI_LOG_ERROR("Frontend: %d, Not supported delivery system", id);
 				break;
 		}
 	}
@@ -278,7 +278,7 @@ void FrontendData::doParseStreamString(
 		} else if (tmode == "auto") {
 			_transmission = TRANSMISSION_MODE_AUTO;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown transmision mode [%s]", streamID, tmode.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown transmision mode [%s]", id, tmode.c_str());
 			_transmission = TRANSMISSION_MODE_AUTO;
 		}
 	}
@@ -302,7 +302,7 @@ void FrontendData::doParseStreamString(
 		} else if (gi == "auto") {
 			_guard = GUARD_INTERVAL_AUTO;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Unknown Guard interval [%s]", streamID, gi.c_str());
+			SI_LOG_ERROR("Frontend: %d, Unknown Guard interval [%s]", id, gi.c_str());
 			_guard = GUARD_INTERVAL_AUTO;
 		}
 	}
@@ -338,7 +338,7 @@ void FrontendData::doParseStreamString(
 	}
 }
 
-std::string FrontendData::doAttributeDescribeString(const int streamID) const {
+std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 	std::string desc;
 	switch (getDeliverySystem()) {
 		case input::InputSystem::DVBS:
@@ -349,7 +349,7 @@ std::string FrontendData::doAttributeDescribeString(const int streamID) const {
 			StringConverter::addFormattedString(desc,
 					"ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
 					getDiSEqcSource(),
-					streamID + 1,
+					id.getID() + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -370,7 +370,7 @@ std::string FrontendData::doAttributeDescribeString(const int streamID) const {
 			//               <sm>;pids=<pid0>,..,<pidn>
 			StringConverter::addFormattedString(desc,
 					"ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
-					streamID + 1,
+					id.getID() + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -392,7 +392,7 @@ std::string FrontendData::doAttributeDescribeString(const int streamID) const {
 			//               <specinv>;pids=<pid0>,..,<pidn>
 			StringConverter::addFormattedString(desc,
 					"ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
-					streamID + 1,
+					id.getID() + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -416,7 +416,7 @@ std::string FrontendData::doAttributeDescribeString(const int streamID) const {
 			StringConverter::addFormattedString(desc, "NONE");
 			break;
 	}
-//	SI_LOG_DEBUG("Stream: %d, %s", _streamID, desc.c_str());
+//	SI_LOG_DEBUG("Frontend: %d, %s", _feID, desc.c_str());
 	return desc;
 }
 

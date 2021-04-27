@@ -20,6 +20,7 @@
 #ifndef MPEGTS_PCR_DATA_H_INCLUDE
 #define MPEGTS_PCR_DATA_H_INCLUDE MPEGTS_PCR_DATA_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 
 #include <cstdint>
@@ -44,7 +45,7 @@ class PCR {
 	public:
 
 		/// Collect Table data for tableID
-		void collectData(int streamID, const unsigned char *data);
+		void collectData(FeID id, const unsigned char *data);
 
 		std::int64_t getPCRDelta() const;
 

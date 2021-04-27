@@ -20,6 +20,7 @@
 #ifndef RTSP_SERVER_H_INCLUDE
 #define RTSP_SERVER_H_INCLUDE RTSP_SERVER_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <HttpcServer.h>
 #include <base/ThreadBase.h>
@@ -53,10 +54,10 @@ class RtspServer :
 	private:
 
 		///
-		virtual void methodSetup(Stream &stream, int clientID, std::string &htmlBody) final;
+		virtual void methodSetup(const Stream &stream, int clientID, std::string &htmlBody) final;
 
 		///
-		virtual void methodPlay(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) final;
+		virtual void methodPlay(const Stream &stream, int clientID, std::string &htmlBody) final;
 
 		///
 		virtual void methodTeardown(const std::string &sessionID, int cseq, std::string &htmlBody) final;
@@ -65,7 +66,7 @@ class RtspServer :
 		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) final;
 
 		///
-		virtual void methodDescribe(const std::string &sessionID, int cseq, int streamID, std::string &htmlBody) final;
+		virtual void methodDescribe(const std::string &sessionID, int cseq, FeID id, std::string &htmlBody) final;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

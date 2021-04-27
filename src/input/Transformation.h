@@ -20,6 +20,7 @@
 #ifndef INPUT_TRANSFORMATION_H_INCLUDE
 #define INPUT_TRANSFORMATION_H_INCLUDE INPUT_TRANSFORMATION_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/Mutex.h>
 #include <base/M3UParser.h>
@@ -81,7 +82,7 @@ class Transformation :
 			const std::string &method) const;
 
 		/// This function may return the transformed input message
-		std::string transformStreamString(int streamID,
+		std::string transformStreamString(FeID id,
 			const std::string &msg,
 			const std::string &method);
 
@@ -93,7 +94,7 @@ class Transformation :
 
 		/// This function will check if transformation is possible and returns
 		/// the URI to use for the transformation
-		bool transformStreamPossible(int streamID,
+		bool transformStreamPossible(FeID id,
 			const std::string &msg,
 			const std::string &method,
 			std::string &uriTransform);

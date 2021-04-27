@@ -20,6 +20,7 @@
 #ifndef INPUT_DVB_FRONTENDDECRYPTINTERFACE_H_INCLUDE
 #define INPUT_DVB_FRONTENDDECRYPTINTERFACE_H_INCLUDE INPUT_DVB_FRONTENDDECRYPTINTERFACE_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 
 FW_DECL_NS0(dvbcsa_bs_key_s);
@@ -46,8 +47,8 @@ class FrontendDecryptInterface {
 		// =====================================================================
 	public:
 
-		/// Get the streamID of this stream
-		virtual int getStreamID() const = 0;
+		/// Get the feID of this Frontend
+		virtual FeID getFeID() const = 0;
 
 		///
 		virtual int getBatchCount() const = 0;
@@ -79,12 +80,12 @@ class FrontendDecryptInterface {
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
 
 		///
-		virtual bool findOSCamFilterData(int streamID, int pid,
+		virtual bool findOSCamFilterData(FeID id, int pid,
 			const unsigned char *tsPacket, int &tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) = 0;
 
 		///
-		virtual void stopOSCamFilters(int streamID) = 0;
+		virtual void stopOSCamFilters(FeID id) = 0;
 
 		///
 		virtual void setECMInfo(

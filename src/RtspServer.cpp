@@ -53,7 +53,7 @@ void RtspServer::threadEntry() {
 	}
 }
 
-void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody) {
+void RtspServer::methodSetup(const Stream &stream, const int clientID, std::string &htmlBody) {
 	StreamClient &client = stream.getStreamClient(clientID);
 	switch (stream.getStreamingType()) {
 		case Stream::StreamingType::RTP_TCP: {
@@ -71,7 +71,7 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 				client.getSessionID(),
 				client.getSessionTimeout(),
 				client.getIPAddressOfStream(),
-				stream.getStreamID());
+				stream.getStreamID().getID());
 			break;
 		}
 		case Stream::StreamingType::RTSP_UNICAST: {
@@ -91,7 +91,7 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 				client.getIPAddressOfStream(),
 				client.getRtpSocketAttr().getSocketPort(),
 				client.getRtcpSocketAttr().getSocketPort(),
-				stream.getStreamID());
+				stream.getStreamID().getID());
 			break;
 		}
 		case Stream::StreamingType::RTSP_MULTICAST: {
@@ -111,7 +111,7 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 				client.getIPAddressOfStream(),
 				client.getRtpSocketAttr().getSocketPort(),
 				client.getRtcpSocketAttr().getSocketPort(),
-				stream.getStreamID());
+				stream.getStreamID().getID());
 			break;
 		}
 		default:
@@ -127,8 +127,8 @@ void RtspServer::methodSetup(Stream &stream, int clientID, std::string &htmlBody
 	};
 }
 
-void RtspServer::methodPlay(
-	const std::string &sessionID, const int cseq, const int streamID, std::string &htmlBody) {
+void RtspServer::methodPlay(const Stream &stream, const int clientID, std::string &htmlBody) {
+	const StreamClient &client = stream.getStreamClient(clientID);
 	static const char *RTSP_PLAY_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"RTP-Info: url=rtsp://@#1/stream=@#2\r\n" \
@@ -138,7 +138,7 @@ void RtspServer::methodPlay(
 		"\r\n";
 
 	htmlBody = StringConverter::stringFormat(RTSP_PLAY_OK, _bindIPAddress,
-		streamID, cseq, sessionID);
+		stream.getStreamID().getID(), client.getCSeq(), client.getSessionID());
 }
 
 void RtspServer::methodTeardown(
@@ -169,7 +169,7 @@ void RtspServer::methodOptions(
 }
 
 void RtspServer::methodDescribe(
-	const std::string &sessionID, const int cseq, const int streamID, std::string &htmlBody) {
+	const std::string &sessionID, const int cseq, const FeID id, std::string &htmlBody) {
 	static const char *RTSP_DESCRIBE  =
 		"@#1" \
 		"CSeq: @#2\r\n" \
@@ -196,20 +196,20 @@ void RtspServer::methodDescribe(
 	std::size_t streamsSetup = 0;
 
 	// Lambda Expression 'setupDescribeMediaLevelString'
-	const auto setupDescribeMediaLevelString = [&](const int streamID) {
-		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(streamID);
+	const auto setupDescribeMediaLevelString = [&](const FeID id) {
+		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(id);
 		if (mediaLevel.size() > 5) {
 			++streamsSetup;
 			desc += mediaLevel;
 		}
 	};
-	// Check if there is a specific stream ID requested
-	if (streamID == -1) {
+	// Check if there is a specific Frontend ID requested
+	if (id == -1) {
 		for (std::size_t i = 0; i < _streamManager.getMaxStreams(); ++i) {
 			setupDescribeMediaLevelString(i);
 		}
 	} else {
-		setupDescribeMediaLevelString(streamID);
+		setupDescribeMediaLevelString(id);
 	}
 
 	// check if we are in session, then we need to send the Session ID

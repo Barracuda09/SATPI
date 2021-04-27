@@ -20,6 +20,7 @@
 #ifndef STREAM_MANAGER_H_INCLUDE
 #define STREAM_MANAGER_H_INCLUDE STREAM_MANAGER_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/Mutex.h>
 #include <base/XMLSupport.h>
@@ -80,6 +81,9 @@ class StreamManager :
 			int &clientID);
 
 		///
+		FeID findFrontendIDWithStreamID(StreamID id) const;
+
+		///
 		void checkForSessionTimeout();
 
 		///
@@ -95,18 +99,17 @@ class StreamManager :
 		}
 
 		///
-		std::string getDescribeMediaLevelString(int streamID) const;
+		std::string getDescribeMediaLevelString(FeID id) const;
 
 #ifdef LIBDVBCSA
 		///
-		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(
-			int streamID);
+		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(FeID id);
 #endif
 
 	private:
 
 		///
-		int findStreamID(const std::string &msg, const std::string &method) const;
+		FeID findFrontendID(const std::string &msg, const std::string &method) const;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

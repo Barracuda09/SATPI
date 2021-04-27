@@ -38,7 +38,7 @@ namespace mpegts {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void PCR::collectData(const int UNUSED(streamID), const unsigned char *data) {
+	void PCR::collectData(const FeID UNUSED(id), const unsigned char *data) {
 		// Check for 'adaptation field flag' and 'PCR field present'
 		if ((data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
 			//        4           3          2          1          0

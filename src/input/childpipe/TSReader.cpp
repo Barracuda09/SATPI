@@ -36,10 +36,10 @@ namespace childpipe {
 // =============================================================================
 
 TSReader::TSReader(
-		int streamID,
+		FeID id,
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) :
-		Device(streamID),
+		Device(id),
 		_transform(appDataPath, _transformDeviceData),
 		_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
@@ -126,7 +126,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		return false;
 	}
 	// Add data to Filter
-	_deviceData.addFilterData(_streamID, buffer);
+	_deviceData.addFilterData(_feID, buffer);
 	return true;
 }
 
@@ -152,17 +152,17 @@ bool TSReader::hasDeviceDataChanged() const {
 }
 
 void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-	SI_LOG_INFO("Stream: %d, Parsing transport parameters...", _streamID);
+	SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
-	const std::string msgTrans = _transform.transformStreamString(_streamID, msg, method);
+	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
-	_deviceData.parseStreamString(_streamID, msgTrans, method);
-	SI_LOG_DEBUG("Stream: %d, Parsing transport parameters (Finished)", _streamID);
+	_deviceData.parseStreamString(_feID, msgTrans, method);
+	SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
 }
 
 bool TSReader::update() {
-	SI_LOG_INFO("Stream: %d, Updating frontend...", _streamID);
+	SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
 		_exec.close();
@@ -171,14 +171,14 @@ bool TSReader::update() {
 		const std::string execPath = _deviceData.getFilePath();
 		_exec.open(execPath);
 		if (_exec.isOpen()) {
-			SI_LOG_INFO("Stream: %d, Child PIPE - TS Reader using exec: %s", _streamID, execPath.c_str());
+			SI_LOG_INFO("Frontend: %d, Child PIPE - TS Reader using exec: %s", _feID, execPath.c_str());
 			_t1 = std::chrono::steady_clock::now();
 			_t2 = _t1;
 		} else {
-			SI_LOG_ERROR("Stream: %d, Child PIPE - TS Reader unable to use exec: %s", _streamID, execPath.c_str());
+			SI_LOG_ERROR("Frontend: %d, Child PIPE - TS Reader unable to use exec: %s", _feID, execPath.c_str());
 		}
 	}
-	SI_LOG_DEBUG("Stream: %d, Updating frontend (Finished)", _streamID);
+	SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
 	return true;
 }
 
@@ -192,7 +192,7 @@ bool TSReader::teardown() {
 std::string TSReader::attributeDescribeString() const {
 	if (_exec.isOpen()) {
 		const DeviceData &data = _transform.transformDeviceData(_deviceData);
-		return data.attributeDescribeString(_streamID);
+		return data.attributeDescribeString(_feID);
 	}
 	return "";
 }

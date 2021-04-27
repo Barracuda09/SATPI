@@ -20,6 +20,7 @@
 #ifndef HTTPC_SERVER_H_INCLUDE
 #define HTTPC_SERVER_H_INCLUDE HTTPC_SERVER_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <socket/TcpSocket.h>
 #include <Unused.h>
@@ -92,10 +93,10 @@ class HttpcServer :
 		}
 
 		/// RTSP Method
-		virtual void methodSetup(Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {}
+		virtual void methodSetup(const Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodPlay(const std::string &UNUSED(sessionID), int UNUSED(cseq), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
+		virtual void methodPlay(const Stream &UNUSED(stream), int UNUSED(clientID), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
 		virtual void methodTeardown(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
@@ -104,7 +105,7 @@ class HttpcServer :
 		virtual void methodOptions(const std::string &UNUSED(sessionID), int UNUSED(cseq), std::string &UNUSED(htmlBody)) {}
 
 		/// RTSP Method
-		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), int UNUSED(streamID), std::string &UNUSED(htmlBody)) {}
+		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), FeID UNUSED(id), std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client) final;

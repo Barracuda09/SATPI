@@ -42,9 +42,9 @@ StreamThreadRtpTcp::StreamThreadRtpTcp(StreamInterface &stream) :
 
 StreamThreadRtpTcp::~StreamThreadRtpTcp() {
 	terminateThread();
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
+	SI_LOG_INFO("Frontend: %d, Destroy %s stream to %s:%d", id, _protocol.c_str(),
 		client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 }
 
@@ -53,13 +53,13 @@ StreamThreadRtpTcp::~StreamThreadRtpTcp() {
 // =============================================================================
 
 void StreamThreadRtpTcp::doStartStreaming(const int clientID) {
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	StreamClient &client = _stream.getStreamClient(clientID);
 
 	// Get default buffer size and set it x times as big
 	const int bufferSize = client.getHttpNetworkSendBufferSize() * 20;
 	client.setHttpNetworkSendBufferSize(bufferSize);
-	SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID, _protocol.c_str(), bufferSize / 1024);
+	SI_LOG_INFO("Frontend: %d, %s set network buffer size: %d KBytes", id, _protocol.c_str(), bufferSize / 1024);
 
 	// RTCP/TCP
 	_rtcp.startStreaming(clientID);
@@ -106,7 +106,7 @@ bool StreamThreadRtpTcp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, S
 	// send the RTP/TCP packet
 	if (!client.writeHttpData(iov, 2)) {
 		if (!client.isSelfDestructing()) {
-			SI_LOG_ERROR("Stream: %d, Error sending RTP/TCP Stream Data to %s", _stream.getStreamID(),
+			SI_LOG_ERROR("Frontend: %d, Error sending RTP/TCP Stream Data to %s", _stream.getFeID(),
 				client.getIPAddressOfStream().c_str());
 			client.selfDestruct();
 		}

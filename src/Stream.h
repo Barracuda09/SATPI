@@ -84,7 +84,9 @@ class Stream :
 		// =======================================================================
 	public:
 
-		virtual int  getStreamID() const final;
+		virtual StreamID getStreamID() const final;
+
+		virtual FeID getFeID() const final;
 
 		virtual StreamClient &getStreamClient(int clientID) const final;
 
@@ -184,7 +186,6 @@ class Stream :
 	private:
 
 		base::Mutex _mutex;
-		int _streamID;                    ///
 
 		StreamingType     _streamingType; ///
 		bool              _enabled;       /// is this stream enabled, could we use it?

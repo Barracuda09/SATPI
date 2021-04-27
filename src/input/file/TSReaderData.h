@@ -55,10 +55,10 @@ class TSReaderData :
 		virtual void doInitialize() final;
 
 		/// @see DeviceData
-		virtual void doParseStreamString(int streamID, const std::string &msg, const std::string &method) final;
+		virtual void doParseStreamString(FeID id, const std::string &msg, const std::string &method) final;
 
 		/// @see DeviceData
-		virtual std::string doAttributeDescribeString(int streamID) const final;
+		virtual std::string doAttributeDescribeString(FeID id) const final;
 
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------

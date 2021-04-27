@@ -41,3 +41,6 @@ rtsp://@#1/?fe=1&freq=458&sr=6900&msys=dvbc&mtype=256qam&fec=35&pids=0,1,16,17,1
 
 #EXTINF:0,14. National Geographic HD (DVB-C)
 rtsp://@#1/?fe=1&freq=378&sr=6900&msys=dvbc&mtype=256qam&fec=35&pids=0,1,16,17,18,103,2000,2001,2011,2012,2051,8187
+
+#EXTINF:0,15. TV Noord (DVB-C)
+rtsp://@#1/?freq=418.00&sr=6900&msys=dvbc&mtype=256qam&fec=35&specinv=0&pids=0,1,16,17,18,103,2600,2601,2611

@@ -128,13 +128,28 @@ std::string StreamManager::getRTSPDescribeString() const {
 	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
 
-int StreamManager::findStreamID(const std::string &msg, const std::string &method) const {
-	int streamID = StringConverter::getIntParameter(msg, method, "stream=");
-	const int fe_nr = StringConverter::getIntParameter(msg, method, "fe=");
-	if (streamID == -1 && fe_nr >= 1 && fe_nr <= static_cast<int>(_stream.size())) {
-		streamID = fe_nr - 1;
+FeID StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
+	for (SpStream stream : _stream) {
+		if (stream->getStreamID() == id) {
+			return stream->getFeID();
+		}
 	}
-	return streamID;
+	return FeID();
+}
+
+FeID StreamManager::findFrontendID(const std::string &msg, const std::string &method) const {
+	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	const FeID feID = StringConverter::getIntParameter(msg, method, "fe=");
+	// Did we find StreamID an NO FrondendID
+	if (streamID != -1 && feID == -1) {
+		return findFrontendIDWithStreamID(streamID);
+	}
+	// Is the FrondendID in range, then return this
+	if (feID >= 1 && feID <= static_cast<int>(_stream.size())) {
+		return feID;
+	}
+	// Out of range, return -1
+	return FeID();
 }
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
@@ -145,8 +160,9 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	const std::string msg = socketClient.getPercentDecodedMessage();
 	const std::string method = StringConverter::getMethod(msg);
 
-	// Now find streamID in the message
-	const int streamID = findStreamID(msg, method);
+	// Now find FrontendID and StreamID of this message
+	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	const FeID feID = findFrontendID(msg, method);
 
 	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
 	bool newSession = false;
@@ -171,7 +187,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	// if no streamID, then we need to find the streamID
 	if (streamID == -1) {
 		if (!sessionID.empty()) {
-			SI_LOG_INFO("Found StreamID x - SessionID: %s", sessionID.c_str());
+			SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: %s", sessionID.c_str());
 			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					stream->getStreamClient(clientID).setSessionID(sessionID);
@@ -179,7 +195,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 				}
 			}
 		} else {
-			SI_LOG_INFO("Found StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
+			SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
 			for (SpStream stream : _stream) {
 				if (!stream->streamInUse()) {
 					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
@@ -189,10 +205,10 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 				}
 			}
 		}
-	} else {
-		SI_LOG_INFO("Found StreamID %d - SessionID %s", streamID, sessionID.c_str());
+	} else if (feID != -1) {
+		SI_LOG_INFO("Found FrondtendID %d - StreamID %d - SessionID %s", feID.getID(), streamID.getID(), sessionID.c_str());
 		// Did we find the StreamClient? else try to search in other Streams
-		if (!_stream[streamID]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+		if (!_stream[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			for (SpStream stream : _stream) {
 				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 					stream->getStreamClient(clientID).setSessionID(sessionID);
@@ -200,8 +216,8 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 				}
 			}
 		} else {
-			_stream[streamID]->getStreamClient(clientID).setSessionID(sessionID);
-			return _stream[streamID];
+			_stream[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);
+			return _stream[feID.getID()];
 		}
 	}
 	// Did not find anything
@@ -220,15 +236,15 @@ void StreamManager::checkForSessionTimeout() {
 	}
 }
 
-std::string StreamManager::getDescribeMediaLevelString(const int streamID) const {
+std::string StreamManager::getDescribeMediaLevelString(const FeID id) const {
 	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
-	return _stream[streamID]->getDescribeMediaLevelString();
+	return _stream[id.getID()]->getDescribeMediaLevelString();
 }
 
 #ifdef LIBDVBCSA
-input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const int streamID) {
-	return _stream[streamID]->getFrontendDecryptInterface();
+input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const FeID id) {
+	return _stream[id.getID()]->getFrontendDecryptInterface();
 }
 #endif
 
@@ -240,7 +256,7 @@ void StreamManager::doFromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	for (SpStream stream : _stream) {
 		std::string element;
-		const std::string find = StringConverter::stringFormat("stream@#1", stream->getStreamID());
+		const std::string find = StringConverter::stringFormat("stream@#1", stream->getFeID().getID());
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
@@ -258,7 +274,7 @@ void StreamManager::doAddToXML(std::string &xml) const {
 	assert(!_stream.empty());
 
 	for (ScpStream stream : _stream) {
-		ADD_XML_N_ELEMENT(xml, "stream", stream->getStreamID(), stream->toXML());
+		ADD_XML_N_ELEMENT(xml, "stream", stream->getFeID().getID(), stream->toXML());
 	}
 #ifdef LIBDVBCSA
 	ADD_XML_ELEMENT(xml, "decrypt", _decrypt->toXML());

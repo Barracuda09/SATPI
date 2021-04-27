@@ -44,9 +44,9 @@ StreamThreadHttp::StreamThreadHttp(
 
 StreamThreadHttp::~StreamThreadHttp() {
 	terminateThread();
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
+	SI_LOG_INFO("Frontend: %d, Destroy %s stream to %s:%d", id, _protocol.c_str(),
 		client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 }
 
@@ -55,13 +55,13 @@ StreamThreadHttp::~StreamThreadHttp() {
 // =========================================================================
 
 void StreamThreadHttp::doStartStreaming(const int clientID) {
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	StreamClient &client = _stream.getStreamClient(clientID);
 
 	// Get default buffer size and set it x times as big
 	const int bufferSize = client.getHttpNetworkSendBufferSize() * 20;
 	client.setHttpNetworkSendBufferSize(bufferSize);
-	SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID,
+	SI_LOG_INFO("Frontend: %d, %s set network buffer size: %d KBytes", id,
 		_protocol.c_str(), bufferSize / 1024);
 
 //		client.setSocketTimeoutInSec(2);
@@ -85,7 +85,7 @@ bool StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, Str
 	// send the HTTP packet
 	if (!client.writeHttpData(iov, 1)) {
 		if (!client.isSelfDestructing()) {
-			SI_LOG_ERROR("Stream: %d, Error sending HTTP Stream Data to %s", _stream.getStreamID(),
+			SI_LOG_ERROR("Frontend: %d, Error sending HTTP Stream Data to %s", _stream.getFeID(),
 				client.getIPAddressOfStream().c_str());
 			client.selfDestruct();
 		}

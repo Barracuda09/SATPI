@@ -50,7 +50,7 @@ class Streamer :
 	public:
 
 		Streamer(
-			int streamID,
+			FeID id,
 			const std::string &bindIPAddress,
 			const std::string &appDataPath);
 

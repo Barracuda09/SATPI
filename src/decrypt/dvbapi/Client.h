@@ -20,6 +20,7 @@
 #ifndef DECRYPT_DVBAPI_CLIENT_H_INCLUDE
 #define DECRYPT_DVBAPI_CLIENT_H_INCLUDE DECRYPT_DVBAPI_CLIENT_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/ThreadBase.h>
 #include <base/XMLSupport.h>
@@ -74,10 +75,10 @@ class Client :
 	public:
 
 		///
-		void decrypt(int streamID, mpegts::PacketBuffer &buffer);
+		void decrypt(FeID id, mpegts::PacketBuffer &buffer);
 
 		///
-		bool stopDecrypt(int streamID);
+		bool stopDecrypt(FeID id);
 
 	private:
 
@@ -91,7 +92,7 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void sendPMT(int streamID, const mpegts::PMT &pmt);
+		void sendPMT(FeID id, const mpegts::PMT &pmt);
 
 		///
 		void cleanPMT(unsigned char *data);

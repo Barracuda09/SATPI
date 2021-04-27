@@ -39,9 +39,9 @@ StreamThreadRtp::StreamThreadRtp(StreamInterface &stream) :
 
 StreamThreadRtp::~StreamThreadRtp() {
 	terminateThread();
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Stream: %d, Destroy %s stream to %s:%d", streamID, _protocol.c_str(),
+	SI_LOG_INFO("Frontend: %d, Destroy %s stream to %s:%d", id, _protocol.c_str(),
 		client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
 	client.getRtpSocketAttr().closeFD();
 }
@@ -51,18 +51,18 @@ StreamThreadRtp::~StreamThreadRtp() {
 // =============================================================================
 
 void StreamThreadRtp::doStartStreaming(const int clientID) {
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	SocketAttr &rtp = _stream.getStreamClient(clientID).getRtpSocketAttr();
 
 	// RTP
 	if (!rtp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
-		SI_LOG_ERROR("Stream: %d, Get RTP handle failed", streamID);
+		SI_LOG_ERROR("Frontend: %d, Get RTP handle failed", id);
 	}
 
 	// Get default buffer size and set it x times as big
 	const int bufferSize = rtp.getNetworkSendBufferSize() * 20;
 	rtp.setNetworkSendBufferSize(bufferSize);
-	SI_LOG_INFO("Stream: %d, %s set network buffer size: %d KBytes", streamID,
+	SI_LOG_INFO("Frontend: %d, %s set network buffer size: %d KBytes", id,
 		_protocol.c_str(), bufferSize / 1024);
 
 	// RTCP
@@ -100,7 +100,7 @@ bool StreamThreadRtp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, Stre
 	SocketAttr &rtp = client.getRtpSocketAttr();
 	if (!rtp.sendDataTo(rtpBuffer, len, MSG_DONTWAIT)) {
 		if (!client.isSelfDestructing()) {
-			SI_LOG_ERROR("Stream: %d, Error sending RTP/UDP data to %s:%d", _stream.getStreamID(),
+			SI_LOG_ERROR("Frontend: %d, Error sending RTP/UDP data to %s:%d", _stream.getFeID(),
 				rtp.getIPAddressOfSocket().c_str(), rtp.getSocketPort());
 			client.selfDestruct();
 		}

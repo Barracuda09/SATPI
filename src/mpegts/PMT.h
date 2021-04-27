@@ -52,7 +52,7 @@ class PMT :
 		// =====================================================================
 	public:
 
-		void parse(int streamID);
+		void parse(FeID id);
 
 		mpegts::TSData getProgramInfo() const {
 			return _progInfo;

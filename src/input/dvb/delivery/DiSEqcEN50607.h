@@ -48,7 +48,7 @@ namespace delivery {
 		public:
 
 			/// @see DiSEqc
-			virtual bool sendDiseqc(int feFD, int streamID, uint32_t &freq,
+			virtual bool sendDiseqc(int feFD, FeID id, uint32_t &freq,
 				int src, Lnb::Polarization pol) final;
 
 		private:
@@ -64,7 +64,7 @@ namespace delivery {
 			// =======================================================================
 		private:
 
-			bool sendDiseqcJess(int feFD, int streamID, uint32_t &freq,
+			bool sendDiseqcJess(int feFD, FeID id, uint32_t &freq,
 				int src, Lnb::Polarization pol);
 
 			// =======================================================================

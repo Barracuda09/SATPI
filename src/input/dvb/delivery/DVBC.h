@@ -20,6 +20,7 @@
 #ifndef INPUT_DVB_DELIVERY_DVBC_H_INCLUDE
 #define INPUT_DVB_DELIVERY_DVBC_H_INCLUDE INPUT_DVB_DELIVERY_DVBC_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <input/dvb/delivery/System.h>
 
@@ -37,7 +38,7 @@ class DVBC :
 		// =======================================================================
 	public:
 
-		explicit DVBC(int streamID, const std::string &fePath);
+		explicit DVBC(FeID id, const std::string &fePath);
 		virtual ~DVBC();
 
 		// =======================================================================

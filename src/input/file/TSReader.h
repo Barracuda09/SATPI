@@ -47,7 +47,7 @@ class TSReader :
 	public:
 
 		TSReader(
-			int streamID,
+			FeID id,
 			const std::string &appDataPath,
 			bool enableUnsecureFrontends);
 

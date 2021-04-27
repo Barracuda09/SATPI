@@ -45,9 +45,9 @@ namespace delivery {
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
 	// =======================================================================
 
-	bool DiSEqcSwitch::sendDiseqc(const int feFD, const int streamID, uint32_t &freq,
+	bool DiSEqcSwitch::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
 			const int src, const Lnb::Polarization pol) {
-		return diseqcSwitch(feFD, streamID, freq, src, pol);
+		return diseqcSwitch(feFD, id, freq, src, pol);
 	}
 
 	void DiSEqcSwitch::doNextAddToXML(std::string &xml) const {
@@ -70,7 +70,7 @@ namespace delivery {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	bool DiSEqcSwitch::diseqcSwitch(int feFD, int streamID, uint32_t &freq,
+	bool DiSEqcSwitch::diseqcSwitch(const int feFD, const FeID id, uint32_t &freq,
 				int src, Lnb::Polarization pol) {
 		bool hiband = false;
 		_lnb[src].getIntermediateFrequency(freq, hiband, pol);
@@ -104,8 +104,8 @@ namespace delivery {
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			SI_LOG_INFO("Stream: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d",
-				streamID, cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src);
+			SI_LOG_INFO("Frontend: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d",
+				id.getID(), cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src);
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 				return false;

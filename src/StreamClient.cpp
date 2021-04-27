@@ -30,8 +30,6 @@
 StreamClient::StreamClient() :
 		_socketClient(nullptr),
 		_sessionTimeoutCheck(SessionTimeoutCheck::WATCHDOG),
-		_streamID(-1),
-		_clientID(-1),
 		_ipAddress("0.0.0.0"),
 		_watchdog(0),
 		_sessionTimeout(60),

@@ -201,8 +201,8 @@ std::string StringConverter::getMethod(const std::string &msg) {
 }
 
 std::string StringConverter::getContentFrom(const std::string &msg) {
-	const std::string parameter = StringConverter::getHeaderFieldParameter(msg, "Content-Length:");
-	const std::size_t contentLength = parameter.empty() ? 0 : std::stoi(parameter);
+	const std::string p = StringConverter::getHeaderFieldParameter(msg, "Content-Length:");
+	const std::size_t contentLength = (!p.empty() && std::isdigit(p[0])) ? std::stoi(p) : 0;
 	if (contentLength > 0) {
 		const std::string::size_type headerSize = msg.find("\r\n\r\n", 0);
 		if (headerSize != std::string::npos) {
@@ -377,12 +377,12 @@ StringVector StringConverter::parseCommandArgumentString(const std::string &cmd)
 double StringConverter::getDoubleParameter(const std::string &msg,
 	const std::string &header_field, const std::string &parameter) {
 	const std::string val = StringConverter::getStringParameter(msg, header_field, parameter);
-	return val.empty() ? -1.0 : std::stof(val);
+	return (!val.empty() && std::isdigit(val[0])) ? std::stof(val) : -1.0;
 }
 
 int StringConverter::getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter) {
 	const std::string val = StringConverter::getStringParameter(msg, header_field, parameter);
-	return val.empty() ? -1 : std::stoi(val);
+	return (!val.empty() && std::isdigit(val[0])) ? std::stoi(val) : -1;
 }
 
 input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, const std::string &header_field) {
@@ -434,7 +434,7 @@ const char *StringConverter::fec_to_string(int fec) {
 	case FEC_AUTO:
 		return " ";
 	case FEC_NONE:
-		return " ";
+		return "";
 	default:
 		return "UNKNOWN FEC";
 	}
@@ -480,7 +480,7 @@ const char *StringConverter::modtype_to_sting(int modtype) {
 	case PSK_8:
 		return "8psk";
 	case QAM_AUTO:
-		return " ";
+		return "";
 	default:
 		return "UNKNOWN MODTYPE";
 	}
@@ -495,7 +495,7 @@ const char *StringConverter::rolloff_to_sting(int rolloff) {
 	case ROLLOFF_20:
 		return "0.20";
 	case ROLLOFF_AUTO:
-		return " ";
+		return "";
 	default:
 		return "UNKNOWN ROLLOFF";
 	}
@@ -508,7 +508,7 @@ const char *StringConverter::pilot_tone_to_string(int pilot) {
 	case PILOT_OFF:
 		return "off";
 	case PILOT_AUTO:
-		return " ";
+		return "";
 	default:
 		return "UNKNOWN PILOT";
 	}

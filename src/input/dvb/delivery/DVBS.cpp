@@ -47,22 +47,22 @@ namespace delivery {
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 
-	DVBS::DVBS(int streamID, const std::string &fePath) :
-		input::dvb::delivery::System(streamID, fePath),
+	DVBS::DVBS(const FeID id, const std::string &fePath) :
+		input::dvb::delivery::System(id, fePath),
 		_diseqcType(DiseqcType::Switch),
 		_diseqc(new DiSEqcSwitch) {
 
 		// Only DVB-S2 have special handling for FBC tuners
-		_fbcSetID = readProcData(streamID, "fbc_set_id");
+		_fbcSetID = readProcData(id.getID(), "fbc_set_id");
 		_fbcTuner = _fbcSetID >= 0;
 		_fbcConnect = 0;
 		_fbcLinked = false;
 		_fbcRoot = false;
 		_sendDiSEqcViaRootTuner = false;
 		if (_fbcTuner) {
-			readConnectionChoices(streamID);
-			_fbcRoot = _choices.find(streamID) != _choices.end();
-			_fbcConnect = _fbcRoot ? streamID : 0;
+			readConnectionChoices(id.getID());
+			_fbcRoot = _choices.find(id.getID()) != _choices.end();
+			_fbcConnect = _fbcRoot ? id.getID() : 0;
 		}
 	}
 
@@ -133,7 +133,7 @@ namespace delivery {
 					_diseqc.reset(nullptr);
 					break;
 				default:
-					SI_LOG_ERROR("Stream: %d, Wrong DiSEqc type requested, not changing", _streamID);
+					SI_LOG_ERROR("Frontend: %d, Wrong DiSEqc type requested, not changing", _feID);
 			}
 		}
 		// This after creating _diseqc!
@@ -143,11 +143,11 @@ namespace delivery {
 
 		if (findXMLElement(xml, "fbcLinked.value", element)) {
 			_fbcLinked = (element == "true") ? true : false;
-			writeProcData(_streamID, "fbc_link", _fbcLinked ? 1 : 0);
+			writeProcData(_feID, "fbc_link", _fbcLinked ? 1 : 0);
 		}
 		if (findXMLElement(xml, "fbcConnection.value", element)) {
 			_fbcConnect = std::stoi(element);
-			writeProcData(_streamID, "fbc_connect", _fbcConnect);
+			writeProcData(_feID, "fbc_connect", _fbcConnect);
 		}
 		if (findXMLElement(xml, "sendDiSEqcViaRootTuner.value", element)) {
 			_sendDiSEqcViaRootTuner =  (element == "true") ? true : false;
@@ -159,7 +159,7 @@ namespace delivery {
 	// =========================================================================
 
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Stream: %d, Start tuning process for DVB-S(2)...", _streamID);
+		SI_LOG_INFO("Frontend: %d, Start tuning process for DVB-S(2)...", _feID);
 
 		// DiSEqC switch position differs from src and adjust to MAX_LNB
 		const int src = (frontendData.getDiSEqcSource() - 1) % DiSEqc::MAX_LNB;
@@ -201,15 +201,15 @@ namespace delivery {
 				}
 			}
 		}
-		SI_LOG_INFO("Stream: %d, Opened %s for Writing DiSEqC command with fd: %d", _streamID, fePathDiseqc.c_str(), feFDDiseqc);
+		SI_LOG_INFO("Frontend: %d, Opened %s for Writing DiSEqC command with fd: %d", _feID, fePathDiseqc.c_str(), feFDDiseqc);
 
 		// send diseqc
-		if (!_diseqc || !_diseqc->sendDiseqc(feFDDiseqc, _streamID, freq, src, pol)) {
+		if (!_diseqc || !_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, src, pol)) {
 			return false;
 		}
 
 		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
-			SI_LOG_INFO("Stream: %d, Closing %s with fd: %d", _streamID, fePathDiseqc.c_str(), feFDDiseqc);
+			SI_LOG_INFO("Frontend: %d, Closing %s with fd: %d", _feID, fePathDiseqc.c_str(), feFDDiseqc);
 			::close(feFDDiseqc);
 		}
 
@@ -224,11 +224,12 @@ namespace delivery {
 	//  -- Other member functions ----------------------------------------------
 	// =========================================================================
 
-	bool DVBS::setProperties(int feFD, const uint32_t freq, const input::dvb::FrontendData &frontendData) {
+	bool DVBS::setProperties(const int feFD, const uint32_t freq,
+			const input::dvb::FrontendData &frontendData) {
 		struct dtv_property p[15];
 		int size = 0;
 
-		SI_LOG_DEBUG("Stream: %d, Set Properties: Frequency %d", _streamID, freq);
+		SI_LOG_DEBUG("Frontend: %d, Set Properties: Frequency %d", _feID, freq);
 
 		#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
@@ -267,9 +268,9 @@ namespace delivery {
 	//  -- FBC member functions ------------------------------------------------
 	// =========================================================================
 
-	int DVBS::readProcData(int streamID, const std::string &procEntry) const {
+	int DVBS::readProcData(const FeID id, const std::string &procEntry) const {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", streamID, procEntry);
+			"/proc/stb/frontend/@#1/@#2", id.getID(), procEntry);
 		std::ifstream file(filePath);
 		if (file.is_open()) {
 			int value;
@@ -279,19 +280,19 @@ namespace delivery {
 		return -1;
 	}
 
-	void DVBS::writeProcData(int streamID, const std::string &procEntry, int value) {
+	void DVBS::writeProcData(const FeID id, const std::string &procEntry, int value) {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", streamID, procEntry);
+			"/proc/stb/frontend/@#1/@#2", id.getID(), procEntry);
 		std::ofstream file(filePath);
 		if (file.is_open()) {
 			file << value;
 		}
 	}
 
-	void DVBS::readConnectionChoices(int streamID) {
+	void DVBS::readConnectionChoices(const FeID id) {
 		// File looks something like: 0=A, 1=B
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/fbc_connect_choices", streamID);
+			"/proc/stb/frontend/@#1/fbc_connect_choices", id.getID());
 		std::ifstream file(filePath);
 		if (!file.is_open()) {
 			return;

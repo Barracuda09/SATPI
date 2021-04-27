@@ -51,7 +51,7 @@ void TSReaderData::doInitialize() {
 }
 
 void TSReaderData::doParseStreamString(
-		const int UNUSED(streamID),
+		const FeID UNUSED(id),
 		const std::string &msg,
 		const std::string &method) {
 	const std::string filePath = StringConverter::getURIParameter(msg, method, "uri=");
@@ -63,12 +63,12 @@ void TSReaderData::doParseStreamString(
 	_filePath = filePath;
 }
 
-std::string TSReaderData::doAttributeDescribeString(const int streamID) const {
+std::string TSReaderData::doAttributeDescribeString(const FeID id) const {
 	std::string desc;
 	// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
 	StringConverter::addFormattedString(desc,
 			"ver=1.5;tuner=%d,%d,%d,%d;uri=%s",
-			streamID + 1,
+			id.getID() + 1,
 			getSignalStrength(),
 			hasLock(),
 			getSignalToNoiseRatio(),

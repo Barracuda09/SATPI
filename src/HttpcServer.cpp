@@ -152,17 +152,18 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	// Save clients seq number
 	const std::string fieldCSeq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
 	const int cseq =  fieldCSeq.empty() ? 0 : std::stoi(fieldCSeq);
-	// Save sessionID
+	// Save sessionID and StreamID
 	const std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
-	//
-	const int streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	// Find the FeID with requesed StreamID
+	const FeID feID = _streamManager.findFrontendIDWithStreamID(streamID);
 
 	std::string httpcReply;
 	bool replyAlreadySend = false;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
-		methodDescribe("", cseq, streamID, httpcReply);
+		methodDescribe("", cseq, feID, httpcReply);
 	} else {
 		int clientID;
 		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
@@ -184,7 +185,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				stream->update(clientID, true);
 
 			} else if (method == "PLAY") {
-				methodPlay(sessionID, cseq, stream->getStreamID(), httpcReply);
+				methodPlay(*stream, clientID, httpcReply);
 
 				// @TODO  check return of update();
 				stream->update(clientID, true);
@@ -196,7 +197,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "OPTIONS") {
 				methodOptions(sessionID, cseq, httpcReply);
 			} else if (method == "DESCRIBE") {
-				methodDescribe(sessionID, cseq, streamID, httpcReply);
+				methodDescribe(sessionID, cseq, feID, httpcReply);
 			} else {
 				// method not supported
 				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());

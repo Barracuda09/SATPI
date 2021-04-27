@@ -54,7 +54,7 @@ namespace stream {
 	}
 
 	void StreamerData::doParseStreamString(
-			const int UNUSED(streamID),
+			const FeID UNUSED(id),
 			const std::string &msg,
 			const std::string &method) {
 		const std::string uri = StringConverter::getURIParameter(msg, method, "uri=");
@@ -80,11 +80,11 @@ namespace stream {
 		}
 	}
 
-	std::string StreamerData::doAttributeDescribeString(const int streamID) const {
+	std::string StreamerData::doAttributeDescribeString(const FeID id) const {
 		std::string desc;
 		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
 		StringConverter::addFormattedString(desc, "ver=1.5;tuner=%d,%d,%d,%d;uri=%s",
-				streamID + 1,
+				id.getID() + 1,
 				getSignalStrength(),
 				hasLock(),
 				getSignalToNoiseRatio(),

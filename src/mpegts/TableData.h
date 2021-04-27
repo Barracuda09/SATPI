@@ -20,6 +20,8 @@
 #ifndef MPEGTS_TABLE_DATA_H_INCLUDE
 #define MPEGTS_TABLE_DATA_H_INCLUDE MPEGTS_TABLE_DATA_H_INCLUDE
 
+#include <Defs.h>
+
 #include <string>
 #include <map>
 
@@ -86,7 +88,7 @@ class TableData {
 		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
 
 		/// Collect Table data for tableID
-		void collectData(int streamID, int tableID, const unsigned char *data, bool raw);
+		void collectData(FeID id, int tableID, const unsigned char *data, bool raw);
 
 		/// Get the collected Table Data
 		TSData getData(size_t secNr) const;

@@ -51,8 +51,8 @@ namespace dvbapi {
 	// -- Other member functions -------------------------------------------------
 	// ===========================================================================
 
-	void ClientProperties::stopOSCamFilters(int streamID) {
-		SI_LOG_INFO("Stream: %d, Clearing OSCam filters and Keys...", streamID);
+	void ClientProperties::stopOSCamFilters(FeID id) {
+		SI_LOG_INFO("Frontend: %d, Clearing OSCam filters and Keys...", id.getID());
 		// free keys
 		_keys.freeKeys();
 		_batchCount = 0;

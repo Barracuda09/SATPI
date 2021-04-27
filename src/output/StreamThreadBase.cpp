@@ -39,7 +39,7 @@ namespace output {
 // =============================================================================
 
 StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream) :
-	ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getStreamID())),
+	ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getFeID())),
 	_stream(stream),
 	_protocol(protocol),
 	_state(State::Paused),
@@ -61,7 +61,7 @@ StreamThreadBase::~StreamThreadBase() {
 #ifdef LIBDVBCSA
 	decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 	if (decrypt != nullptr) {
-		decrypt->stopDecrypt(_stream.getStreamID());
+		decrypt->stopDecrypt(_stream.getFeID());
 	}
 #endif
 }
@@ -98,7 +98,7 @@ void StreamThreadBase::threadEntry() {
 
 bool StreamThreadBase::startStreaming(const int clientID) {
 	_clientID = clientID;
-	const int streamID = _stream.getStreamID();
+	const FeID id = _stream.getFeID();
 	const StreamClient &client = _stream.getStreamClient(clientID);
 
 	doStartStreaming(clientID);
@@ -109,7 +109,7 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	_tsBuffer[_writeIndex].reset();
 
 	if (!startThread()) {
-		SI_LOG_ERROR("Stream: %d, Start %s Start stream to %s:%d ERROR", streamID, _protocol.c_str(),
+		SI_LOG_ERROR("Frontend: %d, Start %s Start stream to %s:%d ERROR", id, _protocol.c_str(),
 			client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 		return false;
 	}
@@ -120,7 +120,7 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	_t1 = std::chrono::steady_clock::now();
 
 	_state = State::Running;
-	SI_LOG_INFO("Stream: %d, Start %s stream to %s:%d", streamID, _protocol.c_str(),
+	SI_LOG_INFO("Frontend: %d, Start %s stream to %s:%d", id, _protocol.c_str(),
 		client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 
 	return true;
@@ -141,22 +141,22 @@ bool StreamThreadBase::pauseStreaming(const int clientID) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			++timeout;
 			if (timeout > 50) {
-				SI_LOG_ERROR("Stream: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
-					_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+				SI_LOG_ERROR("Frontend: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
+					_stream.getFeID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
 					getStreamSocketPort(clientID), payload);
 				paused = false;
 				break;
 			}
 		}
 		if (paused) {
-			SI_LOG_INFO("Stream: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
-					_stream.getStreamID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+			SI_LOG_INFO("Frontend: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
+					_stream.getFeID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
 					getStreamSocketPort(clientID), payload);
 		}
 #ifdef LIBDVBCSA
 		decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 		if (decrypt != nullptr) {
-			decrypt->stopDecrypt(_stream.getStreamID());
+			decrypt->stopDecrypt(_stream.getFeID());
 		}
 #endif
 	}
@@ -171,7 +171,7 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 		_readIndex  = 0;
 		_tsBuffer[_writeIndex].reset();
 		_state = State::Running;
-		SI_LOG_INFO("Stream: %d, Restart %s stream to %s:%d", _stream.getStreamID(),
+		SI_LOG_INFO("Frontend: %d, Restart %s stream to %s:%d", _stream.getFeID(),
 				_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddressOfStream().c_str(),
 				getStreamSocketPort(clientID));
 	}
@@ -184,13 +184,13 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;
 	}
-//		SI_LOG_DEBUG("Stream: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getStreamID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+//		SI_LOG_DEBUG("Frontend: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
 	if (inputDevice->isDataAvailable() && availableSize > 1) {
 		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
 			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 			if (decrypt != nullptr) {
-				decrypt->decrypt(_stream.getStreamID(), _tsBuffer[_writeIndex]);
+				decrypt->decrypt(_stream.getFeID(), _tsBuffer[_writeIndex]);
 			}
 #endif
 			// goto next, so inc write index

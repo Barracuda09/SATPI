@@ -45,16 +45,16 @@ namespace mpegts {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void PAT::parse(const int streamID) {
+	void PAT::parse(const FeID id) {
 		Data tableData;
 		if (getDataForSectionNumber(0, tableData)) {
 			const unsigned char *data = tableData.data.c_str();
 			_tid =  (data[8u] << 8) | data[9u];
 
-//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Stream: %d, PAT data", streamID);
+//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, PAT data", id.getID());
 
-			SI_LOG_INFO("Stream: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: 0x%04X",
-						streamID, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, tableData.crc);
+			SI_LOG_INFO("Frontend: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: 0x%04X",
+						id.getID(), tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, tableData.crc);
 
 			// 4 = CRC  5 = PAT Table begin from section length
 			const size_t len = tableData.sectionLength - 4u - 5u;
@@ -66,9 +66,9 @@ namespace mpegts {
 				const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
 				const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
 				if (prognr == 0u) {
-					SI_LOG_INFO("Stream: %d, PAT: Prog NR: 0x%04X - %05d  NIT PID: %04d", streamID, prognr, prognr, pid);
+					SI_LOG_INFO("Frontend: %d, PAT: Prog NR: 0x%04X - %05d  NIT PID: %04d", id.getID(), prognr, prognr, pid);
 				} else {
-					SI_LOG_INFO("Stream: %d, PAT: Prog NR: 0x%04X - %05d  PMT PID: %04d", streamID, prognr, prognr, pid);
+					SI_LOG_INFO("Frontend: %d, PAT: Prog NR: 0x%04X - %05d  PMT PID: %04d", id.getID(), prognr, prognr, pid);
 					_pmtPidTable[pid] = true;
 				}
 			}

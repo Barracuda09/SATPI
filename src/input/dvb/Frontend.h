@@ -20,6 +20,7 @@
 #ifndef INPUT_DVB_FRONTEND_H_INCLUDE
 #define INPUT_DVB_FRONTEND_H_INCLUDE INPUT_DVB_FRONTEND_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <input/Device.h>
 #include <input/Transformation.h>
@@ -56,7 +57,7 @@ class Frontend :
 	public:
 
 		Frontend(
-			int streamID,
+			FeID id,
 			const std::string &appDataPath,
 			const std::string &fe,
 			const std::string &dvr,
@@ -92,7 +93,7 @@ class Frontend :
 		// =======================================================================
 	public:
 
-		virtual int getStreamID() const final;
+		virtual FeID getFeID() const final;
 
 		virtual int getBatchCount() const final;
 
@@ -113,10 +114,10 @@ class Frontend :
 
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) final;
 
-		virtual bool findOSCamFilterData(int streamID, int pid, const unsigned char *tsPacket, int &tableID,
+		virtual bool findOSCamFilterData(FeID id, int pid, const unsigned char *tsPacket, int &tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) final;
 
-		virtual void stopOSCamFilters(int streamID) final;
+		virtual void stopOSCamFilters(FeID id) final;
 
 		virtual void setECMInfo(
 			int pid,

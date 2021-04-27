@@ -20,6 +20,7 @@
 #ifndef INPUT_DEVICE_H_INCLUDE
 #define INPUT_DEVICE_H_INCLUDE INPUT_DEVICE_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
@@ -41,7 +42,7 @@ class Device :
 		// =======================================================================
 	public:
 
-		Device(int streamID) : _streamID(streamID + 1) {}
+		Device(FeID id) : _feID(id), _streamID(id.getID() + 100) {}
 
 		virtual ~Device() {}
 
@@ -99,7 +100,12 @@ class Device :
 		virtual std::string attributeDescribeString() const = 0;
 
 		///
-		int getStreamID() const {
+		FeID getFeID() const {
+			return _feID;
+		}
+
+		///
+		StreamID getStreamID() const {
 			return _streamID;
 		}
 
@@ -108,7 +114,8 @@ class Device :
 		// =======================================================================
 	protected:
 
-		int _streamID;
+		FeID _feID;
+		StreamID _streamID;
 };
 
 } // namespace input

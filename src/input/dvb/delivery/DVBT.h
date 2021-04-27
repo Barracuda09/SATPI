@@ -20,6 +20,7 @@
 #ifndef INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
 #define INPUT_DVB_DELIVERY_DVBT_H_INCLUDE INPUT_DVB_DELIVERY_DVBT_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <input/dvb/delivery/System.h>
 
@@ -37,7 +38,7 @@ class DVBT :
 		// =======================================================================
 	public:
 
-		explicit DVBT(int streamID, const std::string &fePath);
+		explicit DVBT(FeID id, const std::string &fePath);
 		virtual ~DVBT();
 
 		// =======================================================================

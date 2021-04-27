@@ -56,7 +56,7 @@ void Filter::clear() {
 	_pidTable.clear();
 }
 
-void Filter::addData(const int streamID, const mpegts::PacketBuffer &buffer) {
+void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 	base::MutexLock lock(_mutex);
 	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
 	for (std::size_t i = 0; i < size; ++i) {
@@ -74,11 +74,11 @@ void Filter::addData(const int streamID, const mpegts::PacketBuffer &buffer) {
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat->collectData(streamID, PAT_TABLE_ID, ptr, false);
+				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting PAT
 				if (_pat->isCollected()) {
-					_pat->parse(streamID);
+					_pat->parse(id.getID());
 				}
 			}
 		} else if (_pat->isMarkedAsPMT(pid) /*&& _pidTable.isPIDUsed(pid)*/) {
@@ -94,27 +94,27 @@ void Filter::addData(const int streamID, const mpegts::PacketBuffer &buffer) {
 				}
 #endif
 				// collect PMT data
-				_pmt->collectData(streamID, PMT_TABLE_ID, ptr, false);
+				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting PMT
 				if (_pmt->isCollected()) {
-					_pmt->parse(streamID);
+					_pmt->parse(id.getID());
 					const int pcrPID = _pmt->getPCRPid();
 					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
 						// Probably not the correct PMT, so clear it and try again
 						_pmt = std::make_shared<PMT>();
-						SI_LOG_INFO("Stream: %d, Probably not the correct PMT: %04d  PCR-PID: %04d, Retrying...", streamID, pid, pcrPID);
+						SI_LOG_INFO("Frontend: %d, Probably not the correct PMT: %04d  PCR-PID: %04d, Retrying...", id.getID(), pid, pcrPID);
 					}
 				}
 			}
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt->collectData(streamID, SDT_TABLE_ID, ptr, false);
+				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting SDT
 				if (_sdt->isCollected()) {
-					_sdt->parse(streamID);
+					_sdt->parse(id.getID());
 				}
 			}
 		} else if (pid == 20) {
@@ -140,10 +140,10 @@ void Filter::addData(const int streamID, const mpegts::PacketBuffer &buffer) {
 			const unsigned int mi = ptr[11];
 			const unsigned int s = ptr[12];
 
-			SI_LOG_INFO("Stream: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", streamID, tableID, y, m, d, h, mi, s, mjd);
-//				SI_LOG_BIN_DEBUG(ptr, 188, "Stream: %d, TDT - ", _streamID);
+			SI_LOG_INFO("Frontend: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", id.getID(), tableID, y, m, d, h, mi, s, mjd);
+//				SI_LOG_BIN_DEBUG(ptr, 188, "Frontend: %d, TDT - ", _feID);
 		} else if (pid == _pmt->getPCRPid()) {
-			_pcr->collectData(streamID, ptr);
+			_pcr->collectData(id.getID(), ptr);
 		}
 	}
 }

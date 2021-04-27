@@ -20,6 +20,7 @@
 #ifndef DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 #define DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <mpegts/TableData.h>
 #include <base/TimeCounter.h>
@@ -97,13 +98,13 @@ namespace dvbapi {
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
-			bool findOSCamFilterData(const int streamID, int pid, const unsigned char *tsPacket, int &tableID,
+			bool findOSCamFilterData(const FeID id, int pid, const unsigned char *tsPacket, int &tableID,
 				int &filter, int &demux, mpegts::TSData &filterData) {
-				return _filter.find(streamID, pid, tsPacket, tableID, filter, demux, filterData);
+				return _filter.find(id, pid, tsPacket, tableID, filter, demux, filterData);
 			}
 
 			/// Clear all 'active' filters
-			void stopOSCamFilters(int streamID);
+			void stopOSCamFilters(FeID id);
 
 			///
 			void setECMInfo(

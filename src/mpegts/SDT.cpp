@@ -47,7 +47,7 @@ namespace mpegts {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	void SDT::parse(const int streamID) {
+	void SDT::parse(const FeID id) {
 		for (std::size_t secNr = 0; secNr < _numberOfSections; ++secNr) {
 			TableData::Data tableData;
 			if (getDataForSectionNumber(secNr, tableData)) {
@@ -55,10 +55,10 @@ namespace mpegts {
 				_transportStreamID = (data[ 8u] << 8u) | data[ 9u];
 				_networkID         = (data[13u] << 8u) | data[14u];
 
-//				SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Stream: %d, SDT data", streamID);
+//				SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, SDT data", id.getID());
 
-				SI_LOG_INFO("Stream: %d, SDT - Section Length: %d  Transport Stream ID: %d  Version: %d  secNr: %d  lastSecNr: %d  NetworkID: %04d  CRC: 0x%04X",
-							streamID, tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, _networkID, tableData.crc);
+				SI_LOG_INFO("Frontend: %d, SDT - Section Length: %d  Transport Stream ID: %d  Version: %d  secNr: %d  lastSecNr: %d  NetworkID: %04d  CRC: 0x%04X",
+							id.getID(), tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, _networkID, tableData.crc);
 
 				// 4 = CRC   8 = SDT Header from section length
 				const std::size_t len = tableData.sectionLength - 4u - 8u;
@@ -70,8 +70,8 @@ namespace mpegts {
 					const int eit       =  ptr[i + 2u];
 					const std::size_t descLength  = ((ptr[i + 3u] & 0x0F) << 8u) | ptr[i + 4u];
 					for (std::size_t j = 5u; j < descLength; ) {
-						const int id = ptr[j + i];
-						switch (id) {
+						const int idDesc = ptr[j + i];
+						switch (idDesc) {
 							case 0x48: {
 								Data sdtData;
 								std::size_t subLength = 0;
@@ -82,8 +82,8 @@ namespace mpegts {
 								subLength = ptr[j + i];
 								copyToUTF8(sdtData.channelNameUTF8, &ptr[j + i + 1u], subLength);
 								j += subLength + 1;
-								SI_LOG_INFO("Stream: %d,  serviceID: 0x%04X - %05d  EIT: 0x%02X  NetworkName: %s  ChannelName: %s",
-										streamID, serviceID, serviceID, eit, sdtData.networkNameUTF8.c_str(), sdtData.channelNameUTF8.c_str());
+								SI_LOG_INFO("Frontend: %d,  serviceID: 0x%04X - %05d  EIT: 0x%02X  NetworkName: %s  ChannelName: %s",
+										id.getID(), serviceID, serviceID, eit, sdtData.networkNameUTF8.c_str(), sdtData.channelNameUTF8.c_str());
 								_sdtTable[serviceID] = sdtData;
 								break;
 							}

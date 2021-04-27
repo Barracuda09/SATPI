@@ -20,6 +20,7 @@
 #ifndef MPEGTS_FILTER_H_INCLUDE
 #define MPEGTS_FILTER_H_INCLUDE MPEGTS_FILTER_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/Mutex.h>
 #include <mpegts/PAT.h>
@@ -52,7 +53,7 @@ class Filter {
 		void clear();
 
 		///
-		void addData(int streamID, const mpegts::PacketBuffer &buffer);
+		void addData(FeID id, const mpegts::PacketBuffer &buffer);
 
 		///
 		bool isMarkedAsPMT(int pid) const {

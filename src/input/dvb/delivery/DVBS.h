@@ -20,6 +20,7 @@
 #ifndef INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
 #define INPUT_DVB_DELIVERY_DVBS_H_INCLUDE INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <input/dvb/delivery/System.h>
 
@@ -42,7 +43,7 @@ class DVBS :
 		// =======================================================================
 	public:
 
-		explicit DVBS(int streamID, const std::string &fePath);
+		explicit DVBS(FeID id, const std::string &fePath);
 		virtual ~DVBS();
 
 		// =======================================================================
@@ -82,13 +83,13 @@ class DVBS :
 		// -- FBC member functions -----------------------------------------------
 		// =======================================================================
 		///
-		int readProcData(int streamID, const std::string &procEntry) const;
+		int readProcData(FeID id, const std::string &procEntry) const;
 
 		///
-		void writeProcData(int streamID, const std::string &procEntry, int value);
+		void writeProcData(FeID id, const std::string &procEntry, int value);
 
 		///
-		void readConnectionChoices(int streamID);
+		void readConnectionChoices(FeID id);
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

@@ -24,8 +24,8 @@
 namespace input {
 namespace dvb {
 
-	int Frontend::getStreamID() const {
-		return _streamID;
+	FeID Frontend::getFeID() const {
+		return _feID;
 	}
 
 	int Frontend::getBatchCount() const {
@@ -58,8 +58,8 @@ namespace dvb {
 
 	void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
-		SI_LOG_INFO("Stream: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
-			_streamID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
+		SI_LOG_INFO("Frontend: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
+			_feID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
 		_dvbapiData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 		_frontendData.getFilterData().setPID(pid, true);
 		// now update frontend, PID list has changed
@@ -67,7 +67,7 @@ namespace dvb {
    }
 
 	void Frontend::stopOSCamFilterData(const int pid, const int demux, const int filter) {
-		SI_LOG_INFO("Stream: %d, Stop filter PID: %04d  demux: %d  filter: %d", _streamID, pid, demux, filter);
+		SI_LOG_INFO("Frontend: %d, Stop filter PID: %04d  demux: %d  filter: %d", _feID, pid, demux, filter);
 		_dvbapiData.stopOSCamFilterData(demux, filter);
 		if (pid > 17) {
 			_frontendData.getFilterData().setPID(pid, false);
@@ -75,13 +75,13 @@ namespace dvb {
 		// Do not update frontend or remove the PID!
 	}
 
-	bool Frontend::findOSCamFilterData(const int streamID, const int pid, const unsigned char *tsPacket,
+	bool Frontend::findOSCamFilterData(const FeID id, const int pid, const unsigned char *tsPacket,
 		int &tableID, int &filter, int &demux, mpegts::TSData &filterData) {
-		return _dvbapiData.findOSCamFilterData(streamID, pid, tsPacket, tableID, filter, demux, filterData);
+		return _dvbapiData.findOSCamFilterData(id, pid, tsPacket, tableID, filter, demux, filterData);
 	}
 
-	void Frontend::stopOSCamFilters(int streamID) {
-		_dvbapiData.stopOSCamFilters(streamID);
+	void Frontend::stopOSCamFilters(FeID id) {
+		_dvbapiData.stopOSCamFilters(id);
 	}
 
 	void Frontend::setECMInfo(int pid, int serviceID, int caID, int provID, int emcTime,

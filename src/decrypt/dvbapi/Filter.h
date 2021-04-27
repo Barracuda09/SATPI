@@ -20,6 +20,7 @@
 #ifndef DECRYPT_DVBAPI_FILTER_H_INCLUDE
 #define DECRYPT_DVBAPI_FILTER_H_INCLUDE DECRYPT_DVBAPI_FILTER_H_INCLUDE
 
+#include <Defs.h>
 #include <base/Mutex.h>
 #include <decrypt/dvbapi/FilterData.h>
 
@@ -57,14 +58,14 @@ namespace dvbapi {
 				}
 			}
 
-			bool find(const int streamID, const int pid, const unsigned char *data, int &tableID, int &filter,
+			bool find(const FeID id, const int pid, const unsigned char *data, int &tableID, int &filter,
 				int &demux, mpegts::TSData &filterData) {
 				base::MutexLock lock(_mutex);
 				if (_collecting) {
 					// We are collecting, but is this the correct PID for this filter
 					if (_filterData[_demux][_filter].active(pid)) {
 						// Collect raw (true)
-						_filterData[_demux][_filter].collectTableData(streamID, _tableID, data, true);
+						_filterData[_demux][_filter].collectTableData(id, _tableID, data, true);
 						if (_filterData[_demux][_filter].isTableCollected()) {
 							filter = _filter;
 							demux = _demux;
@@ -83,7 +84,7 @@ namespace dvbapi {
 							if (_filterData[demux][filter].active(pid)) {
 								if (_filterData[demux][filter].match(data)) {
 									// Collect raw (true)
-									_filterData[demux][filter].collectTableData(streamID, tableID, data, true);
+									_filterData[demux][filter].collectTableData(id, tableID, data, true);
 									if (!_filterData[demux][filter].isTableCollected()) {
 										_collecting = true;
 										_filter = filter;

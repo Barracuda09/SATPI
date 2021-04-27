@@ -60,7 +60,7 @@ class SDT :
 		// =====================================================================
 	public:
 
-		void parse(int streamID);
+		void parse(FeID id);
 
 		int getTransportStreamID() const {
 			return _transportStreamID;

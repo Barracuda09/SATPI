@@ -50,9 +50,9 @@ namespace delivery {
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
 	// =======================================================================
 
-	bool DiSEqcEN50607::sendDiseqc(int feFD, int streamID, uint32_t &freq,
+	bool DiSEqcEN50607::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
                 int src, Lnb::Polarization pol) {
-		return sendDiseqcJess(feFD, streamID, freq, src, pol);
+		return sendDiseqcJess(feFD, id, freq, src, pol);
 	}
 
 	void DiSEqcEN50607::doNextAddToXML(std::string &xml) const {
@@ -90,7 +90,7 @@ namespace delivery {
 	//  -- Other member functions --------------------------------------------
 	// =======================================================================
 
-	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const int streamID,
+	bool DiSEqcEN50607::sendDiseqcJess(const int feFD, const FeID id,
 		uint32_t &freq,	const int src, const Lnb::Polarization pol) {
 		bool hiband = false;
 		_lnb.getIntermediateFrequency(freq, hiband, pol);
@@ -123,8 +123,8 @@ namespace delivery {
 				PERROR("FE_SET_VOLTAGE failed");
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
-			SI_LOG_INFO("Stream: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d - UB: %d",
-				streamID, cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src, _chSlot);
+			SI_LOG_INFO("Frontend: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d - UB: %d",
+				id.getID(), cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src, _chSlot);
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
