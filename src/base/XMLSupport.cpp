@@ -101,6 +101,7 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 				break;
 			case StateXML::TAG_START:
 				if (*it == '>') {
+					const bool closingTag = *(it - 1) == '/';
 					tag = xml.substr(itBegin - xml.begin(), it - itBegin);
 					const std::string::size_type end = elementToFind.find_first_of('.', 0);
 					const std::string findTag = elementToFind.substr(0, end);
@@ -108,16 +109,20 @@ bool XMLSupport::parseXML(const std::string &xml, const std::string &elementToFi
 					const std::string nextElementToFind = (tagMatch) ? ((end != std::string::npos) ? elementToFind.substr(end + 1) : "") : elementToFind;
 					++it;
 					if (it != xml.end()) {
-						itBegin = it;
-						if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
-							return false;
-						}
-						if (tag != tagEnd) {
-							return false;
-						}
-						if (tagMatch && end == std::string::npos) {
-							element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
-							found = true;
+						if (!closingTag) {
+							itBegin = it;
+							if (!parseXML(xml, nextElementToFind, found, element, it, tagEnd, itEndElement)) {
+								return false;
+							}
+							if (tag != tagEnd) {
+								return false;
+							}
+							if (tagMatch && end == std::string::npos) {
+								element = xml.substr(itBegin - xml.begin(), itEndElement - itBegin);
+								found = true;
+							}
+						} else {
+							--it;
 						}
 						state = StateXML::SEARCH_START_TAG;
 					} else {
