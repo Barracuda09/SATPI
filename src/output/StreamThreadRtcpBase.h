@@ -107,7 +107,6 @@ class StreamThreadRtcpBase {
 		int _clientID;
 		std::string _protocol;
 		StreamInterface &_stream;
-		int _mon_update;
 		base::Thread _thread;
 };
 

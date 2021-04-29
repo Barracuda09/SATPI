@@ -132,6 +132,10 @@ class StreamThreadBase :
 		std::chrono::steady_clock::time_point _t1;
 		std::chrono::steady_clock::time_point _t2;
 
+		unsigned long _updateMonInterval;
+		std::chrono::steady_clock::time_point _tm1;
+		std::chrono::steady_clock::time_point _tm2;
+
 };
 
 } // namespace output

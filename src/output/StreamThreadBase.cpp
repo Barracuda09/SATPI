@@ -118,6 +118,8 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 
 	// set begin timestamp
 	_t1 = std::chrono::steady_clock::now();
+	_tm1 = std::chrono::steady_clock::now();
+	_updateMonInterval = 1;
 
 	_state = State::Running;
 	SI_LOG_INFO("Frontend: %d, Start %s stream to %s:%d", id, _protocol.c_str(),
@@ -180,6 +182,16 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 
 void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	const input::SpDevice inputDevice = _stream.getInputDevice();
+
+	// check do we need to update Device monitor signals
+	_tm2 = std::chrono::steady_clock::now();
+	const unsigned long intervalMon = std::chrono::duration_cast<std::chrono::milliseconds>(_tm2 - _tm1).count();
+	if (intervalMon > _updateMonInterval) {
+		_tm1 = _tm2;
+		_stream.getInputDevice()->monitorSignal(false);
+		_updateMonInterval = 200 * _stream.getRtcpSignalUpdateFrequency();
+	}
+
 	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;

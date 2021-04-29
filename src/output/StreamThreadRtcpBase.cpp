@@ -62,7 +62,6 @@ bool StreamThreadRtcpBase::startStreaming(const int clientID) {
 	SI_LOG_INFO("Frontend: %d, Start %s stream to %s:%d", _stream.getFeID(),
 		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
 
-	_mon_update = 0;
 	return true;
 }
 
@@ -89,15 +88,6 @@ bool StreamThreadRtcpBase::restartStreaming(const int clientID) {
 }
 
 bool StreamThreadRtcpBase::threadExecuteFunction() {
-	// check do we need to update Device monitor signals
-	if (_mon_update == 0) {
-		_stream.getInputDevice()->monitorSignal(false);
-
-		_mon_update = _stream.getRtcpSignalUpdateFrequency();
-	} else {
-		--_mon_update;
-	}
-
 	// RTCP compound packets must start with a SR, SDES then APP
 	std::size_t srlen   = 0;
 	std::size_t sdeslen = 0;
