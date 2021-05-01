@@ -62,8 +62,6 @@ void StreamManager::enumerateDevices(
 		const std::string &dvbPath,
 		const int numberOfChildPIPE,
 		const bool enableUnsecureFrontends) {
-	base::MutexLock lock(_mutex);
-
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
@@ -153,8 +151,6 @@ FeID StreamManager::findFrontendID(const std::string &msg, const std::string &me
 }
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
-	base::MutexLock lock(_mutex);
-
 	// Here we need to find the correct Stream and StreamClient
 	assert(!_stream.empty());
 	const std::string msg = socketClient.getPercentDecodedMessage();
@@ -226,8 +222,6 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 }
 
 void StreamManager::checkForSessionTimeout() {
-	base::MutexLock lock(_mutex);
-
 	assert(!_stream.empty());
 	for (SpStream stream : _stream) {
 		if (stream->streamInUse()) {
@@ -237,7 +231,6 @@ void StreamManager::checkForSessionTimeout() {
 }
 
 std::string StreamManager::getDescribeMediaLevelString(const FeID id) const {
-	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
 	return _stream[id.getID()]->getDescribeMediaLevelString();
 }
@@ -253,7 +246,6 @@ input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterfac
 // =============================================================================
 
 void StreamManager::doFromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
 	for (SpStream stream : _stream) {
 		std::string element;
 		const std::string find = StringConverter::stringFormat("stream@#1", stream->getFeID().getID());
@@ -270,7 +262,6 @@ void StreamManager::doFromXML(const std::string &xml) {
 }
 
 void StreamManager::doAddToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
 	assert(!_stream.empty());
 
 	for (ScpStream stream : _stream) {

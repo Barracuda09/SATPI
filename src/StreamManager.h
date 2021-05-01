@@ -22,7 +22,6 @@
 
 #include <Defs.h>
 #include <FwDecl.h>
-#include <base/Mutex.h>
 #include <base/XMLSupport.h>
 
 #include <string>
@@ -94,7 +93,6 @@ class StreamManager :
 
 		///
 		std::size_t getMaxStreams() const {
-			base::MutexLock lock(_mutex);
 			return _stream.size();
 		}
 
@@ -116,7 +114,6 @@ class StreamManager :
 		// =====================================================================
 	private:
 
-		base::Mutex _mutex;
 		decrypt::dvbapi::SpClient _decrypt;
 		StreamSpVector _stream;
 };
