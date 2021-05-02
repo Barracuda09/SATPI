@@ -324,8 +324,6 @@ void FrontendData::doParseStreamString(
 	const std::string addUserPids = ",1,16,17,18";
 	const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
 	if (!pidsList.empty()) {
-		// 'pids=' requested then 'remove' all used PIDS first
-		_filter.clear();
 		parsePIDString(pidsList, addPATPid + addUserPids, true);
 	}
 	const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
