@@ -24,12 +24,13 @@
 #include <socket/SocketAttr.h>
 #include <socket/SocketClient.h>
 #include <base/Mutex.h>
+#include <base/XMLSupport.h>
 
 #include <ctime>
 #include <string>
 
 /// StreamClient defines the owner/participants of an stream
-class StreamClient {
+class StreamClient : public base::XMLSupport {
 	public:
 		// Specifies were on the session timeout should react
 		enum class SessionTimeoutCheck {
@@ -46,6 +47,17 @@ class StreamClient {
 		StreamClient();
 
 		virtual ~StreamClient();
+
+		// =======================================================================
+		// -- base::XMLSupport ---------------------------------------------------
+		// =======================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------

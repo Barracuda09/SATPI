@@ -45,6 +45,9 @@
 
 			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
 			page += addTableLineEntry("Owner", xmlDoc, streamID + "owner");
+			page += addTableLineEntry("RTP Port", xmlDoc, streamID + "rtpPort");
+			page += addTableLineEntry("RTCP Port", xmlDoc, streamID + "rtcpPort");
+			page += addTableLineEntry("HTTP Port", xmlDoc, streamID + "httpPort");
 			page += addTableLineEntry("Session ID", xmlDoc, streamID + "ownerSessionID");
 			page += addTableLineEntry("User-Agent", xmlDoc, streamID + "userAgent");
 			page += addTableLineEntry("RTP packet count", xmlDoc, streamID + "spc");

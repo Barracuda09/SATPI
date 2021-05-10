@@ -50,6 +50,7 @@
 	void SocketAttr::closeFD() {
 		CLOSE_FD(_fd);
 		_ipAddr = "0.0.0.0";
+		_addr.sin_port = 0;
 	}
 
 	void SocketAttr::setupSocketStructure(const std::string &ipAddr, int port) {

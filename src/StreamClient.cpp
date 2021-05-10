@@ -39,6 +39,24 @@ StreamClient::StreamClient() :
 
 StreamClient::~StreamClient() {}
 
+// =======================================================================
+//  -- base::XMLSupport --------------------------------------------------
+// =======================================================================
+
+void StreamClient::doAddToXML(std::string &xml) const {
+	base::MutexLock lock(_mutex);
+
+	ADD_XML_ELEMENT(xml, "owner", getIPAddressOfStream());
+	ADD_XML_ELEMENT(xml, "ownerSessionID", getSessionID());
+	ADD_XML_ELEMENT(xml, "userAgent", getUserAgent());
+	ADD_XML_ELEMENT(xml, "rtpPort", _rtp.getSocketPort());
+	ADD_XML_ELEMENT(xml, "rtcpPort", _rtcp.getSocketPort());
+	ADD_XML_ELEMENT(xml, "httpPort", (_socketClient == nullptr) ? 0 : _socketClient->getSocketPort());
+}
+
+void StreamClient::doFromXML(const std::string &UNUSED(xml)) {
+}
+
 // ============================================================================
 //  -- Other member functions -------------------------------------------------
 // ============================================================================

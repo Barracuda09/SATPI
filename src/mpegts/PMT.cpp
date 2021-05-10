@@ -59,7 +59,7 @@ void PMT::parse(const FeID id) {
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
 
-//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, PMT data", id.getID());
+//		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, PMT data", id.getID());
 
 		SI_LOG_INFO("Frontend: %d, PMT - Section Length: %d  Prog NR: %05d  Version: %d  secNr: %d  lastSecNr: %d  PCR-PID: %04d  Program Length: %d  CRC: 0x%04X",
 					id.getID(), tableData.sectionLength, _programNumber, tableData.version, tableData.secNr, tableData.lastSecNr, _pcrPID, _prgLength, tableData.crc);

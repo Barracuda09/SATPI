@@ -157,15 +157,11 @@ void Stream::doAddToXML(std::string &xml) const {
 
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
-	ADD_XML_ELEMENT(xml, "owner", _client[0].getIPAddressOfStream());
-	ADD_XML_ELEMENT(xml, "ownerSessionID", _client[0].getSessionID());
-	ADD_XML_ELEMENT(xml, "userAgent", _client[0].getUserAgent());
-
 	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
-
 	ADD_XML_ELEMENT(xml, "spc", _spc.load());
 	ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
 
+	_client[0].addToXML(xml);
 	_device->addToXML(xml);
 }
 
