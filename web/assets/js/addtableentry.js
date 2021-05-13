@@ -135,6 +135,15 @@ function addTableLineText(labelstring, xmlDoc, tagPath) {
 	return page;
 }
 
+function addTableLineURL(labelstring, url) {
+	var page = "<tr>";
+	page += "<td class=\"col-xs-1\" align=\"left\">" + labelstring + "</td>";
+	page += "<td align=\"left\"><a href=\"" + url + "\">";
+	page += "URL Link";
+	page += "</a></tr></td>";
+	return page;
+}
+
 function addTableEntry(xmlDoc, tagPath) {
 	var entry = "<td align=\"left\">";
 	var input = xmlDoc.querySelector(tagPath);
