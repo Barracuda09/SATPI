@@ -1,5 +1,9 @@
 function buildStreamURL(xmlDoc, streamID) {
-	var delsys = xmlDoc.querySelector(streamID + "delsys").innerHTML;
+	var data = xmlDoc.querySelector(streamID + "delsys");
+	if (!data) {
+		return "";
+	}
+	var delsys = data.innerHTML;
 	if (delsys == "UNKNOWN DELSYS") {
 		return "";
 	}
