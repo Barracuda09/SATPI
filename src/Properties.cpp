@@ -18,9 +18,18 @@
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  */
 #include <Properties.h>
+
 #include <Log.h>
 
 extern const char *satpi_version;
+
+// =============================================================================
+// -- Static const data --------------------------------------------------------
+// =============================================================================
+
+const unsigned int Properties::TCP_PORT_MAX = 65535;
+const unsigned int Properties::HTTP_PORT_MIN = 1024;
+const unsigned int Properties::RTSP_PORT_MIN = 554;
 
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
@@ -71,13 +80,17 @@ void Properties::doFromXML(const std::string &xml) {
 	}
 	if (findXMLElement(xml, "httpport.value", element)) {
 		const unsigned int httpPort = std::stoi(element);
-		_httpPort = _httpPortOpt != 0 ? _httpPortOpt : httpPort;
-		SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
+		if (httpPort >= HTTP_PORT_MIN && httpPort <= TCP_PORT_MAX) {
+			_httpPort = _httpPortOpt != 0 ? _httpPortOpt : httpPort;
+			SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
+		}
 	}
 	if (findXMLElement(xml, "rtspport.value", element)) {
 		const unsigned int rtspPort = std::stoi(element);
-		_rtspPort = _rtspPortOpt != 0 ? _rtspPortOpt : rtspPort;
-		SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
+		if (rtspPort >= RTSP_PORT_MIN && rtspPort <= TCP_PORT_MAX) {
+			_rtspPort = _rtspPortOpt != 0 ? _rtspPortOpt : rtspPort;
+			SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
+		}
 	}
 	if (findXMLElement(xml, "webPath.value", element)) {
 		_webPath = _webPathOpt.empty() ? element : _webPathOpt;
@@ -95,8 +108,8 @@ void Properties::doFromXML(const std::string &xml) {
 
 void Properties::doAddToXML(std::string &xml) const {
 	base::MutexLock lock(_mutex);
-	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, 0, 65535);
-	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, 0, 65535);
+	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, HTTP_PORT_MIN, TCP_PORT_MAX);
+	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, RTSP_PORT_MIN, TCP_PORT_MAX);
 	ADD_XML_TEXT_INPUT(xml, "ipaddress", _ipAddress);
 	ADD_XML_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U);
 	ADD_XML_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile);

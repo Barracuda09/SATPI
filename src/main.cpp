@@ -279,7 +279,8 @@ int main(int argc, char *argv[]) {
 				if (i + 1 < argc) {
 					++i;
 					params.httpPort = std::stoi(argv[i]);
-					if (params.httpPort < 1024 || params.httpPort > 65535) {
+					if (params.httpPort < Properties::HTTP_PORT_MIN ||
+					    params.httpPort > Properties::TCP_PORT_MAX) {
 						printUsage(argv[0]);
 						return EXIT_FAILURE;
 					}
@@ -291,7 +292,8 @@ int main(int argc, char *argv[]) {
 				if (i + 1 < argc) {
 					++i;
 					params.rtspPort = std::stoi(argv[i]);
-					if (params.rtspPort <  554 || params.rtspPort > 65535) {
+					if (params.rtspPort <  Properties::RTSP_PORT_MIN ||
+					    params.rtspPort > Properties::TCP_PORT_MAX) {
 						printUsage(argv[0]);
 						return EXIT_FAILURE;
 					}

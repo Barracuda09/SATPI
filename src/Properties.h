@@ -30,6 +30,15 @@
 class Properties :
 	public base::XMLSupport  {
 		// =====================================================================
+		// -- Static const data ------------------------------------------------
+		// =====================================================================
+	public:
+
+		static const unsigned int TCP_PORT_MAX;
+		static const unsigned int HTTP_PORT_MIN;
+		static const unsigned int RTSP_PORT_MIN;
+
+		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
 	public:
