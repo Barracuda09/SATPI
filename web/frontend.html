@@ -15,6 +15,7 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/addtableentry.js"></script>
 <script src="assets/js/utils.js"></script>
+<script src="assets/js/popper.min.js"></script>
 <script>
 	var autoload = 1;
 	var content;
@@ -175,6 +176,11 @@
 			document.getElementById(content).innerHTML = buildNavContent(xml);
 		}
 	}
+
+	$(document).ready(function(){
+		$('[data-toggle="tooltip"]').tooltip();
+	});
+
 </script>
 
 </head>

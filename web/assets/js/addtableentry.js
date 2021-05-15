@@ -138,7 +138,7 @@ function addTableLineText(labelstring, xmlDoc, tagPath) {
 function addTableLineURL(labelstring, url) {
 	var page = "<tr>";
 	page += "<td class=\"col-xs-1\" align=\"left\">" + labelstring + "</td>";
-	page += "<td align=\"left\"><a href=\"" + url + "\">";
+	page += "<td align=\"left\"><a data-toggle=\"tooltip\" data-placement=\"top\" title=\"" + url + "\" href=\"" + url + "\">";
 	page += "URL Link";
 	page += "</a></tr></td>";
 	return page;
