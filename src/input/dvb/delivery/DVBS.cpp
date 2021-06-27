@@ -22,13 +22,12 @@
 #include <Log.h>
 #include <StringConverter.h>
 #include <Utils.h>
+#include <base/Tokenizer.h>
 #include <input/dvb/FrontendData.h>
-#include <input/dvb/delivery/DiSEqcSwitch.h>
 #include <input/dvb/delivery/DiSEqcEN50494.h>
 #include <input/dvb/delivery/DiSEqcEN50607.h>
-#include <input/dvb/delivery/Lnb.h>
-
-#include <base/Tokenizer.h>
+#include <input/dvb/delivery/DiSEqcLnb.h>
+#include <input/dvb/delivery/DiSEqcSwitch.h>
 
 #include <cstdlib>
 #include <fstream>
@@ -49,8 +48,8 @@ namespace delivery {
 
 	DVBS::DVBS(const FeID id, const std::string &fePath) :
 		input::dvb::delivery::System(id, fePath),
-		_diseqcType(DiseqcType::Switch),
-		_diseqc(new DiSEqcSwitch) {
+		_diseqcType(DiseqcType::Lnb),
+		_diseqc(new DiSEqcLnb) {
 
 		// Only DVB-S2 have special handling for FBC tuners
 		_fbcSetID = readProcData(id.getID(), "fbc_set_id");
@@ -73,7 +72,6 @@ namespace delivery {
 	// =========================================================================
 
 	void DVBS::doAddToXML(std::string &xml) const {
-
 		if (_fbcTuner) {
 			if (_fbcRoot) {
 				ADD_XML_ELEMENT(xml, "type", "DVB-S(2) FBC-Root");
@@ -104,11 +102,13 @@ namespace delivery {
 			ADD_XML_ELEMENT(xml, "option0", "DiSEqc Switch");
 			ADD_XML_ELEMENT(xml, "option1", "Unicable (EN50494)");
 			ADD_XML_ELEMENT(xml, "option2", "Jess/Unicable 2 (EN50607)");
-//			ADD_XML_ELEMENT(xml, "option3", "None");
+			ADD_XML_ELEMENT(xml, "option3", "Lnb");
 			ADD_XML_END_ELEMENT(xml, "list");
 		ADD_XML_END_ELEMENT(xml, "diseqcType");
 
-		ADD_XML_ELEMENT(xml, "diseqc", _diseqc->toXML());
+		if (_diseqc != nullptr) {
+			ADD_XML_ELEMENT(xml, "diseqc", _diseqc->toXML());
+		}
 	}
 
 	void DVBS::doFromXML(const std::string &xml) {
@@ -128,19 +128,20 @@ namespace delivery {
 					_diseqcType = DiseqcType::EN50607;
 					_diseqc.reset(new DiSEqcEN50607);
 					break;
-				case DiseqcType::None:
-					_diseqcType = DiseqcType::None;
-					_diseqc.reset(nullptr);
+				case DiseqcType::Lnb:
+					_diseqcType = DiseqcType::Lnb;
+					_diseqc.reset(new DiSEqcLnb);
 					break;
 				default:
 					SI_LOG_ERROR("Frontend: %d, Wrong DiSEqc type requested, not changing", _feID);
 			}
 		}
-		// This after creating _diseqc!
-		if (findXMLElement(xml, "diseqc", element)) {
-			_diseqc->fromXML(element);
+		if (_diseqc != nullptr) {
+			// This after creating _diseqc!
+			if (findXMLElement(xml, "diseqc", element)) {
+				_diseqc->fromXML(element);
+			}
 		}
-
 		if (findXMLElement(xml, "fbcLinked.value", element)) {
 			_fbcLinked = (element == "true") ? true : false;
 			writeProcData(_feID, "fbc_link", _fbcLinked ? 1 : 0);
@@ -204,7 +205,7 @@ namespace delivery {
 		SI_LOG_INFO("Frontend: %d, Opened %s for Writing DiSEqC command with fd: %d", _feID, fePathDiseqc.c_str(), feFDDiseqc);
 
 		// send diseqc
-		if (!_diseqc || !_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, src, pol)) {
+		if (_diseqc != nullptr && !_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, src, pol)) {
 			return false;
 		}
 

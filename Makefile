@@ -74,6 +74,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DiSEqc.cpp \
 	input/dvb/delivery/DiSEqcEN50494.cpp \
 	input/dvb/delivery/DiSEqcEN50607.cpp \
+	input/dvb/delivery/DiSEqcLnb.cpp \
 	input/dvb/delivery/DiSEqcSwitch.cpp \
 	input/dvb/delivery/DVBC.cpp \
 	input/dvb/delivery/DVBS.cpp \

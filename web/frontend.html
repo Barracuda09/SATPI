@@ -104,16 +104,19 @@
 				page += addTableLineEntry("Send DiSEqC Via Linked Root Tuner", xmlDoc, streamID + "sendDiSEqcViaRootTuner");
 			}
 
-			var diseqc = visibleStream.getElementsByTagName("diseqc");
-			if (diseqc.length > 0) {
+			var diseqcType = visibleStream.getElementsByTagName("diseqcType");
+			if (diseqcType.length > 0) {
 				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">DiSEqC Configuration</th></tr>";
-				page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
 				page += addTableLineEntry("DiSEqC", xmlDoc, streamID + "diseqcType");
-				page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
-				page += addTableLineEntry("Channel Slot (0-32)", xmlDoc, streamID + "chSlot");
-				page += addTableLineEntry("Delay before write", xmlDoc, streamID + "delayBeforeWrite");
-				page += addTableLineEntry("Delay after write", xmlDoc, streamID + "delayAfterWrite");
-				page += addTableLineEntry("PIN (256 disabled)", xmlDoc, streamID + "pin");
+				var diseqc = visibleStream.getElementsByTagName("diseqc");
+				if (diseqc.length > 0) {
+					page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
+					page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
+					page += addTableLineEntry("Channel Slot (0-32)", xmlDoc, streamID + "chSlot");
+					page += addTableLineEntry("Delay before write", xmlDoc, streamID + "delayBeforeWrite");
+					page += addTableLineEntry("Delay after write", xmlDoc, streamID + "delayAfterWrite");
+					page += addTableLineEntry("PIN (256 disabled)", xmlDoc, streamID + "pin");
+				}
 			}
 			var lnb = visibleStream.getElementsByTagName("lnbtype");
 			if (lnb.length > 0) {

@@ -100,7 +100,7 @@ class DVBS :
 			Switch,
 			EN50494,
 			EN50607,
-			None
+			Lnb
 		};
 		DiseqcType _diseqcType;
 		UpDiSEqc _diseqc;
