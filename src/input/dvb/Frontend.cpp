@@ -256,7 +256,6 @@ namespace dvb {
 			PERROR("Error during polling frontend for data");
 			return false;
 		}
-//		SI_LOG_DEBUG("Frontend: %d, Timeout during polling frontend for data", _feID);
 		return false;
 	}
 
@@ -423,8 +422,8 @@ namespace dvb {
 				_frontendData.getFilterData().setPID(i, false);
 				closePid(i);
 			}
-			closeFE();
 			closeDMX();
+			closeFE();
 			// After close wait a moment before opening it again
 			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 		}
@@ -446,8 +445,8 @@ namespace dvb {
 			closePid(i);
 		}
 		_tuned = false;
-		closeFE();
 		closeDMX();
+		closeFE();
 		_frontendData.initialize();
 		_transform.resetTransformFlag();
 		return true;
@@ -665,10 +664,10 @@ namespace dvb {
 
 	void Frontend::closeDMX() {
 		if (_fd_dmx != -1) {
-			SI_LOG_INFO("Frontend: %d, Closing %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
 			if (::ioctl(_fd_dmx, DMX_STOP) != 0) {
 				PERROR("DMX_STOP");
 			}
+			SI_LOG_INFO("Frontend: %d, Closing %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
 			CLOSE_FD(_fd_dmx);
 		}
 	}
@@ -735,6 +734,7 @@ namespace dvb {
 					return;
 				}
 			}
+
 			if (_dvrBufferSizeMB > 0) {
 				const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
 				if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
