@@ -45,6 +45,9 @@ StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface 
 	_state(State::Paused),
 	_clientID(0),
 	_cseq(0),
+	_threadDeviceMonitor(
+		StringConverter::getFormattedString("Monitor%d", stream.getFeID()),
+		std::bind(&StreamThreadBase::threadExecuteDeviceMonitor, this)),
 	_writeIndex(0),
 	_readIndex(0),
 	_sendInterval(100) {
@@ -58,6 +61,7 @@ StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface 
 }
 
 StreamThreadBase::~StreamThreadBase() {
+	_threadDeviceMonitor.terminateThread();
 #ifdef LIBDVBCSA
 	decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 	if (decrypt != nullptr) {
@@ -101,6 +105,11 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	const FeID id = _stream.getFeID();
 	const StreamClient &client = _stream.getStreamClient(clientID);
 
+	if (!_threadDeviceMonitor.startThread()) {
+		SI_LOG_ERROR("Frontend: %d, Error Starting device monitor", _stream.getFeID());
+		return false;
+	}
+
 	doStartStreaming(clientID);
 
 	_cseq = 0x0000;
@@ -132,6 +141,7 @@ bool StreamThreadBase::pauseStreaming(const int clientID) {
 	bool paused = true;
 	// Check if thread is running
 	if (running()) {
+		_threadDeviceMonitor.pauseThread();
 		doPauseStreaming(clientID);
 
 		_state = State::Pause;
@@ -168,6 +178,7 @@ bool StreamThreadBase::pauseStreaming(const int clientID) {
 bool StreamThreadBase::restartStreaming(const int clientID) {
 	// Check if thread is running
 	if (running()) {
+		_threadDeviceMonitor.restartThread();
 		doRestartStreaming(clientID);
 		_writeIndex = 0;
 		_readIndex  = 0;
@@ -182,15 +193,6 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 
 void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	const input::SpDevice inputDevice = _stream.getInputDevice();
-
-	// check do we need to update Device monitor signals
-	_tm2 = std::chrono::steady_clock::now();
-	const unsigned long intervalMon = std::chrono::duration_cast<std::chrono::milliseconds>(_tm2 - _tm1).count();
-	if (intervalMon > _updateMonInterval) {
-		_tm1 = _tm2;
-		_stream.getInputDevice()->monitorSignal(false);
-		_updateMonInterval = 200 * _stream.getRtcpSignalUpdateFrequency();
-	}
 
 	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
 	if (availableSize > MAX_BUF) {
@@ -228,6 +230,18 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			writeDataToOutputDevice(_tsEmpty, client);
 		}
 	}
+}
+
+bool StreamThreadBase::threadExecuteDeviceMonitor() {
+	// check do we need to update Device monitor signals
+	_tm2 = std::chrono::steady_clock::now();
+	const unsigned long intervalMon = std::chrono::duration_cast<std::chrono::milliseconds>(_tm2 - _tm1).count();
+	if (intervalMon > _updateMonInterval) {
+		_tm1 = _tm2;
+		_stream.getInputDevice()->monitorSignal(false);
+		_updateMonInterval = 200 * _stream.getRtcpSignalUpdateFrequency();
+	}
+	return true;
 }
 
 } // namespace output

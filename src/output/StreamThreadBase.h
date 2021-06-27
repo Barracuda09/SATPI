@@ -22,6 +22,7 @@
 
 #include <FwDecl.h>
 #include <Unused.h>
+#include <base/Thread.h>
 #include <base/ThreadBase.h>
 #include <mpegts/PacketBuffer.h>
 
@@ -104,6 +105,10 @@ class StreamThreadBase :
 		/// @param client specifies were it should be sended to
 		void readDataFromInputDevice(StreamClient &client);
 
+		/// Thread execute function @see base::Thread should @return true to
+		/// keep thread running and @return false will stop and then terminate this thread
+		bool threadExecuteDeviceMonitor();
+
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
@@ -122,6 +127,8 @@ class StreamThreadBase :
 		uint16_t _cseq;
 
 	private:
+
+		base::Thread _threadDeviceMonitor;
 
 		static constexpr size_t MAX_BUF = 100;
 		mpegts::PacketBuffer _tsBuffer[MAX_BUF];
