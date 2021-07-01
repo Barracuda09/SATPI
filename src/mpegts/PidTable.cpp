@@ -30,12 +30,14 @@ namespace mpegts {
 			resetPidData(i);
 		}
 		_changed = false;
+		_totalCCErrors = 0;
 	}
 
 	PidTable::~PidTable() {}
 
 	void PidTable::clear() {
 		_changed = false;
+		_totalCCErrors = 0;
 		for (size_t i = 0; i < MAX_PIDS; ++i) {
 			// Check PID still open.
 			// Then set PID not used, to handle and close them later
@@ -56,6 +58,14 @@ namespace mpegts {
 
 	uint32_t PidTable::getPacketCounter(const int pid) const {
 		return _data[pid].count;
+	}
+
+	uint32_t PidTable::getCCErrors(const int pid) const {
+		return _data[pid].cc_error;
+	}
+
+	uint32_t PidTable::getTotalCCErrors() const {
+		return _totalCCErrors;
 	}
 
 	void PidTable::resetPIDTableChanged() {
@@ -88,7 +98,7 @@ namespace mpegts {
 		++data.count;
 		if (data.cc == 0x80) {
 			data.cc = cc;
-		} else {
+		} else if (data.cc != cc) {
 			++data.cc;
 			data.cc %= 0x10;
 			if (data.cc != cc) {
@@ -98,6 +108,7 @@ namespace mpegts {
 				}
 				data.cc = cc;
 				data.cc_error += diff;
+				_totalCCErrors += diff;
 			}
 		}
 	}

@@ -100,6 +100,12 @@ class Filter {
 		/// Get the amount of packet that were received of this pid
 		uint32_t getPacketCounter(int pid) const;
 
+		/// Get the amount Continuity Counter Error of this pid
+		uint32_t getCCErrors(int pid) const;
+
+		/// Get the total amount of Continuity Counter Error
+		uint32_t getTotalCCErrors() const;
+
 		/// Get the CSV of all the requested PID
 		std::string getPidCSV() const;
 

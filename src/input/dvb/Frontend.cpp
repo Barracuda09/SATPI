@@ -772,8 +772,9 @@ namespace dvb {
 			return;
 		}
 		_frontendData.getFilterData().setPIDClosed(pid);
-		SI_LOG_DEBUG("Frontend: %d, Remove filter PID: %04d - Packet Count: %d%s",
+		SI_LOG_DEBUG("Frontend: %d, Remove filter PID: %04d - Packet Count: %09d:%06d%s",
 				_feID, pid, _frontendData.getFilterData().getPacketCounter(pid),
+				_frontendData.getFilterData().getCCErrors(pid),
 				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 	}
 

@@ -80,6 +80,7 @@
 				page += addTableLineEntry("snr", xmlDoc, streamID + "snr");
 				page += addTableLineEntry("ber", xmlDoc, streamID + "ber");
 				page += addTableLineEntry("unc", xmlDoc, streamID + "unc");
+				page += addTableLineEntry("CC Errors", xmlDoc, streamID + "totalCCErrors");
 			}
 
 			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Configuration</th></tr>";

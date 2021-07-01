@@ -54,6 +54,12 @@ namespace mpegts {
 			/// Get the amount of packet that were received of this pid
 			uint32_t getPacketCounter(int pid) const;
 
+			/// Get the amount Continuity Counter Error of this pid
+			uint32_t getCCErrors(int pid) const;
+
+			/// Get the total amount of Continuity Counter Error
+			uint32_t getTotalCCErrors() const;
+
 			/// Get the CSV of all the requested PID
 			std::string getPidCSV() const;
 
@@ -83,7 +89,7 @@ namespace mpegts {
 
 		protected:
 
-			/// Reset the pid data like counters etc. (Not DMX File Descriptor)
+			/// Reset the pid data like counters etc.
 			void resetPidData(int pid);
 
 			// ================================================================
@@ -113,9 +119,9 @@ namespace mpegts {
 				uint32_t cc_error; /// cc error count
 				uint32_t count;    /// the number of times this pid occurred
 			};
-
-			bool _changed;           /// if something changed to 'pid' array
-			PidData _data[MAX_PIDS]; /// used pids
+			uint32_t _totalCCErrors;
+			bool _changed;
+			PidData _data[MAX_PIDS];
 
 	};
 

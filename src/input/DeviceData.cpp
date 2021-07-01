@@ -59,6 +59,7 @@ void DeviceData::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "unc", _ublocks);
 
 	ADD_XML_ELEMENT(xml, "pidcsv", _filter.getPidCSV());
+	ADD_XML_ELEMENT(xml, "totalCCErrors", _filter.getTotalCCErrors());
 
 	doNextAddToXML(xml);
 }

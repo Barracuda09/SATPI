@@ -175,6 +175,16 @@ uint32_t Filter::getPacketCounter(const int pid) const {
 	return _pidTable.getPacketCounter(pid);
 }
 
+uint32_t Filter::getCCErrors(int pid) const {
+	base::MutexLock lock(_mutex);
+	return _pidTable.getCCErrors(pid);
+}
+
+uint32_t Filter::getTotalCCErrors() const {
+	base::MutexLock lock(_mutex);
+	return _pidTable.getTotalCCErrors();
+}
+
 std::string Filter::getPidCSV() const {
 	base::MutexLock lock(_mutex);
 	return _pidTable.getPidCSV();
