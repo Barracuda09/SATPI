@@ -113,8 +113,6 @@ class Stream :
 
 		virtual std::string attributeDescribeString() const final;
 
-		virtual std::string getDescribeMediaLevelString() const final;
-
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
 		// =======================================================================
@@ -179,6 +177,9 @@ class Stream :
 
 		///
 		bool update(int clientID, bool start);
+
+		///
+		std::string getDescribeMediaLevelString() const;
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

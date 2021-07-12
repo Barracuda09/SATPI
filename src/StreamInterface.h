@@ -83,9 +83,6 @@ class StreamInterface {
 		/// Get the stream Description string for RTCP and DESCRIBE command
 		virtual std::string attributeDescribeString() const = 0;
 
-		/// Get the RTSP Describe Media-Level string
-		virtual std::string getDescribeMediaLevelString() const = 0;
-
 };
 
 #endif // STREAMINTERFACE_H_INCLUDE

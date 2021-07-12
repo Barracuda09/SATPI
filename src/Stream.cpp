@@ -125,28 +125,6 @@ std::string Stream::attributeDescribeString() const {
 	return _device->attributeDescribeString();
 }
 
-std::string Stream::getDescribeMediaLevelString() const {
-	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
-		"m=video @#1 RTP/AVP 33\r\n" \
-		"c=IN IP4 @#2\r\n" \
-		"a=control:stream=@#3\r\n" \
-		"a=fmtp:33 @#4\r\n" \
-		"a=@#5\r\n";
-	const std::string desc_attr = _device->attributeDescribeString();
-	if (desc_attr.size() > 5) {
-		if (_streamingType == StreamingType::RTSP_MULTICAST) {
-			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-				_client[0].getRtpSocketAttr().getSocketPort(),
-				_client[0].getIPAddressOfStream() + "/0",
-				_device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
-		} else {
-			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-				0, "0.0.0.0", _device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
-		}
-	}
-	return "";
-}
-
 // =======================================================================
 //  -- base::XMLSupport --------------------------------------------------
 // =======================================================================
@@ -435,4 +413,26 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 
 	_client[clientID].restartWatchDog();
 	return true;
+}
+
+std::string Stream::getDescribeMediaLevelString() const {
+	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
+		"m=video @#1 RTP/AVP 33\r\n" \
+		"c=IN IP4 @#2\r\n" \
+		"a=control:stream=@#3\r\n" \
+		"a=fmtp:33 @#4\r\n" \
+		"a=@#5\r\n";
+	const std::string desc_attr = _device->attributeDescribeString();
+	if (desc_attr.size() > 5) {
+		if (_streamingType == StreamingType::RTSP_MULTICAST) {
+			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
+				_client[0].getRtpSocketAttr().getSocketPort(),
+				_client[0].getIPAddressOfStream() + "/0",
+				_device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
+		} else {
+			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
+				0, "0.0.0.0", _device->getStreamID().getID(), desc_attr, (_streamActive) ? "sendonly" : "inactive");
+		}
+	}
+	return "";
 }
