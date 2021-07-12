@@ -326,7 +326,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Open logging
-	Log::openAppLog("SatPI");
+	Log::openAppLog("SatPI", daemon);
 
 	// Daemonize
 	if (daemon) {

@@ -33,7 +33,7 @@ class Log {
 		// =======================================================================
 		// -- Static functions ---------------------------------------------------
 		// =======================================================================
-		static void openAppLog(const char *deamonName);
+		static void openAppLog(const char *deamonName, bool daemonize);
 
 		static void closeAppLog();
 
@@ -59,6 +59,7 @@ class Log {
 
 		static LogBuffer _appLogBuffer;
 		static bool _syslogOn;
+		static bool _coutLog;
 };
 
 

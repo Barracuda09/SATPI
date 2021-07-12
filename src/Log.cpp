@@ -40,11 +40,15 @@
 static base::Mutex logMutex;
 
 bool Log::_syslogOn = false;
+bool Log::_coutLog = true;
 Log::LogBuffer Log::_appLogBuffer;
 
-void Log::openAppLog(const char *deamonName) {
+void Log::openAppLog(const char *deamonName, bool daemonize) {
 	// initialize the logging interface
 	openlog(deamonName, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+	if (daemonize) {
+		_coutLog = false;
+	}
 }
 
 void Log::closeAppLog() {
@@ -124,8 +128,10 @@ void Log::applog(const int priority, const char *fmt, ...) {
 			syslog(priority, "%s", elem.msg.c_str());
 		}
 #ifdef DEBUG
-		std::cout << elem.msg << "\r\n";
-		std::flush(std::cout);
+		if (_coutLog) {
+			std::cout << elem.timestamp << " " << elem.msg << "\r\n";
+			std::flush(std::cout);
+		}
 #endif
 	}
 }
