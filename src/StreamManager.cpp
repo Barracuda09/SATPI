@@ -135,19 +135,19 @@ FeID StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
 	return FeID();
 }
 
-FeID StreamManager::findFrontendID(const std::string &msg, const std::string &method) const {
+std::pair<FeID, StreamID> StreamManager::findFrontendID(const std::string &msg, const std::string &method) const {
 	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
 	const FeID feID = StringConverter::getIntParameter(msg, method, "fe=");
 	// Did we find StreamID an NO FrondendID
 	if (streamID != -1 && feID == -1) {
-		return findFrontendIDWithStreamID(streamID);
+		return { findFrontendIDWithStreamID(streamID), streamID };
 	}
-	// Is the FrondendID in range, then return this
+	// Is the requested FrondendID in range, then return this
 	if (feID >= 1 && feID <= static_cast<int>(_stream.size())) {
-		return feID;
+		return { feID, streamID};
 	}
-	// Out of range, return -1
-	return FeID();
+	// Out of range, return -1, -1
+	return { FeID(), StreamID() };
 }
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
@@ -156,9 +156,10 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	const std::string msg = socketClient.getPercentDecodedMessage();
 	const std::string method = StringConverter::getMethod(msg);
 
-	// Now find FrontendID and StreamID of this message
-	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
-	const FeID feID = findFrontendID(msg, method);
+	// Now find FrontendID and/or StreamID of this message
+	FeID feID;
+	StreamID streamID;
+	std::tie(feID, streamID) = findFrontendID(msg, method);
 
 	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
 	bool newSession = false;
@@ -180,40 +181,28 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		}
 	}
 
-	// if no streamID, then we need to find the streamID
-	if (streamID == -1) {
-		if (!sessionID.empty()) {
-			SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: %s", sessionID.c_str());
-			for (SpStream stream : _stream) {
-				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-					stream->getStreamClient(clientID).setSessionID(sessionID);
-					return stream;
-				}
-			}
-		} else {
-			SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID x - Creating new SessionID: %s", sessionID.c_str());
-			for (SpStream stream : _stream) {
-				if (!stream->streamInUse()) {
-					if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-						stream->getStreamClient(clientID).setSessionID(sessionID);
-						return stream;
-					}
-				}
+	// if no FeID, then we have to find a suitable one
+	if (feID == -1) {
+		SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: %s", sessionID.c_str());
+		for (SpStream stream : _stream) {
+			if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+				stream->getStreamClient(clientID).setSessionID(sessionID);
+				return stream;
 			}
 		}
-	} else if (feID != -1) {
+	} else {
 		SI_LOG_INFO("Found FrondtendID %d - StreamID %d - SessionID %s", feID.getID(), streamID.getID(), sessionID.c_str());
-		// Did we find the StreamClient? else try to search in other Streams
-		if (!_stream[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-			for (SpStream stream : _stream) {
-				if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-					stream->getStreamClient(clientID).setSessionID(sessionID);
-					return stream;
-				}
-			}
-		} else {
+		// Did we find the StreamClient?
+		if (_stream[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			_stream[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);
 			return _stream[feID.getID()];
+		}
+		// No, Then try to search in other Streams
+		for (SpStream stream : _stream) {
+			if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+				stream->getStreamClient(clientID).setSessionID(sessionID);
+				return stream;
+			}
 		}
 	}
 	// Did not find anything

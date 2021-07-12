@@ -107,7 +107,7 @@ class StreamManager :
 	private:
 
 		///
-		FeID findFrontendID(const std::string &msg, const std::string &method) const;
+		std::pair<FeID, StreamID> findFrontendID(const std::string &msg, const std::string &method) const;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
