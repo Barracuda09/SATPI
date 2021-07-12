@@ -203,8 +203,10 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
 			}
 		} else {
-			// something wrong here... send 503 error
-			getHtmlBodyNoContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, cseq);
+			// something wrong here... send 503 error with 'No-More: frontends'
+			static const std::string content("No-More: frontends\r\n");
+			getHtmlBodyWithContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, content.size(), cseq);
+			httpcReply += content;
 		}
 	}
 	if (!replyAlreadySend) {
