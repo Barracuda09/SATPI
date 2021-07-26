@@ -76,7 +76,7 @@ namespace delivery {
 			PERROR("FE_SET_TONE failed");
 			return false;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		const fe_sec_voltage_t v = (pol == Lnb::Polarization::Vertical) ?
 			SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
@@ -84,14 +84,14 @@ namespace delivery {
 			PERROR("FE_SET_VOLTAGE failed");
 			return false;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		const fe_sec_mini_cmd_t b = (src % 2) ? SEC_MINI_B : SEC_MINI_A;
 		if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
 			PERROR("FE_DISEQC_SEND_BURST failed");
 			return false;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		const fe_sec_tone_mode_t tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
 		if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
