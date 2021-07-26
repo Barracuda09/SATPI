@@ -85,7 +85,7 @@ class HttpcServer :
 			const std::string &location, const std::string &contentType, std::size_t cseq) const;
 
 		/// HTTP Method for getting the required files or stream
-		virtual bool methodGet(SocketClient &UNUSED(client)) {
+		virtual bool methodGet(SocketClient &UNUSED(client), bool UNUSED(headOnly)) {
 			return false;
 		}
 

@@ -61,7 +61,7 @@ class HttpServer :
 		virtual void threadEntry() final;
 
 		/// Method for getting the required files
-		virtual bool methodGet(SocketClient &client) final;
+		virtual bool methodGet(SocketClient &client, bool headOnly) final;
 
 		/// Method for getting the required files
 		virtual bool methodPost(SocketClient &client) final;

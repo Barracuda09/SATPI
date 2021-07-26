@@ -124,11 +124,11 @@ bool HttpcServer::process(SocketClient &client) {
 	if (protocol == "RTSP") {
 		processStreamingRequest(client);
 	} else if (protocol == "HTTP") {
-		if (method == "GET") {
+		if (method == "GET" || method == "HEAD") {
 			if (StringConverter::hasTransportParameters(client.getMessage())) {
 				processStreamingRequest(client);
 			} else {
-				methodGet(client);
+				methodGet(client, method == "HEAD");
 			}
 		} else if (method == "POST") {
 			methodPost(client);

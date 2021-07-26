@@ -64,12 +64,16 @@ void HttpServer::threadEntry() {
 }
 
 std::size_t HttpServer::readFile(const char *filePath, std::string &data) const {
-	std::ifstream file;
-	file.open(filePath);
-	if (file.is_open()) {
-		data = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-		file.close();
-		return data.size();
+	try {
+		std::ifstream file;
+		file.open(filePath);
+		if (file.is_open()) {
+			data = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			file.close();
+			return data.size();
+		}
+	} catch (...) {
+		// Eat this exception
 	}
 	SI_LOG_ERROR("Unable to read from File: %s", filePath);
 	return 0;
@@ -95,7 +99,7 @@ bool HttpServer::methodPost(SocketClient &client) {
 	return true;
 }
 
-bool HttpServer::methodGet(SocketClient &client) {
+bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 	std::string htmlBody;
 	std::string docType;
 	int docTypeSize = 0;
@@ -211,23 +215,24 @@ bool HttpServer::methodGet(SocketClient &client) {
 		}
 	}
 	// send something?
-	if (docType.size() > 0) {
-//		SI_LOG_INFO("%s", htmlBody);
+	if (htmlBody.size() > 0) {
 		// send 'htmlBody' to client
 		if (!client.sendData(htmlBody.c_str(), htmlBody.size(), 0)) {
 			SI_LOG_ERROR("Send htmlBody failed");
 			return false;
 		}
-		// send 'docType' to client
-		if (!client.sendData(docType.c_str(), docTypeSize, 0)) {
-			SI_LOG_ERROR("Send docType failed");
-			return false;
+		// send 'docType' to client if needed
+		if (!headOnly && docTypeSize > 0) {
+			if (!client.sendData(docType.c_str(), docTypeSize, 0)) {
+				SI_LOG_ERROR("Send docType failed");
+				return false;
+			}
+		}
+		// check did we have stop request
+		if (exitRequest) {
+			_properties.setExitApplication();
 		}
 		return true;
-	}
-	// check did we have stop request
-	if (exitRequest) {
-		_properties.setExitApplication();
 	}
 	return false;
 }
