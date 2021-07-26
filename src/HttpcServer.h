@@ -44,15 +44,17 @@ class HttpcServer :
 		static const std::string HTML_NO_RESPONSE;
 		static const std::string HTML_NOT_FOUND;
 		static const std::string HTML_MOVED_PERMA;
+		static const std::string HTML_REQUEST_TIMEOUT;
 		static const std::string HTML_SERVICE_UNAVAILABLE;
 
-		static const std::string CONTENT_TYPE_XML;
-		static const std::string CONTENT_TYPE_JSON;
-		static const std::string CONTENT_TYPE_JS;
-		static const std::string CONTENT_TYPE_HTML;
 		static const std::string CONTENT_TYPE_CSS;
-		static const std::string CONTENT_TYPE_PNG;
+		static const std::string CONTENT_TYPE_HTML;
 		static const std::string CONTENT_TYPE_ICO;
+		static const std::string CONTENT_TYPE_JS;
+		static const std::string CONTENT_TYPE_JSON;
+		static const std::string CONTENT_TYPE_PNG;
+		static const std::string CONTENT_TYPE_XML;
+		static const std::string CONTENT_TYPE_TEXT;
 		static const std::string CONTENT_TYPE_VIDEO;
 
 		// =======================================================================
@@ -117,9 +119,6 @@ class HttpcServer :
 
 		///
 		const std::string &getProtocolVersionString() const;
-
-		///
-		bool sendDataToClient(SocketClient &client, std::string &data);
 
 		// =======================================================================
 		// Data members

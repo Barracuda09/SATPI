@@ -19,6 +19,7 @@
 */
 #include <HttpcServer.h>
 
+#include <base/StopWatch.h>
 #include <Log.h>
 #include <Properties.h>
 #include <Stream.h>
@@ -58,6 +59,7 @@ const std::string HttpcServer::HTML_OK                  = "200 OK";
 const std::string HttpcServer::HTML_NO_RESPONSE         = "204 No Response";
 const std::string HttpcServer::HTML_NOT_FOUND           = "404 Not Found";
 const std::string HttpcServer::HTML_MOVED_PERMA         = "301 Moved Permanently";
+const std::string HttpcServer::HTML_REQUEST_TIMEOUT     = "408 Request Timeout";
 const std::string HttpcServer::HTML_SERVICE_UNAVAILABLE = "503 Service Unavailable";
 
 //const std::string HttpcServer::CONTENT_TYPE_XML         = "application/xml; charset=UTF-8";
@@ -69,6 +71,7 @@ const std::string HttpcServer::CONTENT_TYPE_CSS         = "text/css; charset=UTF
 const std::string HttpcServer::CONTENT_TYPE_PNG         = "image/png";
 const std::string HttpcServer::CONTENT_TYPE_ICO         = "image/x-icon";
 const std::string HttpcServer::CONTENT_TYPE_VIDEO       = "video/MP2T";
+const std::string HttpcServer::CONTENT_TYPE_TEXT        = "text/parameters";
 
 HttpcServer::HttpcServer(
 		int maxClients,
@@ -141,6 +144,10 @@ bool HttpcServer::process(SocketClient &client) {
 }
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
+
+	base::StopWatch sw;
+	sw.start();
+
 	const std::string msg = client.getPercentDecodedMessage();
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
@@ -159,7 +166,6 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const FeID feID = _streamManager.findFrontendIDWithStreamID(streamID);
 
 	std::string httpcReply;
-	bool replyAlreadySend = false;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
@@ -178,18 +184,19 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpcReply);
 
-				// Send SETUP Reply early, some clients are very eager to go on!
-				replyAlreadySend = sendDataToClient(client, httpcReply);
-
-				// @TODO  check return of update();
-				stream->update(clientID, true);
-
+				if (!stream->update(clientID, true)) {
+					// something wrong here... send 408 error
+					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
+					stream->teardown(clientID);
+				}
 			} else if (method == "PLAY") {
 				methodPlay(*stream, clientID, httpcReply);
 
-				// @TODO  check return of update();
-				stream->update(clientID, true);
-
+				if (!stream->update(clientID, true)) {
+					// something wrong here... send 408 error
+					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
+					stream->teardown(clientID);
+				}
 			} else if (method == "TEARDOWN") {
 				methodTeardown(sessionID, cseq, httpcReply);
 
@@ -205,12 +212,14 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 		} else {
 			// something wrong here... send 503 error with 'No-More: frontends'
 			static const std::string content("No-More: frontends\r\n");
-			getHtmlBodyWithContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_VIDEO, content.size(), cseq);
+			getHtmlBodyWithContent(httpcReply, HTML_SERVICE_UNAVAILABLE, "", CONTENT_TYPE_TEXT, content.size(), cseq);
 			httpcReply += content;
 		}
 	}
-	if (!replyAlreadySend) {
-		sendDataToClient(client, httpcReply);
+	const unsigned long time = sw.getIntervalMS();
+	SI_LOG_DEBUG("Send reply in %d ms\r\n%s", time, httpcReply.c_str());
+	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
+		SI_LOG_ERROR("Send Streaming reply failed");
 	}
 }
 
@@ -220,15 +229,4 @@ const std::string &HttpcServer::getProtocolVersionString() const {
 	} else {
 		return HTML_PROTOCOL_HTTP_VERSION;
 	}
-}
-
-bool HttpcServer::sendDataToClient(SocketClient &client, std::string &data) {
-	SI_LOG_DEBUG("%s", data.c_str());
-
-	// send reply to client
-	if (!client.sendData(data.c_str(), data.size(), MSG_NOSIGNAL)) {
-		SI_LOG_ERROR("Send Streaming reply failed");
-		return false;
-	}
-	return true;
 }
