@@ -70,7 +70,6 @@ Properties::~Properties() {}
 // =============================================================================
 
 void Properties::doFromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "xsatipm3u.value", element)) {
 		_xSatipM3U = element;
@@ -107,7 +106,6 @@ void Properties::doFromXML(const std::string &xml) {
 }
 
 void Properties::doAddToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
 	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, HTTP_PORT_MIN, TCP_PORT_MAX);
 	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, RTSP_PORT_MIN, TCP_PORT_MAX);
 	ADD_XML_TEXT_INPUT(xml, "ipaddress", _ipAddress);

@@ -130,7 +130,6 @@ std::string Stream::attributeDescribeString() const {
 // =======================================================================
 
 void Stream::doAddToXML(std::string &xml) const {
-	base::MutexLock lock(_mutex);
 	ADD_XML_ELEMENT(xml, "streamindex", _device->getFeID().getID());
 
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
@@ -144,7 +143,6 @@ void Stream::doAddToXML(std::string &xml) const {
 }
 
 void Stream::doFromXML(const std::string &xml) {
-	base::MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "enable.value", element)) {
 		_enabled = (element == "true") ? true : false;
