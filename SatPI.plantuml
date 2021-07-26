@@ -17,6 +17,11 @@ class SatPI #ffcccc {
   InterfaceAttr
 }
 
+class XMLSupport #aaaaff {
+  Mutex _mutex
+  --
+}
+
 class InterfaceAttr {
   Eth0 etc.
 }
@@ -58,16 +63,18 @@ class socket::UdpSocket {
 
 SsdpServer --|> socket::UdpSocket
 class SsdpServer {
-  Thread
-
+  ** Thread **
+  --
+  --
   threadEntry()
 }
 
 
 RtspServer --|> HttpcServer
 class RtspServer {
-  Thread
-
+  ** Thread **
+  --
+  --
   threadEntry() -> calls poll(..)
   methodSetup(..)
   methodPlay(..)
@@ -79,8 +86,9 @@ class RtspServer {
 HttpServer --|> HttpcServer
 HttpServer *.. Properties
 class HttpServer {
-  Thread
-
+  ** Thread **
+  --
+  --
   threadEntry() -> calls poll(..)
   methodPost(..)
   methodGet(..)
@@ -117,7 +125,7 @@ class Stream #aaaaff {
 }
 
 class decrypt::dvbapi::Client           #ffbb11 {
-  Thread
+  ** Thread **
   --
   --
 }
@@ -137,7 +145,6 @@ StreamManager *-- Stream : " _stream[..] "
 class StreamManager #aaaaff {
   XMLSupport
   --
-  Mutex _mutex
   --
   getFrontendDecryptInterface(..)
 }
@@ -167,7 +174,7 @@ class mpegts::SDT           #11ff11
 output::StreamThreadBase *-- mpegts::PacketBuffer : " _tsBuffer[..] "
 output::StreamThreadBase *.. StreamInterface
 class output::StreamThreadBase #ccffff {
-  Thread
+  ** Thread **
   --
 }
 
