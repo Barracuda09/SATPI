@@ -148,10 +148,7 @@
 			}
 			tab += "</ul>";
 			tab += "<div class=\"tab-content border rounded-bottom\" >";
-			tab += "<div id=\"stream" + 0 + "\" class=\"tab-pane fade show active\"></div>";
-			for (en = 1; en < len; en++) {
-				tab += "<div id=\"stream" + en + "\" class=\"tab-pane fade\"></div>";
-			}
+			tab += "<div id=\"stream" + "\" class=\"tab-pane fade show active\"></div>";
 			tab += "</div>";
 		}
 		return tab;
@@ -166,18 +163,26 @@
 		if (once == 0) {
 			once = 1;
 			document.getElementById("tableContent").innerHTML = createNavTab(xml);
-			$(".nav-tabs a").click(function() {
-				$(this).tab("show");
-			});
 			$(".nav-tabs a").on("shown.bs.tab", function(event) {
 				var href = $(event.target).attr("href");
 				// remove # from href
 				content = href.substr(1, href.length);
 				updatePage();
 			});
+
+			var hash = location.hash;
+			if (hash.length > 0) {
+				// remove # from URL hash
+				content = hash.substr(1, hash.length);
+				var showTab = ".nav-tabs a[href=\"" + hash + "\"]";
+				$(showTab).tab('show');
+				updatePage();
+			} else {
+				content = "stream0";
+			}
 		}
 		if (autoload == 1) {
-			document.getElementById(content).innerHTML = buildNavContent(xml);
+			document.getElementById("stream").innerHTML = buildNavContent(xml);
 		}
 	}
 
@@ -203,7 +208,6 @@
 		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("frontend");
 
-		content = "stream0";
 		updatePage();
 
 		// Call the ajax refresh each refresh_time seconds
