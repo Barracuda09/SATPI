@@ -420,6 +420,7 @@ std::string Stream::getDescribeMediaLevelString() const {
 		"a=control:stream=@#3\r\n" \
 		"a=fmtp:33 @#4\r\n" \
 		"a=@#5\r\n";
+	_device->monitorSignal(false);
 	const std::string desc_attr = _device->attributeDescribeString();
 	if (desc_attr.size() > 5) {
 		if (_streamingType == StreamingType::RTSP_MULTICAST) {
