@@ -51,10 +51,19 @@ void PMT::clear() {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
+int PMT::parsePCRPid() {
+	Data tableData;
+	if (getDataForSectionNumber(0, tableData)) {
+		const unsigned char *const data = tableData.data.c_str();
+		_pcrPID = ((data[13u] & 0x1F) << 8) | data[14u];
+	}
+	return _pcrPID;
+}
+
 void PMT::parse(const FeID id) {
 	Data tableData;
 	if (getDataForSectionNumber(0, tableData)) {
-		const unsigned char *data = tableData.data.c_str();
+		const unsigned char *const data = tableData.data.c_str();
 		_programNumber = ((data[ 8u]       ) << 8) | data[ 9u];
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
@@ -85,7 +94,7 @@ void PMT::parse(const FeID id) {
 		const std::size_t len = tableData.sectionLength - 4u - 9u - _prgLength;
 
 		// Skip to ES Table begin and iterate over entries
-		const unsigned char *ptr = &data[17u + _prgLength];
+		const unsigned char *const ptr = &data[17u + _prgLength];
 		for (std::size_t i = 0u; i < len; ) {
 			const int streamType    =   ptr[i + 0u];
 			const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];

@@ -52,6 +52,8 @@ class PMT :
 		// =====================================================================
 	public:
 
+		int  parsePCRPid();
+
 		void parse(FeID id);
 
 		mpegts::TSData getProgramInfo() const {

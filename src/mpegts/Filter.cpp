@@ -98,12 +98,15 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 
 				// Did we finish collecting PMT
 				if (_pmt->isCollected()) {
-					_pmt->parse(id.getID());
-					const int pcrPID = _pmt->getPCRPid();
+					// First check if this is PMT we need. So first get PCR Pid
+					const int pcrPID = _pmt->parsePCRPid();
 					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
 						// Probably not the correct PMT, so clear it and try again
 						_pmt = std::make_shared<PMT>();
-						SI_LOG_INFO("Frontend: %d, Probably not the correct PMT: %04d  PCR-PID: %04d, Retrying...", id.getID(), pid, pcrPID);
+						SI_LOG_INFO("Frontend: %d, Found PMT, but probably not the correct PMT: %04d  PCR-PID: %04d, Retrying...", id.getID(), pid, pcrPID);
+					} else {
+						// Yes, the correct one, then parse it
+						_pmt->parse(id.getID());
 					}
 				}
 			}
