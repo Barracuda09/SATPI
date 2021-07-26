@@ -19,6 +19,7 @@
  */
 #include <input/dvb/Frontend.h>
 
+#include <base/StopWatch.h>
 #include <Log.h>
 #include <Utils.h>
 #include <Stream.h>
@@ -425,7 +426,7 @@ namespace dvb {
 			closeDMX();
 			closeFE();
 			// After close wait a moment before opening it again
-			std::this_thread::sleep_for(std::chrono::milliseconds(150));
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		}
 
 		if (!setupAndTune()) {
@@ -621,7 +622,7 @@ namespace dvb {
 			const int fdDMX = openDMX(_path_to_dmx);
 			int n = _feID.getID();
 			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
-				PERROR("DMX_SET_SOURCE");
+				PERROR("DMX_SET_SOURCE (%s)", _path_to_dmx.c_str());
 			}
 			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d (Offset: %d)", _feID, offset);
 			::close(fdDMX);
@@ -642,7 +643,7 @@ namespace dvb {
 	int Frontend::openFE(const std::string &path, const bool readonly) const {
 		const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
-			PERROR("FRONTEND DEVICE");
+			PERROR("Frontend: %d, Failed to open %s", _feID, path.c_str());
 		}
 		return fd;
 	}
@@ -657,16 +658,13 @@ namespace dvb {
 	int Frontend::openDMX(const std::string &path) const {
 		const int fd = ::open(path.c_str(), O_RDWR | O_NONBLOCK);
 		if (fd < 0) {
-			PERROR("DMX DEVICE");
+			PERROR("Frontend: %d, Failed to open %s", _feID, path.c_str());
 		}
 		return fd;
 	}
 
 	void Frontend::closeDMX() {
 		if (_fd_dmx != -1) {
-			if (::ioctl(_fd_dmx, DMX_STOP) != 0) {
-				PERROR("DMX_STOP");
-			}
 			SI_LOG_INFO("Frontend: %d, Closing %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
 			CLOSE_FD(_fd_dmx);
 		}
@@ -684,36 +682,47 @@ namespace dvb {
 
 	bool Frontend::setupAndTune() {
 		if (!_tuned) {
+			base::StopWatch sw;
 			// Check if we have already opened a FE
 			if (_fd_fe == -1) {
+				sw.start();
 				_fd_fe = openFE(_path_to_fe, false);
 				if (_fd_fe < 0) {
+					const unsigned long openFETime = sw.getIntervalMS();
+					SI_LOG_INFO("Frontend: %d, Fail to open %s for Read/Write with fd: %d (%d ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
 					_fd_fe = -1;
 					return false;
 				}
-				SI_LOG_INFO("Frontend: %d, Opened %s for Read/Write with fd: %d", _feID, _path_to_fe.c_str(), _fd_fe);
-				std::this_thread::sleep_for(std::chrono::milliseconds(25));
+				const unsigned long openFETime = sw.getIntervalMS();
+				SI_LOG_INFO("Frontend: %d, Opened %s for Read/Write with fd: %d (%d ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
 			}
 			// try tuning
 			if (!tune()) {
 				return false;
 			}
-			SI_LOG_INFO("Frontend: %d, Waiting on lock...", _feID);
 
-			// check if frontend is locked, if not try a few times
-			for (unsigned int i = 0; i < _waitOnLockRetry; ++i) {
-				fe_status_t status = FE_TIMEDOUT;
-				// first read status
-				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-					if (status & FE_HAS_LOCK) {
-						// We are tuned now
-						_tuned = true;
-						SI_LOG_INFO("Frontend: %d, Tuned and locked (FE status 0x%X)", _feID, status);
-						break;
+			const unsigned long time = sw.getIntervalMS();
+			if (time < 700) {
+				SI_LOG_INFO("Frontend: %d, Waiting on lock...", _feID);
+
+				// check if frontend is locked, if not try a few times
+				for (unsigned int i = 0; i < _waitOnLockRetry; ++i) {
+					fe_status_t status = FE_TIMEDOUT;
+					// first read status
+					if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+						if (status & FE_HAS_LOCK) {
+							// We are tuned now, add some tuning stats
+							_tuned = true;
+							_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
+							SI_LOG_INFO("Frontend: %d, Tuned and locked (FE status 0x%X)", _feID, status);
+							break;
+						}
+						SI_LOG_INFO("Frontend: %d, Not locked yet   (FE status 0x%X)...", _feID, status);
 					}
-					SI_LOG_INFO("Frontend: %d, Not locked yet   (FE status 0x%X)...", _feID, status);
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(60));
+			} else {
+				_tuned = true;
 			}
 		}
 		return _tuned;
@@ -728,7 +737,7 @@ namespace dvb {
 			// try opening DMX, try again if fails
 			std::size_t timeout = 0;
 			while ((_fd_dmx = openDMX(_path_to_dmx)) == -1) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(150));
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				++timeout;
 				if (timeout > 3) {
 					return;
@@ -738,7 +747,7 @@ namespace dvb {
 			if (_dvrBufferSizeMB > 0) {
 				const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
 				if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
-					PERROR("DMX - DMX_SET_BUFFER_SIZE failed");
+					PERROR("Frontend: %d, Failed to set DMX_SET_BUFFER_SIZE", _feID);
 				} else {
 					SI_LOG_INFO("Frontend: %d, Set DMX buffer size to %d Bytes", _feID, size);
 				}
@@ -750,12 +759,12 @@ namespace dvb {
 			pesFilter.pes_type = DMX_PES_OTHER;
 			pesFilter.flags    = DMX_IMMEDIATE_START;
 			if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-				PERROR("Frontend: %d, DMX_SET_PES_FILTER (PID %04d)", _feID, 0);
+				PERROR("Frontend: %d, Failed to set DMX_SET_PES_FILTER for PID: %04d", _feID, 0);
 				return;
 			}
 			SI_LOG_INFO("Frontend: %d, Opened %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
 		} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
-			PERROR("Frontend: %d, DMX_ADD_PID: PID %04d", _feID, pid);
+			PERROR("Frontend: %d, Failed to set DMX_ADD_PID for PID: %04d", _feID, pid);
 			return;
 		}
 		_frontendData.getFilterData().setPIDOpened(pid);
