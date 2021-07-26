@@ -86,7 +86,7 @@
 			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Configuration</th></tr>";
 			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
-			page += addTableLineEntry("Wait On Lock Retry", xmlDoc, streamID + "waitOnLockRetry");
+			page += addTableLineEntry("Wait On Tuning Lock Timeout (ms)", xmlDoc, streamID + "waitOnLockTimeout");
 
 			var transformation = visibleStream.getElementsByTagName("transformation");
 			if (transformation.length > 0) {

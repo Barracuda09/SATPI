@@ -228,7 +228,7 @@ class Frontend :
 		std::size_t _dvbc2;
 
 		unsigned long _dvrBufferSizeMB;
-		unsigned int _waitOnLockRetry;
+		unsigned long _waitOnLockTimeout;
 		bool _oldApiCallStats;
 };
 

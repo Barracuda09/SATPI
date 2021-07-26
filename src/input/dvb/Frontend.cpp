@@ -52,10 +52,10 @@ namespace dvb {
 	// -- Static const data --------------------------------------------------
 	// =======================================================================
 
-	static const unsigned int DEFAULT_DVR_BUFFER_SIZE = 18;
-	static const unsigned int MAX_DVR_BUFFER_SIZE     = 18 * 10;
-	static const unsigned int MAX_WAIT_ON_LOCK_RETRY = 20;
-	static const unsigned int DEFAULT_WAIT_ON_LOCK_RETRY = 10;
+	static const unsigned int DEFAULT_DVR_BUFFER_SIZE       = 18;
+	static const unsigned int MAX_DVR_BUFFER_SIZE           = 18 * 10;
+	static const unsigned long MAX_WAIT_ON_LOCK_TIMEOUT     = 3500;
+	static const unsigned long DEFAULT_WAIT_ON_LOCK_TIMEOUT = 1000;
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -81,7 +81,7 @@ namespace dvb {
 		_dvbc(0),
 		_dvbc2(0),
 		_dvrBufferSizeMB(DEFAULT_DVR_BUFFER_SIZE),
-		_waitOnLockRetry(DEFAULT_WAIT_ON_LOCK_RETRY) {
+		_waitOnLockTimeout(DEFAULT_WAIT_ON_LOCK_TIMEOUT) {
 		snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
 		setupFrontend();
 #if FULL_DVB_API_VERSION >= 0x050A
@@ -194,7 +194,7 @@ namespace dvb {
 		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("@#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
 
 		ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
-		ADD_XML_NUMBER_INPUT(xml, "waitOnLockRetry", _waitOnLockRetry, 0, MAX_WAIT_ON_LOCK_RETRY);
+		ADD_XML_NUMBER_INPUT(xml, "waitOnLockTimeout", _waitOnLockTimeout, 0, MAX_WAIT_ON_LOCK_TIMEOUT);
 
 		// Channel
 		_frontendData.addToXML(xml);
@@ -213,9 +213,9 @@ namespace dvb {
 			_dvrBufferSizeMB = (newSize < MAX_DVR_BUFFER_SIZE) ?
 				newSize : DEFAULT_DVR_BUFFER_SIZE;
 		}
-		if (findXMLElement(xml, "waitOnLockRetry.value", element)) {
+		if (findXMLElement(xml, "waitOnLockTimeout.value", element)) {
 			const unsigned int c = std::stoi(element);
-			_waitOnLockRetry = (c < MAX_WAIT_ON_LOCK_RETRY) ? c : MAX_WAIT_ON_LOCK_RETRY;
+			_waitOnLockTimeout = (c < MAX_WAIT_ON_LOCK_TIMEOUT) ? c : MAX_WAIT_ON_LOCK_TIMEOUT;
 		}
 		for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 			const std::string deliverySystem = StringConverter::stringFormat("deliverySystem@#1", i);
@@ -700,29 +700,30 @@ namespace dvb {
 			if (!tune()) {
 				return false;
 			}
-
-			const unsigned long time = sw.getIntervalMS();
-			if (time < 700) {
-				SI_LOG_INFO("Frontend: %d, Waiting on lock...", _feID);
-
-				// check if frontend is locked, if not try a few times
-				for (unsigned int i = 0; i < _waitOnLockRetry; ++i) {
+			_tuned = true;
+			SI_LOG_INFO("Frontend: %d, Tuned, waiting on lock...", _feID);
+			if (sw.getIntervalMS() < 500) {
+				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
+				for (;;) {
 					fe_status_t status = FE_TIMEDOUT;
 					// first read status
 					if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 						if (status & FE_HAS_LOCK) {
 							// We are tuned now, add some tuning stats
-							_tuned = true;
 							_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
 							SI_LOG_INFO("Frontend: %d, Tuned and locked (FE status 0x%X)", _feID, status);
 							break;
 						}
 						SI_LOG_INFO("Frontend: %d, Not locked yet   (FE status 0x%X)...", _feID, status);
 					}
+					if (sw.getIntervalMS() > _waitOnLockTimeout) {
+						SI_LOG_INFO("Frontend: %d, Not locked yet   (Timeout)...", _feID);
+						break;
+					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				}
 			} else {
-				_tuned = true;
+				SI_LOG_INFO("Frontend: %d, Not locked yet   (Timeout)...", _feID);
 			}
 		}
 		return _tuned;
