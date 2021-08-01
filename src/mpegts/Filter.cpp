@@ -94,7 +94,7 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 				}
 #endif
 				// collect PMT data
-				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, false);
+				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, true);
 
 				// Did we finish collecting PMT
 				if (_pmt->isCollected()) {
