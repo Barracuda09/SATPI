@@ -144,10 +144,8 @@ bool HttpcServer::process(SocketClient &client) {
 }
 
 void HttpcServer::processStreamingRequest(SocketClient &client) {
-
 	base::StopWatch sw;
 	sw.start();
-
 	const std::string msg = client.getPercentDecodedMessage();
 	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
 		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
@@ -178,13 +176,13 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 
 			// Check the Method
 			if (method == "GET") {
-				stream->update(clientID, true);
+				stream->update(clientID);
 				getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
 
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpcReply);
 
-				if (!stream->update(clientID, true)) {
+				if (!stream->update(clientID)) {
 					// something wrong here... send 408 error
 					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
 					stream->teardown(clientID);
@@ -192,7 +190,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "PLAY") {
 				methodPlay(*stream, clientID, httpcReply);
 
-				if (!stream->update(clientID, true)) {
+				if (!stream->update(clientID)) {
 					// something wrong here... send 408 error
 					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
 					stream->teardown(clientID);
@@ -217,7 +215,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 		}
 	}
 	const unsigned long time = sw.getIntervalMS();
-	SI_LOG_DEBUG("Send reply in %d ms\r\n%s", time, httpcReply.c_str());
+	SI_LOG_DEBUG("Send reply in %lu ms\r\n%s", time, httpcReply.c_str());
 	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
 		SI_LOG_ERROR("Send Streaming reply failed");
 	}

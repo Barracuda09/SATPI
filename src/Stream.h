@@ -176,7 +176,7 @@ class Stream :
 		bool processStreamingRequest(const std::string &msg, int clientID, const std::string &method);
 
 		///
-		bool update(int clientID, bool start);
+		bool update(int clientID);
 
 		///
 		std::string getDescribeMediaLevelString() const;

@@ -241,11 +241,11 @@ void Stream::checkForSessionTimeout() {
 	}
 }
 
-bool Stream::update(int clientID, bool start) {
+bool Stream::update(int clientID) {
 	base::MutexLock lock(_mutex);
 	const FeID id = _device->getFeID();
 	// first time streaming?
-	if (!_streaming && start) {
+	if (!_streaming) {
 		switch (_streamingType) {
 			case StreamingType::NONE:
 				_streaming.reset(nullptr);
