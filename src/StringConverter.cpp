@@ -78,7 +78,7 @@ std::string StringConverter::getline(const std::string &msg, std::string::size_t
 		if (size > 2) {
 			line = msg.substr(begin, end - begin);
 		} else {
-			line = "--- LINE END ---";
+			line = "<CRLF>";
 		}
 		begin = end + strlen(line_delim);
 		return line;
