@@ -25,40 +25,42 @@
 namespace base {
 
 class StopWatch {
-		// =====================================================================
-		//  -- Constructors and destructor -------------------------------------
-		// =====================================================================
-    public:
+		// =========================================================================
+		//  -- Constructors and destructor -----------------------------------------
+		// =========================================================================
+	public:
 
-        StopWatch() {
+		StopWatch() {
 			start();
 		}
-        ~StopWatch() = default;
-        
-		// =====================================================================
-		//  -- Other member functions ------------------------------------------
-		// =====================================================================
-    public:
 
-        void start() {
-        	_t1 = std::chrono::steady_clock::now();
-        }
-        void stop() {
-        	_t2 = std::chrono::steady_clock::now();
-        }
-        
-        unsigned long getIntervalMS() const {
-        	const auto t = std::chrono::steady_clock::now();
-            return std::chrono::duration_cast<std::chrono::milliseconds>(t - _t1).count();
-        }
-		// =====================================================================
-		// -- Data members -----------------------------------------------------
-		// =====================================================================
-    private:
+		~StopWatch() = default;
+
+		// =========================================================================
+		//  -- Other member functions ----------------------------------------------
+		// =========================================================================
+	public:
+
+		void start() {
+			_t1 = std::chrono::steady_clock::now();
+		}
+		void stop() {
+			_t2 = std::chrono::steady_clock::now();
+		}
+
+		unsigned long getIntervalMS() const {
+			const auto t = std::chrono::steady_clock::now();
+			return std::chrono::duration_cast<std::chrono::milliseconds>(t - _t1).count();
+		}
+
+		// =========================================================================
+		// -- Data members ---------------------------------------------------------
+		// =========================================================================
+	private:
 
 		std::chrono::steady_clock::time_point _t1;
 		std::chrono::steady_clock::time_point _t2;
-    
+
 };
 
 } // namespace base
