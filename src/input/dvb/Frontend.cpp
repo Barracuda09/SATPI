@@ -254,7 +254,7 @@ namespace dvb {
 		if (pollRet > 0) {
 			return (pfd.revents & POLLIN) == POLLIN;
 		} else if (pollRet < 0) {
-			PERROR("Error during polling frontend for data");
+			PERROR("Frontend: %d, Error during polling frontend for data", _feID);
 			return false;
 		}
 		return false;
@@ -262,7 +262,7 @@ namespace dvb {
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		// try read maximum amount of bytes from DMX
-		const int bytes = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		const auto bytes = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (bytes > 0) {
 			buffer.addAmountOfBytesWritten(bytes);
 			if (buffer.full()) {
@@ -271,7 +271,7 @@ namespace dvb {
 				return true;
 			}
 		} else if (bytes < 0) {
-			PERROR("Frontend::readFullTSPacket");
+			PERROR("Frontend: %d, Error reading data..", _feID);
 		}
 		return false;
 	}
@@ -322,7 +322,7 @@ namespace dvb {
 				cmdseq.props = p;
 
 				if (ioctl(_fd_fe, FE_GET_PROPERTY, &cmdseq) == -1) {
-					PERROR("FE_GET_PROPERTY failed");
+					PERROR("Frontend: %d, FE_GET_PROPERTY failed", _feID);
 				}
 
 				const auto strengthScale = cmdseq.props[0].u.st.stat[0].scale;
@@ -391,7 +391,7 @@ namespace dvb {
 			}
 			_frontendData.setMonitorData(status, strength, snr, ber, ublocks);
 		} else {
-			PERROR("FE_READ_STATUS failed");
+			PERROR("Frontend: %d, FE_READ_STATUS failed", _feID);
 		}
 #endif
 	}
@@ -413,6 +413,8 @@ namespace dvb {
 
 	bool Frontend::update() {
 		SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
+		base::StopWatch sw;
+		sw.start();
 #ifndef SIMU
 		// Setup, tune and set PID Filters
 		if (_frontendData.hasDeviceDataChanged()) {
@@ -435,7 +437,8 @@ namespace dvb {
 		}
 		updatePIDFilters();
 #endif
-		SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
+		const unsigned long time = sw.getIntervalMS();
+		SI_LOG_INFO("Frontend: %d, Updating frontend (Finished in %lu ms)", _feID, time);
 		return true;
 	}
 
@@ -689,12 +692,12 @@ namespace dvb {
 				_fd_fe = openFE(_path_to_fe, false);
 				if (_fd_fe < 0) {
 					const unsigned long openFETime = sw.getIntervalMS();
-					SI_LOG_INFO("Frontend: %d, Fail to open %s for Read/Write with fd: %d (%d ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
+					SI_LOG_INFO("Frontend: %d, Fail to open %s for Read/Write with fd: %d (%lu ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
 					_fd_fe = -1;
 					return false;
 				}
 				const unsigned long openFETime = sw.getIntervalMS();
-				SI_LOG_INFO("Frontend: %d, Opened %s for Read/Write with fd: %d (%d ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
+				SI_LOG_INFO("Frontend: %d, Opened %s for Read/Write with fd: %d (%lu ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
 			}
 			// try tuning
 			if (!tune()) {
@@ -716,14 +719,15 @@ namespace dvb {
 						}
 						SI_LOG_INFO("Frontend: %d, Not locked yet   (FE status 0x%X)...", _feID, status);
 					}
-					if (sw.getIntervalMS() > _waitOnLockTimeout) {
-						SI_LOG_INFO("Frontend: %d, Not locked yet   (Timeout)...", _feID);
+					const unsigned long waitTime = sw.getIntervalMS();
+					if (waitTime > _waitOnLockTimeout) {
+						SI_LOG_INFO("Frontend: %d, Not locked yet (Timeout %lu ms)...", _feID, waitTime);
 						break;
 					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				}
 			} else {
-				SI_LOG_INFO("Frontend: %d, Not locked yet   (Timeout)...", _feID);
+				SI_LOG_INFO("Frontend: %d, Not locked yet (Timeout %lu ms)...", _feID, sw.getIntervalMS());
 			}
 		}
 		return _tuned;
