@@ -66,6 +66,7 @@ Tested Hardware
 - <a href="http://www.beagleboard.org">BeagleBone Black</a>
 - <a href="http://www.orangepi.org">Orange Pi One with armbian</a>
 - <a href="https://shop.sundtek.de">Sundtek DVB-C/T/T2</a>
+- <a href="https://shop.sundtek.de">Sundtek SkyTV Ultimate Dual (2x DVB-S/S2/S2X)</a>
 - <a href="http://www.satip.info/sites/satip/files/files/DSR41IP_GB.pdf">Schwaiger DSR41IP</a> - Thanks to Axel Hartmann for kindly suppling this to me
 - DIGITALBOX IMPERIAL HD 6i - Thanks to <a href="https://www.apfutura.com">APfutura</a> for kindly suppling this to me
 - Anysee-S2(LP) STV090x Multistandard
