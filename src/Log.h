@@ -20,6 +20,8 @@
 #ifndef LOG_H_INCLUDE
 #define LOG_H_INCLUDE LOG_H_INCLUDE
 
+#include <StringConverter.h>
+
 #include <string>
 #include <deque>
 
@@ -41,13 +43,24 @@ class Log {
 
 		static bool getSysLogState();
 
-		static void binlog(int priority, const unsigned char *p, int length, const char *fmt, ...);
+		template <typename... Args>
+		static void binlog(int priority, const unsigned char *p, int length, const char * format, Args&&... args) {
+			std::string data = StringConverter::convertToHexASCIITable(p, length, 16);
+			std::string line = StringConverter::stringFormat(format, std::forward<Args>(args)...);
+			log(priority, StringConverter::stringFormat("%s\r\n%s\r\nEND\r\n", line, data));
+		}
 
-		static void applog(int priority, const char *fmt, ...);
+		template <typename... Args>
+		static void applog(int priority, const char * format, Args&&... args) {
+			std::string line = StringConverter::stringFormat(format, std::forward<Args>(args)...);
+			log(priority, line);
+		}
 
 		static std::string makeJSON();
 
 	private:
+
+		static void log(int priority, const std::string &msg);
 
 		struct LogElem {
 			int priority;
@@ -62,23 +75,22 @@ class Log {
 		static bool _coutLog;
 };
 
-
 #ifdef NDEBUG
-#define PERROR(fmt, ...)                       Log::applog(LOG_ERR, fmt ": %s (code %d)", ##__VA_ARGS__, strerror(errno), errno)
-#define GAI_PERROR(str, s)                     Log::applog(LOG_ERR, str ": %s (code %d)", gai_strerror(s), s)
-#define SI_LOG_INFO(...)                       Log::applog(LOG_INFO, __VA_ARGS__)
-#define SI_LOG_ERROR(...)                      Log::applog(LOG_ERR, __VA_ARGS__)
-#define SI_LOG_DEBUG(...)                      Log::applog(LOG_DEBUG, __VA_ARGS__)
-#define SI_LOG_COND_DEBUG(cond, fmt, ...)      if (cond) { Log::applog(LOG_DEBUG, fmt, ##__VA_ARGS__); }
-#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
+#define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  format, ##__VA_ARGS__)
+#define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   format, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, format, ##__VA_ARGS__)
+#define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
+#define SI_LOG_GIA_PERROR(format, err, ...)   Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), gai_strerror(err), err)
+#define SI_LOG_COND_DEBUG(cond, format, ...)  if (cond) { SI_LOG_DEBUG(format, ##__VA_ARGS__); }
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
 #else
-#define PERROR(fmt, ...)                       Log::applog(LOG_ERR,   "[%45s:%03d] " fmt ": %s (code %d)", __FILE__, __LINE__, ##__VA_ARGS__, strerror(errno), errno)
-#define GAI_PERROR(str, s)                     Log::applog(LOG_ERR,   "[%45s:%03d] " str ": %s (code %d)", __FILE__, __LINE__, gai_strerror(s), s)
-#define SI_LOG_INFO(fmt, ...)                  Log::applog(LOG_INFO,  "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_ERROR(fmt, ...)                 Log::applog(LOG_ERR,   "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(fmt, ...)                 Log::applog(LOG_DEBUG, "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define SI_LOG_COND_DEBUG(cond, fmt, ...)      if (cond) { Log::applog(LOG_DEBUG, "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__); }
-#define SI_LOG_BIN_DEBUG(p, length, fmt, ...)  Log::binlog(LOG_DEBUG, p, length, "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
+#define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
+#define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
+#define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "[@#1:@#2] @#3: @#4 (code @#5)", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
+#define SI_LOG_GIA_PERROR(format, err, ...)   Log::applog(LOG_ERR,   "[@#1:@#2] @#3: @#4 (code @#5)", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__), gai_strerror(err), err)
+#define SI_LOG_COND_DEBUG(cond, format, ...)  if (cond) { SI_LOG_DEBUG(format, ##__VA_ARGS__); }
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, "[%45s:%03d] " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif // LOG_H_INCLUDE

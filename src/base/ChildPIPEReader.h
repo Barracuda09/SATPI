@@ -94,7 +94,7 @@ class ChildPIPEReader {
 				::dup2(pipefd[WRITE], WRITE);
 
 				::execvp(argv[0], argv);
-				perror("execvp");
+				SI_LOG_PERROR("execvp");
 				exit(1);
 			}
 			// This is the parent process

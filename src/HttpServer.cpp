@@ -75,7 +75,7 @@ std::size_t HttpServer::readFile(const char *filePath, std::string &data) const 
 	} catch (...) {
 		// Eat this exception
 	}
-	SI_LOG_ERROR("Unable to read from File: %s", filePath);
+	SI_LOG_ERROR("Unable to read from File: @#1", filePath);
 	return 0;
 }
 
@@ -152,7 +152,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID,
 					// XSatipM3U, presentationURL and tuner string
 					if (docType.find("urn:ses-com:device") != std::string::npos) {
-						SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
+						SI_LOG_DEBUG("Client: @#1 requested @#2", client.getIPAddressOfSocket(), file);
 						// check did we get our desc.xml (we assume there are some @#1 in there)
 						if (docType.find("@#1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
@@ -177,7 +177,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 				} else if (file.find(".css") != std::string::npos) {
 					getHtmlBodyWithContent(htmlBody, HTML_OK, file, CONTENT_TYPE_CSS, docTypeSize, 0);
 				} else if (file.find(".m3u") != std::string::npos) {
-					SI_LOG_DEBUG("Client: %s requested %s", client.getIPAddressOfSocket().c_str(), file.c_str());
+					SI_LOG_DEBUG("Client: @#1 requested @#2", client.getIPAddressOfSocket(), file);
 					// did we read our *.m3u, we assume there are some @#1
 					if (docType.find("@#1") != std::string::npos) {
 						const std::string rtsp = StringConverter::stringFormat("@#1:@#2",

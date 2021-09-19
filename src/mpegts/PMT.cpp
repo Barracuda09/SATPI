@@ -68,10 +68,11 @@ void PMT::parse(const FeID id) {
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
 
-//		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, PMT data", id.getID());
+//		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PMT data", id);
 
-		SI_LOG_INFO("Frontend: %d, PMT - Section Length: %d  Prog NR: %05d  Version: %d  secNr: %d  lastSecNr: %d  PCR-PID: %04d  Program Length: %d  CRC: 0x%04X",
-					id.getID(), tableData.sectionLength, _programNumber, tableData.version, tableData.secNr, tableData.lastSecNr, _pcrPID, _prgLength, tableData.crc);
+		SI_LOG_INFO("Frontend: @#1, PMT - Section Length: @#2  Prog NR: @#3  Version: @#4  secNr: @#5  lastSecNr: @#6  PCR-PID: @#7  Program Length: @#8  CRC: @#9",
+			id, tableData.sectionLength, DIGIT(_programNumber, 5), tableData.version,
+			tableData.secNr, tableData.lastSecNr, DIGIT(_pcrPID, 4), _prgLength, HEX(tableData.crc, 4));
 
 		// To save the Program Info
 		if (_prgLength > 0) {
@@ -83,8 +84,8 @@ void PMT::parse(const FeID id) {
 				if (_progInfo[i + 0u] == 0x09 && subLength > 0) {
 					const int caid   =  (_progInfo[i + 2u] << 8u)         | _progInfo[i + 3u];
 					const int ecmpid = ((_progInfo[i + 4u] & 0x1F) << 8u) | _progInfo[i + 5u];
-					SI_LOG_INFO("Frontend: %d, PMT - CAID: 0x%04X  ECM-PID: %04d  ES-Length: %03d",
-								id.getID(), caid, ecmpid, subLength);
+					SI_LOG_INFO("Frontend: @#1, PMT - CAID: @#2  ECM-PID: @#3  ES-Length: @#4",
+						id, HEX(caid, 4), DIGIT(ecmpid, 4), DIGIT(subLength, 3));
 				}
 				i += subLength + 2u;
 			}
@@ -100,8 +101,8 @@ void PMT::parse(const FeID id) {
 			const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];
 			const std::size_t esInfoLength  = ((ptr[i + 3u] & 0x0F) << 8u) | ptr[i + 4u];
 
-			SI_LOG_INFO("Frontend: %d, PMT - Stream Type: %02d  ES PID: %04d  ES-Length: %03d",
-						id.getID(), streamType, elementaryPID, esInfoLength);
+			SI_LOG_INFO("Frontend: @#1, PMT - Stream Type: @#2  ES PID: @#3  ES-Length: @#4",
+				id, DIGIT(streamType, 2), DIGIT(elementaryPID, 4), DIGIT(esInfoLength, 3));
 			for (std::size_t j = 0u; j < esInfoLength; ) {
 				const std::size_t subLength = ptr[j + i + 6u];
 				// Check for Conditional access system and EMM/ECM PID
@@ -109,8 +110,8 @@ void PMT::parse(const FeID id) {
 					const int caid   =  (ptr[j + i +  7u] << 8u) | ptr[j + i + 8u];
 					const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 					const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
-					SI_LOG_INFO("Frontend: %d, PMT - ECM-PID - CAID: 0x%04X  ECM-PID: %04d  PROVID: %05d ES-Length: %03d",
-								id.getID(), caid, ecmpid, provid, subLength);
+					SI_LOG_INFO("Frontend: @#1, PMT - ECM-PID - CAID: @#2  ECM-PID: @#3  PROVID: @#4 ES-Length: @#5",
+						id, HEX(caid, 4), DIGIT(ecmpid, 4), DIGIT(provid, 5), DIGIT(subLength, 3));
 
 					_progInfo.append(&ptr[j + i + 5u], subLength + 2u);
 				}

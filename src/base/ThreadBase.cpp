@@ -77,7 +77,7 @@ namespace base {
 			++timeout;
 			if (timeout > 50u) {
 				cancelThread();
-				SI_LOG_DEBUG("%s: Thread did not stop within timeout?  !!TIMEOUT!!", _name.c_str());
+				SI_LOG_DEBUG("@#1: Thread did not stop within timeout?  !!TIMEOUT!!", _name);
 				break;
 			}
 		}
@@ -125,7 +125,7 @@ namespace base {
 				factor = 0.0;
 				break;
 			default:
-				SI_LOG_ERROR("%s: setPriority: Unknown case", _name.c_str());
+				SI_LOG_ERROR("@#1: setPriority: Unknown case", _name);
 				return false;
 		}
 		int policy = 0;
@@ -151,7 +151,7 @@ namespace base {
 			threadEntry();
 			_exit = true;
 		} catch (...) {
-			SI_LOG_ERROR("%s: Catched an exception", _name.c_str());
+			SI_LOG_ERROR("@#1: Catched an exception", _name);
 			_exit = true;
 			throw;
 		}

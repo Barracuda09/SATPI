@@ -24,9 +24,6 @@
 #include <base/Tokenizer.h>
 
 #include <iostream>
-#include <cctype>
-#include <sstream>
-#include <iomanip>
 #include <cstdarg>
 
 #include <stdio.h>
@@ -40,14 +37,10 @@ void StringConverter::splitPath(const std::string &fullPath, std::string &path, 
 }
 
 std::string StringConverter::stringToUpper(const char *str) {
-	std::string result(str);
-	std::size_t i = 0;
-	while (*str) {
-		if (std::islower(*str)) {
-			result[i] = static_cast<char>(std::toupper(*str));
-		}
+	std::string result;
+	while (*str != '\0') {
+		result += std::islower(*str) ? static_cast<char>(std::toupper(*str)) : *str;
 		++str;
-		++i;
 	}
 	return result;
 }
@@ -81,14 +74,12 @@ std::string StringConverter::getline(const std::string &msg, std::string::size_t
 			line = "<CRLF>";
 		}
 		begin = end + strlen(line_delim);
-		return line;
 	} else if (begin == 0 && msg.size() > 2) {
 		// if there is no delim found but msg size is more then 2, give just the string
 		line = msg;
 		begin = msg.size();
-		return line;
 	}
-	return "";
+	return line;
 }
 
 void StringConverter::addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist) {

@@ -101,7 +101,7 @@ void Server::doFromXML(const std::string &xml) {
 
 void Server::threadEntry() {
 	incrementBootID();
-	SI_LOG_INFO("Setting up SSDP server with BOOTID: %d  annouce interval: %d Sec", _bootID, _announceTimeSec);
+	SI_LOG_INFO("Setting up SSDP server with BOOTID: @#1  annouce interval: @#2 Sec", _bootID, _announceTimeSec);
 
 	// Get file and constuct new location
 	constructLocation();
@@ -200,7 +200,7 @@ void Server::checkDefendDeviceID(
 		const std::string &ip_addr) {
 	// check server found with clashing DEVICEID? we should defend it!!
 	if (_deviceID == otherDeviceID) {
-		SI_LOG_INFO("Found SAT>IP Server %s: with clashing DEVICEID %d defending", ip_addr.c_str(), otherDeviceID);
+		SI_LOG_INFO("Found SAT>IP Server @#1: with clashing DEVICEID @#2 defending", ip_addr, otherDeviceID);
 		SocketClient udpSend;
 		initUDPSocket(udpSend, ip_addr, SSDP_PORT);
 		// send message back
@@ -221,7 +221,7 @@ void Server::checkDefendDeviceID(
 			SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 		}
 	} else if (servers.find(otherDeviceID) == servers.end()) {
-		SI_LOG_INFO("Found SAT>IP Server %s: with DEVICEID %d", ip_addr.c_str(), otherDeviceID);
+		SI_LOG_INFO("Found SAT>IP Server @#1: with DEVICEID @#2", ip_addr, otherDeviceID);
 		servers[otherDeviceID] = ip_addr;
 	}
 }
@@ -229,7 +229,7 @@ void Server::checkDefendDeviceID(
 void Server::sendGiveUpDeviceID(
 		sockaddr_in &si_other,
 		const std::string &ip_addr) {
-	SI_LOG_INFO("SAT>IP Server %s: contacted us because of clashing DEVICEID %d", ip_addr.c_str(), _deviceID);
+	SI_LOG_INFO("SAT>IP Server @#1: contacted us because of clashing DEVICEID @#2", ip_addr, _deviceID);
 
 	// send message back
 	const char *UPNP_M_SEARCH_OK =
@@ -255,7 +255,7 @@ void Server::sendGiveUpDeviceID(
 
 	if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
 		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
-		PERROR("send");
+		SI_LOG_PERROR("send");
 	}
 	// we should increment DEVICEID and send bye bye
 	incrementDeviceID();
@@ -268,7 +268,7 @@ void Server::sendGiveUpDeviceID(
 void Server::sendSATIPClientDiscoverResponse(
 		sockaddr_in &si_other,
 		const std::string &ip_addr) {
-	SI_LOG_INFO("SAT>IP Client %s : tries to discover the network, sending reply back", ip_addr.c_str());
+	SI_LOG_INFO("SAT>IP Client @#1 : tries to discover the network, sending reply back", ip_addr);
 
 	sendDiscoverResponse("urn:ses-com:device:SatIPServer:1", si_other);
 }
@@ -276,7 +276,7 @@ void Server::sendSATIPClientDiscoverResponse(
 void Server::sendRootDeviceDiscoverResponse(
 		sockaddr_in &si_other,
 		const std::string &ip_addr) {
-	SI_LOG_INFO("Root Device Client %s : tries to discover the network, sending reply back", ip_addr.c_str());
+	SI_LOG_INFO("Root Device Client @#1 : tries to discover the network, sending reply back", ip_addr);
 
 	sendDiscoverResponse("upnp:rootdevice", si_other);
 }
@@ -307,7 +307,7 @@ void Server::sendDiscoverResponse(
 
 	if (sendto(_udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
 		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
-		PERROR("send");
+		SI_LOG_PERROR("send");
 	}
 }
 

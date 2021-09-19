@@ -103,10 +103,10 @@ int TcpSocket::poll(int timeout) {
 					if (_client[j].getFD() != _pfd[i].fd) {
 						continue;
 					}
-					SI_LOG_INFO("%s Client %s:%d Connection closed with fd: %d",
-					            _client[j].getProtocolString().c_str(),
-					            _client[j].getIPAddressOfSocket().c_str(),
-								_client[j].getSocketPort(), _client[j].getFD());
+					SI_LOG_INFO("@#1 Client @#2:@#3 Connection closed with fd: @#4",
+						_client[j].getProtocolString(),
+						_client[j].getIPAddressOfSocket(),
+						_client[j].getSocketPort(), _client[j].getFD());
 					_client[j].closeFD();
 					break;
 				}

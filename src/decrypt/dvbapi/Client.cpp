@@ -164,11 +164,12 @@ namespace dvbapi {
 								std::memcpy(&clientData[6], &tableData[5], sectionLength); // copy Table data
 								const int length = sectionLength + 6; // 6 = clientData header
 
-								SI_LOG_DEBUG("Frontend: %d, Send Filter Data with size %d for demux %d filter %d PID %04d TableID %02x %02x %02x %02x %02x",
-									id.getID(), length, demux, filter, pid, tableData[5], tableData[6], tableData[7], tableData[8], tableData[9]);
+								SI_LOG_DEBUG("Frontend: @#1, Send Filter Data with size @#2 for demux @#3 filter @#4 PID @#5 TableID @#6 @#7 @#8 @#9 @#10",
+									id, length, demux, filter, DIGIT(pid, 4),
+									HEX(tableData[5], 2), HEX(tableData[6], 2), HEX(tableData[7], 2), HEX(tableData[8], 2), HEX(tableData[9], 2));
 
 								if (!_client.sendData(clientData, length, MSG_DONTWAIT)) {
-									SI_LOG_ERROR("Frontend: %d, Filter - send data to server failed", id.getID());
+									SI_LOG_ERROR("Frontend: @#1, Filter - send data to server failed", id);
 								}
 							}
 						}
@@ -200,14 +201,14 @@ namespace dvbapi {
 			buff[6] = 0x00;
 			buff[7] = demuxIndex;
 
-			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Frontend: %d, Stop CA Decrypt with demux index %d", id.getID(), demuxIndex);
+			SI_LOG_BIN_DEBUG(buff, sizeof(buff), "Frontend: @#1, Stop CA Decrypt with demux index @#2", id, demuxIndex);
 
 			// cleaning OSCam filters
 			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(id);
 			frontend->stopOSCamFilters(id);
 
 			if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
-				SI_LOG_ERROR("Frontend: %d, Stop CA Decrypt with demux index %d - send data to server failed", id.getID(), demuxIndex);
+				SI_LOG_ERROR("Frontend: @#1, Stop CA Decrypt with demux index @#2 - send data to server failed", id, demuxIndex);
 				return false;
 			}
 		}
@@ -313,10 +314,10 @@ namespace dvbapi {
 			// copy new PMT to buffer
 			memcpy(data, pmt.c_str(), 188);
 
-//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: %d, NEW PMT data", id.getID());
+//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, NEW PMT data", id);
 
 		} else {
-//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: %d, Not handled Cleaning PMT data!", id.getID());
+//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, Not handled Cleaning PMT data!", id);
 			// Clear PID to NULL packet
 			data[1] = 0x1F;
 			data[2] = 0xFF;
@@ -358,10 +359,10 @@ namespace dvbapi {
 		caPMT[16] = demuxIndex;                          // streamID
 		std::memcpy(&caPMT[17], progInfo.c_str(), cpyLength); // copy Prog Info data
 
-		SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Frontend: %d, PMT data to OSCam with demux index %d", id.getID(), demuxIndex);
+		SI_LOG_BIN_DEBUG(caPMT, totLength + 6, "Frontend: @#1, PMT data to OSCam with demux index @#2", id, demuxIndex);
 
 		if (!_client.sendData(caPMT, totLength + 6, MSG_DONTWAIT)) {
-			SI_LOG_ERROR("Frontend: %d, PMT - send data to server failed", id.getID());
+			SI_LOG_ERROR("Frontend: @#1, PMT - send data to server failed", id);
 		}
 	}
 
@@ -404,12 +405,12 @@ namespace dvbapi {
 						while (i < size) {
 							// get command
 							const uint32_t cmd = (buf[i + 0] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
-							SI_LOG_DEBUG("Frontend: %d, Receive data total size %u - cmd: 0x%X", buf[i + 4] - _adapterOffset, size, cmd);
+							SI_LOG_DEBUG("Frontend: @#1, Receive data total size @#2 - cmd: @#3", buf[i + 4] - _adapterOffset, size, HEX(cmd, 2));
 
 							switch (cmd) {
 								case DVBAPI_SERVER_INFO: {
 										_serverName.assign(reinterpret_cast<const char *>(&buf[i + 7]), buf[i + 6]);
-										SI_LOG_INFO("Connected to %s", _serverName.c_str());
+										SI_LOG_INFO("Connected to @#1", _serverName);
 										_connected = true;
 
 										// Goto next cmd
@@ -424,7 +425,7 @@ namespace dvbapi {
 										const unsigned char *filterData = &buf[i + 9];
 										const unsigned char *filterMask = &buf[i + 25];
 
-//										SI_LOG_BIN_DEBUG(&buf[i], 65, "Frontend: %d, DVBAPI_DMX_SET_FILTER", adapter);
+//										SI_LOG_BIN_DEBUG(&buf[i], 65, "Frontend: @#1, DVBAPI_DMX_SET_FILTER", adapter);
 
 										const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(adapter);
 										frontend->startOSCamFilterData(pid, demux, filter, filterData, filterMask);
@@ -456,8 +457,10 @@ namespace dvbapi {
 
 										const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(adapter);
 										frontend->setKey(cw, parity, index);
-										SI_LOG_DEBUG("Frontend: %d, Received %s(%02X) CW: %02X %02X %02X %02X %02X %02X %02X %02X  index: %d",
-													 adapter, (parity == 0) ? "even" : "odd", parity, cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7], index);
+										SI_LOG_DEBUG("Frontend: @#1, Received @#2(@#3) CW: @#4 @#5 @#6 @#7 @#8 @#9 @#10 @#11  index: @#12",
+											adapter, (parity == 0) ? "even" : "odd", HEX(parity, 2),
+											HEX(cw[0], 2), HEX(cw[1], 2), HEX(cw[2], 2), HEX(cw[3], 2),
+											HEX(cw[4], 2), HEX(cw[5], 2), HEX(cw[6], 2), HEX(cw[7], 2), index);
 
 										// Goto next cmd
 										i += 21;
@@ -494,12 +497,12 @@ namespace dvbapi {
 										const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(adapter);
 										frontend->setECMInfo(pid, serviceID, caID, provID, emcTime,
 														  cardSystem, readerName, sourceName, protocolName, hops);
-										SI_LOG_DEBUG("Frontend: %d, Receive ECM Info System: %s  Reader: %s  Source: %s  Protocol: %s  ECM Time: %d",
-													 adapter, cardSystem.c_str(), readerName.c_str(), sourceName.c_str(), protocolName.c_str(), emcTime);
+										SI_LOG_DEBUG("Frontend: @#1, Receive ECM Info System: @#2  Reader: @#3  Source: @#4  Protocol: @#5  ECM Time: @#6",
+											adapter, cardSystem, readerName, sourceName, protocolName, emcTime);
 										break;
 									}
 								default:
-									SI_LOG_BIN_DEBUG(buf, size, "Frontend: %d, Receive unexpected data", 0);
+									SI_LOG_BIN_DEBUG(buf, size, "Frontend: x, Receive unexpected data");
 
 									i = size;
 									break;
@@ -507,7 +510,7 @@ namespace dvbapi {
 						}
 					} else {
 						// connection closed, try to reconnect
-						SI_LOG_INFO("Connected lost with %s", _serverName.c_str());
+						SI_LOG_INFO("Connection lost with @#1", _serverName);
 						_serverName = "Not connected";
 						_client.closeFD();
 						pfd[0].fd = -1;
@@ -536,7 +539,7 @@ namespace dvbapi {
 		if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 			_enabled = (element == "true") ? true : false;
 			if (!_enabled) {
-				SI_LOG_INFO("Connection closed with %s", _serverName.c_str());
+				SI_LOG_INFO("Connection closed with @#1", _serverName);
 				_serverName = "Not connected";
 				_client.closeFD();
 				_connected = false;

@@ -53,7 +53,7 @@ void TSReader::enumerate(
 		StreamSpVector &streamVector,
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) {
-	SI_LOG_INFO("Setting up Child PIPE - TS Reader using path: %s", appDataPath.c_str());
+	SI_LOG_INFO("Setting up Child PIPE - TS Reader using path: @#1", appDataPath);
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::childpipe::SpTSReader tsreader =
 		std::make_shared<input::childpipe::TSReader>(size, appDataPath, enableUnsecureFrontends);
@@ -152,17 +152,17 @@ bool TSReader::hasDeviceDataChanged() const {
 }
 
 void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-	SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
 	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
 	_deviceData.parseStreamString(_feID, msgTrans, method);
-	SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 }
 
 bool TSReader::update() {
-	SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
 		_exec.close();
@@ -171,14 +171,14 @@ bool TSReader::update() {
 		const std::string execPath = _deviceData.getFilePath();
 		_exec.open(execPath);
 		if (_exec.isOpen()) {
-			SI_LOG_INFO("Frontend: %d, Child PIPE - TS Reader using exec: %s", _feID, execPath.c_str());
+			SI_LOG_INFO("Frontend: @#1, Child PIPE - TS Reader using exec: @#2", _feID, execPath);
 			_t1 = std::chrono::steady_clock::now();
 			_t2 = _t1;
 		} else {
-			SI_LOG_ERROR("Frontend: %d, Child PIPE - TS Reader unable to use exec: %s", _feID, execPath.c_str());
+			SI_LOG_ERROR("Frontend: @#1, Child PIPE - TS Reader unable to use exec: @#2", _feID, execPath);
 		}
 	}
-	SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
 

@@ -31,19 +31,14 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef NDEBUG
-#define LOG_SIZE 400
-#else
 #define LOG_SIZE 550
-#endif
 
 static base::Mutex logMutex;
-
 bool Log::_syslogOn = false;
 bool Log::_coutLog = true;
 Log::LogBuffer Log::_appLogBuffer;
 
-void Log::openAppLog(const char *deamonName, bool daemonize) {
+void Log::openAppLog(const char *deamonName, const bool daemonize) {
 	// initialize the logging interface
 	openlog(deamonName, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
 	if (daemonize) {
@@ -64,58 +59,28 @@ bool Log::getSysLogState() {
 	return _syslogOn;
 }
 
-void Log::binlog(const int priority, const unsigned char *p, const int length, const char *fmt, ...) {
-	const std::string strData = StringConverter::convertToHexASCIITable(p, length, 16);
-	char txt[4096];
-	va_list arglist;
-	va_start(arglist, fmt);
-	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
-	va_end(arglist);
+void Log::log(int priority, const std::string &msg) {
+	// set timestamp
+	struct timespec timeStamp;
+	struct tm result;
+	char asciiTime[100];
+	clock_gettime(CLOCK_REALTIME, &timeStamp);
+	localtime_r(&timeStamp.tv_sec, &result);
+	std::strftime(asciiTime, sizeof(asciiTime), "%c", &result);
 
-	applog(priority, "%s\r\n%s\r\nEND\r\n", txt, strData.c_str());
-}
+	// cut line to insert nsec '.000000000'
+	asciiTime[19] = 0;
+	const std::string time = StringConverter::stringFormat("@#1.@#2 @#3",
+		&asciiTime[0], DIGIT(timeStamp.tv_nsec/100000, 4), &asciiTime[20]);
 
-void Log::applog(const int priority, const char *fmt, ...) {
-	base::MutexLock lock(logMutex);
-
-	char txt[4096];
-	va_list arglist;
-	va_start(arglist, fmt);
-	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
-	va_end(arglist);
-
-	struct timespec time_stamp;
-	clock_gettime(CLOCK_REALTIME, &time_stamp);
-	std::string msg(txt);
-	std::string line;
 	std::string::size_type index = 0;
-
+	base::MutexLock lock(logMutex);
 	for (;;) {
 		const std::string line = StringConverter::getline(msg, index, "\r\n");
 		if (line.empty()) {
 			return;
 		}
-		LogElem elem;
-
-		// set priority
-		elem.priority = priority;
-
-		// set timestamp
-		char ascTime[100];
-		struct tm result;
-		localtime_r(&time_stamp.tv_sec, &result);
-		std::strftime(ascTime, sizeof(ascTime), "%c", &result);
-
-		// cut line to insert nsec '.000000000'
-		ascTime[19] = 0;
-		char time[150];
-		if (snprintf(time, sizeof(time), "%s.%04lu %s", &ascTime[0], time_stamp.tv_nsec/100000, &ascTime[20]) < 0) {
-			continue;
-		}
-		elem.timestamp = time;
-
-		// set message
-		elem.msg = line;
+		const LogElem elem = { priority, line, time };
 
 		// save to deque
 		if (_appLogBuffer.size() == LOG_SIZE) {
@@ -127,6 +92,7 @@ void Log::applog(const int priority, const char *fmt, ...) {
 		if (_syslogOn) {
 			syslog(priority, "%s", elem.msg.c_str());
 		}
+
 #ifdef DEBUG
 		if (_coutLog) {
 			std::cout << elem.timestamp << " " << elem.msg << "\r\n";

@@ -55,10 +55,10 @@ namespace mpegts {
 				_transportStreamID = (data[ 8u] << 8u) | data[ 9u];
 				_networkID         = (data[13u] << 8u) | data[14u];
 
-//				SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, SDT data", id.getID());
+//				SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, SDT data", id);
 
-				SI_LOG_INFO("Frontend: %d, SDT - Section Length: %d  Transport Stream ID: %d  Version: %d  secNr: %d  lastSecNr: %d  NetworkID: %04d  CRC: 0x%04X",
-							id.getID(), tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, _networkID, tableData.crc);
+				SI_LOG_INFO("Frontend: @#1, SDT - Section Length: @#2  Transport Stream ID: @#3  Version: @#4  secNr: @#5  lastSecNr: @#6  NetworkID: @#7  CRC: @#8",
+					id, tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, DIGIT(_networkID, 4), HEX(tableData.crc, 4));
 
 				// 4 = CRC   8 = SDT Header from section length
 				const std::size_t len = tableData.sectionLength - 4u - 8u;
@@ -82,8 +82,8 @@ namespace mpegts {
 								subLength = ptr[j + i];
 								copyToUTF8(sdtData.channelNameUTF8, &ptr[j + i + 1u], subLength);
 								j += subLength + 1;
-								SI_LOG_INFO("Frontend: %d,  serviceID: 0x%04X - %05d  EIT: 0x%02X  NetworkName: %s  ChannelName: %s",
-										id.getID(), serviceID, serviceID, eit, sdtData.networkNameUTF8.c_str(), sdtData.channelNameUTF8.c_str());
+								SI_LOG_INFO("Frontend: @#1,  serviceID: @#2 - @#3  EIT: @#4  NetworkName: @#5  ChannelName: @#6",
+									id, HEX(serviceID, 4), DIGIT(serviceID, 5), HEX(eit, 2), sdtData.networkNameUTF8, sdtData.channelNameUTF8);
 								_sdtTable[serviceID] = sdtData;
 								break;
 							}

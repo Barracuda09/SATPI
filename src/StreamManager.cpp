@@ -65,7 +65,7 @@ void StreamManager::enumerateDevices(
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
-	SI_LOG_INFO("Current DVB_API_VERSION: %d.%d", DVB_API_VERSION, DVB_API_VERSION_MINOR);
+	SI_LOG_INFO("Current DVB_API_VERSION: @#1.@#2", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 	SI_LOG_INFO("Enumerating all devices...");
 
 	// enumerate streams (frontends)
@@ -183,7 +183,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 
 	// if no FeID, then we have to find a suitable one
 	if (feID == -1) {
-		SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: %s", sessionID.c_str());
+		SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: @#1", sessionID);
 		for (SpStream stream : _stream) {
 			if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 				stream->getStreamClient(clientID).setSessionID(sessionID);
@@ -191,7 +191,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			}
 		}
 	} else {
-		SI_LOG_INFO("Found FrondtendID %d - StreamID %d - SessionID %s", feID.getID(), streamID.getID(), sessionID.c_str());
+		SI_LOG_INFO("Found FrondtendID @#1 - StreamID @#2 - SessionID @#3", feID, streamID, sessionID);
 		// Did we find the StreamClient?
 		if (_stream[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
 			_stream[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);

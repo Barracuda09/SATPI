@@ -177,8 +177,8 @@ namespace mpegts {
 				// Add Table Data
 				if (addData(tableID, data, 188, pid, cc)) {
 					if (!raw) {
-						SI_LOG_INFO("Frontend: %d, %s - PID %04d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
-							id.getID(), getTableTXT(tableID), pid, sectionLength, currentTableData.data.size(), secNr, lastSecNr, _currentSectionNumber);
+						SI_LOG_INFO("Frontend: @#1, @#2 - PID @#3: sectionLength: @#4  tableDataSize: @#5  secNr: @#6  lastSecNr: @#7  currSecNr: @#8",
+							id, getTableTXT(tableID), DIGIT(pid, 4), sectionLength, currentTableData.data.size(), secNr, lastSecNr, _currentSectionNumber);
 					}
 					// Check did we finish collecting Table Data
 					if (sectionLength <= (188 - 4 - 4)) { // 4 = TS Header  4 = CRC
@@ -192,8 +192,8 @@ namespace mpegts {
 								currentTableData.crc = crc;
 								setCollected();
 							} else {
-								SI_LOG_ERROR("Frontend: %d, %s - CRC Error! Calc CRC32: 0x%04X - TS CRC32: 0x%04X  Retrying to collect data...",
-										id.getID(), getTableTXT(tableID), calccrc, crc);
+								SI_LOG_ERROR("Frontend: @#1, @#2 - CRC Error! Calc CRC32: @#3 - TS CRC32: @#4  Retrying to collect data...",
+									id, getTableTXT(tableID), HEX(calccrc, 4), HEX(crc, 4));
 								_dataTable.erase(_dataTable.find(_currentSectionNumber));
 							}
 						}
@@ -213,8 +213,8 @@ namespace mpegts {
 			if (addData(tableID, &data[4u], 188 - 4, pid, cc)) { // 4 = TS Header
 				const std::size_t tableDataSize = currentTableData.data.size();
 				if (!raw) {
-					SI_LOG_INFO("Frontend: %d, %s - PID %04d: sectionLength: %d  tableDataSize: %d  secNr: %d  lastSecNr: %d  currSecNr: %d",
-							id.getID(), getTableTXT(tableID), pid, sectionLength, tableDataSize, currentTableData.secNr, currentTableData.lastSecNr, _currentSectionNumber);
+					SI_LOG_INFO("Frontend: @#1, @#2 - PID @#3: sectionLength: @#4  tableDataSize: @#5  secNr: @#6  lastSecNr: @#7  currSecNr: @#8",
+						id, getTableTXT(tableID), DIGIT(pid, 4), sectionLength, tableDataSize, currentTableData.secNr, currentTableData.lastSecNr, _currentSectionNumber);
 				}
 				// Check did we finish collecting Table Data
 				if (sectionLength <= (tableDataSize - 9)) { // 9 = Untill Table Section Length
@@ -225,18 +225,18 @@ namespace mpegts {
 						currentTableData.crc = crc;
 						setCollected();
 					} else {
-						SI_LOG_ERROR("Frontend: %d, %s - CRC Error! Calc CRC32: 0x%04X - TS CRC32: 0x%04X  Retrying to collect data...",
-								id.getID(), getTableTXT(tableID), calccrc, crc);
+						SI_LOG_ERROR("Frontend: @#1, @#2 - CRC Error! Calc CRC32: @#3 - TS CRC32: @#4  Retrying to collect data...",
+							id, getTableTXT(tableID), HEX(calccrc, 4), HEX(crc, 4));
 						_dataTable.erase(_dataTable.find(_currentSectionNumber));
 					}
 				}
 			} else {
-				SI_LOG_ERROR("Frontend: %d, %s - PID %04d: Unable to add data! Retrying to collect data",
-						id.getID(), getTableTXT(tableID), pid);
+				SI_LOG_ERROR("Frontend: @#1, @#2 - PID @#3: Unable to add data! Retrying to collect data",
+					id, getTableTXT(tableID), DIGIT(pid, 4));
 				_dataTable.erase(_dataTable.find(_currentSectionNumber));
 			}
 		} else {
-//			SI_LOG_ERROR("Frontend: %d, %s - PID %04d: Unable to add data! Retrying to collect data", id.getID(), getTableTXT(0), pid);
+//			SI_LOG_ERROR("Frontend: @#1, @#2 - PID @#3: Unable to add data! Retrying to collect data", id, getTableTXT(0), DIGIT(pid, 4));
 			_dataTable.erase(_dataTable.find(_currentSectionNumber));
 		}
 	}

@@ -94,33 +94,33 @@ namespace delivery {
 
 		for (size_t i = 0; i < _diseqcRepeat + 1; ++i) {
 			if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-				PERROR("FE_SET_TONE failed");
+				SI_LOG_PERROR("FE_SET_TONE failed");
 				return false;
 			}
 			const fe_sec_voltage_t v = (pol == Lnb::Polarization::Vertical) ?
 				SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
 			if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
-				PERROR("FE_SET_VOLTAGE failed");
+				SI_LOG_PERROR("FE_SET_VOLTAGE failed");
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			SI_LOG_INFO("Frontend: %d, Sending DiSEqC: [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d",
-				id.getID(), cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], src);
+			SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] - DiSEqC Src: @#6",
+				id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), src);
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
-				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
+				SI_LOG_PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 			const fe_sec_mini_cmd_t b = (src % 2) ? SEC_MINI_B : SEC_MINI_A;
 			if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
-				PERROR("FE_DISEQC_SEND_BURST failed");
+				SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 			const fe_sec_tone_mode_t tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
 			if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
-				PERROR("FE_SET_TONE failed");
+				SI_LOG_PERROR("FE_SET_TONE failed");
 				return false;
 			}
 			// Should we repeat message

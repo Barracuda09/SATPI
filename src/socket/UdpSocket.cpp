@@ -69,7 +69,7 @@ bool UdpSocket::initMutlicastUDPSocket(
 	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr.c_str());
 	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr.c_str());
 	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
-		PERROR("IP_ADD_MEMBERSHIP");
+		SI_LOG_PERROR("IP_ADD_MEMBERSHIP");
 		return false;
 	}
 	return true;

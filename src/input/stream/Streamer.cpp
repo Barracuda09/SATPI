@@ -117,7 +117,7 @@ bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 			buffer.addAmountOfBytesWritten(readSize);
 			buffer.trySyncing();
 		} else {
-			PERROR("_udpMultiListen");
+			SI_LOG_PERROR("_udpMultiListen");
 		}
 		return buffer.full();
 	}
@@ -148,17 +148,17 @@ bool Streamer::hasDeviceDataChanged() const {
 // Client side
 // http://192.168.178.10:8875/?msys=streamer&uri="udp@224.0.1.3:1234"
 void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
-	SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
 	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
 	_deviceData.parseStreamString(_feID, msgTrans, method);
-	SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 }
 
 bool Streamer::update() {
-	SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
 		_udpMultiListen.closeFD();
@@ -168,8 +168,8 @@ bool Streamer::update() {
 		const std::string multiAddr = _deviceData.getMultiAddr();
 		const int port = _deviceData.getPort();
 		if(initMutlicastUDPSocket(_udpMultiListen, multiAddr, _bindIPAddress, port)) {
-			SI_LOG_INFO("Frontend: %d, Streamer reading from: %s:%d  fd %d", _feID,
-				multiAddr.c_str(), port, _udpMultiListen.getFD());
+			SI_LOG_INFO("Frontend: @#1, Streamer reading from: @#2:@#3  fd @#4",
+				_feID, multiAddr, port, _udpMultiListen.getFD());
 			// set receive buffer to 8MB
 			constexpr int bufferSize =  1024 * 1024 * 8;
 			_udpMultiListen.setNetworkReceiveBufferSize(bufferSize);
@@ -179,10 +179,10 @@ bool Streamer::update() {
 			_pfd[0].fd      = _udpMultiListen.getFD();
 
 		} else {
-			SI_LOG_ERROR("Frontend: %d, Init UDP Multicast socket failed", _feID);
+			SI_LOG_ERROR("Frontend: @#1, Init UDP Multicast socket failed", _feID);
 		}
 	}
-	SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
 

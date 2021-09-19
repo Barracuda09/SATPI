@@ -103,7 +103,8 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
 						// Probably not the correct PMT, so clear it and try again
 						_pmt = std::make_shared<PMT>();
-						SI_LOG_INFO("Frontend: %d, Found PMT, but probably not the correct PMT: %04d  PCR-PID: %04d, Retrying...", id.getID(), pid, pcrPID);
+						SI_LOG_INFO("Frontend: @#1, Found PMT, but probably not the correct PMT: @#2  PCR-PID: @#3, Retrying...",
+							id, DIGIT(pid, 4), DIGIT(pcrPID, 4));
 					} else {
 						// Yes, the correct one, then parse it
 						_pmt->parse(id.getID());
@@ -143,8 +144,9 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 			const unsigned int mi = ptr[11];
 			const unsigned int s = ptr[12];
 
-			SI_LOG_INFO("Frontend: %d, TDT - Table ID: 0x%02X  Date: %d-%d-%d  Time: %02X:%02X.%02X  MJD: 0x%04X", id.getID(), tableID, y, m, d, h, mi, s, mjd);
-//				SI_LOG_BIN_DEBUG(ptr, 188, "Frontend: %d, TDT - ", _feID);
+			SI_LOG_INFO("Frontend: @#1, TDT - Table ID: @#2  Date: @#3-@#4-@#5  Time: @#6:@#7.@#8  MJD: @#9",
+				id, HEX(tableID, 2), y, m, d, HEX(h, 2), HEX(mi, 2), HEX(s, 2), HEX(mjd, 4));
+//				SI_LOG_BIN_DEBUG(ptr, 188, "Frontend: @#1, TDT - ", _feID);
 		} else if (pid == _pmt->getPCRPid()) {
 			_pcr->collectData(id.getID(), ptr);
 		}

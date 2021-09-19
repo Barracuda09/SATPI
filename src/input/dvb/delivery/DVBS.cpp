@@ -133,7 +133,7 @@ namespace delivery {
 					_diseqc.reset(new DiSEqcLnb);
 					break;
 				default:
-					SI_LOG_ERROR("Frontend: %d, Wrong DiSEqc type requested, not changing", _feID);
+					SI_LOG_ERROR("Frontend: @#1, Wrong DiSEqc type requested, not changing", _feID);
 			}
 		}
 		if (_diseqc != nullptr) {
@@ -160,7 +160,7 @@ namespace delivery {
 	// =========================================================================
 
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Frontend: %d, Start tuning process for DVB-S(2)...", _feID);
+		SI_LOG_INFO("Frontend: @#1, Start tuning process for DVB-S(2)...", _feID);
 
 		// DiSEqC switch position differs from src and adjust to MAX_LNB
 		const int src = (frontendData.getDiSEqcSource() - 1) % DiSEqc::MAX_LNB;
@@ -202,7 +202,7 @@ namespace delivery {
 				}
 			}
 		}
-		SI_LOG_INFO("Frontend: %d, Opened %s for Writing DiSEqC command with fd: %d", _feID, fePathDiseqc.c_str(), feFDDiseqc);
+		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3", _feID, fePathDiseqc, feFDDiseqc);
 
 		// send diseqc
 		if (_diseqc != nullptr && !_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, src, pol)) {
@@ -210,7 +210,7 @@ namespace delivery {
 		}
 
 		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
-			SI_LOG_INFO("Frontend: %d, Closing %s with fd: %d", _feID, fePathDiseqc.c_str(), feFDDiseqc);
+			SI_LOG_INFO("Frontend: @#1, Closing @#2 with fd: @#3", _feID, fePathDiseqc, feFDDiseqc);
 			::close(feFDDiseqc);
 		}
 
@@ -230,7 +230,7 @@ namespace delivery {
 		struct dtv_property p[15];
 		int size = 0;
 
-		SI_LOG_DEBUG("Frontend: %d, Set Properties: Frequency %d", _feID, freq);
+		SI_LOG_DEBUG("Frontend: @#1, Set Properties: Frequency @#2", _feID, freq);
 
 		#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
@@ -259,7 +259,7 @@ namespace delivery {
 		}
 		// set the tuning properties
 		if ((ioctl(feFD, FE_SET_PROPERTY, &cmdseq)) == -1) {
-			PERROR("FE_SET_PROPERTY failed");
+			SI_LOG_PERROR("FE_SET_PROPERTY failed");
 			return false;
 		}
 		return true;

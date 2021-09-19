@@ -40,8 +40,8 @@ StreamThreadRtcp::~StreamThreadRtcp() {
 	_thread.terminateThread();
 	const FeID id = _stream.getFeID();
 	const StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Frontend: %d, Destroy %s stream to %s:%d", id,
-		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(_clientID));
+	SI_LOG_INFO("Frontend: @#1, Destroy @#2 stream to @#3:@#4", id,
+		_protocol, client.getIPAddressOfStream(), getStreamSocketPort(_clientID));
 
 	_stream.getStreamClient(_clientID).getRtcpSocketAttr().closeFD();
 }
@@ -54,7 +54,7 @@ void StreamThreadRtcp::doStartStreaming(int clientID) {
 	SocketAttr &rtcp = _stream.getStreamClient(clientID).getRtcpSocketAttr();
 
 	if (!rtcp.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
-		SI_LOG_ERROR("Frontend: %d, Get RTCP handle failed", _stream.getFeID());
+		SI_LOG_ERROR("Frontend: @#1, Get RTCP handle failed", _stream.getFeID());
 	}
 }
 
@@ -77,8 +77,8 @@ void StreamThreadRtcp::doSendDataToClient(const int clientID,
 
 	// send the RTCP/UDP packet
 	if (!client.getRtcpSocketAttr().sendDataTo(data, len, 0)) {
-		SI_LOG_ERROR("Frontend: %d, Error sending %s data to %s:%d", _stream.getFeID(),
-			_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+		SI_LOG_ERROR("Frontend: @#1, Error sending @#2 data to @#3:@#4", _stream.getFeID(),
+			_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 	}
 }
 

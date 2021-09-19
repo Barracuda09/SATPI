@@ -55,7 +55,7 @@ namespace delivery {
 	// =======================================================================
 
 	bool DVBC::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
-		SI_LOG_INFO("Frontend: %d, Start tuning process for DVB-C(2)...", _feID);
+		SI_LOG_INFO("Frontend: @#1, Start tuning process for DVB-C(2)...", _feID);
 
 		// Now tune by setting properties
 		if (!setProperties(feFD, frontendData)) {
@@ -109,7 +109,7 @@ namespace delivery {
 		}
 		// set the tuning properties
 		if ((ioctl(feFD, FE_SET_PROPERTY, &cmdseq)) == -1) {
-			PERROR("FE_SET_PROPERTY failed");
+			SI_LOG_PERROR("FE_SET_PROPERTY failed");
 			return false;
 		}
 		return true;

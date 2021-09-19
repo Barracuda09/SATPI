@@ -75,13 +75,13 @@
 		if (_fd == -1) {
 			_fd = ::socket(AF_INET, type, protocol);
 			if (_fd == -1) {
-				PERROR("socket");
+				SI_LOG_PERROR("socket");
 				return false;
 			}
 
 			const int val = 1;
 			if (::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-				PERROR("setsockopt: SO_REUSEADDR");
+				SI_LOG_PERROR("setsockopt: SO_REUSEADDR");
 				return false;
 			}
 		}
@@ -91,7 +91,7 @@
 	bool SocketAttr::bind() {
 		// bind the socket to the port number
 		if (::bind(_fd, reinterpret_cast<sockaddr *>(&_addr), sizeof(_addr)) == -1) {
-			PERROR("bind");
+			SI_LOG_PERROR("bind");
 			return false;
 		}
 		return true;
@@ -99,7 +99,7 @@
 
 	bool SocketAttr::listen(std::size_t backlog) {
 		if (::listen(_fd, backlog) == -1) {
-			PERROR("listen");
+			SI_LOG_PERROR("listen");
 			return false;
 		}
 		return true;
@@ -108,7 +108,7 @@
 	bool SocketAttr::connectTo() {
 		if (::connect(_fd, reinterpret_cast<sockaddr *>(&_addr), sizeof(_addr)) == -1) {
 			if (errno != ECONNREFUSED && errno != EINPROGRESS) {
-				PERROR("connect");
+				SI_LOG_PERROR("connect");
 			}
 			return false;
 		}
@@ -135,8 +135,8 @@
 
 			// Show who is connected
 			if (showLogInfo) {
-				SI_LOG_INFO("%s Connection from %s Port %d with fd: %d", client.getProtocolString().c_str(),
-							client.getIPAddressOfSocket().c_str(), ntohs(client._addr.sin_port), fdAccept);
+				SI_LOG_INFO("@#1 Connection from @#2 Port @#3 with fd: @#4", client.getProtocolString(),
+					client.getIPAddressOfSocket(), ntohs(client._addr.sin_port), fdAccept);
 			}
 			return true;
 		}
@@ -149,7 +149,7 @@
 
 	bool SocketAttr::sendData(const void *buf, std::size_t len, int flags) {
 		if (::send(_fd, buf, len, flags) == -1) {
-			PERROR("send");
+			SI_LOG_PERROR("send");
 			return false;
 		}
 		return true;
@@ -158,7 +158,7 @@
 	bool SocketAttr::writeData(const iovec *iov, const int iovcnt) {
 		if (::writev(_fd, iov, iovcnt) == -1) {
 			if (errno != EBADF) {
-				PERROR("writev");
+				SI_LOG_PERROR("writev");
 			}
 			return false;
 		}
@@ -168,7 +168,7 @@
 	bool SocketAttr::sendDataTo(const void *buf, std::size_t len, int flags) {
 		if (::sendto(_fd, buf, len, flags, reinterpret_cast<sockaddr *>(&_addr),
 				   sizeof(_addr)) == -1) {
-			PERROR("sendto");
+			SI_LOG_PERROR("sendto");
 			return false;
 		}
 		return true;
@@ -194,13 +194,13 @@
 		tv.tv_sec = timeout;
 		tv.tv_usec = 0;
 
-//		SI_LOG_DEBUG("Set Timeout to %d Sec (fd: %d)", timeout, _fd);
+//		SI_LOG_DEBUG("Set Timeout to @#1 Sec (fd: @#2)", timeout, _fd);
 
 		if (::setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval))) {
-			PERROR("setsockopt: SO_RCVTIMEO");
+			SI_LOG_PERROR("setsockopt: SO_RCVTIMEO");
 		}
 		if (::setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval))) {
-			PERROR("setsockopt: SO_SNDTIMEO");
+			SI_LOG_PERROR("setsockopt: SO_SNDTIMEO");
 		}
 	}
 
@@ -211,7 +211,7 @@
 		// sysctl -p
 		int optval = 1;
 		if (::setsockopt(_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) == -1) {
-			PERROR("setsockopt: SO_KEEPALIVE");
+			SI_LOG_PERROR("setsockopt: SO_KEEPALIVE");
 		}
 	}
 
@@ -219,7 +219,7 @@
 		int bufferSize;
 		socklen_t optlen = sizeof(bufferSize);
 		if (::getsockopt(_fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {
-			PERROR("getsockopt: SO_SNDBUF");
+			SI_LOG_PERROR("getsockopt: SO_SNDBUF");
 			bufferSize = 0;
 		}
 		return bufferSize / 2;
@@ -227,7 +227,7 @@
 
 	bool SocketAttr::setNetworkSendBufferSize(int size) {
 		if (::setsockopt(_fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1) {
-			PERROR("setsockopt: SO_SNDBUF");
+			SI_LOG_PERROR("setsockopt: SO_SNDBUF");
 			return false;
 		}
 		return true;
@@ -235,7 +235,7 @@
 
 	bool SocketAttr::setNetworkReceiveBufferSize(int size) {
 		if (::setsockopt(_fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1) {
-			PERROR("setsockopt: SO_RCVBUF");
+			SI_LOG_PERROR("setsockopt: SO_RCVBUF");
 			return false;
 		}
 		return true;

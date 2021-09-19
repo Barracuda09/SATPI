@@ -27,24 +27,35 @@ class TypeID {
 			_id = id;
 			return *this;
 		}
+
 		int getID() const {
 			return _id;
 		}
+
+		operator int() const {
+			return _id;
+		}
+
 		bool operator>=(const int id) const {
 			return _id >= id;
 		}
+
 		bool operator<=(const int id) const {
 			return _id <= id;
 		}
+
 		bool operator==(const int id) const {
 			return _id == id;
 		}
+
 		bool operator!=(const int id) const {
 			return _id != id;
 		}
+
 		bool operator==(const TypeID& rhs) const {
 			return _id == rhs._id;
 		}
+
 	private:
 		int _id;
 };

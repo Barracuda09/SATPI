@@ -38,8 +38,8 @@ StreamThreadRtcpTcp::~StreamThreadRtcpTcp() {
 	_thread.terminateThread();
 	const FeID id = _stream.getFeID();
 	const StreamClient &client = _stream.getStreamClient(_clientID);
-	SI_LOG_INFO("Frontend: %d, Destroy %s stream to %s:%d", id,
-		_protocol.c_str(), client.getIPAddressOfStream().c_str(), client.getHttpSocketPort());
+	SI_LOG_INFO("Frontend: @#1, Destroy @#2 stream to @#3:@#4", id,
+		_protocol, client.getIPAddressOfStream(), client.getHttpSocketPort());
 }
 
 // =============================================================================
@@ -76,8 +76,8 @@ void StreamThreadRtcpTcp::doSendDataToClient(const int clientID,
 
 	// send the RTCP/TCP packet
 	if (!client.writeHttpData(iov, 4)) {
-		SI_LOG_ERROR("Frontend: %d, Error sending %s Stream Data to %s",
-			_stream.getFeID(), _protocol.c_str(), client.getIPAddressOfStream().c_str());
+		SI_LOG_ERROR("Frontend: @#1, Error sending @#2 Stream Data to @#3",
+			_stream.getFeID(), _protocol, client.getIPAddressOfStream());
 	}
 }
 

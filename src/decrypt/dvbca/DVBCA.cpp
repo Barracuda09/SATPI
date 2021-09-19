@@ -90,10 +90,10 @@ static char fileFIFO[] = "/tmp/fifo";
 #else
         sprintf(path, "/dev/dvb/adapter%d/ca0", id);
 #endif
-		SI_LOG_INFO("Try to detected CA device: %s", path);
+		SI_LOG_INFO("Try to detected CA device: @#1", path);
         _fd = ::open(path, O_RDWR | O_NONBLOCK);
         if (_fd < 0) {
-			SI_LOG_ERROR("No CA device detected on adapter %d", id);
+			SI_LOG_ERROR("No CA device detected on adapter @#1", id);
             return false;
         }
         _id = id;
@@ -106,17 +106,17 @@ static char fileFIFO[] = "/tmp/fifo";
     }
 
     void DVBCA::close() {
-		SI_LOG_INFO("Stopping CA%d: %d", _id, _fd);
+		SI_LOG_INFO("Stopping CA@#1: @#2", _id, _fd);
         CLOSE_FD(_fd);
     }
 
     bool DVBCA::reset() {
-		SI_LOG_INFO("Resetting CA%d, fd %d", _id, _fd);
+		SI_LOG_INFO("Resetting CA@#1, fd @#2", _id, _fd);
 #ifdef ENIGMA
         unsigned char buf[256];
         while(::read(_fd, buf, 256)>0);
         if (::ioctl(_fd, 0)) {
-			SI_LOG_ERROR("Could not reset CA%d\n", _id);
+			SI_LOG_ERROR("Could not reset CA@#1\n", _id);
             return false;
         }
 #else
@@ -217,7 +217,7 @@ static char fileFIFO[] = "/tmp/fifo";
 	void DVBCA::createSessionFor(const std::size_t resource,
 			std::size_t &sessionStatus, std::size_t &sessionNB) {
 		for (std::size_t i = 0; i < MAX_SESSIONS; ++i) {
-			SI_LOG_DEBUG("sessionNB: %d - 0x%08X", i + 1, _sessions[i]._resource);
+			SI_LOG_DEBUG("sessionNB: @#1 - @#2", i + 1, HEX(_sessions[i]._resource, 8));
 			if (_sessions[i]._resource == 0) {
 				sessionStatus = SESSION_RESOURCE_OPEN;
 				sessionNB = i + 1;
@@ -236,7 +236,8 @@ static char fileFIFO[] = "/tmp/fifo";
 	std::size_t DVBCA::findSessionNumberForRecource(const std::size_t resource) const {
 		for (std::size_t i = 0; i < MAX_SESSIONS; ++i) {
 			if (_sessions[i]._resource == resource) {
-				SI_LOG_DEBUG("Found sessionNB: %d for Resource: 0x%08X", _sessions[i]._sessionNB, _sessions[i]._resource);
+				SI_LOG_DEBUG("Found sessionNB: @#1 for Resource: @#2",
+					_sessions[i]._sessionNB, HEX(_sessions[i]._resource, 8));
 				return _sessions[i]._sessionNB;
 			}
 		}
@@ -252,7 +253,7 @@ static char fileFIFO[] = "/tmp/fifo";
 	void DVBCA::closeSessionRequest(const CAData &spduTag) {
 		if (spduTag[1u] == 0x02) {
 			const std::size_t sessionNB = spduTag[2u] << 8 | spduTag[3u];
-			SI_LOG_DEBUG("Close Session Request 0x%04X", sessionNB);
+			SI_LOG_DEBUG("Close Session Request @#1", HEX(sessionNB, 4));
 			clearSessionFor(sessionNB);
 			CAData buf(4, 0);
 			buf[0] = SPDU_CLOSE_SESSION_RESPONSE;
@@ -273,7 +274,7 @@ static char fileFIFO[] = "/tmp/fifo";
 		std::size_t sessionNB = 0x0001;
 		switch (resource) {
 			case RESOURCE_MANAGER:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (Resource Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (Resource Manager)", HEX(resource, 8));
 				createSessionFor(resource, sessionStatus, sessionNB);
 				sendOpenSessionResponse(resource, sessionStatus, sessionNB);
 				if (sessionStatus == SESSION_RESOURCE_OPEN) {
@@ -282,7 +283,7 @@ static char fileFIFO[] = "/tmp/fifo";
 				}
 				break;
 			case APPLICATION_MANAGER:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (Application Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (Application Manager)", HEX(resource, 8));
 				createSessionFor(resource, sessionStatus, sessionNB);
 				sendOpenSessionResponse(resource, sessionStatus, sessionNB);
 				if (sessionStatus == SESSION_RESOURCE_OPEN) {
@@ -291,7 +292,7 @@ static char fileFIFO[] = "/tmp/fifo";
 				}
 				break;
 			case CA_MANAGER:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (CA Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (CA Manager)", HEX(resource, 8));
 				createSessionFor(resource, sessionStatus, sessionNB);
 				sendOpenSessionResponse(resource, sessionStatus, sessionNB);
 				if (sessionStatus == SESSION_RESOURCE_OPEN) {
@@ -300,23 +301,23 @@ static char fileFIFO[] = "/tmp/fifo";
 				}
 				break;
 			case AUTHENTICATION:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (Authentication Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (Authentication Manager)", HEX(resource, 8));
 				break;
 			case HOST_CONTROLER:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (Host Controler Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (Host Controler Manager)", HEX(resource, 8));
 				break;
 			case DATE_TIME:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (Data-Time Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (Data-Time Manager)", HEX(resource, 8));
 				createSessionFor(resource, sessionStatus, sessionNB);
 				sendOpenSessionResponse(resource, sessionStatus, sessionNB);
 				break;
 			case MMI_MANAGER:
-				SI_LOG_DEBUG("Create Session Response 0x%08X (MMI Manager)", resource);
+				SI_LOG_DEBUG("Create Session Response @#1 (MMI Manager)", HEX(resource, 8));
 				createSessionFor(resource, sessionStatus, sessionNB);
 				sendOpenSessionResponse(resource, sessionStatus, sessionNB);
 				break;
 			default:
-				SI_LOG_ERROR("Unknown resource 0x%08X", resource);
+				SI_LOG_ERROR("Unknown resource @#1", HEX(resource, 8));
 				break;
 		}
 	}
@@ -330,29 +331,29 @@ static char fileFIFO[] = "/tmp/fifo";
 				CAData apduData(&spduTag[4u], spduTag[7u] + 4);
 				parseAPDUTag(sessionNB, apduData);
 			} else {
-				SI_LOG_ERROR("Other request with tag: 0x%02X", spduTag[4u]);
+				SI_LOG_ERROR("Other request with tag: @#1", HEX(spduTag[4u], 2));
 			}
 		} else {
-			SI_LOG_ERROR("Invalid len: 0x%02X", spduTag[1]);
+			SI_LOG_ERROR("Invalid len: @#1", HEX(spduTag[1], 2));
 		}
 	}
 
 	void DVBCA::parseApplicationInfo(const std::size_t sessionNB, const CAData &apduData) {
-		SI_LOG_INFO("Application info (0x%04X):", sessionNB);
+		SI_LOG_INFO("Application info (@#1):", HEX(sessionNB, 4));
 		const std::size_t size = apduData.size();
 		if (size > 4) {
 			const std::size_t len = apduData[3u];
 			if (size == len + 4u) {
-				SI_LOG_INFO("  Application Type: 0x%02X", apduData[4]);
-				SI_LOG_INFO("  Application Manufacturer: 0x%04X", apduData[5] << 8 | apduData[6]);
-				SI_LOG_INFO("  Manufacturer Code: 0x%04X", ((apduData[7] << 8) | apduData[8]));
-				SI_LOG_INFO("  Menu String: %s", apduData.substr(10, apduData[9]).c_str());
+				SI_LOG_INFO("  Application Type: @#1", HEX(apduData[4], 2));
+				SI_LOG_INFO("  Application Manufacturer: @#1", HEX((apduData[5] << 8 | apduData[6]), 4));
+				SI_LOG_INFO("  Manufacturer Code: @#1", HEX(((apduData[7] << 8) | apduData[8]), 4));
+				SI_LOG_INFO("  Menu String: @#1", apduData.substr(10, apduData[9]));
 			}
 		}
 	}
 
 	void DVBCA::parseMMIMenu(const std::size_t sessionNB, const CAData &apduData) {
-		SI_LOG_INFO("MMI Menu Strings (0x%04X):", sessionNB);
+		SI_LOG_INFO("MMI Menu Strings (@#1):", HEX(sessionNB, 4));
 		std::size_t strCnt = 0;
 		const std::size_t size = apduData.size();
 		if (size > 4) {
@@ -364,14 +365,14 @@ static char fileFIFO[] = "/tmp/fifo";
 						case APDU_MMI_TEXT_LAST: {
 							const std::size_t tagLen = apduData[i + 3u];
 							const std::string mmi(reinterpret_cast<const char *>(&apduData[i + 4u]), tagLen);
-							SI_LOG_INFO("  Menu Strings %d: %s", strCnt, mmi.c_str());
+							SI_LOG_INFO("  Menu Strings @#1: @#2", strCnt, mmi);
 							// Goto next tag entry
 							i += tagLen + 4u;
 							++strCnt;
 							break;
 						}
 						default:
-							SI_LOG_ERROR("Unknown APDU Tag: 0x%08X for Session NB: 0x%04X", apduTag, sessionNB);
+							SI_LOG_ERROR("Unknown APDU Tag: @#1 for Session NB: @#2", HEX(apduTag, 8), HEX(sessionNB, 4));
 							++i;
 							break;
 					}
@@ -381,14 +382,14 @@ static char fileFIFO[] = "/tmp/fifo";
 	}
 
 	void DVBCA::parseCAInfo(const std::size_t sessionNB, const CAData &apduData) {
-		SI_LOG_INFO("Ca info (0x%04X):", sessionNB);
+		SI_LOG_INFO("Ca info (@#1):", HEX(sessionNB, 4));
 		const std::size_t size = apduData.size();
 		if (size > 4u) {
 			const std::size_t len = apduData[3u];
 			if (size == len + 4u) {
 				for (std::size_t i = 4u; i < size; i += 2u) {
 					const std::size_t id = apduData[i] << 8u | apduData[i + 1];
-					SI_LOG_INFO("  CA System ID: (0x%04X)", id);
+					SI_LOG_INFO("  CA System ID: (@#1)", HEX(id, 4));
 				}
 			}
 		}
@@ -403,10 +404,10 @@ static char fileFIFO[] = "/tmp/fifo";
 		} while (recvLen < 0 && errno == EINTR);
 
 		if (recvLen < 0) {
-			SI_LOG_ERROR("device read failed %d", recvLen);
+			SI_LOG_ERROR("device read failed @#1", recvLen);
 		} else {
 			if (recvLen > 0) {
-				SI_LOG_BIN_DEBUG(data.data(), recvLen, "read CA%d:", _id);
+				SI_LOG_BIN_DEBUG(data.data(), recvLen, "read CA@#1:", _id);
 			}
 		}
 		return data.size();
@@ -422,10 +423,10 @@ static char fileFIFO[] = "/tmp/fifo";
 			SI_LOG_ERROR("Unable to write");
 			return false;
 		} else if (data.size() > static_cast<std::size_t>(len)) {
-			SI_LOG_ERROR("Partial write: %d", len);
+			SI_LOG_ERROR("Partial write: @#1", len);
 			return false;
 		} else {
-			SI_LOG_BIN_DEBUG(data.data(), data.size(), "write CA%d:", _id);
+			SI_LOG_BIN_DEBUG(data.data(), data.size(), "write CA@#1:", _id);
 			return true;
 		}
 	}
@@ -442,7 +443,8 @@ static char fileFIFO[] = "/tmp/fifo";
 
 	void DVBCA::sendOpenSessionResponse(const std::size_t resource,
 			const std::size_t sessionStatus, const std::size_t sessionNB) {
-		SI_LOG_DEBUG("Send Session Response Status: 0x%02X Resource: 0x%08X SessionNB: 0x%04X", sessionStatus, resource, sessionNB);
+		SI_LOG_DEBUG("Send Session Response Status: @#1 Resource: @#2 SessionNB: @#3",
+			HEX(sessionStatus, 2), HEX(resource, 8), HEX(sessionNB, 4));
 		CAData buf(9, 0);
 		buf[0] = SPDU_OPEN_SESSION_RESPONSE;
 		buf[1] = 0x07; // len
@@ -522,16 +524,16 @@ END
 				break;
 			case APDU_DATE_TIME_ENQUIRY: {
 				_timeDateInterval = apduData[4];
-				SI_LOG_INFO("Data-Time Enquiry (0x%04X):", sessionNB);
-				SI_LOG_INFO("  Response Interval: 0x%02X", _timeDateInterval);
+				SI_LOG_INFO("Data-Time Enquiry (@#1):", HEX(sessionNB, 4));
+				SI_LOG_INFO("  Response Interval: @#1", HEX(_timeDateInterval, 2));
 
 				_connected = true;
 				break;
 			}
 			case APDU_MMI_DISPLAY_CONTROL: {
-				SI_LOG_INFO("MMI Display Control (0x%04X):", sessionNB);
-				SI_LOG_INFO("  Display Control Cmd: 0x%02X", apduData[4]);
-				SI_LOG_INFO("  MMI Mode: 0x%02X", apduData[5]);
+				SI_LOG_INFO("MMI Display Control (@#1):", HEX(sessionNB, 4));
+				SI_LOG_INFO("  Display Control Cmd: @#1", HEX(apduData[4], 2));
+				SI_LOG_INFO("  MMI Mode: @#1", HEX(apduData[5], 2));
 				CAData apduReplyData;
 				apduReplyData = apduData.substr(4, apduData[3]);
 				createAndSendAPDUTag(sessionNB, APDU_MMI_DISPLAY_REPLY, apduReplyData);
@@ -541,7 +543,8 @@ END
 				parseMMIMenu(sessionNB, apduData);
 				break;
 			default:
-				SI_LOG_ERROR("Unknown APDU Tag: 0x%08X for Session NB: 0x%04X", apduTag, sessionNB);
+				SI_LOG_ERROR("Unknown APDU Tag: @#1 for Session NB: @#2",
+					HEX(apduTag, 8), HEX(sessionNB, 4));
 				break;
 		}
 	}
@@ -553,7 +556,7 @@ END
 		SI_LOG_INFO("Setting up DVB-CA Handler");
 		{
 			if (mkfifo(fileFIFO, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH) < 0) {
-				PERROR("Error creating FIFO-PIPE");
+				SI_LOG_PERROR("Error creating FIFO-PIPE");
 			}
 
 			_fdFifo = ::open(fileFIFO, O_RDONLY | O_NONBLOCK);
@@ -617,11 +620,11 @@ END
 								closeSessionRequest(data);
 								break;
 							default:
-								SI_LOG_ERROR("Found: Other request with tag: 0x%02X", data[0]);
+								SI_LOG_ERROR("Found: Other request with tag: @#1", HEX(data[0], 2));
 								break;
 						}
 					} else if (recvLen == 0) {
-						SI_LOG_INFO("DVB-CA%d active", id);
+						SI_LOG_INFO("DVB-CA@#1 active", id);
 //						_connected = true;
 					}
 				}
@@ -629,7 +632,7 @@ END
 					unsigned char buf[1024];
 					ssize_t recvLen  = ::read(_fdFifo, buf, sizeof(buf));
 					if (recvLen > 0) {
-//						SI_LOG_BIN_DEBUG(buf, recvLen, "FIFO Data:", _id);
+//						SI_LOG_BIN_DEBUG(buf, recvLen, "FIFO Data (@#1):", _id);
 
 						const unsigned int tableID = buf[5u];
 						if (_connected) {

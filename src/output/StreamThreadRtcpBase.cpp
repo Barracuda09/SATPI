@@ -55,12 +55,12 @@ bool StreamThreadRtcpBase::startStreaming(const int clientID) {
 	const StreamClient &client = _stream.getStreamClient(clientID);
 
 	if (!_thread.startThread()) {
-		SI_LOG_ERROR("Frontend: %d, Start %s stream to %s:%d ERROR", _stream.getFeID(),
-			_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+		SI_LOG_ERROR("Frontend: @#1, Start @#2 stream to @#3:@#4 ERROR", _stream.getFeID(),
+			_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 		return false;
 	}
-	SI_LOG_INFO("Frontend: %d, Start %s stream to %s:%d", _stream.getFeID(),
-		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	SI_LOG_INFO("Frontend: @#1, Start @#2 stream to @#3:@#4", _stream.getFeID(),
+		_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 
 	return true;
 }
@@ -71,8 +71,8 @@ bool StreamThreadRtcpBase::pauseStreaming(const int clientID) {
 	doPauseStreaming(clientID);
 
 	const StreamClient &client = _stream.getStreamClient(clientID);
-	SI_LOG_INFO("Frontend: %d, Pause %s stream to %s:%d", _stream.getFeID(),
-		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	SI_LOG_INFO("Frontend: @#1, Pause @#2 stream to @#3:@#4", _stream.getFeID(),
+		_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 	return true;
 }
 
@@ -82,8 +82,8 @@ bool StreamThreadRtcpBase::restartStreaming(const int clientID) {
 	doRestartStreaming(clientID);
 
 	const StreamClient &client = _stream.getStreamClient(clientID);
-	SI_LOG_INFO("Frontend: %d, Restart %s stream to %s:%d", _stream.getFeID(),
-		_protocol.c_str(), client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	SI_LOG_INFO("Frontend: @#1, Restart @#2 stream to @#3:@#4", _stream.getFeID(),
+		_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 	return true;
 }
 

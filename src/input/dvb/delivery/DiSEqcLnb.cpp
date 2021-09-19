@@ -70,10 +70,10 @@ namespace delivery {
 		bool hiband = false;
 		_lnb.getIntermediateFrequency(freq, hiband, pol);
 
-		SI_LOG_INFO("Frontend: %d, Sending LNB: Mini-Switch Src: %d", id.getID(), src);
+		SI_LOG_INFO("Frontend: @#1, Sending LNB: Mini-Switch Src: @#2", id, src);
 
 		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-			PERROR("FE_SET_TONE failed");
+			SI_LOG_PERROR("FE_SET_TONE failed");
 			return false;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -81,21 +81,21 @@ namespace delivery {
 		const fe_sec_voltage_t v = (pol == Lnb::Polarization::Vertical) ?
 			SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
 		if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
-			PERROR("FE_SET_VOLTAGE failed");
+			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
 			return false;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		const fe_sec_mini_cmd_t b = (src % 2) ? SEC_MINI_B : SEC_MINI_A;
 		if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
-			PERROR("FE_DISEQC_SEND_BURST failed");
+			SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
 			return false;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 		const fe_sec_tone_mode_t tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
 		if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
-			PERROR("FE_SET_TONE failed");
+			SI_LOG_PERROR("FE_SET_TONE failed");
 			return false;
 		}
 		return true;

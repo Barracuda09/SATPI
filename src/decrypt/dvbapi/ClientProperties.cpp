@@ -52,7 +52,7 @@ namespace dvbapi {
 	// ===========================================================================
 
 	void ClientProperties::stopOSCamFilters(FeID id) {
-		SI_LOG_INFO("Frontend: %d, Clearing OSCam filters and Keys...", id.getID());
+		SI_LOG_INFO("Frontend: @#1, Clearing OSCam filters and Keys...", id);
 		// free keys
 		_keys.freeKeys();
 		_batchCount = 0;

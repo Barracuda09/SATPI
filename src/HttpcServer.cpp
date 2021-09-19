@@ -112,13 +112,13 @@ void HttpcServer::getHtmlBodyNoContent(std::string &htmlBody, const std::string 
 bool HttpcServer::process(SocketClient &client) {
 	std::string msg = client.getMessage();
 
-//	SI_LOG_DEBUG("%s HTML data from client %s: %s", client.getProtocolString().c_str(), client.getIPAddress().c_str(), msg.c_str());
+//	SI_LOG_DEBUG("@#1 HTML data from client @#2: @#3", client.getProtocolString(), client.getIPAddress(), msg);
 
 	// parse HTML
 	const std::string method = StringConverter::getMethod(msg);
 	const std::string protocol = StringConverter::getProtocol(msg);
 	if (method.empty() || protocol.empty()) {
-		SI_LOG_ERROR("Unknown Data: %s", msg.c_str());
+		SI_LOG_ERROR("Unknown Data: @#1", msg);
 		return false;
 	}
 	if (protocol == "RTSP") {
@@ -133,11 +133,11 @@ bool HttpcServer::process(SocketClient &client) {
 		} else if (method == "POST") {
 			methodPost(client);
 		} else {
-			SI_LOG_ERROR("Unknown HTML message: %s", msg.c_str());
+			SI_LOG_ERROR("Unknown HTML message: @#1", msg);
 			return false;
 		}
 	} else {
-		SI_LOG_ERROR("%s: Unknown HTML protocol: %s", protocol.c_str(), msg.c_str());
+		SI_LOG_ERROR("@#1: Unknown HTML protocol: @#2", protocol, msg);
 		return false;
 	}
 	return true;
@@ -147,8 +147,9 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	base::StopWatch sw;
 	sw.start();
 	const std::string msg = client.getPercentDecodedMessage();
-	SI_LOG_DEBUG("%s Stream data from client %s with IP %s on Port %d: %s", client.getProtocolString().c_str(),
-		"None", client.getIPAddressOfSocket().c_str(), client.getSocketPort(), msg.c_str());
+	SI_LOG_DEBUG("@#1 Stream data from client @#2 with IP @#3 on Port @#4: @#5",
+		client.getProtocolString(), "None", client.getIPAddressOfSocket(),
+		client.getSocketPort(), msg);
 
 	const std::string method = StringConverter::getMethod(msg);
 	if (method.empty()) {
@@ -205,7 +206,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				methodDescribe(sessionID, cseq, feID, httpcReply);
 			} else {
 				// method not supported
-				SI_LOG_ERROR("%s: Method not allowed: %s", method.c_str(), msg.c_str());
+				SI_LOG_ERROR("@#1: Method not allowed: @#2", method, msg);
 			}
 		} else {
 			// something wrong here... send 503 error with 'No-More: frontends'
@@ -215,7 +216,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 		}
 	}
 	const unsigned long time = sw.getIntervalMS();
-	SI_LOG_DEBUG("Send reply in %lu ms\r\n%s", time, httpcReply.c_str());
+	SI_LOG_DEBUG("Send reply in @#1 ms\r\n@#2", time, httpcReply);
 	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
 		SI_LOG_ERROR("Send Streaming reply failed");
 	}

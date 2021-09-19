@@ -53,13 +53,13 @@
 	int InterfaceAttr::getNetworkUDPBufferSize() {
 		int fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		if (fd == -1) {
-			PERROR("socket");
+			SI_LOG_PERROR("socket");
 			return 0;
 		}
 		int bufferSize;
 		socklen_t optlen = sizeof(bufferSize);
 		if (::getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {
-			PERROR("getsockopt: SO_SNDBUF");
+			SI_LOG_PERROR("getsockopt: SO_SNDBUF");
 			bufferSize = 0;
 		}
 		CLOSE_FD(fd);
@@ -74,7 +74,7 @@
 		struct ifaddrs *ifaddrHead, *ifa;
 		// get list of interfaces
 		if (::getifaddrs(&ifaddrHead) == -1) {
-			PERROR("getifaddrs");
+			SI_LOG_PERROR("getifaddrs");
 			return;
 		}
 		bool foundInterface = false;
@@ -92,20 +92,20 @@
 					(family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
 					 host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
 				if (s != 0) {
-					GAI_PERROR("getnameinfo()", s);
+					SI_LOG_GIA_PERROR("getnameinfo()", s);
 					continue;
 				}
 				// Get hardware address
 				int fd = ::socket(AF_INET, SOCK_STREAM, 0);
 				if (fd == -1) {
-					PERROR("Server socket");
+					SI_LOG_PERROR("Server socket");
 					continue;
 				}
 				struct ifreq ifr;
 				ifr.ifr_addr.sa_family = family;
 				std::memcpy(&ifr.ifr_name, ifa->ifa_name, IFNAMSIZ);
 				if (::ioctl(fd, SIOCGIFHWADDR, &ifr) != 0) {
-					PERROR("ioctl SIOCGIFHWADDR");
+					SI_LOG_PERROR("ioctl SIOCGIFHWADDR");
 					CLOSE_FD(fd);
 					continue;
 				}
@@ -127,12 +127,12 @@
 		// free linked list
 		::freeifaddrs(ifaddrHead);
 		if (foundInterface) {
-			SI_LOG_INFO("%s: %s [%s]", _ifaceName.c_str(), _ipAddr.c_str(), _macAddrDecorated.c_str());
+			SI_LOG_INFO("@#1: @#2 [@#3]", _ifaceName, _ipAddr, _macAddrDecorated);
 		} else {
 			if (ifaceName.empty()) {
 				SI_LOG_INFO("Bind failed: No usable network interface found");
 			} else {
-				SI_LOG_INFO("Bind failed: Could not find [%s] interface", ifaceName.c_str());
+				SI_LOG_INFO("Bind failed: Could not find [@#1] interface", ifaceName);
 			}
 		}
 	}

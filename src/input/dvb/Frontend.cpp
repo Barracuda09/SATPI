@@ -177,10 +177,10 @@ namespace dvb {
 			decrypt::dvbapi::SpClient decrypt,
 			const std::string &dvbAdapterPath) {
 		const StreamSpVector::size_type beginSize = streamVector.size();
-		SI_LOG_INFO("Detecting frontends in: %s", dvbAdapterPath.c_str());
+		SI_LOG_INFO("Detecting frontends in: @#1", dvbAdapterPath);
 		getAttachedFrontends(streamVector, appDataPath, decrypt, dvbAdapterPath, dvbAdapterPath);
 		const StreamSpVector::size_type endSize = streamVector.size();
-		SI_LOG_INFO("Frontends found: %u", endSize - beginSize);
+		SI_LOG_INFO("Frontends found: @#1", endSize - beginSize);
 	}
 
 	// =======================================================================
@@ -254,7 +254,7 @@ namespace dvb {
 		if (pollRet > 0) {
 			return (pfd.revents & POLLIN) == POLLIN;
 		} else if (pollRet < 0) {
-			PERROR("Frontend: %d, Error during polling frontend for data", _feID);
+			SI_LOG_PERROR("Frontend: @#1, Error during polling frontend for data", _feID);
 			return false;
 		}
 		return false;
@@ -271,7 +271,7 @@ namespace dvb {
 				return true;
 			}
 		} else if (bytes < 0) {
-			PERROR("Frontend: %d, Error reading data..", _feID);
+			SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
 		}
 		return false;
 	}
@@ -322,7 +322,7 @@ namespace dvb {
 				cmdseq.props = p;
 
 				if (ioctl(_fd_fe, FE_GET_PROPERTY, &cmdseq) == -1) {
-					PERROR("Frontend: %d, FE_GET_PROPERTY failed", _feID);
+					SI_LOG_PERROR("Frontend: @#1, FE_GET_PROPERTY failed", _feID);
 				}
 
 				const auto strengthScale = cmdseq.props[0].u.st.stat[0].scale;
@@ -385,13 +385,13 @@ namespace dvb {
 
 			// Print Status
 			if (showStatus) {
-				SI_LOG_INFO("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | Locked %d",
-					status, strength, snr, ber, ublocks,
+				SI_LOG_INFO("status @#1 | signal @#2% | snr @#3% | ber @#4 | unc @#5 | Locked @#6",
+					HEX(status, 2), DIGIT(strength, 3), DIGIT(snr, 3), ber, ublocks,
 					(status & FE_HAS_LOCK) ? 1 : 0);
 			}
 			_frontendData.setMonitorData(status, strength, snr, ber, ublocks);
 		} else {
-			PERROR("Frontend: %d, FE_READ_STATUS failed", _feID);
+			SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS failed", _feID);
 		}
 #endif
 	}
@@ -401,18 +401,18 @@ namespace dvb {
 	}
 
 	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
-		SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
+		SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 		// Do we need to transform this request?
 		const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
 		_frontendData.parseStreamString(_feID, msgTrans, method);
 
-		SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
+		SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 	}
 
 	bool Frontend::update() {
-		SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
+		SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 		base::StopWatch sw;
 		sw.start();
 #ifndef SIMU
@@ -432,13 +432,13 @@ namespace dvb {
 		}
 
 		if (!setupAndTune()) {
-			SI_LOG_INFO("Frontend: %d, Updating frontend (Failed)", _feID);
+			SI_LOG_INFO("Frontend: @#1, Updating frontend (Failed)", _feID);
 			return false;
 		}
 		updatePIDFilters();
 #endif
 		const unsigned long time = sw.getIntervalMS();
-		SI_LOG_INFO("Frontend: %d, Updating frontend (Finished in %lu ms)", _feID, time);
+		SI_LOG_INFO("Frontend: @#1, Updating frontend (Finished in @#2 ms)", _feID, time);
 		return true;
 	}
 
@@ -477,18 +477,18 @@ namespace dvb {
 		int fd_fe = openFE(_path_to_fe, true);
 		if (fd_fe < 0) {
 			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Found");
-			PERROR("openFE");
+			SI_LOG_PERROR("openFE");
 			return;
 		}
 
 		if (::ioctl(fd_fe, FE_GET_INFO, &_fe_info) != 0) {
 			snprintf(_fe_info.name, sizeof(_fe_info.name), "Not Set");
-			PERROR("FE_GET_INFO");
+			SI_LOG_PERROR("FE_GET_INFO");
 			CLOSE_FD(fd_fe);
 			return;
 		}
 #endif
-		SI_LOG_INFO("Frontend Name: %s", _fe_info.name);
+		SI_LOG_INFO("Frontend Name: @#1", _fe_info.name);
 
 		struct dtv_property dtvProperty;
 #if SIMU
@@ -603,12 +603,12 @@ namespace dvb {
 					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
 					break;
 				default:
-					SI_LOG_INFO("Frontend Type: Unknown %d", dtvProperty.u.buffer.data[i]);
+					SI_LOG_INFO("Frontend Type: Unknown @#1", dtvProperty.u.buffer.data[i]);
 					break;
 			}
 		}
-		SI_LOG_INFO("Frontend Freq: %d Hz to %d Hz", _fe_info.frequency_min, _fe_info.frequency_max);
-		SI_LOG_INFO("Frontend srat: %d symbols/s to %d symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
+		SI_LOG_INFO("Frontend Freq: @#1 Hz to @#2 Hz", _fe_info.frequency_min, _fe_info.frequency_max);
+		SI_LOG_INFO("Frontend srat: @#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
 		// Do we run on an Set-Top Box with Enigma2
 		const std::string infoVersionPath = StringConverter::stringFormat(
@@ -625,9 +625,9 @@ namespace dvb {
 			const int fdDMX = openDMX(_path_to_dmx);
 			int n = _feID.getID();
 			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
-				PERROR("DMX_SET_SOURCE (%s)", _path_to_dmx.c_str());
+				SI_LOG_PERROR("DMX_SET_SOURCE (@#1)", _path_to_dmx);
 			}
-			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend %d (Offset: %d)", _feID, offset);
+			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend @#1 (Offset: @#2)", _feID, offset);
 			::close(fdDMX);
 		}
 
@@ -646,14 +646,14 @@ namespace dvb {
 	int Frontend::openFE(const std::string &path, const bool readonly) const {
 		const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 		if (fd  < 0) {
-			PERROR("Frontend: %d, Failed to open %s", _feID, path.c_str());
+			SI_LOG_PERROR("Frontend: @#1, Failed to open @#2", _feID, path);
 		}
 		return fd;
 	}
 
 	void Frontend::closeFE() {
 		if (_fd_fe != -1) {
-			SI_LOG_INFO("Frontend: %d, Closing %s fd: %d", _feID, _path_to_fe.c_str(), _fd_fe);
+			SI_LOG_INFO("Frontend: @#1, Closing @#2 fd: @#3", _feID, _path_to_fe, _fd_fe);
 			CLOSE_FD(_fd_fe);
 		}
 	}
@@ -661,14 +661,14 @@ namespace dvb {
 	int Frontend::openDMX(const std::string &path) const {
 		const int fd = ::open(path.c_str(), O_RDWR | O_NONBLOCK);
 		if (fd < 0) {
-			PERROR("Frontend: %d, Failed to open %s", _feID, path.c_str());
+			SI_LOG_PERROR("Frontend: @#1, Failed to open @#2", _feID, path);
 		}
 		return fd;
 	}
 
 	void Frontend::closeDMX() {
 		if (_fd_dmx != -1) {
-			SI_LOG_INFO("Frontend: %d, Closing %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
+			SI_LOG_INFO("Frontend: @#1, Closing @#2 fd: @#3", _feID, _path_to_dmx, _fd_dmx);
 			CLOSE_FD(_fd_dmx);
 		}
 	}
@@ -692,19 +692,19 @@ namespace dvb {
 				_fd_fe = openFE(_path_to_fe, false);
 				if (_fd_fe < 0) {
 					const unsigned long openFETime = sw.getIntervalMS();
-					SI_LOG_INFO("Frontend: %d, Fail to open %s for Read/Write with fd: %d (%lu ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
+					SI_LOG_INFO("Frontend: @#1, Fail to open @#2 for Read/Write with fd: @#3 (@#4 ms)", _feID, _path_to_fe, _fd_fe, openFETime);
 					_fd_fe = -1;
 					return false;
 				}
 				const unsigned long openFETime = sw.getIntervalMS();
-				SI_LOG_INFO("Frontend: %d, Opened %s for Read/Write with fd: %d (%lu ms)", _feID, _path_to_fe.c_str(), _fd_fe, openFETime);
+				SI_LOG_INFO("Frontend: @#1, Opened @#2 for Read/Write with fd: @#3 (@#4 ms)", _feID, _path_to_fe, _fd_fe, openFETime);
 			}
 			// try tuning
 			if (!tune()) {
 				return false;
 			}
 			_tuned = true;
-			SI_LOG_INFO("Frontend: %d, Tuned, waiting on lock...", _feID);
+			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
 			if (sw.getIntervalMS() < 500) {
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
 				for (;;) {
@@ -714,20 +714,20 @@ namespace dvb {
 						if (status & FE_HAS_LOCK) {
 							// We are tuned now, add some tuning stats
 							_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
-							SI_LOG_INFO("Frontend: %d, Tuned and locked (FE status 0x%X)", _feID, status);
+							SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
 							break;
 						}
-						SI_LOG_INFO("Frontend: %d, Not locked yet   (FE status 0x%X)...", _feID, status);
+						SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
 					}
 					const unsigned long waitTime = sw.getIntervalMS();
 					if (waitTime > _waitOnLockTimeout) {
-						SI_LOG_INFO("Frontend: %d, Not locked yet (Timeout %lu ms)...", _feID, waitTime);
+						SI_LOG_INFO("Frontend: @#1, Not locked yet (Timeout @#2 ms)...", _feID, waitTime);
 						break;
 					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				}
 			} else {
-				SI_LOG_INFO("Frontend: %d, Not locked yet (Timeout %lu ms)...", _feID, sw.getIntervalMS());
+				SI_LOG_INFO("Frontend: @#1, Not locked yet (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
 			}
 		}
 		return _tuned;
@@ -752,9 +752,9 @@ namespace dvb {
 			if (_dvrBufferSizeMB > 0) {
 				const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
 				if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
-					PERROR("Frontend: %d, Failed to set DMX_SET_BUFFER_SIZE", _feID);
+					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_BUFFER_SIZE", _feID);
 				} else {
-					SI_LOG_INFO("Frontend: %d, Set DMX buffer size to %d Bytes", _feID, size);
+					SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
 				}
 			}
 			struct dmx_pes_filter_params pesFilter;
@@ -764,16 +764,16 @@ namespace dvb {
 			pesFilter.pes_type = DMX_PES_OTHER;
 			pesFilter.flags    = DMX_IMMEDIATE_START;
 			if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-				PERROR("Frontend: %d, Failed to set DMX_SET_PES_FILTER for PID: %04d", _feID, 0);
+				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, DIGIT(pid, 4));
 				return;
 			}
-			SI_LOG_INFO("Frontend: %d, Opened %s fd: %d", _feID, _path_to_dmx.c_str(), _fd_dmx);
+			SI_LOG_INFO("Frontend: @#1, Opened @#2 fd: @#3", _feID, _path_to_dmx, _fd_dmx);
 		} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
-			PERROR("Frontend: %d, Failed to set DMX_ADD_PID for PID: %04d", _feID, pid);
+			SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, DIGIT(pid, 4));
 			return;
 		}
 		_frontendData.getFilterData().setPIDOpened(pid);
-		SI_LOG_DEBUG("Frontend: %d, Set filter PID: %04d%s", _feID, pid,
+		SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3", _feID, DIGIT(pid, 4),
 				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 	}
 
@@ -782,12 +782,13 @@ namespace dvb {
 			return;
 		}
 		if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-			PERROR("Frontend: %d, DMX_REMOVE_PID: PID %04d", _feID, pid);
+			SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
 			return;
 		}
-		SI_LOG_DEBUG("Frontend: %d, Remove filter PID: %04d - Packet Count: %09d:%06d%s",
-				_feID, pid, _frontendData.getFilterData().getPacketCounter(pid),
-				_frontendData.getFilterData().getCCErrors(pid),
+		SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
+				_feID, DIGIT(pid, 4),
+				DIGIT(_frontendData.getFilterData().getPacketCounter(pid), 9),
+				DIGIT(_frontendData.getFilterData().getCCErrors(pid), 6),
 				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
 		_frontendData.getFilterData().setPIDClosed(pid);
 	}
@@ -797,11 +798,11 @@ namespace dvb {
 			return;
 		}
 		if (!_tuned) {
-			SI_LOG_INFO("Frontend: %d, Update PID filters requested, but frontend not tuned!", _feID);
+			SI_LOG_INFO("Frontend: @#1, Update PID filters requested, but frontend not tuned!", _feID);
 			return;
 		}
 		_frontendData.getFilterData().resetPIDTableChanged();
-		SI_LOG_INFO("Frontend: %d, Updating PID filters...", _feID);
+		SI_LOG_INFO("Frontend: @#1, Updating PID filters...", _feID);
 		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
 			// Check should we close PIDs first then open again
 			closePid(i);

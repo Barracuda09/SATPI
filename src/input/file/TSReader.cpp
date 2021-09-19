@@ -53,7 +53,7 @@ void TSReader::enumerate(
 		StreamSpVector &streamVector,
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) {
-	SI_LOG_INFO("Setting up TS Reader using path: %s", appDataPath.c_str());
+	SI_LOG_INFO("Setting up TS Reader using path: @#1", appDataPath);
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::file::SpTSReader tsreader =
 		std::make_shared<input::file::TSReader>(size, appDataPath, enableUnsecureFrontends);
@@ -152,17 +152,17 @@ bool TSReader::hasDeviceDataChanged() const {
 }
 
 void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
-	SI_LOG_INFO("Frontend: %d, Parsing transport parameters...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
 	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
 
 	_deviceData.parseStreamString(_feID, msgTrans, method);
-	SI_LOG_DEBUG("Frontend: %d, Parsing transport parameters (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 }
 
 bool TSReader::update() {
-	SI_LOG_INFO("Frontend: %d, Updating frontend...", _feID);
+	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
 		_file.close();
@@ -170,15 +170,15 @@ bool TSReader::update() {
 			const std::string filePath = _deviceData.getFilePath();
 			_file.open(filePath, std::ifstream::binary | std::ifstream::in);
 			if (_file.is_open()) {
-				SI_LOG_INFO("Frontend: %d, TS Reader using path: %s", _feID, filePath.c_str());
+				SI_LOG_INFO("Frontend: @#1, TS Reader using path: @#2", _feID, filePath);
 				_t1 = std::chrono::steady_clock::now();
 				_t2 = _t1;
 			} else {
-				SI_LOG_ERROR("Frontend: %d, TS Reader unable to open path: %s", _feID, filePath.c_str());
+				SI_LOG_ERROR("Frontend: @#1, TS Reader unable to open path: @#2", _feID, filePath);
 			}
 		}
 	}
-	SI_LOG_DEBUG("Frontend: %d, Updating frontend (Finished)", _feID);
+	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
 

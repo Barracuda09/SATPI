@@ -56,7 +56,7 @@ namespace base {
 		std::ifstream file;
 		file.open(filePath);
 		if (!file.is_open()) {
-			SI_LOG_ERROR("Error: could not open file: %s", filePath.c_str());
+			SI_LOG_ERROR("Error: could not open file: @#1", filePath);
 			return false;
 		}
 		_transformationMap.clear();
@@ -66,7 +66,7 @@ namespace base {
 		std::getline(file, lineEXTM3U);
 		// first line should be '#EXTM3U'
 		if (lineEXTM3U.find("#EXTM3U") == std::string::npos) {
-			SI_LOG_ERROR("Error: Seems not a valid M3U file: %s", filePath.c_str());
+			SI_LOG_ERROR("Error: Seems not a valid M3U file: @#1", filePath);
 			return false;
 		}
 		// seems we are dealing with an M3U file
@@ -98,7 +98,7 @@ namespace base {
 				if (!freqStr.empty()) {
 					const double freq = std::atof(freqStr.c_str());
 					if (exist(freq)) {
-						SI_LOG_ERROR("Error: freq: %f already exists in file: %s", freq, filePath.c_str());
+						SI_LOG_ERROR("Error: freq: @#1 already exists in file: @#2", freq, filePath);
 						break;
 					}
 					element.freq = freq;

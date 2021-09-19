@@ -97,7 +97,7 @@ void Transformation::doFromXML(const std::string &xml) {
 				_advertiseAs = AdvertiseAs::DVB_T;
 				break;
 			default:
-				SI_LOG_ERROR("Frontend: %d, Wrong AdvertiseAs type requested, not changing", 0);
+				SI_LOG_ERROR("Frontend: x, Wrong AdvertiseAs type requested, not changing");
 		}
 	}
 }
@@ -157,7 +157,7 @@ bool Transformation::transformStreamPossible(
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);
 			if (!element.uri.empty() && (element.src == -1 || (element.src >= 0 && element.src == src))) {
-				SI_LOG_INFO("Frontend: %d, Request can be Transformed with: %s", id.getID(), uriTransform.c_str());
+				SI_LOG_INFO("Frontend: @#1, Request can be Transformed with: @#2", id, uriTransform);
 				uriTransform = element.uri;
 				_transformFreq = freq * 1000.0;
 				return true;
@@ -210,7 +210,7 @@ std::string Transformation::transformStreamString(
 		msgTrans += delpidsList;
 	}
 	msgTrans += " RTSP/1.0";
-	SI_LOG_INFO("Frontend: %d, Request Transformed to: %s", id.getID(), msgTrans.c_str());
+	SI_LOG_INFO("Frontend: @#1, Request Transformed to: @#2", id, msgTrans);
 	return msgTrans;
 }
 

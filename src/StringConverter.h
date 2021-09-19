@@ -20,12 +20,16 @@
 #ifndef STRING_CONVERTER_H_INCLUDE
 #define STRING_CONVERTER_H_INCLUDE STRING_CONVERTER_H_INCLUDE
 
+#include <Defs.h>
 #include <input/InputSystem.h>
 
 #include <string>
+#include <cctype>
 #include <sstream>
 #include <cstring>
 #include <vector>
+#include <algorithm>
+#include <iomanip>
 
 using StringVector = std::vector<std::string>;
 
@@ -41,7 +45,7 @@ class StringConverter  {
 		/// @return A copy of the string where all specified markers are replaced
 		/// with the specified arguments.
 		template <typename... Args>
-		static std::string stringFormat(const char* format, Args&&... args) {
+		static std::string stringFormat(const char *format, Args&&... args) {
 			std::vector<std::string> vectArgs;
 			vectArgs.push_back("?");
 			// trick for pack expansion
@@ -88,6 +92,29 @@ class StringConverter  {
 		}
 
 		static std::string convertToHexASCIITable(const unsigned char *p, std::size_t length, std::size_t blockSize);
+
+		template<class T>
+		static std::string hexString(const T &value, const int width) {
+			std::ostringstream stream;
+			stream.flags(std::ios_base::fmtflags(std::ios::hex | std::ios::uppercase));
+			stream << "0x" << std::setfill('0') << std::setw(width);
+			stream << static_cast<unsigned long>(value);
+			return stream.str();
+		}
+
+		template<class T>
+		static std::string alphaString(const T &value, const int width) {
+			std::ostringstream stream;
+			stream << std::setfill(' ') << std::setw(width) << value;
+			return stream.str();
+		}
+
+		template<class T>
+		static std::string digitString(const T &value, const int width) {
+			std::ostringstream stream;
+			stream << std::setfill('0') << std::setw(width) << value;
+			return stream.str();
+		}
 
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c line or empty line
@@ -194,5 +221,11 @@ class StringConverter  {
 			vec.push_back(stream.str());
 		}
 };
+
+#define HEX(value, size) StringConverter::hexString(value, size)
+
+#define STR(value, size) StringConverter::alphaString(value, size)
+
+#define DIGIT(value, size) StringConverter::digitString(value, size)
 
 #endif // STRING_CONVERTER_H_INCLUDE

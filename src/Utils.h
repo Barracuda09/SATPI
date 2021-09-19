@@ -53,7 +53,7 @@ class Utils  {
 #define CLOSE_FD(x) \
 	if (x != -1) { \
 		if (::close(x) == -1) { \
-			PERROR("close error fd %d", x); \
+			SI_LOG_PERROR("close error fd @#1", x); \
 		} \
 		x = -1; \
 	}

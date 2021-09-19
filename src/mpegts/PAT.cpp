@@ -51,10 +51,10 @@ namespace mpegts {
 			const unsigned char *data = tableData.data.c_str();
 			_tid =  (data[8u] << 8) | data[9u];
 
-//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: %d, PAT data", id.getID());
+//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
 
-			SI_LOG_INFO("Frontend: %d, PAT: Section Length: %d  TID: %d  Version: %d  secNr: %d lastSecNr: %d  CRC: 0x%04X",
-						id.getID(), tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, tableData.crc);
+			SI_LOG_INFO("Frontend: @#1, PAT: Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
+				id, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
 
 			// 4 = CRC  5 = PAT Table begin from section length
 			const size_t len = tableData.sectionLength - 4u - 5u;
@@ -66,9 +66,9 @@ namespace mpegts {
 				const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
 				const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
 				if (prognr == 0u) {
-					SI_LOG_INFO("Frontend: %d, PAT: Prog NR: 0x%04X - %05d  NIT PID: %04d", id.getID(), prognr, prognr, pid);
+					SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  NIT PID: @#4", id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
 				} else {
-					SI_LOG_INFO("Frontend: %d, PAT: Prog NR: 0x%04X - %05d  PMT PID: %04d", id.getID(), prognr, prognr, pid);
+					SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  PMT PID: @#4", id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
 					_pmtPidTable[pid] = true;
 				}
 			}

@@ -118,17 +118,17 @@ namespace delivery {
 
 		for (size_t i = 0; i < _diseqcRepeat + 1; ++i) {
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
-				PERROR("FE_SET_VOLTAGE failed to 18V");
+				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 18V");
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
-			SI_LOG_INFO("Frontend: %d, Sending DiSEqC [%02x] [%02x] [%02x] [%02x] [%02x] - DiSEqC Src: %d - UB: %d",
-				id.getID(), cmd.msg[0], cmd.msg[1], cmd.msg[2], cmd.msg[3], cmd.msg[4], src, _chSlot);
+			SI_LOG_INFO("Frontend: @#1, Sending DiSEqC [@#2] [@#3] [@#4] [@#5] [@#6] - DiSEqC Src: @#7 - UB: @#8",
+				id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), HEX(cmd.msg[4], 2), src, _chSlot);
 			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
-				PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
+				SI_LOG_PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
 			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
-				PERROR("FE_SET_VOLTAGE failed to 13V");
+				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 13V");
 			}
 			// Should we repeat message
 			if (_diseqcRepeat > 0) {

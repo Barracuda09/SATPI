@@ -58,8 +58,8 @@ namespace dvb {
 
 	void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
-		SI_LOG_INFO("Frontend: %d, Start filter PID: %04d  demux: %d  filter: %d (data %02x mask %02x %02x)",
-			_feID, pid, demux, filter, filterData[0], filterMask[0], filterMask[1]);
+		SI_LOG_INFO("Frontend: @#1, Start filter PID: @#2  demux: @#3  filter: @#4 (data @#5 mask @#6 @#7)",
+			_feID, DIGIT(pid, 4), demux, filter, HEX(filterData[0], 2), HEX(filterMask[0], 2), HEX(filterMask[1], 2));
 		_dvbapiData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
 		_frontendData.getFilterData().setPID(pid, true);
 		// now update frontend, PID list has changed
@@ -67,7 +67,8 @@ namespace dvb {
    }
 
 	void Frontend::stopOSCamFilterData(const int pid, const int demux, const int filter) {
-		SI_LOG_INFO("Frontend: %d, Stop filter PID: %04d  demux: %d  filter: %d", _feID, pid, demux, filter);
+		SI_LOG_INFO("Frontend: @#1, Stop filter PID: @#2  demux: @#3  filter: @#4",
+			_feID, DIGIT(pid, 4), demux, filter);
 		_dvbapiData.stopOSCamFilterData(demux, filter);
 		if (pid > 17) {
 			_frontendData.getFilterData().setPID(pid, false);

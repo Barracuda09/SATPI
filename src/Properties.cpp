@@ -81,23 +81,23 @@ void Properties::doFromXML(const std::string &xml) {
 		const unsigned int httpPort = std::stoi(element);
 		if (httpPort >= HTTP_PORT_MIN && httpPort <= TCP_PORT_MAX) {
 			_httpPort = _httpPortOpt != 0 ? _httpPortOpt : httpPort;
-			SI_LOG_INFO("Setting HTTP Port to: %d", _httpPort);
+			SI_LOG_INFO("Setting HTTP Port to: @#1", _httpPort);
 		}
 	}
 	if (findXMLElement(xml, "rtspport.value", element)) {
 		const unsigned int rtspPort = std::stoi(element);
 		if (rtspPort >= RTSP_PORT_MIN && rtspPort <= TCP_PORT_MAX) {
 			_rtspPort = _rtspPortOpt != 0 ? _rtspPortOpt : rtspPort;
-			SI_LOG_INFO("Setting RTSP Port to: %d", _rtspPort);
+			SI_LOG_INFO("Setting RTSP Port to: @#1", _rtspPort);
 		}
 	}
 	if (findXMLElement(xml, "webPath.value", element)) {
 		_webPath = _webPathOpt.empty() ? element : _webPathOpt;
-		SI_LOG_INFO("Setting WEB Path to: %s", _webPath.c_str());
+		SI_LOG_INFO("Setting WEB Path to: @#1", _webPath);
 	}
 	if (findXMLElement(xml, "appDataPath.value", element)) {
 		_appdataPath = _appdataPathOpt.empty() ? element : _appdataPathOpt;
-		SI_LOG_INFO("Setting App Data Path to: %s", _appdataPath.c_str());
+		SI_LOG_INFO("Setting App Data Path to: @#1", _appdataPath);
 	}
 	if (findXMLElement(xml, "syslog.value", element)) {
 		const bool start = (element == "true") ? true : false;

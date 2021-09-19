@@ -89,7 +89,7 @@ void StreamThreadBase::threadEntry() {
 				readDataFromInputDevice(client);
 				break;
 			default:
-				PERROR("Wrong State");
+				SI_LOG_PERROR("Wrong State");
 				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				break;
 		}
@@ -106,7 +106,7 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	const StreamClient &client = _stream.getStreamClient(clientID);
 
 	if (!_threadDeviceMonitor.startThread()) {
-		SI_LOG_ERROR("Frontend: %d, Error Starting device monitor", _stream.getFeID());
+		SI_LOG_ERROR("Frontend: @#1, Error Starting device monitor", id);
 		return false;
 	}
 
@@ -118,8 +118,8 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	_tsBuffer[_writeIndex].reset();
 
 	if (!startThread()) {
-		SI_LOG_ERROR("Frontend: %d, Start %s Start stream to %s:%d ERROR", id, _protocol.c_str(),
-			client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+		SI_LOG_ERROR("Frontend: @#1, Start @#2 Start stream to @#3:@#4 ERROR", id, _protocol,
+			client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 		return false;
 	}
 	// Set priority above normal for this Thread
@@ -131,8 +131,8 @@ bool StreamThreadBase::startStreaming(const int clientID) {
 	_updateMonInterval = 1;
 
 	_state = State::Running;
-	SI_LOG_INFO("Frontend: %d, Start %s stream to %s:%d", id, _protocol.c_str(),
-		client.getIPAddressOfStream().c_str(), getStreamSocketPort(clientID));
+	SI_LOG_INFO("Frontend: @#1, Start @#2 stream to @#3:@#4", id, _protocol,
+		client.getIPAddressOfStream(), getStreamSocketPort(clientID));
 
 	return true;
 }
@@ -153,16 +153,16 @@ bool StreamThreadBase::pauseStreaming(const int clientID) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			++timeout;
 			if (timeout > 50) {
-				SI_LOG_ERROR("Frontend: %d, Pause %s stream to %s:%d  TIMEOUT (Streamed %.3f MBytes)",
-					_stream.getFeID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+				SI_LOG_ERROR("Frontend: @#1, Pause @#2 stream to @#3:@#4  TIMEOUT (Streamed @#5 MBytes)",
+					_stream.getFeID(), _protocol, client.getIPAddressOfStream(),
 					getStreamSocketPort(clientID), payload);
 				paused = false;
 				break;
 			}
 		}
 		if (paused) {
-			SI_LOG_INFO("Frontend: %d, Pause %s stream to %s:%d (Streamed %.3f MBytes)",
-					_stream.getFeID(), _protocol.c_str(), client.getIPAddressOfStream().c_str(),
+			SI_LOG_INFO("Frontend: @#1, Pause @#2 stream to @#3:@#4 (Streamed @#5 MBytes)",
+					_stream.getFeID(), _protocol, client.getIPAddressOfStream(),
 					getStreamSocketPort(clientID), payload);
 		}
 #ifdef LIBDVBCSA
@@ -184,9 +184,9 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 		_readIndex  = 0;
 		_tsBuffer[_writeIndex].reset();
 		_state = State::Running;
-		SI_LOG_INFO("Frontend: %d, Restart %s stream to %s:%d", _stream.getFeID(),
-				_protocol.c_str(), _stream.getStreamClient(clientID).getIPAddressOfStream().c_str(),
-				getStreamSocketPort(clientID));
+		SI_LOG_INFO("Frontend: @#1, Restart @#2 stream to @#3:@#4", _stream.getFeID(),
+			_protocol, _stream.getStreamClient(clientID).getIPAddressOfStream(),
+			getStreamSocketPort(clientID));
 	}
 	return true;
 }
@@ -198,7 +198,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;
 	}
-//		SI_LOG_DEBUG("Frontend: %d, PacketBuffer MAX %d W %d R %d  S %d", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+//		SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
 	if (inputDevice->isDataAvailable() && availableSize > 1) {
 		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA

@@ -96,16 +96,15 @@ class MutexLock {
 
 		MutexLock(const Mutex &mutex, unsigned int timeout = TIMEOUT_15SEC) : _mutex(mutex) {
 			if (!_mutex.tryLock(timeout)) {
-				SI_LOG_ERROR("Mutex in %s did not lock within timeout?  !!DEADLOCK!!",
-					Thread::getThisThreadName().c_str());
+				SI_LOG_ERROR("Mutex in @#1 did not lock within timeout?  !!DEADLOCK!!",
+					Thread::getThisThreadName());
 				Utils::createBackTrace("MutexLock");
 			}
 		}
 
 		virtual ~MutexLock() {
 			if (!_mutex.unlock()) {
-				SI_LOG_ERROR("Mutex in %s not unlocked!!",
-					Thread::getThisThreadName().c_str());
+				SI_LOG_ERROR("Mutex in @#1 not unlocked!!", Thread::getThisThreadName());
 			}
 		}
 
