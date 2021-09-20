@@ -555,7 +555,8 @@ namespace dvb {
 #endif
 		// get capability of this frontend and count the delivery systems
 		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; ++i) {
-			switch (dtvProperty.u.buffer.data[i]) {
+			const int deliveryType = dtvProperty.u.buffer.data[i];
+			switch (deliveryType) {
 				case SYS_DSS:
 					SI_LOG_INFO("Frontend Type: DSS");
 					break;
@@ -603,7 +604,7 @@ namespace dvb {
 					SI_LOG_INFO("Frontend Type: Cable (Annex B)");
 					break;
 				default:
-					SI_LOG_INFO("Frontend Type: Unknown @#1", dtvProperty.u.buffer.data[i]);
+					SI_LOG_INFO("Frontend Type: Unknown @#1", deliveryType);
 					break;
 			}
 		}
