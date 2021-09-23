@@ -428,7 +428,7 @@ namespace dvb {
 			closeDMX();
 			closeFE();
 			// After close wait a moment before opening it again
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
 		if (!setupAndTune()) {
@@ -706,7 +706,7 @@ namespace dvb {
 			}
 			_tuned = true;
 			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
-			if (sw.getIntervalMS() < 500) {
+			if (sw.getIntervalMS() < _waitOnLockTimeout) {
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
 				for (;;) {
 					fe_status_t status = FE_TIMEDOUT;
