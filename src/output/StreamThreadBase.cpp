@@ -39,14 +39,14 @@ namespace output {
 // =============================================================================
 
 StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface &stream) :
-	ThreadBase(StringConverter::getFormattedString("Streaming%d", stream.getFeID())),
+	ThreadBase(StringConverter::stringFormat("Streaming@#1", stream.getFeID())),
 	_stream(stream),
 	_protocol(protocol),
 	_state(State::Paused),
 	_clientID(0),
 	_cseq(0),
 	_threadDeviceMonitor(
-		StringConverter::getFormattedString("Monitor%d", stream.getFeID()),
+		StringConverter::stringFormat("Monitor@#1", stream.getFeID()),
 		std::bind(&StreamThreadBase::threadExecuteDeviceMonitor, this)),
 	_writeIndex(0),
 	_readIndex(0),
@@ -233,7 +233,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 bool StreamThreadBase::threadExecuteDeviceMonitor() {
 	// check do we need to update Device monitor signals
 	_stream.getInputDevice()->monitorSignal(false);
-	unsigned long interval = 200 * _stream.getRtcpSignalUpdateFrequency();
+	const unsigned long interval = 200 * _stream.getRtcpSignalUpdateFrequency();
 	std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 	return true;
 }

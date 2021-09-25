@@ -63,17 +63,17 @@ int StreamThreadRtcp::getStreamSocketPort(const int clientID) const {
 }
 
 void StreamThreadRtcp::doSendDataToClient(const int clientID,
-	uint8_t *sr, const std::size_t srlen,
-	uint8_t *sdes, const std::size_t sdeslen,
-	uint8_t *app, const std::size_t applen) {
+	const PacketPtr& sr, const int srlen,
+	const PacketPtr& sdes, const int sdeslen,
+	const PacketPtr& app, const int applen) {
 	StreamClient &client = _stream.getStreamClient(clientID);
 
-	const std::size_t len = srlen + sdeslen + applen;
+	const int len = srlen + sdeslen + applen;
 	uint8_t data[len];
 
-	std::memcpy(data, sr, srlen);
-	std::memcpy(data + srlen, sdes, sdeslen);
-	std::memcpy(data + srlen + sdeslen, app, applen);
+	std::memcpy(data, sr.get(), srlen);
+	std::memcpy(data + srlen, sdes.get(), sdeslen);
+	std::memcpy(data + srlen + sdeslen, app.get(), applen);
 
 	// send the RTCP/UDP packet
 	if (!client.getRtcpSocketAttr().sendDataTo(data, len, 0)) {

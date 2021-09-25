@@ -25,13 +25,17 @@
 #include <base/Thread.h>
 
 #include <cstdint>
+#include <memory>
 
 FW_DECL_NS0(StreamInterface);
 
 namespace output {
 
+using PacketPtr = std::unique_ptr<uint8_t[]>;
+
 /// The base class for RTCP Server
 class StreamThreadRtcpBase {
+
 		// =====================================================================
 		//  -- Constructors and destructor -------------------------------------
 		// =====================================================================
@@ -74,11 +78,6 @@ class StreamThreadRtcpBase {
 		/// @return the socket port for ex. to data send to
 		virtual int getStreamSocketPort(int UNUSED(clientID)) const { return 0; }
 
-		///
-		uint8_t *get_app_packet(std::size_t *len);
-		uint8_t *get_sdes_packet(std::size_t *len);
-		uint8_t *get_sr_packet(std::size_t *len);
-
 	private:
 
 		/// Specialization for @see startStreaming
@@ -92,12 +91,14 @@ class StreamThreadRtcpBase {
 
 		/// Specialization for @see threadExecuteFunction to send data to client
 		virtual void doSendDataToClient(int UNUSED(clientID),
-			uint8_t *UNUSED(sr),
-			std::size_t UNUSED(srlen),
-			uint8_t *UNUSED(sdes),
-			std::size_t UNUSED(sdeslen),
-			uint8_t *UNUSED(app),
-			std::size_t UNUSED(applen)) {}
+			const PacketPtr& UNUSED(sr), int UNUSED(srlen),
+			const PacketPtr& UNUSED(sdes), int UNUSED(sdeslen),
+			const PacketPtr& UNUSED(app), int UNUSED(applen)) {}
+
+		///
+		PacketPtr getAPP(int &len);
+		PacketPtr getSDES(int &len);
+		PacketPtr getSR(int &len);
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------

@@ -89,30 +89,25 @@ bool StreamThreadRtcpBase::restartStreaming(const int clientID) {
 
 bool StreamThreadRtcpBase::threadExecuteFunction() {
 	// RTCP compound packets must start with a SR, SDES then APP
-	std::size_t srlen   = 0;
-	std::size_t sdeslen = 0;
-	std::size_t applen  = 0;
-	uint8_t *sr   = get_sr_packet(&srlen);
-	uint8_t *sdes = get_sdes_packet(&sdeslen);
-	uint8_t *app  = get_app_packet(&applen);
+	int srlen   = 0;
+	int sdeslen = 0;
+	int applen  = 0;
+	PacketPtr sr   = getSR(srlen);
+	PacketPtr sdes = getSDES(sdeslen);
+	PacketPtr app  = getAPP(applen);
 
 	if (sr != nullptr && sdes != nullptr && app != nullptr) {
 		doSendDataToClient(_clientID, sr, srlen, sdes, sdeslen, app, applen);
 	}
-	DELETE_ARRAY(sr);
-	DELETE_ARRAY(sdes);
-	DELETE_ARRAY(app);
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
 	return true;
 }
 
-uint8_t *StreamThreadRtcpBase::get_app_packet(std::size_t *len) {
-	uint8_t app[1024 * 2];
-
-	uint32_t ssrc = _stream.getSSRC();
+PacketPtr StreamThreadRtcpBase::getAPP(int &len) {
+	const uint32_t ssrc = _stream.getSSRC();
 
 	// Application Defined packet  (APP Packet)
+	uint8_t app[16];
 	app[0]  = 0x80;                // version: 2, padding: 0, subtype: 0
 	app[1]  = 204;                 // payload type: 204 (0xcc) (APP)
 	app[2]  = 0;                   // length (total in 32-bit words minus one)
@@ -129,41 +124,40 @@ uint8_t *StreamThreadRtcpBase::get_app_packet(std::size_t *len) {
 	app[13] = 0;                   // identifier
 	app[14] = 0;                   // string length
 	app[15] = 0;                   // string length
-	                               // Now the App defined data is added
+	                               // here the App defined data is added
 
 	const std::string desc = _stream.attributeDescribeString();
-	const char *attr_desc_str = desc.c_str();
-	std::memcpy(app + 16, attr_desc_str, desc.size());
 
 	// total length and align on 32 bits
-	*len = 16 + desc.size();
-	if ((*len % 4) != 0) {
-		*len += 4 - (*len % 4);
+	len = sizeof(app) + desc.size();
+	if ((len % 4) != 0) {
+		len += 4 - (len % 4);
 	}
 
 	// Alloc and copy data and adjust length
-	uint8_t *appPtr = new uint8_t[*len];
+	PacketPtr appPtr(new uint8_t[len]);
 	if (appPtr != nullptr) {
-		std::memcpy(appPtr, app, *len);
-		int ws = (*len / 4) - 1;
+		std::memset(appPtr.get(), 0, len);
+		std::memcpy(appPtr.get(), app, sizeof(app));
+		std::memcpy(appPtr.get() + sizeof(app), desc.c_str(), desc.size());
+		const int ws = (len / 4) - 1;
 		appPtr[2] = (ws >> 8) & 0xff;
 		appPtr[3] = (ws >> 0) & 0xff;
-		int ss = *len - 16;
+		const int ss = len - sizeof(app);
 		appPtr[14] = (ss >> 8) & 0xff;
 		appPtr[15] = (ss >> 0) & 0xff;
 	}
 	return appPtr;
 }
 
-uint8_t *StreamThreadRtcpBase::get_sr_packet(std::size_t *len) {
-	uint8_t sr[28];
-
-	long timestamp = _stream.getTimestamp();
-	uint32_t ssrc = _stream.getSSRC();
-	uint32_t spc = _stream.getSPC();
-	uint32_t soc = _stream.getSOC();
+PacketPtr StreamThreadRtcpBase::getSR(int &len) {
+	const long timestamp = _stream.getTimestamp();
+	const uint32_t ssrc = _stream.getSSRC();
+	const uint32_t spc = _stream.getSPC();
+	const uint32_t soc = _stream.getSOC();
 
 	// Sender Report (SR Packet)
+	uint8_t sr[28];
 	sr[0]  = 0x80;                         // version: 2, padding: 0, sr blocks: 0
 	sr[1]  = 200;                          // payload type: 200 (0xc8) (SR)
 	sr[2]  = 0;                            // length (total in 32-bit words minus one)
@@ -198,24 +192,24 @@ uint8_t *StreamThreadRtcpBase::get_sr_packet(std::size_t *len) {
 	sr[26] = (soc >>  8) & 0xff;           // sender's octet count SOC
 	sr[27] = (soc >>  0) & 0xff;           // sender's octet count SOC
 
-	*len = sizeof(sr);
+	len = sizeof(sr);
 
 	// Alloc and copy data and adjust length
-	uint8_t *srPtr = new uint8_t[*len];
+	PacketPtr srPtr(new uint8_t[len]);
 	if (srPtr != nullptr) {
-		std::memcpy(srPtr, sr, sizeof(sr));
-		int ws = (*len / 4) - 1;
+		std::memcpy(srPtr.get(), sr, sizeof(sr));
+		const int ws = (len / 4) - 1;
 		srPtr[2] = (ws >> 8) & 0xff;
 		srPtr[3] = (ws >> 0) & 0xff;
 	}
 	return srPtr;
 }
 
-uint8_t *StreamThreadRtcpBase::get_sdes_packet(std::size_t *len) {
-	uint8_t sdes[20];
-	uint32_t ssrc = _stream.getSSRC();
+PacketPtr StreamThreadRtcpBase::getSDES(int &len) {
+	const uint32_t ssrc = _stream.getSSRC();
 
 	// Source Description (SDES Packet)
+	uint8_t sdes[20];
 	sdes[0]  = 0x81;                           // version: 2, padding: 0, sc blocks: 1
 	sdes[1]  = 202;                            // payload type: 202 (0xca) (SDES)
 	sdes[2]  = 0;                              // length (total in 32-bit words minus one)
@@ -241,13 +235,13 @@ uint8_t *StreamThreadRtcpBase::get_sdes_packet(std::size_t *len) {
 	sdes[18] = 0;                              // data
 	sdes[19] = 0;                              // data
 
-	*len = sizeof(sdes);
+	len = sizeof(sdes);
 
 	// Alloc and copy data and adjust length
-	uint8_t *sdesPtr = new uint8_t[*len];
+	PacketPtr sdesPtr(new uint8_t[len]);
 	if (sdesPtr != nullptr) {
-		std::memcpy(sdesPtr, sdes, sizeof(sdes));
-		int ws = (*len / 4) - 1;
+		std::memcpy(sdesPtr.get(), sdes, sizeof(sdes));
+		const int ws = (len / 4) - 1;
 		sdesPtr[2] = (ws >> 8) & 0xff;
 		sdesPtr[3] = (ws >> 0) & 0xff;
 	}

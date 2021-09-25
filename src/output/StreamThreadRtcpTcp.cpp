@@ -51,12 +51,12 @@ int StreamThreadRtcpTcp::getStreamSocketPort(const int clientID) const {
 }
 
 void StreamThreadRtcpTcp::doSendDataToClient(const int clientID,
-	uint8_t *sr, const std::size_t srlen,
-	uint8_t *sdes, const std::size_t sdeslen,
-	uint8_t *app, const std::size_t applen) {
+	const PacketPtr& sr, const int srlen,
+	const PacketPtr& sdes, const int sdeslen,
+	const PacketPtr& app, const int applen) {
 	StreamClient &client = _stream.getStreamClient(clientID);
 
-	const std::size_t len = srlen + sdeslen + applen;
+	const int len = srlen + sdeslen + applen;
 
 	unsigned char header[4];
 	header[0] = 0x24;
@@ -67,11 +67,11 @@ void StreamThreadRtcpTcp::doSendDataToClient(const int clientID,
 	iovec iov[4];
 	iov[0].iov_base = header;
 	iov[0].iov_len = 4;
-	iov[1].iov_base = sr;
+	iov[1].iov_base = sr.get();
 	iov[1].iov_len = srlen;
-	iov[2].iov_base = sdes;
+	iov[2].iov_base = sdes.get();
 	iov[2].iov_len = sdeslen;
-	iov[3].iov_base = app;
+	iov[3].iov_base = app.get();
 	iov[3].iov_len = applen;
 
 	// send the RTCP/TCP packet

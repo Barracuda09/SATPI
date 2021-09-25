@@ -51,12 +51,9 @@ class StreamThreadRtcpTcp :
 
 		/// @see StreamThreadRtcpBase
 		virtual void doSendDataToClient(int clientID,
-			uint8_t *sr,
-			std::size_t srlen,
-			uint8_t *sdes,
-			std::size_t sdeslen,
-			uint8_t *app,
-			std::size_t applen) final;
+			const PacketPtr& sr, int srlen,
+			const PacketPtr& sdes, int sdeslen,
+			const PacketPtr& app, int applen) final;
 
 };
 
