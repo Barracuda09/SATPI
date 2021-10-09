@@ -708,7 +708,7 @@ namespace dvb {
 			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
 			if (sw.getIntervalMS() < _waitOnLockTimeout) {
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
-				for (;;) {
+				for (int i = 1;; ++i) {
 					fe_status_t status = FE_TIMEDOUT;
 					// first read status
 					if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
@@ -718,17 +718,19 @@ namespace dvb {
 							SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
 							break;
 						}
-						SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
+						if (i == 1) {
+							SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
+						}
 					}
 					const unsigned long waitTime = sw.getIntervalMS();
 					if (waitTime > _waitOnLockTimeout) {
-						SI_LOG_INFO("Frontend: @#1, Not locked yet (Timeout @#2 ms)...", _feID, waitTime);
+						SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, waitTime);
 						break;
 					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				}
 			} else {
-				SI_LOG_INFO("Frontend: @#1, Not locked yet (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
+				SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
 			}
 		}
 		return _tuned;
