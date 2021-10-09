@@ -324,15 +324,15 @@ void FrontendData::doParseStreamString(
 	const std::string addUserPids = ",1,16,17,18";
 	const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
 	if (!pidsList.empty()) {
-		parsePIDString(pidsList, addPATPid + addUserPids, true);
+		_filter.parsePIDString(pidsList, addPATPid + addUserPids, true);
 	}
 	const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
 	if (!addpidsList.empty()) {
-		parsePIDString(addpidsList, addPATPid + addUserPids, true);
+		_filter.parsePIDString(addpidsList, addPATPid + addUserPids, true);
 	}
 	const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
 	if (!delpidsList.empty()) {
-		parsePIDString(delpidsList, "", false);
+		_filter.parsePIDString(delpidsList, "", false);
 	}
 }
 
@@ -413,40 +413,6 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
-
-void FrontendData::parsePIDString(const std::string &reqPids,
-	const std::string &userPids, const bool add) {
-	if (reqPids.find("all") != std::string::npos ||
-		reqPids.find("none") != std::string::npos) {
-		// all/none pids requested then 'remove' all used PIDS first
-		_filter.clear();
-		if (reqPids.find("all") != std::string::npos) {
-			_filter.setAllPID(add);
-		}
-	} else {
-		const std::string pids = reqPids + userPids;
-		std::string::size_type begin = 0;
-		for (;; ) {
-			const std::string::size_type end = pids.find_first_of(",", begin);
-			if (end != std::string::npos) {
-				const std::string pid = pids.substr(begin, end - begin);
-				if (std::isdigit(pid[0]) != 0) {
-					_filter.setPID(std::stoi(pid), add);
-				}
-				begin = end + 1;
-			} else {
-				// Get the last one
-				if (begin < pids.size()) {
-					const std::string pid = pids.substr(begin, end - begin);
-					if (std::isdigit(pid[0]) != 0) {
-						_filter.setPID(std::stoi(pid), add);
-					}
-				}
-				break;
-			}
-		}
-	}
-}
 
 uint32_t FrontendData::getFrequency() const {
 	base::MutexLock lock(_mutex);

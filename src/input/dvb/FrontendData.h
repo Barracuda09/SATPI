@@ -123,10 +123,6 @@ class FrontendData :
 
 	private:
 
-		///
-		void parsePIDString(const std::string &reqPids,
-			const std::string &userPids, bool add);
-
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================

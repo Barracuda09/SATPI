@@ -56,6 +56,41 @@ void Filter::clear() {
 	_pidTable.clear();
 }
 
+void Filter::parsePIDString(const std::string &reqPids,
+	const std::string &userPids, const bool add) {
+	base::MutexLock lock(_mutex);
+	if (reqPids.find("all") != std::string::npos ||
+		reqPids.find("none") != std::string::npos) {
+		// all/none pids requested then 'remove' all used PIDS first
+		_pidTable.clear();
+		if (reqPids.find("all") != std::string::npos) {
+			_pidTable.setAllPID(add);
+		}
+	} else {
+		const std::string pids = reqPids + userPids;
+		std::string::size_type begin = 0;
+		for (;; ) {
+			const std::string::size_type end = pids.find_first_of(",", begin);
+			if (end != std::string::npos) {
+				const std::string pid = pids.substr(begin, end - begin);
+				if (std::isdigit(pid[0]) != 0) {
+					_pidTable.setPID(std::stoi(pid), add);
+				}
+				begin = end + 1;
+			} else {
+				// Get the last one
+				if (begin < pids.size()) {
+					const std::string pid = pids.substr(begin, end - begin);
+					if (std::isdigit(pid[0]) != 0) {
+						_pidTable.setPID(std::stoi(pid), add);
+					}
+				}
+				break;
+			}
+		}
+	}
+}
+
 void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 	base::MutexLock lock(_mutex);
 	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
@@ -226,11 +261,6 @@ bool Filter::shouldPIDOpen(const int pid) const {
 void Filter::setPIDOpened(const int pid) {
 	base::MutexLock lock(_mutex);
 	_pidTable.setPIDOpened(pid);
-}
-
-void Filter::setAllPID(const bool val) {
-	base::MutexLock lock(_mutex);
-	_pidTable.setAllPID(val);
 }
 
 } // namespace mpegts

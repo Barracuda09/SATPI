@@ -53,6 +53,10 @@ class Filter {
 		void clear();
 
 		///
+		void parsePIDString(const std::string &reqPids,
+			const std::string &userPids, const bool add);
+
+		///
 		void addData(FeID id, const mpegts::PacketBuffer &buffer);
 
 		///
@@ -123,9 +127,6 @@ class Filter {
 
 		/// Set that this pid is opened
 		void setPIDOpened(int pid);
-
-		/// Set all PID
-		void setAllPID(bool val);
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------
