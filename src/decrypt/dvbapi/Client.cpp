@@ -116,8 +116,8 @@ namespace dvbapi {
 						// or check if this batch full, then decrypt this batch
 						if (countBatch != 0 && (parity != parityBatch || countBatch >= maxBatchSize)) {
 							//
-							SI_LOG_COND_DEBUG(parity != parityBatch, "Frontend: %d, Parity changed from %d to %d, decrypting batch size %d",
-								id.getID(), parityBatch, parity, countBatch);
+							SI_LOG_COND_DEBUG(parity != parityBatch, "Frontend: @#1, Parity changed from @#2 to @#3, decrypting batch size @#4",
+								id, parityBatch, parity, countBatch);
 
 							// decrypt this batch
 							frontend->decryptBatch();
