@@ -26,10 +26,6 @@
 #include <iostream>
 #include <cstdarg>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 void StringConverter::splitPath(const std::string &fullPath, std::string &path, std::string &file) {
 	std::string::size_type end = fullPath.find_last_of("/\\");
 	path = fullPath.substr(0, end);
@@ -80,28 +76,6 @@ std::string StringConverter::getline(const std::string &msg, std::string::size_t
 		begin = msg.size();
 	}
 	return line;
-}
-
-void StringConverter::addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist) {
-	char txt[1024 * 3];
-	vsnprintf(txt, sizeof(txt)-1, fmt, arglist);
-	str += txt;
-}
-
-void StringConverter::addFormattedString(std::string &str, const char *fmt, ...) {
-	va_list arglist;
-	va_start(arglist, fmt);
-	addFormattedStringBasic(str, fmt, arglist);
-	va_end(arglist);
-}
-
-std::string StringConverter::getFormattedString(const char *fmt, ...) {
-	std::string str;
-	va_list arglist;
-	va_start(arglist, fmt);
-	addFormattedStringBasic(str, fmt, arglist);
-	va_end(arglist);
-	return str;
 }
 
 std::string StringConverter::convertToHexASCIITable(const unsigned char *p, const std::size_t length, const std::size_t blockSize) {
@@ -400,7 +374,7 @@ input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, con
 	return input::InputSystem::UNDEFINED;
 }
 
-const char *StringConverter::fec_to_string(int fec) {
+std::string StringConverter::fec_to_string(const int fec) {
 	switch (fec) {
 	case FEC_1_2:
 		return "12";
@@ -431,7 +405,7 @@ const char *StringConverter::fec_to_string(int fec) {
 	}
 }
 
-const char *StringConverter::delsys_to_string(input::InputSystem system) {
+std::string StringConverter::delsys_to_string(const input::InputSystem system) {
 	switch (system) {
 		case input::InputSystem::DVBS2:
 			return "dvbs2";
@@ -454,7 +428,7 @@ const char *StringConverter::delsys_to_string(input::InputSystem system) {
 	}
 }
 
-const char *StringConverter::modtype_to_sting(int modtype) {
+std::string StringConverter::modtype_to_sting(const int modtype) {
 	switch (modtype) {
 	case QAM_16:
 		return "16qam";
@@ -477,7 +451,7 @@ const char *StringConverter::modtype_to_sting(int modtype) {
 	}
 }
 
-const char *StringConverter::rolloff_to_sting(int rolloff) {
+std::string StringConverter::rolloff_to_sting(const int rolloff) {
 	switch (rolloff) {
 	case ROLLOFF_35:
 		return "0.35";
@@ -492,7 +466,7 @@ const char *StringConverter::rolloff_to_sting(int rolloff) {
 	}
 }
 
-const char *StringConverter::pilot_tone_to_string(int pilot) {
+std::string StringConverter::pilot_tone_to_string(const int pilot) {
 	switch (pilot) {
 	case PILOT_ON:
 		return "on";
@@ -505,7 +479,7 @@ const char *StringConverter::pilot_tone_to_string(int pilot) {
 	}
 }
 
-const char *StringConverter::transmode_to_string(int transmission_mode) {
+std::string StringConverter::transmode_to_string(const int transmission_mode) {
 	switch (transmission_mode) {
 	case TRANSMISSION_MODE_2K:
 		return "2k";
@@ -532,7 +506,7 @@ const char *StringConverter::transmode_to_string(int transmission_mode) {
 	}
 }
 
-const char *StringConverter::guardinter_to_string(int guard_interval) {
+std::string StringConverter::guardinter_to_string(const int guard_interval) {
 	switch (guard_interval) {
 	case GUARD_INTERVAL_1_32:
 		return "132";

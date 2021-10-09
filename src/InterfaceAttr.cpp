@@ -113,10 +113,12 @@
 				// Check did we find the requested or we should get the first usable
 				if (ifaceName == ifr.ifr_name || ifaceName.empty()) {
 					const unsigned char* mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
-					StringConverter::addFormattedString(_macAddrDecorated, "%02x:%02x:%02x:%02x:%02x:%02x",
-						   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-					StringConverter::addFormattedString(_macAddr, "%02x%02x%02x%02x%02x%02x",
-						   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+					_macAddrDecorated = StringConverter::stringFormat("@#1:@#2:@#3:@#4:@#5:@#6",
+						HEXPL(mac[0], 2), HEXPL(mac[1], 2), HEXPL(mac[2], 2),
+						HEXPL(mac[3], 2), HEXPL(mac[4], 2), HEXPL(mac[5], 2));
+					_macAddr = StringConverter::stringFormat("@#1@#2@#3@#4@#5@#6",
+						HEXPL(mac[0], 2), HEXPL(mac[1], 2), HEXPL(mac[2], 2),
+						HEXPL(mac[3], 2), HEXPL(mac[4], 2), HEXPL(mac[5], 2));
 					_ifaceName = ifr.ifr_name;
 					_ipAddr = host;
 					foundInterface = true;

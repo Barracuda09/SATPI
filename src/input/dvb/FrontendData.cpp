@@ -337,17 +337,16 @@ void FrontendData::doParseStreamString(
 }
 
 std::string FrontendData::doAttributeDescribeString(const FeID id) const {
-	std::string desc;
 	switch (getDeliverySystem()) {
 		case input::InputSystem::DVBS:
 		case input::InputSystem::DVBS2:
 			// ver=1.0;src=<srcID>;tuner=<feID>,<level>,<lock>,<quality>,<frequency>,
 			//             <polarisation>,<system>,<type>,<pilots>,<roll_off>,
 			//             <symbol_rate>,<fec_inner>;pids=<pid0>,..,<pidn>
-			StringConverter::addFormattedString(desc,
-					"ver=1.0;src=%d;tuner=%d,%d,%d,%d,%.2lf,%c,%s,%s,%s,%s,%d,%s;pids=%s",
+			return StringConverter::stringFormat(
+					"ver=1.0;src=@#1;tuner=@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13;pids=@#14",
 					getDiSEqcSource(),
-					id.getID() + 1,
+					id + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -359,16 +358,15 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 					StringConverter::rolloff_to_sting(getRollOff()),
 					getSymbolRate() / 1000,
 					StringConverter::fec_to_string(getFEC()),
-					_filter.getPidCSV().c_str());
-			break;
+					_filter.getPidCSV());
 		case input::InputSystem::DVBT:
 		case input::InputSystem::DVBT2:
 			// ver=1.1;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,
 			//               <tmode>,<mtype>,<gi>,<fec>,<plp>,<t2id>,
 			//               <sm>;pids=<pid0>,..,<pidn>
-			StringConverter::addFormattedString(desc,
-					"ver=1.1;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%s,%s,%s,%d,%d,%d;pids=%s",
-					id.getID() + 1,
+			return StringConverter::stringFormat(
+					"ver=1.1;tuner=@#1,@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13,@#14;pids=@#15",
+					id + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -382,15 +380,14 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 					getUniqueIDPlp(),
 					getUniqueIDT2(),
 					getSISOMISO(),
-					_filter.getPidCSV().c_str());
-			break;
+					_filter.getPidCSV());
 		case input::InputSystem::DVBC:
 			// ver=1.2;tuner=<feID>,<level>,<lock>,<quality>,<freq>,<bw>,<msys>,
 			//               <mtype>,<sr>,<c2tft>,<ds>,<plp>,
 			//               <specinv>;pids=<pid0>,..,<pidn>
-			StringConverter::addFormattedString(desc,
-					"ver=1.2;tuner=%d,%d,%d,%d,%.2lf,%.3lf,%s,%s,%d,%d,%d,%d,%d;pids=%s",
-					id.getID() + 1,
+			return StringConverter::stringFormat(
+					"ver=1.2;tuner=@#1,@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13;pids=@#14",
+					id + 1,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -403,19 +400,14 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 					getDataSlice(),
 					getUniqueIDPlp(),
 					getSpectralInversion(),
-					_filter.getPidCSV().c_str());
-			break;
+					_filter.getPidCSV());
 		case input::InputSystem::UNDEFINED:
 			// Not setup yet
-			StringConverter::addFormattedString(desc, "NONE");
-			break;
+			return "NONE";
 		default:
 			// Not supported
-			StringConverter::addFormattedString(desc, "NONE");
-			break;
+			return "NONE";
 	}
-//	SI_LOG_DEBUG("Frontend: @#1, @#2", _feID, desc);
-	return desc;
 }
 
 // =============================================================================

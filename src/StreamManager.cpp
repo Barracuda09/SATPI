@@ -172,7 +172,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			std::random_device rd;
 			std::mt19937 gen(rd());
 			std::normal_distribution<> dist(0xfffffff, 0xffffff);
-			StringConverter::addFormattedString(sessionID, "%010d", std::lround(dist(gen)) % 0xffffffff);
+			sessionID = StringConverter::stringFormat("@#1", DIGIT(std::lround(dist(gen)), 10));
 			newSession = true;
 		} else {
 			// None of the above.. so it is just an outside session

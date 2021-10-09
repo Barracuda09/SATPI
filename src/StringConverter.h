@@ -103,6 +103,15 @@ class StringConverter  {
 		}
 
 		template<class T>
+		static std::string hexPlainString(const T &value, const int width) {
+			std::ostringstream stream;
+			stream.flags(std::ios_base::fmtflags(std::ios::hex));
+			stream << std::setfill('0') << std::setw(width);
+			stream << static_cast<unsigned long>(value);
+			return stream.str();
+		}
+
+		template<class T>
 		static std::string alphaString(const T &value, const int width) {
 			std::ostringstream stream;
 			stream << std::setfill(' ') << std::setw(width) << value;
@@ -121,12 +130,6 @@ class StringConverter  {
 		static std::string getline(const std::string &msg, std::string::size_type &begin, const char *line_delim);
 
 		///
-		static void addFormattedStringBasic(std::string &str, const char *fmt, va_list arglist);
-
-		///
-		static void addFormattedString(std::string &str, const char *fmt, ...);
-
-		///
 		static void trimWhitespace(const std::string &str, std::string &sub);
 
 		///
@@ -134,9 +137,6 @@ class StringConverter  {
 
 		///
 		static std::string stringToUpper(const std::string &str);
-
-		///
-		static std::string getFormattedString(const char *fmt, ...);
 
 		///
 		static bool isRootFile(const std::string &msg);
@@ -189,25 +189,25 @@ class StringConverter  {
 		static input::InputSystem getMSYSParameter(const std::string &msg, const std::string &header_field);
 
 		///
-		static const char *transmode_to_string(int transmission_mode);
+		static std::string transmode_to_string(int transmission_mode);
 
 		///
-		static const char *rolloff_to_sting(int rolloff);
+		static std::string rolloff_to_sting(int rolloff);
 
 		///
-		static const char *modtype_to_sting(int modtype);
+		static std::string modtype_to_sting(int modtype);
 
 		///
-		static const char *fec_to_string(int fec);
+		static std::string fec_to_string(int fec);
 
 		///
-		static const char *delsys_to_string(input::InputSystem delsys);
+		static std::string delsys_to_string(input::InputSystem delsys);
 
 		///
-		static const char *guardinter_to_string(int guard_interval);
+		static std::string guardinter_to_string(int guard_interval);
 
 		///
-		static const char *pilot_tone_to_string(int pilot);
+		static std::string pilot_tone_to_string(int pilot);
 
 	protected:
 
@@ -223,6 +223,8 @@ class StringConverter  {
 };
 
 #define HEX(value, size) StringConverter::hexString(value, size)
+
+#define HEXPL(value, size) StringConverter::hexPlainString(value, size)
 
 #define STR(value, size) StringConverter::alphaString(value, size)
 
