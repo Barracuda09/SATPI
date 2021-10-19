@@ -96,7 +96,6 @@ void Log::log(int priority, const std::string &msg) {
 #ifdef DEBUG
 		if (_coutLog) {
 			std::cout << elem.timestamp << " " << elem.msg << "\r\n";
-			std::flush(std::cout);
 		}
 #endif
 	}

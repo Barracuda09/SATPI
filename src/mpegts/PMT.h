@@ -36,9 +36,9 @@ class PMT :
 		// =====================================================================
 	public:
 
-		PMT();
+		PMT() = default;
 
-		virtual ~PMT();
+		virtual ~PMT() = default;
 
 		// =====================================================================
 		// -- mpegts::TableData ------------------------------------------------
@@ -52,8 +52,6 @@ class PMT :
 		// =====================================================================
 	public:
 
-		int  parsePCRPid();
-
 		void parse(FeID id);
 
 		mpegts::TSData getProgramInfo() const {
@@ -63,6 +61,8 @@ class PMT :
 		uint16_t getProgramNumber() const {
 			return _programNumber;
 		}
+
+		int  parsePCRPid();
 
 		int getPCRPid() const {
 			return _pcrPID;
@@ -82,10 +82,10 @@ class PMT :
 	private:
 
 		mpegts::TSData _progInfo;
-		uint16_t _programNumber;
-		int _pcrPID;
-		std::size_t _prgLength;
-		mutable bool _send;
+		uint16_t _programNumber = 0;
+		int _pcrPID = 0;
+		std::size_t _prgLength = 0;
+		mutable bool _send = false;
 };
 
 } // namespace mpegts

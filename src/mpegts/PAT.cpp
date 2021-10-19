@@ -22,65 +22,57 @@
 
 namespace mpegts {
 
-	// ========================================================================
-	// -- Constructors and destructor -----------------------------------------
-	// ========================================================================
+// =============================================================================
+//  -- mpegts::TableData -------------------------------------------------------
+// =============================================================================
 
-	PAT::PAT() :
-		_tid(0)	{}
+void PAT::clear() {
+	_tid = 0;
+	_pmtPidTable.clear();
+	TableData::clear();
+}
 
-	PAT::~PAT() {}
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
-	// =======================================================================
-	//  -- mpegts::TableData -------------------------------------------------
-	// =======================================================================
+void PAT::parse(const FeID id) {
+	Data tableData;
+	if (getDataForSectionNumber(0, tableData)) {
+		const unsigned char *data = tableData.data.c_str();
+		_tid =  (data[8u] << 8) | data[9u];
 
-	void PAT::clear() {
-		_tid = 0;
-		_pmtPidTable.clear();
-		TableData::clear();
-	}
+//		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
+		SI_LOG_INFO("Frontend: @#1, PAT: Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
+			id, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
 
-	void PAT::parse(const FeID id) {
-		Data tableData;
-		if (getDataForSectionNumber(0, tableData)) {
-			const unsigned char *data = tableData.data.c_str();
-			_tid =  (data[8u] << 8) | data[9u];
+		// 4 = CRC  5 = PAT Table begin from section length
+		const size_t len = tableData.sectionLength - 4u - 5u;
 
-//			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
-
-			SI_LOG_INFO("Frontend: @#1, PAT: Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
-				id, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
-
-			// 4 = CRC  5 = PAT Table begin from section length
-			const size_t len = tableData.sectionLength - 4u - 5u;
-
-			// skip to Table begin and iterate over entries
-			const unsigned char *ptr = &data[13u];
-			for (size_t i = 0u; i < len; i += 4u) {
-				// Get PAT entry
-				const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
-				const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
-				if (prognr == 0u) {
-					SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  NIT PID: @#4", id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
-				} else {
-					SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  PMT PID: @#4", id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
-					_pmtPidTable[pid] = true;
-				}
+		// skip to Table begin and iterate over entries
+		const unsigned char *ptr = &data[13u];
+		for (size_t i = 0u; i < len; i += 4u) {
+			// Get PAT entry
+			const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
+			const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
+			if (prognr == 0u) {
+				SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  NIT PID: @#4",
+					id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
+			} else {
+				SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  PMT PID: @#4",
+					id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
+				_pmtPidTable[pid] = true;
 			}
 		}
 	}
+}
 
-	bool PAT::isMarkedAsPMT(int pid) const {
-		const auto s = _pmtPidTable.find(pid);
-		if (s != _pmtPidTable.end() && s->second) {
-			return true;
-		}
-		return false;
+bool PAT::isMarkedAsPMT(int pid) const {
+	if (const auto s = _pmtPidTable.find(pid); s != _pmtPidTable.end() && s->second) {
+		return true;
 	}
+	return false;
+}
 
-} // namespace mpegts
+} // namespace

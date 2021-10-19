@@ -44,9 +44,9 @@ class SDT :
 		// =====================================================================
 	public:
 
-		SDT();
+		SDT() = default;
 
-		virtual ~SDT();
+		virtual ~SDT() = default;
 
 		// =====================================================================
 		// -- mpegts::TableData ------------------------------------------------
@@ -84,12 +84,12 @@ class SDT :
 
 	private:
 
-		int _transportStreamID;
-		int _networkID;
+		int _transportStreamID = 0;
+		int _networkID = 0;
 		std::map<int, Data> _sdtTable;
 
 };
 
-} // namespace mpegts
+} // namespace
 
 #endif // MPEGTS_SDT_DATA_H_INCLUDE

@@ -22,6 +22,7 @@
 
 #include <Defs.h>
 #include <FwDecl.h>
+#include <Log.h>
 #include <base/Mutex.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PCR.h>
@@ -42,28 +43,27 @@ class Filter {
 
 		Filter();
 
-		virtual ~Filter();
+		virtual ~Filter() = default;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
 	public:
 
-		///
+		/// Clear ONLY @see PidTable and MPEG Tables (Does not close PIDS)
 		void clear();
 
-		///
+		/// Parse the CSV PID string with requested PIDs and update @see PidTable
+		/// @param reqPids specifies the requested PIDs
+		/// @param userPids specifies the user defined PIDs
+		/// @param add specifies if true to open all the PIDs or false to close
 		void parsePIDString(const std::string &reqPids,
 			const std::string &userPids, const bool add);
 
-		///
+		/// Add the filter data to MPEG Tables
+		/// @param feID specifies the frontend ID
+		/// @param buffer specifies the mpegts buffer from the frontend
 		void addData(FeID id, const mpegts::PacketBuffer &buffer);
-
-		///
-		bool isMarkedAsPMT(int pid) const {
-			base::MutexLock lock(_mutex);
-			return _pat->isMarkedAsPMT(pid);
-		}
 
 		///
 		bool isMarkedAsActivePMT(int pid) const;
@@ -95,18 +95,6 @@ class Filter {
 		// =====================================================================
 		// =====================================================================
 
-		/// Reset 'PID has changed' flag
-		void resetPIDTableChanged();
-
-		/// Check the 'PID has changed' flag
-		bool hasPIDTableChanged() const;
-
-		/// Get the amount of packet that were received of this pid
-		uint32_t getPacketCounter(int pid) const;
-
-		/// Get the amount Continuity Counter Error of this pid
-		uint32_t getCCErrors(int pid) const;
-
 		/// Get the total amount of Continuity Counter Error
 		uint32_t getTotalCCErrors() const;
 
@@ -116,17 +104,89 @@ class Filter {
 		/// Set pid used or not
 		void setPID(int pid, bool val);
 
-		/// Check if this pid should be closed
-		bool shouldPIDClose(int pid) const;
+		/// Close all active PID filter
+		/// @param feID specifies the frontend ID
+		/// @param closePid specifies the lambda function to use to close the PIDs
+		template<typename CLOSE_FUNC>
+		void closeActivePIDFilters(const FeID feID, CLOSE_FUNC closePid) {
+			base::MutexLock lock(_mutex);
+			SI_LOG_INFO("Frontend: @#1, Closing all active PID filters...", feID);
+			for (int pid = 0; pid < mpegts::PidTable::MAX_PIDS; ++pid) {
+				_pidTable.setPID(pid, false);
+				closePIDFilter_L(feID, pid, closePid);
+			}
+		}
 
-		/// Set that this pid is closed
-		void setPIDClosed(int pid);
+		/// Update all PID filters set/reset in @see PidTable
+		/// @param feID specifies the frontend ID
+		/// @param openPid specifies the lambda function to use to open the PIDs
+		/// @param closePid specifies the lambda function to use to close the PIDs
+		template<typename OPEN_FUNC, typename CLOSE_FUNC>
+		void updatePIDFilters(const FeID feID, OPEN_FUNC openPid, CLOSE_FUNC closePid) {
+			base::MutexLock lock(_mutex);
+			if (!_pidTable.hasPIDTableChanged()) {
+				return;
+			}
+			_pidTable.resetPIDTableChanged();
+			SI_LOG_INFO("Frontend: @#1, Updating PID filters...", feID);
+			for (int pid = 0; pid < mpegts::PidTable::MAX_PIDS; ++pid) {
+				// Check should we close PIDs first then open again
+				closePIDFilter_L(feID, pid, closePid);
+				openPIDFilter_L(feID, pid, openPid);
+			}
+		}
 
-		/// Check if PID should be opened
-		bool shouldPIDOpen(int pid) const;
+	private:
 
-		/// Set that this pid is opened
-		void setPIDOpened(int pid);
+		/// Open requesed PID filter
+		/// @param feID specifies the frontend ID
+		/// @param pid specifies the PID to open with openPid
+		/// @param openPid specifies the lambda function to use to open the PID with
+		template<typename OPEN_FUNC>
+		void openPIDFilter_L(const FeID feID, const int pid, OPEN_FUNC openPid) {
+			if (!_pidTable.shouldPIDOpen(pid)) {
+				return;
+			}
+			if (!openPid(pid)) {
+				return;
+			}
+			_pidTable.setPIDOpened(pid);
+			SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
+				feID, DIGIT(pid, 4),
+				_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
+		}
+
+		/// Close requesed PID filter
+		/// @param feID specifies the frontend ID
+		/// @param pid specifies the PID to close with closePid
+		/// @param closePid specifies the lambda function to use to close the PID with
+		template<typename CLOSE_FUNC>
+		void closePIDFilter_L(const FeID feID, const int pid, CLOSE_FUNC closePid) {
+			// Check should we close PIDs first then open again
+			if (!_pidTable.shouldPIDClose(pid)) {
+				return;
+			}
+			if (!closePid(pid)) {
+				return;
+			}
+			SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
+				feID, DIGIT(pid, 4),
+				DIGIT(_pidTable.getPacketCounter(pid), 9),
+				DIGIT(_pidTable.getCCErrors(pid), 6),
+				_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
+			// Clear stats
+			_pidTable.setPIDClosed(pid);
+			// Need to clear the PID Tables as well?
+			const int pcrPID = _pmt->getPCRPid();
+			if (pid == 0) {
+				_pat = std::make_shared<PAT>();
+			} else if (pid == 17) {
+				_sdt = std::make_shared<SDT>();
+			} else if (pcrPID > 0 && pcrPID == pid) {
+				_pmt = std::make_shared<PMT>();
+				_pcr = std::make_shared<PCR>();
+			}
+		}
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------

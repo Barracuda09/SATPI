@@ -63,9 +63,9 @@ class TableData {
 		// =====================================================================
 	public:
 
-		TableData();
+		TableData() = default;
 
-		virtual ~TableData();
+		virtual ~TableData() = default;
 
 		// =====================================================================
 		//  -- Static member functions -----------------------------------------
@@ -127,16 +127,16 @@ class TableData {
 
 	protected:
 
-		std::size_t _numberOfSections;
+		std::size_t _numberOfSections = 0;
 
 	private:
 
-		std::size_t _currentSectionNumber;
+		std::size_t _currentSectionNumber = 0;
+		mutable bool _collectingFinished = false;
 		std::map<int, Data> _dataTable;
-		mutable bool _collectingFinished;
 
 };
 
-} // namespace mpegts
+} // namespace
 
 #endif // MPEGTS_TABLE_DATA_H_INCLUDE

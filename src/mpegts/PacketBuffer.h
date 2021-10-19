@@ -30,9 +30,9 @@ class PacketBuffer {
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
 	public:
-		PacketBuffer();
+		PacketBuffer() = default;
 
-		virtual ~PacketBuffer();
+		virtual ~PacketBuffer() = default;
 
 		// =====================================================================
 		// -- Other functions --------------------------------------------------
@@ -154,12 +154,12 @@ class PacketBuffer {
 	protected:
 
 		unsigned char _buffer[MTU];
-		std::size_t   _writeIndex;
-		bool          _initialized;
-		bool          _decryptPending;
+		std::size_t   _writeIndex = 0;
+		bool          _initialized = false;
+		bool          _decryptPending = false;
 
 };
 
-} // namespace mpegts
+} // namespace
 
 #endif // MPEGTS_PACKET_BUFFER_H_INCLUDE

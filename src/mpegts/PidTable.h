@@ -25,105 +25,103 @@
 
 namespace mpegts {
 
-	/// The class @c PidTable carries all the PID and DMX information
-	class PidTable {
-		public:
+/// The class @c PidTable carries all the PID and DMX information
+class PidTable {
+		// =====================================================================
+		//  -- Constructors and destructor -------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Constructors and destructor --------------------------------
-			// ================================================================
-			PidTable();
+		PidTable();
 
-			virtual ~PidTable();
+		virtual ~PidTable() = default;
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// =====================================================================
+		//  -- Other member functions ------------------------------------------
+		// =====================================================================
+	public:
 
-		public:
+		/// Clear all PID data
+		void clear();
 
-			/// Clear all PID data
-			void clear();
+		/// Reset that PID has changed
+		void resetPIDTableChanged();
 
-			/// Reset that PID has changed
-			void resetPIDTableChanged();
+		/// Check if the PID has changed
+		bool hasPIDTableChanged() const;
 
-			/// Check if the PID has changed
-			bool hasPIDTableChanged() const;
+		/// Get the amount of packet that were received of this pid
+		uint32_t getPacketCounter(int pid) const;
 
-			/// Get the amount of packet that were received of this pid
-			uint32_t getPacketCounter(int pid) const;
+		/// Get the amount Continuity Counter Error of this pid
+		uint32_t getCCErrors(int pid) const;
 
-			/// Get the amount Continuity Counter Error of this pid
-			uint32_t getCCErrors(int pid) const;
+		/// Get the total amount of Continuity Counter Error
+		uint32_t getTotalCCErrors() const;
 
-			/// Get the total amount of Continuity Counter Error
-			uint32_t getTotalCCErrors() const;
+		/// Get the CSV of all the requested PID
+		std::string getPidCSV() const;
 
-			/// Get the CSV of all the requested PID
-			std::string getPidCSV() const;
+		/// Set the continuity counter for pid
+		void addPIDData(int pid, uint8_t cc);
 
-			/// Set the continuity counter for pid
-			void addPIDData(int pid, uint8_t cc);
+		/// Set pid used or not
+		void setPID(int pid, bool use);
 
-			/// Set pid used or not
-			void setPID(int pid, bool use);
+		/// Check if this pid is opened
+		bool isPIDOpened(int pid) const;
 
-			/// Check if this pid is opened
-			bool isPIDOpened(int pid) const;
+		/// Check if this pid should be closed
+		bool shouldPIDClose(int pid) const;
 
-			/// Check if this pid should be closed
-			bool shouldPIDClose(int pid) const;
+		/// Set that this pid is closed
+		void setPIDClosed(int pid);
 
-			/// Set that this pid is closed
-			void setPIDClosed(int pid);
+		/// Check if PID should be opened
+		bool shouldPIDOpen(int pid) const;
 
-			/// Check if PID should be opened
-			bool shouldPIDOpen(int pid) const;
+		/// Set that this pid is opened
+		void setPIDOpened(int pid);
 
-			/// Set that this pid is opened
-			void setPIDOpened(int pid);
+		/// Set all PID
+		void setAllPID(bool use);
 
-			/// Set all PID
-			void setAllPID(bool use);
+	protected:
 
-		protected:
+		/// Reset the pid data like counters etc.
+		void resetPidData(int pid);
 
-			/// Reset the pid data like counters etc.
-			void resetPidData(int pid);
+		// =====================================================================
+		//  -- Data members ----------------------------------------------------
+		// =====================================================================
+	public:
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
-		public:
+		static constexpr int MAX_PIDS = 8193;
+		static constexpr int ALL_PIDS = 8192;
 
-			static constexpr size_t MAX_PIDS = 8193;
-			static constexpr size_t ALL_PIDS = 8192;
+	protected:
 
-		protected:
+	private:
 
-		private:
+		enum class State {
+			ShouldOpen,
+			Opened,
+			ShouldClose,
+			ShouldCloseReopen,
+			Closed
+		};
 
-			enum class State {
-				ShouldOpen,
-				Opened,
-				ShouldClose,
-				ShouldCloseReopen,
-				Closed
-			};
-
-			// PID State
-			struct PidData {
-				State state;
-				uint8_t cc;        /// continuity counter (0 - 15) of this PID
-				uint32_t cc_error; /// cc error count
-				uint32_t count;    /// the number of times this pid occurred
-			};
-			uint32_t _totalCCErrors;
-			bool _changed;
-			PidData _data[MAX_PIDS];
-
-	};
+		// PID State
+		struct PidData {
+			State state;
+			uint8_t cc;        /// continuity counter (0 - 15) of this PID
+			uint32_t cc_error; /// cc error count
+			uint32_t count;    /// the number of times this pid occurred
+		};
+		uint32_t _totalCCErrors;
+		bool _changed;
+		PidData _data[MAX_PIDS];
+};
 
 } // namespace mpegts
 

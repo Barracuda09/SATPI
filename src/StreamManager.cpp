@@ -157,9 +157,7 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	const std::string method = StringConverter::getMethod(msg);
 
 	// Now find FrontendID and/or StreamID of this message
-	FeID feID;
-	StreamID streamID;
-	std::tie(feID, streamID) = findFrontendID(msg, method);
+	const auto [feID, streamID] = findFrontendID(msg, method);
 
 	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
 	bool newSession = false;

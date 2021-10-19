@@ -45,8 +45,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 	// =======================================================================
 	// -- Static const data --------------------------------------------------
@@ -90,8 +89,6 @@ namespace dvb {
 		_oldApiCallStats = true;
 #endif
 	}
-
-	Frontend::~Frontend() {}
 
 	// =======================================================================
 	//  -- Static functions --------------------------------------------------
@@ -421,10 +418,7 @@ namespace dvb {
 			_frontendData.resetDeviceDataChanged();
 			_tuned = false;
 			// Close active PIDs
-			for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-				_frontendData.getFilterData().setPID(i, false);
-				closePid(i);
-			}
+			closeActivePIDFilters();
 			closeDMX();
 			closeFE();
 			// After close wait a moment before opening it again
@@ -444,10 +438,7 @@ namespace dvb {
 
 	bool Frontend::teardown() {
 		// Close active PIDs
-		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-			_frontendData.getFilterData().setPID(i, false);
-			closePid(i);
-		}
+		closeActivePIDFilters();
 		_tuned = false;
 		closeDMX();
 		closeFE();
@@ -736,82 +727,71 @@ namespace dvb {
 		return _tuned;
 	}
 
-	void Frontend::openPid(const int pid) {
-		if (!_frontendData.getFilterData().shouldPIDOpen(pid)) {
-			return;
-		}
-		// Check if we have already a DMX open
-		if (_fd_dmx == -1) {
-			// try opening DMX, try again if fails
-			std::size_t timeout = 0;
-			while ((_fd_dmx = openDMX(_path_to_dmx)) == -1) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-				++timeout;
-				if (timeout > 3) {
-					return;
+	void Frontend::closeActivePIDFilters() {
+		_frontendData.getFilterData().closeActivePIDFilters(_feID,
+			// closePid lambda function
+			[&](const int pid) {
+				if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
+					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
+					return false;
 				}
-			}
-
-			if (_dvrBufferSizeMB > 0) {
-				const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
-				if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
-					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_BUFFER_SIZE", _feID);
-				} else {
-					SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
-				}
-			}
-			struct dmx_pes_filter_params pesFilter;
-			pesFilter.pid      = pid;
-			pesFilter.input    = DMX_IN_FRONTEND;
-			pesFilter.output   = DMX_OUT_TSDEMUX_TAP;
-			pesFilter.pes_type = DMX_PES_OTHER;
-			pesFilter.flags    = DMX_IMMEDIATE_START;
-			if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, DIGIT(pid, 4));
-				return;
-			}
-			SI_LOG_INFO("Frontend: @#1, Opened @#2 fd: @#3", _feID, _path_to_dmx, _fd_dmx);
-		} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
-			SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, DIGIT(pid, 4));
-			return;
-		}
-		_frontendData.getFilterData().setPIDOpened(pid);
-		SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3", _feID, DIGIT(pid, 4),
-				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
-	}
-
-	void Frontend::closePid(const int pid) {
-		if (!_frontendData.getFilterData().shouldPIDClose(pid)) {
-			return;
-		}
-		if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-			SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
-			return;
-		}
-		SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
-				_feID, DIGIT(pid, 4),
-				DIGIT(_frontendData.getFilterData().getPacketCounter(pid), 9),
-				DIGIT(_frontendData.getFilterData().getCCErrors(pid), 6),
-				_frontendData.getFilterData().isMarkedAsPMT(pid) ? " - PMT" : "");
-		_frontendData.getFilterData().setPIDClosed(pid);
+				return true;
+			});
 	}
 
 	void Frontend::updatePIDFilters() {
-		if (!_frontendData.getFilterData().hasPIDTableChanged()) {
-			return;
-		}
 		if (!_tuned) {
 			SI_LOG_INFO("Frontend: @#1, Update PID filters requested, but frontend not tuned!", _feID);
 			return;
 		}
-		_frontendData.getFilterData().resetPIDTableChanged();
-		SI_LOG_INFO("Frontend: @#1, Updating PID filters...", _feID);
-		for (std::size_t i = 0; i < mpegts::PidTable::MAX_PIDS; ++i) {
-			// Check should we close PIDs first then open again
-			closePid(i);
-			openPid(i);
-		}
+		_frontendData.getFilterData().updatePIDFilters(_feID,
+			// openPid lambda function
+			[&](const int pid) {
+				// Check if we have already a DMX open
+				if (_fd_dmx == -1) {
+					// try opening DMX, try again if fails
+					std::size_t timeout = 0;
+					while ((_fd_dmx = openDMX(_path_to_dmx)) == -1) {
+						std::this_thread::sleep_for(std::chrono::milliseconds(20));
+						++timeout;
+						if (timeout > 3) {
+							return false;
+						}
+					}
+
+					if (_dvrBufferSizeMB > 0) {
+						const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
+						if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
+							SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_BUFFER_SIZE", _feID);
+						} else {
+							SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
+						}
+					}
+					struct dmx_pes_filter_params pesFilter;
+					pesFilter.pid      = pid;
+					pesFilter.input    = DMX_IN_FRONTEND;
+					pesFilter.output   = DMX_OUT_TSDEMUX_TAP;
+					pesFilter.pes_type = DMX_PES_OTHER;
+					pesFilter.flags    = DMX_IMMEDIATE_START;
+					if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
+						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, DIGIT(pid, 4));
+						return false;
+					}
+					SI_LOG_INFO("Frontend: @#1, Opened @#2 fd: @#3", _feID, _path_to_dmx, _fd_dmx);
+				} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
+					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, DIGIT(pid, 4));
+					return false;
+				}
+				return true;
+			},
+			// closePid lambda function
+			[&](const int pid) {
+				if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
+					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
+					return false;
+				}
+				return true;
+			});
 	}
 
-} // namespace dvb
-} // namespace input
+} // namespace

@@ -41,8 +41,6 @@ Filter::Filter() {
 	_sdt = std::make_shared<SDT>();
 }
 
-Filter::~Filter() {}
-
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
@@ -100,7 +98,6 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
 			continue;
 		}
-
 		// get PID and CC from TS
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 		const uint8_t  cc  =   ptr[3] & 0x0f;
@@ -116,24 +113,13 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 					_pat->parse(id.getID());
 				}
 			}
-		} else if (_pat->isMarkedAsPMT(pid) /*&& _pidTable.isPIDUsed(pid)*/) {
+		} else if (_pat->isMarkedAsPMT(pid)) {
+			// Did we finish collecting PMT
 			if (!_pmt->isCollected()) {
-#ifdef ADDDVBCA
-				{
-					const char fileFIFO[] = "/tmp/fifo";
-					int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
-					if (fd > 0) {
-						::write(fd, ptr, 188);
-						::close(fd);
-					}
-				}
-#endif
 				// collect PMT data
 				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, true);
-
-				// Did we finish collecting PMT
 				if (_pmt->isCollected()) {
-					// First check if this is PMT we need. So first get PCR Pid
+					// Collected, check if this is the PMT we need, by getting PCR Pid
 					const int pcrPID = _pmt->parsePCRPid();
 					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
 						// Probably not the correct PMT, so clear it and try again
@@ -145,6 +131,16 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 						_pmt->parse(id.getID());
 					}
 				}
+#ifdef ADDDVBCA
+				{
+					const char fileFIFO[] = "/tmp/fifo";
+					int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
+					if (fd > 0) {
+						::write(fd, ptr, 188);
+						::close(fd);
+					}
+				}
+#endif
 			}
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
@@ -157,16 +153,6 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 				}
 			}
 		} else if (pid == 20) {
-#ifdef ADDDVBCA
-			{
-				const char fileFIFO[] = "/tmp/fifo";
-				int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
-				if (fd > 0) {
-					::write(fd, ptr, 188);
-					::close(fd);
-				}
-			}
-#endif
 			const unsigned int tableID = ptr[5];
 			const unsigned int mjd = (ptr[8] << 8) | (ptr[9]);
 			const unsigned int y1 = static_cast<unsigned int>((mjd - 15078.2) / 365.25);
@@ -180,8 +166,17 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 			const unsigned int s = ptr[12];
 
 			SI_LOG_INFO("Frontend: @#1, TDT - Table ID: @#2  Date: @#3-@#4-@#5  Time: @#6:@#7.@#8  MJD: @#9",
-				id, HEX(tableID, 2), y, m, d, HEX(h, 2), HEX(mi, 2), HEX(s, 2), HEX(mjd, 4));
-//				SI_LOG_BIN_DEBUG(ptr, 188, "Frontend: @#1, TDT - ", _feID);
+				id, HEX(tableID, 2), y, m, d, DIGIT(h, 2), DIGIT(mi, 2), DIGIT(s, 2), HEX(mjd, 4));
+#ifdef ADDDVBCA
+			{
+				const char fileFIFO[] = "/tmp/fifo";
+				int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
+				if (fd > 0) {
+					::write(fd, ptr, 188);
+					::close(fd);
+				}
+			}
+#endif
 		} else if (pid == _pmt->getPCRPid()) {
 			_pcr->collectData(id.getID(), ptr);
 		}
@@ -189,35 +184,14 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 }
 
 bool Filter::isMarkedAsActivePMT(const int pid) const {
-	if (isMarkedAsPMT(pid)) {
+	base::MutexLock lock(_mutex);
+	if (_pat->isMarkedAsPMT(pid)) {
 		const int pcrPID = _pmt->getPCRPid();
 		if (_pidTable.isPIDOpened(pcrPID) || _pidTable.getPacketCounter(pcrPID) != 0) {
 			return true;
 		}
-		// Probably not the correct PMT, so clear it and try again
-		_pmt = std::make_shared<PMT>();
 	}
 	return false;
-}
-
-void Filter::resetPIDTableChanged() {
-	base::MutexLock lock(_mutex);
-	_pidTable.resetPIDTableChanged();
-}
-
-bool Filter::hasPIDTableChanged() const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.hasPIDTableChanged();
-}
-
-uint32_t Filter::getPacketCounter(const int pid) const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.getPacketCounter(pid);
-}
-
-uint32_t Filter::getCCErrors(int pid) const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.getCCErrors(pid);
 }
 
 uint32_t Filter::getTotalCCErrors() const {
@@ -233,34 +207,6 @@ std::string Filter::getPidCSV() const {
 void Filter::setPID(const int pid, const bool val) {
 	base::MutexLock lock(_mutex);
 	_pidTable.setPID(pid, val);
-}
-
-bool Filter::shouldPIDClose(const int pid) const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.shouldPIDClose(pid);
-}
-
-void Filter::setPIDClosed(const int pid) {
-	base::MutexLock lock(_mutex);
-	_pidTable.setPIDClosed(pid);
-	if (pid == 0) {
-//			_pat = std::make_shared<PAT>();
-	} else if (_pat->isMarkedAsPMT(pid)) {
-		_pmt = std::make_shared<PMT>();
-		_pcr = std::make_shared<PCR>();
-	} else if (pid == 17) {
-		_sdt = std::make_shared<SDT>();
-	}
-}
-
-bool Filter::shouldPIDOpen(const int pid) const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.shouldPIDOpen(pid);
-}
-
-void Filter::setPIDOpened(const int pid) {
-	base::MutexLock lock(_mutex);
-	_pidTable.setPIDOpened(pid);
 }
 
 } // namespace mpegts

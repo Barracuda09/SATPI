@@ -26,8 +26,7 @@
 #include <cstdint>
 #include <string>
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 /// The class @c FrontendData carries all the data/information for tuning a frontend
 class FrontendData :
@@ -39,7 +38,7 @@ class FrontendData :
 
 		FrontendData();
 
-		virtual ~FrontendData();
+		virtual ~FrontendData() = default;
 
 		FrontendData(const FrontendData&) = delete;
 
@@ -161,7 +160,6 @@ class FrontendData :
 
 };
 
-} // namespace dvb
-} // namespace input
+} // namespace
 
 #endif // INPUT_DVB_FRONTEND_DATA_H_INCLUDE

@@ -24,8 +24,7 @@
 #include <Utils.h>
 #include <StringConverter.h>
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 using namespace input::dvb::delivery;
 
@@ -36,8 +35,6 @@ using namespace input::dvb::delivery;
 FrontendData::FrontendData() {
 	doInitialize();
 }
-
-FrontendData::~FrontendData() {;}
 
 // =============================================================================
 // -- input::DeviceData --------------------------------------------------------
@@ -509,5 +506,4 @@ int FrontendData::getUniqueIDT2() const {
 	return _t2_system_id;
 }
 
-} // namespace dvb
-} // namespace input
+} // namespace

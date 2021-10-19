@@ -41,8 +41,7 @@ FW_DECL_SP_NS2(input, dvb, Frontend);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 /// The class @c Frontend carries all the data/information of an frontend
 /// and to tune it
@@ -63,7 +62,7 @@ class Frontend :
 			const std::string &dvr,
 			const std::string &dmx);
 
-		virtual ~Frontend();
+		virtual ~Frontend() = default;
 
 		// =======================================================================
 		//  -- Static member functions -------------------------------------------
@@ -196,10 +195,7 @@ class Frontend :
 		bool setupAndTune();
 
 		///
-		void closePid(int pid);
-
-		///
-		void openPid(int pid);
+		void closeActivePIDFilters();
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
@@ -232,7 +228,6 @@ class Frontend :
 		bool _oldApiCallStats;
 };
 
-} // namespace dvb
-} // namespace input
+} // namespace
 
 #endif // INPUT_DVB_FRONTEND_H_INCLUDE

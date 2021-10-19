@@ -37,9 +37,9 @@ class PAT :
 		// =====================================================================
 	public:
 
-		PAT();
+		PAT() = default;
 
-		virtual ~PAT();
+		virtual ~PAT() = default;
 
 		// =====================================================================
 		// -- mpegts::TableData ------------------------------------------------
@@ -62,10 +62,10 @@ class PAT :
 		// =====================================================================
 	private:
 
-		uint16_t _tid;
+		uint16_t _tid = 0;
 		std::map<int, bool> _pmtPidTable;
 };
 
-} // namespace mpegts
+} // namespace
 
 #endif // MPEGTS_PAT_DATA_H_INCLUDE

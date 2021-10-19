@@ -29,17 +29,6 @@ static_assert(PacketBuffer::MTU_MAX_TS_PACKET_SIZE < PacketBuffer::MTU, "TS Pack
 static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
 
 // =============================================================================
-// -- Constructors and destructor ----------------------------------------------
-// =============================================================================
-
-PacketBuffer::PacketBuffer() :
-	_writeIndex(0),
-	_initialized(false),
-	_decryptPending(false) {}
-
-PacketBuffer::~PacketBuffer() {}
-
-// =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
@@ -95,4 +84,4 @@ void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 	_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
 }
 
-} // namespace mpegts
+} // namespace
