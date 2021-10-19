@@ -26,7 +26,7 @@ ifeq "$(RESULT_HAS_ATOMIC_FUNCTIONS)" "1"
 endif
 
 # Set Compiler Flags
-CFLAGS += -I ./src -std=c++11 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS += -I src -std=c++17 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"
