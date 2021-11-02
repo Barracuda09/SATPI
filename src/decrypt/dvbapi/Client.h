@@ -38,6 +38,38 @@ FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 namespace decrypt {
 namespace dvbapi {
 
+/*
+ca_pmt () {
+	ca_pmt_tag                                                      24 uimsbf
+	length_field()
+	ca_pmt_list_management                                           8 uimsbf
+	program_number                                                  16 uimsbf
+	reserved                                                         2 bslbf
+	version_number                                                   5 uimsbf
+	current_next_indicator                                           1 bslbf
+	reserved                                                         4 bslbf
+	program_info_length                                             12 uimsbf
+	if (program_info_length != 0) {
+		ca_pmt_cmd_id // at program level                            8 uimsbf
+		for (i=0; i<n; i++) {
+			CA_descriptor() // CA descriptor at programme level
+		}
+	}
+	for (i=0; i<n; i++) {
+		stream_type                                                  8 uimsbf
+		reserved                                                     3 bslbf
+		elementary_PID // elementary stream PID                     13 uimsbf
+		reserved                                                     4 bslbf
+		ES_info_length                                              12 uimsbf
+		if (ES_info_length != 0) {
+			ca_pmt_cmd_id //at ES level                              8 uimsbf
+			for (i=0; i<n; i++) {
+				CA_descriptor() // CA descriptor at elementary stream level
+			}
+		}
+	}
+}
+ */
 /// The class @c Client is for decrypting streams
 class Client :
 	public base::ThreadBase,
@@ -92,7 +124,7 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void sendPMT(FeID id, const mpegts::PMT &pmt);
+		void sendPMT(FeID id, int pid, const mpegts::PMT &pmt);
 
 		///
 		void cleanPMT(unsigned char *data);
