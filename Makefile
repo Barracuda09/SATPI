@@ -26,7 +26,7 @@ ifeq "$(RESULT_HAS_ATOMIC_FUNCTIONS)" "1"
 endif
 
 # Set Compiler Flags
-CFLAGS += -I src -std=c++17 -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"
@@ -117,7 +117,7 @@ endif
 # Add dvbcsa ?
 ifeq "$(LIBDVBCSA)" "yes"
   LDFLAGS += -ldvbcsa
-  CFLAGS  += -DLIBDVBCSA
+  CFLAGS  += -DLIBDVBCSA -DUSE_DEPRECATED_DVBAPI
   SOURCES += decrypt/dvbapi/Client.cpp
   SOURCES += decrypt/dvbapi/ClientProperties.cpp
   SOURCES += decrypt/dvbapi/Keys.cpp
