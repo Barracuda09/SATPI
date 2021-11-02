@@ -38,7 +38,7 @@ class XMLString : private std::string {
 
 		XMLString(std::string &str) : std::string(str) {}
 
-		virtual ~XMLString() {}
+		virtual ~XMLString() = default;
 
 		// =====================================================================
 		// -- Other member functions -------------------------------------------
@@ -58,9 +58,9 @@ class XMLSupport {
 		// =====================================================================
 	public:
 
-		XMLSupport() {}
+		XMLSupport() = default;
 
-		virtual ~XMLSupport() {}
+		virtual ~XMLSupport() = default;
 
 		// =====================================================================
 		// -- Other static member functions ------------------------------------
@@ -85,12 +85,20 @@ class XMLSupport {
 					xml += "&amp;";
 				} else if (c == '"') {
 					xml += "&quot;";
+				} else if (c == '\'') {
+					xml += "&apos;";
 				} else if (c == '>') {
 					xml += "&gt;";
 				} else if (c == '<') {
 					xml += "&lt;";
 				} else {
-					xml += c;
+					if (c >= 0x20 && c <= 0x7A) {
+						xml += c;
+					} else {
+						xml += "&#";
+						xml += std::to_string(c);
+						xml += ";";
+					}
 				}
 			}
 			return xml;
