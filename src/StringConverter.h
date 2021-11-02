@@ -24,6 +24,7 @@
 #include <input/InputSystem.h>
 
 #include <string>
+#include <string_view>
 #include <cctype>
 #include <sstream>
 #include <cstring>
@@ -127,16 +128,14 @@ class StringConverter  {
 
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c line or empty line
-		static std::string getline(const std::string &msg, std::string::size_type &begin, const char *line_delim);
+		static std::string getline(std::string_view msg,
+			std::string::size_type &begin, std::string_view delim);
 
 		///
-		static void trimWhitespace(const std::string &str, std::string &sub);
+		static std::string trimWhitespace(std::string_view str);
 
 		///
-		static std::string stringToUpper(const char *str);
-
-		///
-		static std::string stringToUpper(const std::string &str);
+		static std::string stringToUpper(std::string_view str);
 
 		///
 		static bool isRootFile(const std::string &msg);
@@ -213,12 +212,12 @@ class StringConverter  {
 
 		/// Helper function for stringFormat
 		template <typename Type>
-		static void makeVectArgs(std::vector<std::string> &vec, Type t) {
+		static void makeVectArgs(std::vector<std::string> &vec, Type&& t) {
 			std::ostringstream stream;
 			stream.setf(std::ios::fixed);
 			stream.precision(4);
-			stream << t;
-			vec.push_back(stream.str());
+			stream << std::move(t);
+			vec.emplace_back(std::move(stream.str()));
 		}
 };
 

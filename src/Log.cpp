@@ -76,28 +76,27 @@ void Log::log(int priority, const std::string &msg) {
 	std::string::size_type index = 0;
 	base::MutexLock lock(logMutex);
 	for (;;) {
-		const std::string line = StringConverter::getline(msg, index, "\r\n");
+		std::string line = StringConverter::getline(msg, index, "\r\n");
 		if (line.empty()) {
 			return;
 		}
-		const LogElem elem = { priority, line, time };
-
-		// save to deque
-		if (_appLogBuffer.size() == LOG_SIZE) {
-			_appLogBuffer.pop_front();
-		}
-		_appLogBuffer.push_back(elem);
 
 		// log to syslog
 		if (_syslogOn) {
-			syslog(priority, "%s", elem.msg.c_str());
+			syslog(priority, "%s", line.c_str());
 		}
 
 #ifdef DEBUG
 		if (_coutLog) {
-			std::cout << elem.timestamp << " " << elem.msg << "\r\n";
+			std::cout << time << " " << line << std::endl;
 		}
 #endif
+
+		// save to deque as last, because of std::move
+		if (_appLogBuffer.size() == LOG_SIZE) {
+			_appLogBuffer.pop_front();
+		}
+		_appLogBuffer.emplace_back(priority, std::move(line), time);
 	}
 }
 

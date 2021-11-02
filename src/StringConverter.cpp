@@ -32,21 +32,18 @@ void StringConverter::splitPath(const std::string &fullPath, std::string &path, 
 	file = fullPath.substr(end + 1);
 }
 
-std::string StringConverter::stringToUpper(const char *str) {
-	std::string result;
-	while (*str != '\0') {
-		result += std::islower(*str) ? static_cast<char>(std::toupper(*str)) : *str;
-		++str;
+std::string StringConverter::stringToUpper(const std::string_view str) {
+	std::string result(str);
+	for (auto &c : result) {
+		if (std::islower(c)) {
+			c = std::toupper(c);
+		}
 	}
 	return result;
 }
 
-std::string StringConverter::stringToUpper(const std::string &str) {
-	return stringToUpper(str.c_str());
-}
-
-void StringConverter::trimWhitespace(const std::string &str, std::string &sub) {
-	sub = str;
+std::string StringConverter::trimWhitespace(const std::string_view str) {
+	std::string sub(str);
 	if (str.size() > 0) {
 		// trim leading
 		while (sub.size() > 0 && std::isspace(sub[0])) {
@@ -57,25 +54,27 @@ void StringConverter::trimWhitespace(const std::string &str, std::string &sub) {
 			sub.erase(sub.size() - 1, 1);
 		}
 	}
+	return sub;
 }
 
-std::string StringConverter::getline(const std::string &msg, std::string::size_type &begin, const char *line_delim) {
-	const std::string::size_type end = msg.find(line_delim, begin);
-	const std::string::size_type size = end - begin;
-	std::string line;
+std::string StringConverter::getline(const std::string_view msg,
+		std::string::size_type &begin, const std::string_view delim) {
+	const std::string_view::size_type end = msg.find(delim, begin);
+	const std::string_view::size_type size = end - begin;
+	std::string_view line;
 	if (end != std::string::npos) {
 		if (size > 2) {
 			line = msg.substr(begin, end - begin);
 		} else {
 			line = "<CRLF>";
 		}
-		begin = end + strlen(line_delim);
+		begin = end + strlen(delim.data());
 	} else if (begin == 0 && msg.size() > 2) {
 		// if there is no delim found but msg size is more then 2, give just the string
 		line = msg;
 		begin = msg.size();
 	}
-	return line;
+	return std::string(line);
 }
 
 std::string StringConverter::convertToHexASCIITable(const unsigned char *p, const std::size_t length, const std::size_t blockSize) {
@@ -193,7 +192,6 @@ bool StringConverter::hasTransportParameters(const std::string &msg) {
 
 std::string StringConverter::getHeaderFieldParameter(const std::string &msg, const std::string &header_field) {
 	std::string::size_type nextline = 0;
-	std::string parameter;
 	for (;;) {
 		const std::string line = StringConverter::getline(msg, nextline, "\r\n");
 		if (line.empty()) {
@@ -219,8 +217,7 @@ std::string StringConverter::getHeaderFieldParameter(const std::string &msg, con
 			// copy parameter and trim whitespace
 			const std::string::size_type begin = it - line.begin();
 			const std::string::size_type end = line.size();
-			StringConverter::trimWhitespace(line.substr(begin, end - begin), parameter);
-			return parameter;
+			return StringConverter::trimWhitespace(line.substr(begin, end - begin));
 		}
 	}
 }
@@ -233,7 +230,6 @@ std::string StringConverter::getStringParameter(const std::string &msg, const st
 	}
 	base::StringTokenizer tokenizer(line, delim);
 	std::string token;
-	std::string value;
 	while (tokenizer.isNextToken(token)) {
 		std::string::size_type begin = token.find(parameter);
 		if (begin != std::string::npos && begin == 0) {
@@ -247,8 +243,7 @@ std::string StringConverter::getStringParameter(const std::string &msg, const st
 				end = token.size();
 			}
 			// copy and trim whitespace
-			trimWhitespace(token.substr(begin, end - begin), value);
-			return value;
+			return trimWhitespace(token.substr(begin, end - begin));
 		}
 	}
 	return "";

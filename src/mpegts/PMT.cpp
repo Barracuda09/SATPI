@@ -51,7 +51,7 @@ int PMT::parsePCRPid() {
 void PMT::parse(const FeID id) {
 	Data tableData;
 	if (getDataForSectionNumber(0, tableData)) {
-		const unsigned char *const data = tableData.data.c_str();
+		const unsigned char* const data = tableData.data.c_str();
 		_programNumber = ((data[ 8u]       ) << 8) | data[ 9u];
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
