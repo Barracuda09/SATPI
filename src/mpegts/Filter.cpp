@@ -184,7 +184,7 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 }
 
 bool Filter::isMarkedAsActivePMT(const int pid) const {
-	base::MutexLock lock(_mutex);
+	// Do not use lock here, its used for decrypt (Uses to much time)
 	if (_pat->isMarkedAsPMT(pid)) {
 		const int pcrPID = _pmt->getPCRPid();
 		if (_pidTable.isPIDOpened(pcrPID) || _pidTable.getPacketCounter(pcrPID) != 0) {
