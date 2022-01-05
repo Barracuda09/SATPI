@@ -30,16 +30,17 @@
 #include <execinfo.h>
 
 void Utils::createBackTrace(const char *file) {
-	// DO NOT alloc memory!!
+	// DO NOT alloc memory on heap!!
 	void *array[25];
 	const size_t size = backtrace(array, 25);
 
 	// Log all the frames to Backtrace File
 	char path[256];
 	snprintf(path, sizeof(path), "/tmp/%s.bt", file);
-	int backtraceFile = open(path, O_CREAT|O_WRONLY|O_TRUNC, 0664);
+	int backtraceFile = ::open(path, O_CREAT|O_WRONLY|O_TRUNC, 0664);
 	if (backtraceFile > 0) {
 		backtrace_symbols_fd(array, size, backtraceFile);
+		::close(backtraceFile);
 	} else {
 		backtrace_symbols_fd(array, size, STDOUT_FILENO);
 	}
