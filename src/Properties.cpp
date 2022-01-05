@@ -21,7 +21,7 @@
 
 #include <Log.h>
 
-extern const char *satpi_version;
+extern const char* const satpi_version;
 
 // =============================================================================
 // -- Static const data --------------------------------------------------------
@@ -121,8 +121,11 @@ void Properties::doAddToXML(std::string &xml) const {
 // =============================================================================
 
 std::string Properties::getSoftwareVersion() const {
-	base::MutexLock lock(_mutex);
 	return _versionString;
+}
+
+std::string Properties::getUPnPVersion() const {
+	return "SatPI/" + _versionString;
 }
 
 std::string Properties::getUUID() const {

@@ -74,6 +74,9 @@ class Properties :
 		std::string getSoftwareVersion() const;
 
 		///
+		std::string getUPnPVersion() const;
+
+		///
 		std::string getUUID() const;
 
 		///
