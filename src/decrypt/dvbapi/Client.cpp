@@ -51,7 +51,7 @@ namespace decrypt {
 namespace dvbapi {
 
 	//constants used in socket communication:
-	#define DVBAPI_PROTOCOL_VERSION 3
+	#define DVBAPI_PROTOCOL_VERSION 2
 
 	#define DVBAPI_CA_SET_DESCR     0x40106f86
 	#define DVBAPI_CA_SET_PID       0x40086f87
