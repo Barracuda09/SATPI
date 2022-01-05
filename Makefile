@@ -149,13 +149,13 @@ SRC_DIR = src
 
 # Get Version from git describe
 ifneq ($(wildcard .git),)
-  VER1 = $(shell git describe --long --match "v*" 2> /dev/null)
+  VER1 = $(shell git describe --long --match "V*" 2> /dev/null)
   ifeq ($(VER1),)
     # Git describe failed. Adding "-unknown" postfix to mark this situation
-    VER1 = $(shell git describe --match "v*" 2> /dev/null)-unknown
+    VER1 = $(shell git describe --match "V*" 2> /dev/null)-unknown
   endif
   # Parse
-  VER = $(shell echo $(VER1) | sed "s/^v//" | sed "s/-\([0-9]*\)-\(g[0-9a-f]*\)/.\1~\2/")
+  VER = $(shell echo $(VER1) | sed "s/^V//" | sed "s/-\([0-9]*\)-\(g[0-9a-f]*\)/.\1~\2/")
 else
   VER = "1.6.2~unknown"
 endif
