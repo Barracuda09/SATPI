@@ -602,27 +602,6 @@ namespace input::dvb {
 		SI_LOG_INFO("Frontend Freq: @#1 Hz to @#2 Hz", _fe_info.frequency_min, _fe_info.frequency_max);
 		SI_LOG_INFO("Frontend srat: @#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
-		// Do we run on an Set-Top Box with Enigma2
-		const std::string infoVersionPath = StringConverter::stringFormat(
-			"/proc/stb/info/version");
-		std::ifstream infoVersionFile(infoVersionPath);
-		if (infoVersionFile.is_open()) {
-			int offset = 0;
-			const std::string offsetFilePath = StringConverter::stringFormat(
-				"/proc/stb/frontend/dvr_source_offset");
-			std::ifstream offsetFile(offsetFilePath);
-			if (offsetFile.is_open()) {
-				offsetFile >> offset;
-			}
-			const int fdDMX = openDMX(_path_to_dmx);
-			int n = _feID.getID();
-			if (::ioctl(fdDMX, DMX_SET_SOURCE, &n) != 0) {
-				SI_LOG_PERROR("DMX_SET_SOURCE (@#1)", _path_to_dmx);
-			}
-			SI_LOG_INFO("Set DMX_SET_SOURCE for frontend @#1 (Offset: @#2)", _feID, offset);
-			::close(fdDMX);
-		}
-
 		// Set delivery systems
 		if (_dvbs2 > 0) {
 			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_feID, _path_to_fe)));
@@ -766,6 +745,21 @@ namespace input::dvb {
 						} else {
 							SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
 						}
+					}
+					// Do we run on an Set-Top Box with Enigma2, then we need to set DMX_SET_SOURCE
+					std::ifstream infoVersionFile("/proc/stb/info/version");
+					if (infoVersionFile.is_open()) {
+						int offset = 0;
+						std::ifstream offsetFile("/proc/stb/frontend/dvr_source_offset");
+						if (offsetFile.is_open()) {
+							offsetFile >> offset;
+						}
+						int n = _feID.getID();
+						if (::ioctl(_fd_dmx, DMX_SET_SOURCE, &n) != 0) {
+							SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_SOURCE with (Src: @#2 - Offset: @#3)", _feID, n, offset);
+							return false;
+						}
+						SI_LOG_INFO("Frontend: @#1, Set DMX_SET_SOURCE with (Src: @#2 - Offset: @#3)", _feID, n, offset);
 					}
 					struct dmx_pes_filter_params pesFilter;
 					pesFilter.pid      = pid;
