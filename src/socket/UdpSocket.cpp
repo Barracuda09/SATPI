@@ -27,13 +27,10 @@
 #include <netinet/in.h>
 #include <net/if.h>
 
-UdpSocket::UdpSocket() {}
-
-UdpSocket::~UdpSocket() {}
 
 bool UdpSocket::initUDPSocket(
-		SocketClient &server,
-		const std::string &ipAddr,
+		SocketClient& server,
+		const std::string_view ipAddr,
 		int port) {
 	// fill in the socket structure with host information
 	server.setupSocketStructure(ipAddr, port);

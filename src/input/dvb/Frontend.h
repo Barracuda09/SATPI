@@ -153,13 +153,13 @@ class Frontend :
 
 		virtual bool capableOf(InputSystem system) const final;
 
-		virtual bool capableToTransform(const std::string &msg, const std::string &method) const final;
+		virtual bool capableToTransform(const TransportParamVector& params) const final;
 
 		virtual void monitorSignal(bool showStatus) final;
 
 		virtual bool hasDeviceDataChanged() const final;
 
-		virtual void parseStreamString(const std::string &msg, const std::string &method) final;
+		virtual void parseStreamString(const TransportParamVector& params) final;
 
 		virtual bool update() final;
 

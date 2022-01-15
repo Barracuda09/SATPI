@@ -81,10 +81,9 @@ void DeviceData::initialize() {
 	doInitialize();
 }
 
-void DeviceData::parseStreamString(FeID id, const std::string &msg,
-		const std::string &method) {
+void DeviceData::parseStreamString(FeID id, const TransportParamVector& params) {
 	base::MutexLock lock(_mutex);
-	doParseStreamString(id, msg, method);
+	doParseStreamString(id, params);
 }
 
 std::string DeviceData::attributeDescribeString(FeID id) const {
@@ -108,10 +107,6 @@ const mpegts::Filter &DeviceData::getFilterData() const {
 
 mpegts::Filter &DeviceData::getFilterData() {
 	return _filter;
-}
-
-void DeviceData::addFilterData(const FeID id, const mpegts::PacketBuffer &buffer) {
-	_filter.addData(id, buffer);
 }
 
 fe_delivery_system DeviceData::convertDeliverySystem() const {

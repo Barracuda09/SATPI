@@ -20,8 +20,10 @@
 #ifndef SOCKET_SOCKETCLIENT_H_INCLUDE
 #define SOCKET_SOCKETCLIENT_H_INCLUDE SOCKET_SOCKETCLIENT_H_INCLUDE
 
-#include <socket/SocketAttr.h>
+#include <HeaderVector.h>
 #include <StringConverter.h>
+#include <TransportParamVector.h>
+#include <socket/SocketAttr.h>
 
 #include <string>
 
@@ -55,25 +57,119 @@ class SocketClient :
 		// =====================================================================
 	public:
 
-		/// Clear the HTTP message from this client
+		/// Clear the HTTP message
 		void clearMessage() {
 			_msg.clear();
 		}
 
-		/// Add HTTP message to this client
+		/// Add HTTP message data
 		/// @param msg specifiet the message to set/add
 		void addMessage(const std::string &msg) {
 			_msg += msg;
 		}
 
-		/// Get the Raw HTTP message from this client
-		std::string getMessage() const {
+		/// Get the Headers of the HTTP message
+		HeaderVector getHeaders() const {
+			return HeaderVector(StringConverter::split(_msg, "\r\n"));
+		}
+
+		/// Get the Raw HTTP message data
+		std::string getRawMessage() const {
 			return _msg;
+		}
+
+		/// Get the Method used for this HTTP message
+		std::string getMethod() const {
+			// request line should be in the first line (method)
+			HeaderVector headers = getHeaders();
+			const std::string& line = headers[0];
+			if (!headers[0].empty()) {
+				std::string::const_iterator it = line.begin();
+				// remove any leading whitespace
+				while (*it == ' ') ++it;
+
+				// copy method (upper case)
+				std::string method;
+				while (*it != ' ') {
+					method += std::toupper(*it);
+					++it;
+				}
+				return method;
+			}
+			return std::string();
+		}
+
+		/// Get the content from HTTP message
+		std::string getContentFrom() const {
+			HeaderVector headers = getHeaders();
+			const std::string p = headers.getFieldParameter("Content-Length");
+			const std::size_t contentLength = (!p.empty() && std::isdigit(p[0])) ? std::stoi(p) : 0;
+			if (contentLength > 0) {
+				const std::string::size_type headerSize = _msg.find("\r\n\r\n", 0);
+				if (headerSize != std::string::npos) {
+					return _msg.substr(headerSize + 4);
+				}
+			}
+			return std::string();
+		}
+
+		/// Get the requested resource from HTTP message
+		std::string getRequestedFile() const {
+			HeaderVector headers = getHeaders();
+			const std::string& param = headers[0];
+			if (!param.empty()) {
+				const std::string::size_type begin = param.find_first_of("/");
+				const std::string::size_type end   = param.find_first_of(" ", begin);
+				return param.substr(begin, end - begin);
+			}
+			return std::string();
+		}
+
+		/// Is the request the root-resource
+		bool isRootFile() const {
+			return _msg.find("/ ") != std::string::npos;
+		}
+
+		/// Does the request have any Transport Parameters
+		bool hasTransportParameters() const {
+			// Transport Parameters should be in the first line (method)
+			std::string::size_type nextline = 0;
+			const std::string line = StringConverter::getline(_msg, nextline, "\r\n");
+			if (!line.empty()) {
+				const std::string::size_type size = line.size() - 1;
+				const std::string::size_type found = line.find_first_of("?");
+				if (found != std::string::npos && found < size && line[found + 1] != ' ') {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/// Get the Transport Parameters
+		TransportParamVector getTransportParameters() const {
+			HeaderVector headers = getHeaders();
+			return TransportParamVector(StringConverter::split(
+				StringConverter::getPercentDecoding(headers[0]), " /?&"));
 		}
 
 		/// Get the Percent Decoded HTTP message from this client
 		std::string getPercentDecodedMessage() const {
 			return StringConverter::getPercentDecoding(_msg);
+		}
+
+		/// Get the protocol specified in this HTTP message
+		std::string getProtocol() const {
+			// Protocol should be in the first line
+			std::string::size_type nextline = 0;
+			const std::string line = StringConverter::getline(_msg, nextline, "\r\n");
+			if (!line.empty()) {
+				const std::string::size_type begin = line.find_last_of(" ") + 1;
+				const std::string::size_type end   = line.find_last_of("/");
+				if (begin != std::string::npos && end != std::string::npos) {
+					return line.substr(begin, end - begin);
+				}
+			}
+			return std::string();
 		}
 
 		/// Set protocol string

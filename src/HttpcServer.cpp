@@ -110,22 +110,21 @@ void HttpcServer::getHtmlBodyNoContent(std::string &htmlBody, const std::string 
 }
 
 bool HttpcServer::process(SocketClient &client) {
-	std::string msg = client.getMessage();
 
-//	SI_LOG_DEBUG("@#1 HTML data from client @#2: @#3", client.getProtocolString(), client.getIPAddress(), msg);
+//	SI_LOG_DEBUG("@#1 HTML data from client @#2: @#3", client.getProtocol(), client.getIPAddress(), client.getRawMessage());
 
 	// parse HTML
-	const std::string method = StringConverter::getMethod(msg);
-	const std::string protocol = StringConverter::getProtocol(msg);
+	const std::string method = client.getMethod();
+	const std::string protocol = client.getProtocol();
 	if (method.empty() || protocol.empty()) {
-		SI_LOG_ERROR("Unknown Data: @#1", msg);
+		SI_LOG_ERROR("Unknown Data: @#1", client.getRawMessage());
 		return false;
 	}
 	if (protocol == "RTSP") {
 		processStreamingRequest(client);
 	} else if (protocol == "HTTP") {
 		if (method == "GET" || method == "HEAD") {
-			if (StringConverter::hasTransportParameters(client.getMessage())) {
+			if (client.hasTransportParameters()) {
 				processStreamingRequest(client);
 			} else {
 				methodGet(client, method == "HEAD");
@@ -133,11 +132,11 @@ bool HttpcServer::process(SocketClient &client) {
 		} else if (method == "POST") {
 			methodPost(client);
 		} else {
-			SI_LOG_ERROR("Unknown HTML message: @#1", msg);
+			SI_LOG_ERROR("Unknown HTML message: @#1", client.getRawMessage());
 			return false;
 		}
 	} else {
-		SI_LOG_ERROR("@#1: Unknown HTML protocol: @#2", protocol, msg);
+		SI_LOG_ERROR("@#1: Unknown HTML protocol: @#2", protocol, client.getRawMessage());
 		return false;
 	}
 	return true;
@@ -146,24 +145,23 @@ bool HttpcServer::process(SocketClient &client) {
 void HttpcServer::processStreamingRequest(SocketClient &client) {
 	base::StopWatch sw;
 	sw.start();
-	const std::string msg = client.getPercentDecodedMessage();
 	SI_LOG_DEBUG("@#1 Stream data from client @#2 with IP @#3 on Port @#4: @#5",
 		client.getProtocolString(), "None", client.getIPAddressOfSocket(),
-		client.getSocketPort(), msg);
+		client.getSocketPort(), client.getRawMessage());
 
-	const std::string method = StringConverter::getMethod(msg);
-	if (method.empty()) {
-		return;
-	}
+	HeaderVector headers = client.getHeaders();
+	TransportParamVector params = client.getTransportParameters();
+
 	// Save clients seq number
-	const std::string fieldCSeq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
-	const int cseq =  fieldCSeq.empty() ? 0 : std::stoi(fieldCSeq);
+	const std::string fieldCSeq = headers.getFieldParameter("CSeq");
+	const int cseq = fieldCSeq.empty() ? 0 : std::stoi(fieldCSeq);
 	// Save sessionID and StreamID
-	const std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
-	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
+	const std::string sessionID = headers.getFieldParameter("Session");
+	const StreamID streamID = params.getIntParameter("stream");
 	// Find the FeID with requesed StreamID
 	const FeID feID = _streamManager.findFrontendIDWithStreamID(streamID);
 
+	const std::string method = client.getMethod();
 	std::string httpcReply;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
@@ -173,7 +171,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 		int clientID;
 		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
 		if (stream != nullptr) {
-			stream->processStreamingRequest(msg, clientID, method);
+			stream->processStreamingRequest(client, clientID);
 
 			// Check the Method
 			if (method == "GET") {
@@ -206,7 +204,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 				methodDescribe(sessionID, cseq, feID, httpcReply);
 			} else {
 				// method not supported
-				SI_LOG_ERROR("@#1: Method not allowed: @#2", method, msg);
+				SI_LOG_ERROR("@#1: Method not allowed: @#2", method, client.getRawMessage());
 			}
 		} else {
 			// something wrong here... send 503 error with 'No-More: frontends'

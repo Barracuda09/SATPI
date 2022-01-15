@@ -137,10 +137,7 @@ class Stream :
 
 		/// Find the clientID for the requested parameters
 		bool findClientIDFor(SocketClient &socketClient,
-		                     bool newSession,
-		                     std::string sessionID,
-		                     const std::string &method,
-		                     int &clientID);
+				bool newSession, std::string sessionID, int &clientID);
 
 		/// Check is this stream used already
 		bool streamInUse() const {
@@ -173,7 +170,7 @@ class Stream :
 	public:
 
 		///
-		bool processStreamingRequest(const std::string &msg, int clientID, const std::string &method);
+		bool processStreamingRequest(const SocketClient &client, int clientID);
 
 		///
 		bool update(int clientID);

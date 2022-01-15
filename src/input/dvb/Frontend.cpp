@@ -254,6 +254,7 @@ namespace input::dvb {
 			SI_LOG_PERROR("Frontend: @#1, Error during polling frontend for data", _feID);
 			return false;
 		}
+		// Time-out return false
 		return false;
 	}
 
@@ -264,11 +265,13 @@ namespace input::dvb {
 			buffer.addAmountOfBytesWritten(bytes);
 			if (buffer.full()) {
 				// Add data to Filter
-				_frontendData.addFilterData(_feID, buffer);
+				_frontendData.getFilterData().addData(_feID, buffer);
 				return true;
 			}
 		} else if (bytes < 0) {
 			SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
+		} else {
+			SI_LOG_ERROR("Frontend: @#1, Error reading data: 0 Bytes available..", _feID);
 		}
 		return false;
 	}
@@ -282,9 +285,8 @@ namespace input::dvb {
 		return false;
 	}
 
-	bool Frontend::capableToTransform(const std::string &msg,
-			const std::string &method) const {
-		const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
+	bool Frontend::capableToTransform(const TransportParamVector& params) const {
+		const input::InputSystem system = _transform.getTransformationSystemFor(params);
 		return capableOf(system);
 	}
 
@@ -397,13 +399,13 @@ namespace input::dvb {
 		return _frontendData.hasDeviceDataChanged();
 	}
 
-	void Frontend::parseStreamString(const std::string &msg, const std::string &method) {
+	void Frontend::parseStreamString(const TransportParamVector& params) {
 		SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 		// Do we need to transform this request?
-		const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
+		const TransportParamVector transParams = _transform.transformStreamString(_feID, params);
 
-		_frontendData.parseStreamString(_feID, msgTrans, method);
+		_frontendData.parseStreamString(_feID, transParams);
 
 		SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 	}
@@ -412,7 +414,6 @@ namespace input::dvb {
 		SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 		base::StopWatch sw;
 		sw.start();
-#ifndef SIMU
 		// Setup, tune and set PID Filters
 		if (_frontendData.hasDeviceDataChanged()) {
 			_frontendData.resetDeviceDataChanged();
@@ -430,7 +431,6 @@ namespace input::dvb {
 			return false;
 		}
 		updatePIDFilters();
-#endif
 		const unsigned long time = sw.getIntervalMS();
 		SI_LOG_INFO("Frontend: @#1, Updating frontend (Finished in @#2 ms)", _feID, time);
 		return true;
@@ -737,7 +737,7 @@ namespace input::dvb {
 							return false;
 						}
 					}
-
+					SI_LOG_INFO("Frontend: @#1, Opened @#2 using fd: @#3", _feID, _path_to_dmx, _fd_dmx);
 					if (_dvrBufferSizeMB > 0) {
 						const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
 						if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
@@ -771,7 +771,6 @@ namespace input::dvb {
 						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, DIGIT(pid, 4));
 						return false;
 					}
-					SI_LOG_INFO("Frontend: @#1, Opened @#2 fd: @#3", _feID, _path_to_dmx, _fd_dmx);
 				} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
 					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, DIGIT(pid, 4));
 					return false;

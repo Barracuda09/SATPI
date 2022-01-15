@@ -20,6 +20,11 @@
 #ifndef DEFS_H_INCLUDE
 #define DEFS_H_INCLUDE DEFS_H_INCLUDE
 
+#include <string>
+#include <vector>
+
+using StringVector = std::vector<std::string>;
+
 class TypeID {
 	public:
 		TypeID(int id) : _id(id) {}

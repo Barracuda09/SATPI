@@ -27,6 +27,7 @@
 #include <string>
 
 FW_DECL_NS0(SocketClient);
+FW_DECL_NS0(TransportParamVector);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
@@ -93,7 +94,7 @@ class StreamManager :
 
 		///
 		std::size_t getMaxStreams() const {
-			return _stream.size();
+			return _streamVector.size();
 		}
 
 		///
@@ -107,7 +108,7 @@ class StreamManager :
 	private:
 
 		///
-		std::pair<FeID, StreamID> findFrontendID(const std::string &msg, const std::string &method) const;
+		std::pair<FeID, StreamID> findFrontendID(const TransportParamVector& params) const;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
@@ -115,7 +116,7 @@ class StreamManager :
 	private:
 
 		decrypt::dvbapi::SpClient _decrypt;
-		StreamSpVector _stream;
+		StreamSpVector _streamVector;
 };
 
 #endif // STREAM_MANAGER_H_INCLUDE

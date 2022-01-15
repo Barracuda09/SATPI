@@ -128,9 +128,8 @@ bool Streamer::capableOf(const input::InputSystem system) const {
 	return system == input::InputSystem::STREAMER;
 }
 
-bool Streamer::capableToTransform(const std::string &msg,
-		const std::string &method) const {
-	const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
+bool Streamer::capableToTransform(const TransportParamVector& params) const {
+	const input::InputSystem system = _transform.getTransformationSystemFor(params);
 	return capableOf(system);
 }
 
@@ -147,13 +146,13 @@ bool Streamer::hasDeviceDataChanged() const {
 
 // Client side
 // http://192.168.178.10:8875/?msys=streamer&uri="udp@224.0.1.3:1234"
-void Streamer::parseStreamString(const std::string &msg, const std::string &method) {
+void Streamer::parseStreamString(const TransportParamVector& params) {
 	SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
-	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
+	const TransportParamVector transParams = _transform.transformStreamString(_feID, params);
 
-	_deviceData.parseStreamString(_feID, msgTrans, method);
+	_deviceData.parseStreamString(_feID, transParams);
 	SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 }
 

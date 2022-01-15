@@ -80,9 +80,9 @@ std::size_t HttpServer::readFile(const char *filePath, std::string &data) const 
 }
 
 bool HttpServer::methodPost(SocketClient &client) {
-	const std::string content = StringConverter::getContentFrom(client.getMessage());
+	const std::string content = client.getContentFrom();
 	if (!content.empty()) {
-		const std::string file = StringConverter::getRequestedFile(client.getMessage());
+		const std::string file = client.getRequestedFile();
 		if (file == "/SatPI.xml") {
 			_xml.fromXML(content);
 		}
@@ -106,7 +106,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 	bool exitRequest = false;
 
 	// Parse what to get
-	if (StringConverter::isRootFile(client.getMessage())) {
+	if (client.isRootFile()) {
 		static const char *HTML_MOVED = "<html>\r\n"                           \
 		                               "<head>\r\n"                            \
 		                               "<title>Page is moved</title>\r\n"      \
@@ -122,7 +122,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
 	} else {
-		std::string file = StringConverter::getRequestedFile(client.getMessage());
+		std::string file = client.getRequestedFile();
 		if (!file.empty()) {
 			// remove first '/'?
 			if (file[0] == '/') {
@@ -161,7 +161,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 									std::to_string(_properties.getHttpPort()));
 							const std::string modelName = StringConverter::stringFormat("SatPI Server (@#1)", _bindIPAddress);
 							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
-								modelName, _properties.getSoftwareVersion(), _properties.getUUID(), presentationURL,
+								modelName, _properties.getUPnPVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
 							docType = newDocType;
 							docTypeSize = docType.size();

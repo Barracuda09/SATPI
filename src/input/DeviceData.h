@@ -28,6 +28,7 @@
 #include <input/dvb/dvbfix.h>
 #include <mpegts/Filter.h>
 
+FW_DECL_NS0(TransportParamVector);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
@@ -63,7 +64,7 @@ class DeviceData :
 		void initialize();
 
 		///
-		void parseStreamString(FeID id, const std::string &msg, const std::string &method);
+		void parseStreamString(FeID id, const TransportParamVector& params);
 
 		///
 		std::string attributeDescribeString(FeID id) const;
@@ -80,7 +81,7 @@ class DeviceData :
 		virtual void doInitialize() {}
 
 		/// Specialization for @see parseStreamString
-		virtual void doParseStreamString(FeID id, const std::string &msg, const std::string &method) = 0;
+		virtual void doParseStreamString(FeID id, const TransportParamVector& params) = 0;
 
 		/// Specialization for @see attributeDescribeString
 		virtual std::string doAttributeDescribeString(FeID id) const = 0;
@@ -112,9 +113,6 @@ class DeviceData :
 
 		///
 		mpegts::Filter &getFilterData();
-
-		///
-		void addFilterData(FeID id, const mpegts::PacketBuffer &buffer);
 
 		///
 		fe_delivery_system convertDeliverySystem() const;

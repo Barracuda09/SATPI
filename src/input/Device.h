@@ -27,6 +27,7 @@
 
 #include <string>
 
+FW_DECL_NS0(TransportParamVector);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 FW_DECL_SP_NS1(input, Device);
@@ -73,9 +74,8 @@ class Device :
 
 		/// Check if this device can transform the reguest according to an M3U file
 		/// This function should be called after function @c capableOf
-		/// @param msg
-		/// @param method
-		virtual bool capableToTransform(const std::string &msg, const std::string &method) const = 0;
+		/// @param params
+		virtual bool capableToTransform(const TransportParamVector& params) const = 0;
 
 		/// Monitor signal of this device
 		virtual void monitorSignal(bool showStatus) = 0;
@@ -86,9 +86,8 @@ class Device :
 		/// Parse the input/request string from client.
 		///   For example:
 		///   rtsp://ip.of.your.box/?fe=3&freq=170&sr=6900&msys=dvbc&mtype=256qam&fec=35&addpids=0,1,16,17
-		/// @param msg
-		/// @param method
-		virtual void parseStreamString(const std::string &msg, const std::string &method) = 0;
+		/// @param params
+		virtual void parseStreamString(const TransportParamVector& params) = 0;
 
 		/// Update the Channel and PID. Will close DVR and reopen it if channel did change
 		virtual bool update() = 0;

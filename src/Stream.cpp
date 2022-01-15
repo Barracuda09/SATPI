@@ -163,14 +163,11 @@ input::dvb::SpFrontendDecryptInterface Stream::getFrontendDecryptInterface() {
 #endif
 
 bool Stream::findClientIDFor(SocketClient &socketClient,
-                             const bool newSession,
-                             const std::string sessionID,
-                             const std::string &method,
-                             int &clientID) {
+		const bool newSession, const std::string sessionID, int &clientID) {
 	base::MutexLock lock(_mutex);
 	const FeID id = _device->getFeID();
-	const std::string message = socketClient.getPercentDecodedMessage();
-	const input::InputSystem msys = StringConverter::getMSYSParameter(message, method);
+	const TransportParamVector params = socketClient.getTransportParameters();
+	const input::InputSystem msys = params.getMSYSParameter();
 
 	// Check if the input device is set, else this stream is not usable
 	if (!_device) {
@@ -187,7 +184,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use, skipping...", id);
 			return false;
 		} else if (!_device->capableOf(msys)) {
-			if (_device->capableToTransform(message, method)) {
+			if (_device->capableToTransform(params)) {
 				SI_LOG_INFO("Frontend: @#1, Capable of transforming msys=@#2",
 					id, StringConverter::delsys_to_string(msys));
 			} else {
@@ -325,24 +322,29 @@ bool Stream::teardown(int clientID) {
 	return true;
 }
 
-bool Stream::processStreamingRequest(const std::string &msg, const int clientID, const std::string &method) {
+bool Stream::processStreamingRequest(const SocketClient &client, const int clientID) {
 	base::MutexLock lock(_mutex);
 
+	// Split message into Headers
+	HeaderVector headers = client.getHeaders();
+
 	// Save clients seq number
-	const std::string cseq = StringConverter::getHeaderFieldParameter(msg, "CSeq:");
+	const std::string cseq = headers.getFieldParameter("CSeq");
 	if (!cseq.empty()) {
 		_client[clientID].setCSeq(std::stoi(cseq));
 	}
 
 	// Save clients User-Agent
-	const std::string userAgent = StringConverter::getHeaderFieldParameter(msg, "User-Agent:");
+	const std::string userAgent = headers.getFieldParameter("User-Agent");
 	if (!userAgent.empty()) {
 		_client[clientID].setUserAgent(userAgent);
 	}
 
+	const std::string method = client.getMethod();
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
-	    StringConverter::hasTransportParameters(msg)) {
-		_device->parseStreamString(msg, method);
+			client.hasTransportParameters()) {
+		TransportParamVector params = client.getTransportParameters();
+		_device->parseStreamString(params);
 	}
 
 	// Channel changed?.. stop/pause Stream
@@ -359,7 +361,7 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 			_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::FILE_DESCRIPTOR);
 			_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 		} else {
-			const std::string transport = StringConverter::getHeaderFieldParameter(msg, "Transport:");
+			const std::string transport = headers.getFieldParameter("Transport");
 			if (transport.find("unicast") != std::string::npos) {
 				if (transport.find("RTP/AVP") != std::string::npos) {
 					_streamingType = StreamingType::RTSP_UNICAST;
@@ -377,14 +379,14 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 
 	switch (_streamingType) {
 		case StreamingType::RTP_TCP: {
-				const int interleaved = StringConverter::getIntParameter(msg, "Transport:", "interleaved=");
+				const int interleaved = headers.getIntFieldParameter("Transport", "interleaved");
 				if (interleaved != -1) {
 					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 				}
 			}
 			break;
 		case StreamingType::RTSP_UNICAST: {
-				const int port = StringConverter::getIntParameter(msg, "Transport:", "client_port=");
+				const int port = headers.getIntFieldParameter("Transport", "client_port");
 				if (port != -1) {
 					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
@@ -393,11 +395,11 @@ bool Stream::processStreamingRequest(const std::string &msg, const int clientID,
 			}
 			break;
 		case StreamingType::RTSP_MULTICAST: {
-				const std::string dest = StringConverter::getStringParameter(msg, "Transport:", "destination=");
+				const std::string dest = headers.getStringFieldParameter("Transport", "destination");
 				if (!dest.empty()) {
 					_client[clientID].setIPAddressOfStream(dest);
 				}
-				const int port = StringConverter::getIntParameter(msg, "Transport:", "port=");
+				const int port = headers.getIntFieldParameter("Transport", "port");
 				if (port != -1) {
 					_client[clientID].getRtpSocketAttr().setupSocketStructure(dest, port);
 					_client[clientID].getRtcpSocketAttr().setupSocketStructure(dest, port + 1);

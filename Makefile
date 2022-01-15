@@ -49,6 +49,7 @@ endif
 # List of source to be compiled
 SOURCES = Version.cpp \
 	InterfaceAttr.cpp \
+	HeaderVector.cpp \
 	HttpServer.cpp \
 	HttpcServer.cpp \
 	Log.cpp \
@@ -60,6 +61,7 @@ SOURCES = Version.cpp \
 	StreamClient.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
+	TransportParamVector.cpp \
 	Utils.cpp \
 	base/M3UParser.cpp \
 	base/Thread.cpp \

@@ -20,6 +20,7 @@
 #include <input/Transformation.h>
 
 #include <Log.h>
+#include <TransportParamVector.h>
 #include <Utils.h>
 #include <StringConverter.h>
 #include <base/Tokenizer.h>
@@ -127,91 +128,73 @@ void Transformation::resetTransformFlag() {
 	_transformFreq = 0;
 }
 
-input::InputSystem Transformation::getTransformationSystemFor(
-		const std::string &msg,
-		const std::string &method) const {
+input::InputSystem Transformation::getTransformationSystemFor(const TransportParamVector& params) const {
 	base::MutexLock lock(_mutex);
 	if (_enabled && _fileParsed) {
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		const double freq = params.getDoubleParameter("freq");
 		if (freq > 0.0) {
-			const int src = StringConverter::getIntParameter(msg, method, "src=");
+			const int src = params.getIntParameter("src");
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);
 			if (element.src == -1 || (element.src >= 0 && element.src == src)) {
-				return StringConverter::getMSYSParameter(element.uri, "");
+				TransportParamVector param(StringConverter::split(element.uri, " /?&"));
+				return param.getMSYSParameter();
 			}
 		}
 	}
 	return input::InputSystem::UNDEFINED;
 }
 
-bool Transformation::transformStreamPossible(
+std::string Transformation::transformStreamPossible(
 		const FeID id,
-		const std::string &msg,
-		const std::string &method,
-		std::string &uriTransform) {
+		const TransportParamVector& params) {
 	if (_enabled && _fileParsed) {
-		const double freq = StringConverter::getDoubleParameter(msg, method, "freq=");
+		const double freq = params.getDoubleParameter("freq");
 		if (freq > 0.0) {
-			const int src = StringConverter::getIntParameter(msg, method, "src=");
+			const int src = params.getIntParameter("src");
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);
 			if (!element.uri.empty() && (element.src == -1 || (element.src >= 0 && element.src == src))) {
-				SI_LOG_INFO("Frontend: @#1, Request can be Transformed with: @#2", id, uriTransform);
-				uriTransform = element.uri;
 				_transformFreq = freq * 1000.0;
-				return true;
+				return element.uri;
 			}
 		}
 	}
-	return false;
+	return std::string();
 }
 
-std::string Transformation::transformStreamString(
-		const FeID id,
-		const std::string &msg,
-		const std::string &method) {
+TransportParamVector Transformation::transformStreamString(
+		const FeID id, const TransportParamVector& params) {
 	base::MutexLock lock(_mutex);
 	// Transformation possible for this request
-	std::string uriTransform;
-	if (!transformStreamPossible(id, msg, method, uriTransform)) {
-		return msg;
+	std::string uriTransform = transformStreamPossible(id, params);
+	if (uriTransform.empty()) {
+		return params;
 	}
 	// Transformation possible
 	_transform = true;
 
-	// remove 'xxxpids=' from transform uri if specified
-	base::StringTokenizer tokenizer(uriTransform, "?& ");
-	tokenizer.removeToken("addpids=");
-	tokenizer.removeToken("delpids=");
-	const std::string uri = tokenizer.removeToken("pids=");
-
-	const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
+	const input::InputSystem msys = params.getMSYSParameter();
 	if (msys != input::InputSystem::UNDEFINED) {
 		_transformedDeviceData.setDeliverySystem(msys);
 	}
-	// Build new message with transform uri and requested PIDS
-	std::string msgTrans = method;
-	msgTrans += " ";
-	msgTrans += uri;
-	const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
+	TransportParamVector transParams = TransportParamVector(
+			StringConverter::split(uriTransform, " /?&"));
+
+	const std::string pidsList = params.getParameter("pids");
 	if (!pidsList.empty()) {
-		msgTrans += "&pids=";
-		msgTrans += pidsList;
+		transParams.replaceParameter("pids", pidsList);
 	}
-	const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
+	const std::string addpidsList = params.getParameter("addpids");
 	if (!addpidsList.empty()) {
-		msgTrans += "&addpids=";
-		msgTrans += addpidsList;
+		transParams.replaceParameter("addpids", addpidsList);
 	}
-	const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
+	const std::string delpidsList = params.getParameter("delpids");
 	if (!delpidsList.empty()) {
-		msgTrans += "&delpids=";
-		msgTrans += delpidsList;
+		transParams.replaceParameter("delpids", delpidsList);
 	}
-	msgTrans += " RTSP/1.0";
-	SI_LOG_INFO("Frontend: @#1, Request Transformed to: @#2", id, msgTrans);
-	return msgTrans;
+	SI_LOG_INFO("Frontend: @#1, Request Transformed to: @#2", id, uriTransform);
+	return transParams;
 }
 
 const DeviceData &Transformation::transformDeviceData(
@@ -229,7 +212,6 @@ const DeviceData &Transformation::transformDeviceData(
 			strength = 240;
 			snr = 15;
 		}
-
 		_transformedDeviceData.setMonitorData(status, strength, snr, ber, ublocks);
 	}
 	return (_transform && _enabled && _fileParsed) ? _transformedDeviceData : deviceData;

@@ -21,7 +21,6 @@
 
 #include <Log.h>
 #include <input/dvb/dvbfix.h>
-#include <base/Tokenizer.h>
 
 #include <iostream>
 #include <cstdarg>
@@ -30,6 +29,29 @@ void StringConverter::splitPath(const std::string &fullPath, std::string &path, 
 	std::string::size_type end = fullPath.find_last_of("/\\");
 	path = fullPath.substr(0, end);
 	file = fullPath.substr(end + 1);
+}
+
+StringVector StringConverter::split(const std::string_view input,
+		const std::string_view delimiters) {
+	StringVector tokens;
+	std::string_view::size_type start = 0;
+	std::string_view::size_type end = 0;
+	do {
+		// try to find end of a token by finding the delimiter from current start pos
+		end = input.find_first_of(delimiters, start);
+		// if there is no delimiter found than use string end
+		if (end == std::string::npos) {
+			end = input.size();
+		}
+		// get the subpart of the string and store it as a token
+		std::string_view token = input.substr(start, end - start);
+		if (!token.empty()) {
+			tokens.emplace_back(token);
+		}
+		// advance 'start' to pos just after found token + delimiter
+		start = input.find_first_not_of(delimiters, end);
+	} while (end < input.size() && start < input.size());
+	return tokens;
 }
 
 std::string StringConverter::stringToUpper(const std::string_view str) {
@@ -115,166 +137,6 @@ std::string StringConverter::convertToHexASCIITable(const unsigned char *p, cons
 	return out;
 }
 
-bool StringConverter::isRootFile(const std::string &msg) {
-	return msg.find("/ ") != std::string::npos;
-}
-
-std::string StringConverter::getProtocol(const std::string &msg) {
-	// Protocol should be in the first line
-	std::string::size_type nextline = 0;
-	const std::string line = StringConverter::getline(msg, nextline, "\r\n");
-	if (!line.empty()) {
-		const std::string::size_type begin = line.find_last_of(" ") + 1;
-		const std::string::size_type end   = line.find_last_of("/");
-		if (begin != std::string::npos && end != std::string::npos) {
-			return line.substr(begin, end - begin);
-		}
-	}
-	return "";
-}
-
-std::string StringConverter::getRequestedFile(const std::string &msg) {
-	const std::string method = StringConverter::getMethod(msg);
-	if (!method.empty()) {
-		const std::string param = StringConverter::getHeaderFieldParameter(msg, method);
-		const std::string::size_type begin = param.find_first_of("/");
-		const std::string::size_type end   = param.find_first_of(" ", begin);
-		return param.substr(begin, end - begin);
-	}
-	return "";
-}
-
-std::string StringConverter::getMethod(const std::string &msg) {
-	// request line should be in the first line (method)
-	std::string::size_type nextline = 0;
-	const std::string line = StringConverter::getline(msg, nextline, "\r\n");
-	if (!line.empty()) {
-		std::string::const_iterator it = line.begin();
-		// remove any leading whitespace
-		while (*it == ' ') ++it;
-
-		// copy method (upper case)
-		std::string method;
-		while (*it != ' ') {
-			method += std::toupper(*it);
-			++it;
-		}
-		return method;
-	}
-	return "";
-}
-
-std::string StringConverter::getContentFrom(const std::string &msg) {
-	const std::string p = StringConverter::getHeaderFieldParameter(msg, "Content-Length:");
-	const std::size_t contentLength = (!p.empty() && std::isdigit(p[0])) ? std::stoi(p) : 0;
-	if (contentLength > 0) {
-		const std::string::size_type headerSize = msg.find("\r\n\r\n", 0);
-		if (headerSize != std::string::npos) {
-			return msg.substr(headerSize + 4);
-		}
-	}
-	return "";
-}
-
-bool StringConverter::hasTransportParameters(const std::string &msg) {
-	// Transport Parameters should be in the first line (method)
-	std::string::size_type nextline = 0;
-	const std::string line = StringConverter::getline(msg, nextline, "\r\n");
-	if (!line.empty()) {
-		const std::string::size_type size = line.size() - 1;
-		const std::string::size_type found = line.find_first_of("?");
-		if (found != std::string::npos && found < size && line[found + 1] != ' ') {
-			return true;
-		}
-	}
-	return false;
-}
-
-std::string StringConverter::getHeaderFieldParameter(const std::string &msg, const std::string &header_field) {
-	std::string::size_type nextline = 0;
-	for (;;) {
-		const std::string line = StringConverter::getline(msg, nextline, "\r\n");
-		if (line.empty()) {
-			return "";
-		}
-		std::string::const_iterator it = line.begin();
-		std::string::const_iterator it_h = header_field.begin();
-
-		// remove any leading whitespace
-		while (std::isspace(*it)) ++it;
-
-		// check if we find header_field
-		bool found = true;
-		while (it != line.end() && it_h != header_field.end()) {
-			if (std::toupper(*it) != std::toupper(*it_h)) {
-				found = false;
-				break;
-			}
-			++it;
-			++it_h;
-		}
-		if (found) {
-			// copy parameter and trim whitespace
-			const std::string::size_type begin = it - line.begin();
-			const std::string::size_type end = line.size();
-			return StringConverter::trimWhitespace(line.substr(begin, end - begin));
-		}
-	}
-}
-
-std::string StringConverter::getStringParameter(const std::string &msg, const std::string &header_field,
-	const std::string &delim, const std::string &parameter) {
-	const std::string line = StringConverter::getHeaderFieldParameter(msg, header_field);
-	if (line.empty()) {
-		return "";
-	}
-	base::StringTokenizer tokenizer(line, delim);
-	std::string token;
-	while (tokenizer.isNextToken(token)) {
-		std::string::size_type begin = token.find(parameter);
-		if (begin != std::string::npos && begin == 0) {
-			begin += parameter.size();
-
-			// trim leading whitespace
-			while (std::isspace(token[begin])) ++begin;
-
-			std::string::size_type end = token.find_first_of(delim + " \r\n", begin);
-			if (end == std::string::npos) {
-				end = token.size();
-			}
-			// copy and trim whitespace
-			return trimWhitespace(token.substr(begin, end - begin));
-		}
-	}
-	return "";
-}
-
-std::string StringConverter::getStringParameter(const std::string &msg,
-	const std::string &header_field, const std::string &parameter) {
-	return StringConverter::getStringParameter(msg, header_field, "/&?;", parameter);
-}
-
-std::string StringConverter::getURIParameter(const std::string &msg,
-	const std::string &header_field, const std::string &uriParameter) {
-	const std::string line = StringConverter::getHeaderFieldParameter(msg, header_field);
-	if (line.empty()) {
-		return "";
-	}
-	std::string::size_type begin = line.find(uriParameter);
-	if (begin != std::string::npos) {
-		begin += uriParameter.size();
-		begin = line.find("\"", begin);
-		if (begin != std::string::npos) {
-			begin += 1;
-			std::string::size_type end = line.find("\"", begin);
-			if (end != std::string::npos) {
-				return line.substr(begin, end - begin);
-			}
-		}
-	}
-	return "";
-}
-
 std::string StringConverter::getPercentDecoding(const std::string &msg) {
 	std::string decoded = msg;
 	// Search for ASCII Percent-Encoding and decode it
@@ -334,42 +196,7 @@ StringVector StringConverter::parseCommandArgumentString(const std::string &cmd)
      return argVector;
 }
 
-double StringConverter::getDoubleParameter(const std::string &msg,
-	const std::string &header_field, const std::string &parameter) {
-	const std::string val = StringConverter::getStringParameter(msg, header_field, parameter);
-	return (!val.empty() && std::isdigit(val[0])) ? std::stof(val) : -1.0;
-}
-
-int StringConverter::getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter) {
-	const std::string val = StringConverter::getStringParameter(msg, header_field, parameter);
-	return (!val.empty() && std::isdigit(val[0])) ? std::stoi(val) : -1;
-}
-
-input::InputSystem StringConverter::getMSYSParameter(const std::string &msg, const std::string &header_field) {
-	const std::string val = StringConverter::getStringParameter(msg, header_field, "msys=");
-	if (!val.empty()) {
-		if (val == "dvbs2") {
-			return input::InputSystem::DVBS2;
-		} else if (val == "dvbs") {
-			return input::InputSystem::DVBS;
-		} else if (val == "dvbt") {
-			return input::InputSystem::DVBT;
-		} else if (val == "dvbt2") {
-			return input::InputSystem::DVBT2;
-		} else if (val == "dvbc") {
-			return input::InputSystem::DVBC;
-		} else if (val == "file") {
-			return input::InputSystem::FILE;
-		} else if (val == "streamer") {
-			return input::InputSystem::STREAMER;
-		} else if (val == "childpipe") {
-			return input::InputSystem::CHILDPIPE;
-		}
-	}
-	return input::InputSystem::UNDEFINED;
-}
-
-std::string StringConverter::fec_to_string(const int fec) {
+std::string_view StringConverter::fec_to_string(const int fec) {
 	switch (fec) {
 	case FEC_1_2:
 		return "12";
@@ -400,7 +227,7 @@ std::string StringConverter::fec_to_string(const int fec) {
 	}
 }
 
-std::string StringConverter::delsys_to_string(const input::InputSystem system) {
+std::string_view StringConverter::delsys_to_string(const input::InputSystem system) {
 	switch (system) {
 		case input::InputSystem::DVBS2:
 			return "dvbs2";
@@ -423,7 +250,7 @@ std::string StringConverter::delsys_to_string(const input::InputSystem system) {
 	}
 }
 
-std::string StringConverter::modtype_to_sting(const int modtype) {
+std::string_view StringConverter::modtype_to_sting(const int modtype) {
 	switch (modtype) {
 	case QAM_16:
 		return "16qam";
@@ -446,7 +273,7 @@ std::string StringConverter::modtype_to_sting(const int modtype) {
 	}
 }
 
-std::string StringConverter::rolloff_to_sting(const int rolloff) {
+std::string_view StringConverter::rolloff_to_sting(const int rolloff) {
 	switch (rolloff) {
 	case ROLLOFF_35:
 		return "0.35";
@@ -461,7 +288,7 @@ std::string StringConverter::rolloff_to_sting(const int rolloff) {
 	}
 }
 
-std::string StringConverter::pilot_tone_to_string(const int pilot) {
+std::string_view StringConverter::pilot_tone_to_string(const int pilot) {
 	switch (pilot) {
 	case PILOT_ON:
 		return "on";
@@ -474,7 +301,7 @@ std::string StringConverter::pilot_tone_to_string(const int pilot) {
 	}
 }
 
-std::string StringConverter::transmode_to_string(const int transmission_mode) {
+std::string_view StringConverter::transmode_to_string(const int transmission_mode) {
 	switch (transmission_mode) {
 	case TRANSMISSION_MODE_2K:
 		return "2k";
@@ -501,7 +328,7 @@ std::string StringConverter::transmode_to_string(const int transmission_mode) {
 	}
 }
 
-std::string StringConverter::guardinter_to_string(const int guard_interval) {
+std::string_view StringConverter::guardinter_to_string(const int guard_interval) {
 	switch (guard_interval) {
 	case GUARD_INTERVAL_1_32:
 		return "132";

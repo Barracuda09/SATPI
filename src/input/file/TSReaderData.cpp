@@ -22,6 +22,7 @@
 #include <Log.h>
 #include <Unused.h>
 #include <StringConverter.h>
+#include <TransportParamVector.h>
 
 namespace input {
 namespace file {
@@ -50,11 +51,8 @@ void TSReaderData::doInitialize() {
 	_filePath = "None";
 }
 
-void TSReaderData::doParseStreamString(
-		const FeID UNUSED(id),
-		const std::string &msg,
-		const std::string &method) {
-	const std::string filePath = StringConverter::getURIParameter(msg, method, "uri=");
+void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+	const std::string filePath = params.getURIParameter("uri");
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
 		return;
 	}

@@ -29,6 +29,7 @@
 
 #include <string>
 
+FW_DECL_NS0(TransportParamVector);
 FW_DECL_NS1(input, DeviceData);
 
 namespace input {
@@ -78,13 +79,10 @@ class Transformation :
 
 		/// This function may return the input system for the
 		/// requested input frequency and src input.
-		input::InputSystem getTransformationSystemFor(const std::string &msg,
-			const std::string &method) const;
+		input::InputSystem getTransformationSystemFor(const TransportParamVector& params) const;
 
 		/// This function may return the transformed input message
-		std::string transformStreamString(FeID id,
-			const std::string &msg,
-			const std::string &method);
+		TransportParamVector transformStreamString(FeID id, const TransportParamVector& params);
 
 		/// This function may return the transformed Device Data
 		const DeviceData &transformDeviceData(
@@ -94,10 +92,8 @@ class Transformation :
 
 		/// This function will check if transformation is possible and returns
 		/// the URI to use for the transformation
-		bool transformStreamPossible(FeID id,
-			const std::string &msg,
-			const std::string &method,
-			std::string &uriTransform);
+		std::string transformStreamPossible(FeID id,
+			const TransportParamVector& params);
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

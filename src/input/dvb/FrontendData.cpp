@@ -23,6 +23,7 @@
 #include <Unused.h>
 #include <Utils.h>
 #include <StringConverter.h>
+#include <TransportParamVector.h>
 
 namespace input::dvb {
 
@@ -104,14 +105,13 @@ void FrontendData::doInitialize() {
 	_siso_miso = 0;
 }
 
-void FrontendData::doParseStreamString(
-		const FeID id,
-		const std::string &msg,
-		const std::string &method) {
+void FrontendData::doParseStreamString(const FeID id, const TransportParamVector& params) {
 	// Save freq FIRST because of possible initializing of channel data
 	const double oldFreq = _freq / 1000.0;
-	const double reqFreq = StringConverter::getDoubleParameter(msg, method, "freq=");
+	const double reqFreq = params.getDoubleParameter("freq");
 	if (reqFreq != -1.0) {
+		// TransportParamVector has on first position the Method
+		const std::string method = params[0];
 		if (reqFreq != oldFreq) {
 			// New frequency, so initialize FrontendData and 'remove' all used PIDS
 			SI_LOG_INFO("Frontend: @#1, New frequency requested, clearing old channel data...", id);
@@ -119,27 +119,27 @@ void FrontendData::doParseStreamString(
 			_freq = reqFreq * 1000.0;
 			_changed = true;
 		} else if (method == "SETUP" || method == "PLAY") {
-			const std::string list = StringConverter::getStringParameter(msg, method, "pids=");
-			if (msg.find("pids=") == std::string::npos) {
+			const std::string list = params.getParameter("pids");
+			if (list.empty()) {
 				// TvHeadend Bug #4809
 				// Channel change within the same frequency and no 'xxxpids=', 'remove' all used PIDS
 				SI_LOG_INFO("Frontend: @#1, @#2 method with query and no pids=, clearing old pids...", id, method);
 				_filter.clear();
-			} else if (!list.empty()) {
+			} else {
 				SI_LOG_INFO("Frontend: @#1, @#2 method with query and pids=, clearing old pids...", id, method);
 				_filter.clear();
 			}
 		}
 	}
-	const int sr = StringConverter::getIntParameter(msg, method, "sr=");
+	const int sr = params.getIntParameter("sr");
 	if (sr != -1) {
 		_srate = sr * 1000;
 	}
-	const input::InputSystem msys = StringConverter::getMSYSParameter(msg, method);
+	const input::InputSystem msys = params.getMSYSParameter();
 	if (msys != input::InputSystem::UNDEFINED) {
 		_delsys = msys;
 	}
-	const std::string pol = StringConverter::getStringParameter(msg, method, "pol=");
+	const std::string pol = params.getParameter("pol");
 	if (!pol.empty()) {
 		if (pol == "h") {
 			_pol = Lnb::Polarization::Horizontal;
@@ -147,11 +147,11 @@ void FrontendData::doParseStreamString(
 			_pol = Lnb::Polarization::Vertical;
 		}
 	}
-	const int src = StringConverter::getIntParameter(msg, method, "src=");
+	const int src = params.getIntParameter("src");
 	if (src >= 1) {
 		_src = src;
 	}
-	const std::string plts = StringConverter::getStringParameter(msg, method, "plts=");
+	const std::string plts = params.getParameter("plts");
 	if (!plts.empty()) {
 		// "on", "off"[, "auto"]
 		if (plts == "on") {
@@ -165,7 +165,7 @@ void FrontendData::doParseStreamString(
 			_pilot = PILOT_AUTO;
 		}
 	}
-	const std::string ro = StringConverter::getStringParameter(msg, method, "ro=");
+	const std::string ro = params.getParameter("ro");
 	if (!ro.empty()) {
 		// "0.35", "0.25", "0.20"[, "auto"]
 		if (ro == "0.35") {
@@ -181,7 +181,7 @@ void FrontendData::doParseStreamString(
 			_rolloff = ROLLOFF_AUTO;
 		}
 	}
-	const std::string fec = StringConverter::getStringParameter(msg, method, "fec=");
+	const std::string fec = params.getParameter("fec");
 	if (!fec.empty()) {
 		// "12", "23", "34", "56", "78", "89", "35", "45", "910"[, "auto"]
 		if (fec == "12") {
@@ -211,7 +211,7 @@ void FrontendData::doParseStreamString(
 			_fec = FEC_AUTO;
 		}
 	}
-	const std::string mtype = StringConverter::getStringParameter(msg, method, "mtype=");
+	const std::string mtype = params.getParameter("mtype");
 	if (!mtype.empty()) {
 		if (mtype == "8psk") {
 			_modtype = PSK_8;
@@ -249,15 +249,15 @@ void FrontendData::doParseStreamString(
 				break;
 		}
 	}
-	const int specinv = StringConverter::getIntParameter(msg, method, "specinv=");
+	const int specinv = params.getIntParameter("specinv");
 	if (specinv != -1) {
 		_inversion = specinv;
 	}
-	const double bw = StringConverter::getDoubleParameter(msg, method, "bw=");
+	const double bw = params.getDoubleParameter("bw");
 	if (bw != -1) {
 		_bandwidthHz = bw * 1000000.0;
 	}
-	const std::string tmode = StringConverter::getStringParameter(msg, method, "tmode=");
+	const std::string tmode = params.getParameter("tmode");
 	if (!tmode.empty()) {
 		// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
 		if (tmode == "1k") {
@@ -279,7 +279,7 @@ void FrontendData::doParseStreamString(
 			_transmission = TRANSMISSION_MODE_AUTO;
 		}
 	}
-	const std::string gi = StringConverter::getStringParameter(msg, method, "gi=");
+	const std::string gi = params.getParameter("gi");
 	if (!gi.empty()) {
 		// "14", "18", "116", "132","1128", "19128", "19256"[, "auto"]
 		if (gi == "14") {
@@ -303,31 +303,30 @@ void FrontendData::doParseStreamString(
 			_guard = GUARD_INTERVAL_AUTO;
 		}
 	}
-	const int plp = StringConverter::getIntParameter(msg, method, "plp=");
+	const int plp = params.getIntParameter("plp");
 	if (plp != -1) {
 		_plp_id = plp;
 	}
-	const int t2id = StringConverter::getIntParameter(msg, method, "t2id=");
+	const int t2id = params.getIntParameter("t2id");
 	if (t2id != -1) {
 		_t2_system_id = t2id;
 	}
-	const int sm = StringConverter::getIntParameter(msg, method, "sm=");
+	const int sm = params.getIntParameter("sm");
 	if (sm != -1) {
 		_siso_miso = sm;
 	}
 	// Always request PID 0 - Program Association Table (PAT)
-	const std::string addPATPid = ",0";
+	const std::string addUserPids = ",0,1,16,17,18";
 	// Add user defined PIDs
-	const std::string addUserPids = ",1,16,17,18";
-	const std::string pidsList = StringConverter::getStringParameter(msg, method, "pids=");
+	const std::string pidsList = params.getParameter("pids");
 	if (!pidsList.empty()) {
-		_filter.parsePIDString(pidsList, addPATPid + addUserPids, true);
+		_filter.parsePIDString(pidsList, addUserPids, true);
 	}
-	const std::string addpidsList = StringConverter::getStringParameter(msg, method, "addpids=");
+	const std::string addpidsList = params.getParameter("addpids");
 	if (!addpidsList.empty()) {
-		_filter.parsePIDString(addpidsList, addPATPid + addUserPids, true);
+		_filter.parsePIDString(addpidsList, addUserPids, true);
 	}
-	const std::string delpidsList = StringConverter::getStringParameter(msg, method, "delpids=");
+	const std::string delpidsList = params.getParameter("delpids");
 	if (!delpidsList.empty()) {
 		_filter.parsePIDString(delpidsList, "", false);
 	}

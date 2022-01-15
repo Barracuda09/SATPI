@@ -22,9 +22,9 @@
 #include <Log.h>
 #include <Unused.h>
 #include <StringConverter.h>
+#include <TransportParamVector.h>
 
-namespace input {
-namespace childpipe {
+namespace input::childpipe {
 
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
@@ -51,20 +51,17 @@ void TSReaderData::doInitialize() {
 	_pcrTimer = 0;
 }
 
-void TSReaderData::doParseStreamString(
-		const FeID UNUSED(id),
-		const std::string &msg,
-		const std::string &method) {
-	const std::string filePath = StringConverter::getURIParameter(msg, method, "exec=");
+void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+	const std::string filePath = params.getURIParameter("exec");
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
 		return;
 	}
 	initialize();
 	_changed = true;
-	_filePath = filePath;
+	_filePath = StringConverter::getPercentDecoding(filePath);
 	// when 'pcrtimer=' is not set or zero the PCR from the stream is used, else this timer
 	// will be used as read interval.
-	const int pcrTimer = StringConverter::getIntParameter(msg, method, "pcrtimer=");
+	const int pcrTimer = params.getIntParameter("pcrtimer");
 	if (pcrTimer != -1) {
 		_pcrTimer = pcrTimer;
 	}
@@ -96,5 +93,4 @@ int TSReaderData::getPCRTimer() const {
 	return _pcrTimer;
 }
 
-} // namespace childpipe
-} // namespace input
+}

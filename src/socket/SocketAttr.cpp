@@ -53,14 +53,13 @@
 		_addr.sin_port = 0;
 	}
 
-	void SocketAttr::setupSocketStructure(const std::string &ipAddr, int port) {
+	void SocketAttr::setupSocketStructure(const std::string_view ipAddr, int port) {
 		// fill in the socket structure with host information
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family      = AF_INET;
-		_addr.sin_addr.s_addr = inet_addr(ipAddr.c_str());
+		_addr.sin_addr.s_addr = inet_addr(ipAddr.data());
 		_addr.sin_port        = htons(port);
-
-		_ipAddr = ipAddr;
+		_ipAddr = ipAddr.data();
 	}
 
 	void SocketAttr::setupSocketStructureWithAnyAddress(int port) {

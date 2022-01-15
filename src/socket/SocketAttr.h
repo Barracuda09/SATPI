@@ -48,7 +48,7 @@ class SocketAttr {
 		virtual void closeFD();
 
 		///
-		void setupSocketStructure(const std::string &ipAddr, int port);
+		void setupSocketStructure(std::string_view ipAddr, int port);
 
 		///
 		void setupSocketStructureWithAnyAddress(int port);
@@ -58,7 +58,7 @@ class SocketAttr {
 
 		/// Set the IP address of this client
 		/// @param addr specifies the IP address of this client
-		void setIPAddressOfSocket(const std::string &ipAddr) {
+		void setIPAddressOfSocket(const std::string& ipAddr) {
 			_ipAddr = ipAddr;
 		}
 
@@ -68,14 +68,14 @@ class SocketAttr {
 		}
 
 		///
-		bool writeData(const struct iovec *iov, int iovcnt);
+		bool writeData(const struct iovec* iov, int iovcnt);
 
 		/// Use this function when the socket is in connected state
-		bool sendData(const void *buf, std::size_t len, int flags);
+		bool sendData(const void* buf, std::size_t len, int flags);
 
 		/// Use this function when the socket is on a
 		/// connection-mode (SOCK_STREAM)
-		bool sendDataTo(const void *buf, std::size_t len, int flags);
+		bool sendDataTo(const void* buf, std::size_t len, int flags);
 
 		/// Get the port of this Socket
 		int getSocketPort() const;
@@ -96,7 +96,7 @@ class SocketAttr {
 		int getFD() const;
 
 		///
-		ssize_t recvDatafrom(void *buf, std::size_t len, int flags);
+		ssize_t recvDatafrom(void* buf, std::size_t len, int flags);
 
 		/// bind the socket to the port number
 		bool bind();
@@ -111,7 +111,7 @@ class SocketAttr {
 
 		/// Accept an connection on this Socket and save client IP address etc.
 		/// in client
-		bool acceptConnection(SocketClient &client, bool showLogInfo);
+		bool acceptConnection(SocketClient& client, bool showLogInfo);
 
 	protected:
 

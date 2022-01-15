@@ -32,8 +32,6 @@
 #include <algorithm>
 #include <iomanip>
 
-using StringVector = std::vector<std::string>;
-
 /// The class @c StringConverter has some string manipulation functions
 class StringConverter  {
 
@@ -138,42 +136,13 @@ class StringConverter  {
 		static std::string stringToUpper(std::string_view str);
 
 		///
-		static bool isRootFile(const std::string &msg);
-
-		///
 		static std::string getProtocol(const std::string &msg);
-
-		///
-		static std::string getRequestedFile(const std::string &msg);
 
 		///
 		static void splitPath(const std::string &fullPath, std::string &path, std::string &file);
 
 		///
-		static std::string getMethod(const std::string &msg);
-
-		///
-		static std::string getContentFrom(const std::string &msg);
-
-		///
-		static bool hasTransportParameters(const std::string &msg);
-
-		///
-		static std::string getHeaderFieldParameter(const std::string &msg, const std::string &header_field);
-
-		///
-		static std::string getStringParameter(const std::string &msg, const std::string &header_field,
-		   const std::string &delim, const std::string &parameter);
-
-		///
-		static std::string getStringParameter(const std::string &msg,
-		    const std::string &header_field, const std::string &parameter);
-
-		///
-		static double getDoubleParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
-
-		///
-		static std::string getURIParameter(const std::string &msg, const std::string &header_field, const std::string &uriParameter);
+		static StringVector split(std::string_view input, std::string_view delimiters);
 
 		///
 		static std::string getPercentDecoding(const std::string &msg);
@@ -182,31 +151,25 @@ class StringConverter  {
 		static StringVector parseCommandArgumentString(const std::string &cmd);
 
 		///
-		static int getIntParameter(const std::string &msg, const std::string &header_field, const std::string &parameter);
+		static std::string_view transmode_to_string(int transmission_mode);
 
 		///
-		static input::InputSystem getMSYSParameter(const std::string &msg, const std::string &header_field);
+		static std::string_view rolloff_to_sting(int rolloff);
 
 		///
-		static std::string transmode_to_string(int transmission_mode);
+		static std::string_view modtype_to_sting(int modtype);
 
 		///
-		static std::string rolloff_to_sting(int rolloff);
+		static std::string_view fec_to_string(int fec);
 
 		///
-		static std::string modtype_to_sting(int modtype);
+		static std::string_view delsys_to_string(input::InputSystem delsys);
 
 		///
-		static std::string fec_to_string(int fec);
+		static std::string_view guardinter_to_string(int guard_interval);
 
 		///
-		static std::string delsys_to_string(input::InputSystem delsys);
-
-		///
-		static std::string guardinter_to_string(int guard_interval);
-
-		///
-		static std::string pilot_tone_to_string(int pilot);
+		static std::string_view pilot_tone_to_string(int pilot);
 
 	protected:
 

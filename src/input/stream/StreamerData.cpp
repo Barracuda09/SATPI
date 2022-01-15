@@ -22,6 +22,7 @@
 #include <Log.h>
 #include <Unused.h>
 #include <StringConverter.h>
+#include <TransportParamVector.h>
 
 namespace input {
 namespace stream {
@@ -53,11 +54,8 @@ namespace stream {
 		_udp = false;
 	}
 
-	void StreamerData::doParseStreamString(
-			const FeID UNUSED(id),
-			const std::string &msg,
-			const std::string &method) {
-		const std::string uri = StringConverter::getURIParameter(msg, method, "uri=");
+	void StreamerData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+		const std::string uri = params.getURIParameter("uri");
 		if (uri.empty() || (hasFilePath() && uri == _uri)) {
 			return;
 		}

@@ -28,11 +28,11 @@
 #include <socket/UdpSocket.h>
 
 #include <map>
+#include <string_view>
 
 FW_DECL_NS0(Properties);
 
-namespace upnp {
-namespace ssdp {
+namespace upnp::ssdp {
 
 /// SSDP Server
 class Server :
@@ -71,39 +71,45 @@ class Server :
 
 		///
 		void checkReply(
-			struct sockaddr_in &si_other,
-			const std::string &message);
+			SocketClient& udpMultiListen,
+			SocketClient& udpMultiSend,
+			struct sockaddr_in& si_other);
 
 		///
 		void sendSATIPClientDiscoverResponse(
-			struct sockaddr_in &si_other,
-			const std::string &ip_addr);
+			SocketClient& udpMultiSend,
+			struct sockaddr_in& si_other,
+			const std::string& ip_addr);
 
 		///
 		void sendRootDeviceDiscoverResponse(
-			struct sockaddr_in &si_other,
-			const std::string &ip_addr);
+			SocketClient& udpMultiSend,
+			struct sockaddr_in& si_other,
+			const std::string& ip_addr);
 
 		///
 		void sendDiscoverResponse(
-			const std::string &searchTarget,
-			struct sockaddr_in &si_other);
+			SocketClient& udpMultiSend,
+			const std::string& searchTarget,
+			struct sockaddr_in& si_other);
 
 		///
 		void checkDefendDeviceID(
 			unsigned int otherDeviceID,
-			const std::string &ip_addr);
+			std::string_view ip_addr);
 
 		///
 		void sendGiveUpDeviceID(
-			struct sockaddr_in &si_other,
-			const std::string &ip_addr);
+			SocketClient& udpMultiSend,
+			struct sockaddr_in& si_other,
+			const std::string& ip_addr);
 
 		///
-		void sendAnnounce();
+		void sendAnnounce(SocketClient& udpMultiSend);
 
 		///
-		bool sendByeBye(unsigned int bootId, const char *uuid);
+		bool sendByeBye(SocketClient& udpMultiSend, unsigned int bootId,
+			std::string_view uuid);
 
 		///
 		void incrementBootID();
@@ -125,8 +131,6 @@ class Server :
 		base::Mutex _mutex;
 		const Properties &_properties;
 		std::string _bindIPAddress;
-		SocketClient _udpMultiListen;
-		SocketClient _udpMultiSend;
 		std::string _xmlDeviceDescriptionFile;
 		std::string _location;
 		std::size_t _announceTimeSec;
@@ -134,7 +138,6 @@ class Server :
 		std::size_t _deviceID;
 };
 
-} // namespace ssdp
-} // namespace upnp
+}
 
 #endif // UPNP_SSDP_SSDP_SERVER_H_INCLUDE

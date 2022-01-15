@@ -23,6 +23,8 @@
 #include <FwDecl.h>
 #include <socket/HttpcSocket.h>
 
+#include <string_view>
+
 FW_DECL_NS0(SocketClient);
 
 /// UDP Socket
@@ -33,9 +35,9 @@ class UdpSocket :
 		// =====================================================================
 	public:
 
-		UdpSocket();
+		UdpSocket() = default;
 
-		virtual ~UdpSocket();
+		virtual ~UdpSocket() = default;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
@@ -47,8 +49,8 @@ class UdpSocket :
 		/// @param port
 		/// @param s_addr
 		bool initUDPSocket(
-			SocketClient &server,
-			const std::string &ipAddr,
+			SocketClient& server,
+			std::string_view ipAddr,
 			int port);
 
 		/// Initialize an Multicast UDP socket

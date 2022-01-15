@@ -76,22 +76,22 @@ const int HttpcSocket::HTTPC_TIMEOUT = 500;
 				timeout = HTTPC_TIMEOUT;
 				// end of message "\r\n\r\n" ?
 				if (!end) {
-					const std::string::size_type headerSize = client.getMessage().find("\r\n\r\n");
+					const std::string::size_type headerSize = client.getRawMessage().find("\r\n\r\n");
 					end = headerSize != std::string::npos;
 
 					// check do we need to read more?
-					const std::string parameter = StringConverter::getHeaderFieldParameter(client.getMessage(), "Content-Length:");
+					const std::string parameter = client.getHeaders().getFieldParameter("Content-Length");
 					const std::size_t contentLength = parameter.empty() ? 0 : std::stoi(parameter);
 					if (contentLength > 0) {
 						// now check did we read it all
 						actualSize = headerSize + contentLength + 4; // 4 = "\r\n\r\n"
-						done = actualSize == client.getMessage().size();
+						done = actualSize == client.getRawMessage().size();
 					} else if (end) {
 						done = true;
 					}
 				} else {
 					// now check did we read it all this time around?
-					done = actualSize == client.getMessage().size();
+					done = actualSize == client.getRawMessage().size();
 				}
 			} else {
 				if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {

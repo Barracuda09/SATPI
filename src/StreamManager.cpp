@@ -69,11 +69,11 @@ void StreamManager::enumerateDevices(
 	SI_LOG_INFO("Enumerating all devices...");
 
 	// enumerate streams (frontends)
-	input::dvb::Frontend::enumerate(_stream, appDataPath, _decrypt, dvbPath);
-	input::file::TSReader::enumerate(_stream, appDataPath, enableUnsecureFrontends);
-	input::stream::Streamer::enumerate(_stream, bindIPAddress, appDataPath);
+	input::dvb::Frontend::enumerate(_streamVector, appDataPath, _decrypt, dvbPath);
+	input::file::TSReader::enumerate(_streamVector, appDataPath, enableUnsecureFrontends);
+	input::stream::Streamer::enumerate(_streamVector, bindIPAddress, appDataPath);
 	for (int i = 0; i < numberOfChildPIPE; ++i) {
-		input::childpipe::TSReader::enumerate(_stream, appDataPath, enableUnsecureFrontends);
+		input::childpipe::TSReader::enumerate(_streamVector, appDataPath, enableUnsecureFrontends);
 	}
 }
 
@@ -83,7 +83,7 @@ std::string StreamManager::getXMLDeliveryString() const {
 	std::size_t dvb_t2 = 0u;
 	std::size_t dvb_c = 0u;
 	std::size_t dvb_c2 = 0u;
-	for (SpStream stream : _stream) {
+	for (SpStream stream : _streamVector) {
 		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
 	std::vector<std::string> strArry;
@@ -120,14 +120,14 @@ std::string StreamManager::getRTSPDescribeString() const {
 	std::size_t dvb_t2 = 0u;
 	std::size_t dvb_c = 0u;
 	std::size_t dvb_c2 = 0u;
-	for (SpStream stream : _stream) {
+	for (SpStream stream : _streamVector) {
 		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
 	}
 	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
 
 FeID StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
-	for (SpStream stream : _stream) {
+	for (SpStream stream : _streamVector) {
 		if (stream->getStreamID() == id) {
 			return stream->getFeID();
 		}
@@ -135,16 +135,17 @@ FeID StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
 	return FeID();
 }
 
-std::pair<FeID, StreamID> StreamManager::findFrontendID(const std::string &msg, const std::string &method) const {
-	const StreamID streamID = StringConverter::getIntParameter(msg, method, "stream=");
-	const FeID feID = StringConverter::getIntParameter(msg, method, "fe=");
+std::pair<FeID, StreamID> StreamManager::findFrontendID(const TransportParamVector& params) const {
+	const StreamID streamID = params.getIntParameter("stream");
+	const FeID feID = params.getIntParameter("fe");
 	// Did we find StreamID an NO FrondendID
 	if (streamID != -1 && feID == -1) {
 		return { findFrontendIDWithStreamID(streamID), streamID };
 	}
 	// Is the requested FrondendID in range, then return this
-	if (feID >= 1 && feID <= static_cast<int>(_stream.size())) {
-		return { feID, streamID};
+	if (feID >= 1 && feID <= static_cast<int>(_streamVector.size())) {
+		// We start with FeID = 0, therefore we subtract 1 from transport parameter 'fe='
+		return { feID - 1, streamID};
 	}
 	// Out of range, return -1, -1
 	return { FeID(), StreamID() };
@@ -152,20 +153,20 @@ std::pair<FeID, StreamID> StreamManager::findFrontendID(const std::string &msg, 
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
 	// Here we need to find the correct Stream and StreamClient
-	assert(!_stream.empty());
-	const std::string msg = socketClient.getPercentDecodedMessage();
-	const std::string method = StringConverter::getMethod(msg);
+	assert(!_streamVector.empty());
+	HeaderVector headers = socketClient.getHeaders();
+	TransportParamVector params = socketClient.getTransportParameters();
 
 	// Now find FrontendID and/or StreamID of this message
-	const auto [feID, streamID] = findFrontendID(msg, method);
+	const auto [feID, streamID] = findFrontendID(params);
 
-	std::string sessionID = StringConverter::getHeaderFieldParameter(msg, "Session:");
+	std::string sessionID = headers.getFieldParameter("Session");
 	bool newSession = false;
 	clientID = 0;
 
-	// if no sessionID, then try to find it.
+	// if no sessionID, then make a new one or its just a outside message.
 	if (sessionID.empty()) {
-		if (StringConverter::hasTransportParameters(socketClient.getMessage())) {
+		if (socketClient.hasTransportParameters()) {
 			// Do we need to make a new sessionID (only if there are transport parameters)
 			std::random_device rd;
 			std::mt19937 gen(rd());
@@ -181,23 +182,23 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 
 	// if no FeID, then we have to find a suitable one
 	if (feID == -1) {
-		SI_LOG_INFO("Found FrondtendID x - StreamID x - SessionID: @#1", sessionID);
-		for (SpStream stream : _stream) {
-			if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+		SI_LOG_INFO("Found FrondtendID: x (fe=x)  StreamID: x  SessionID: @#1", sessionID);
+		for (SpStream stream : _streamVector) {
+			if (stream->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
 				stream->getStreamClient(clientID).setSessionID(sessionID);
 				return stream;
 			}
 		}
 	} else {
-		SI_LOG_INFO("Found FrondtendID @#1 - StreamID @#2 - SessionID @#3", feID, streamID, sessionID);
+		SI_LOG_INFO("Found FrondtendID: @#1 (fe=@#2)  StreamID: @#3  SessionID: @#4", feID, feID + 1, streamID, sessionID);
 		// Did we find the StreamClient?
-		if (_stream[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
-			_stream[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);
-			return _stream[feID.getID()];
+		if (_streamVector[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
+			_streamVector[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);
+			return _streamVector[feID.getID()];
 		}
 		// No, Then try to search in other Streams
-		for (SpStream stream : _stream) {
-			if (stream->findClientIDFor(socketClient, newSession, sessionID, method, clientID)) {
+		for (SpStream stream : _streamVector) {
+			if (stream->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
 				stream->getStreamClient(clientID).setSessionID(sessionID);
 				return stream;
 			}
@@ -209,8 +210,8 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 }
 
 void StreamManager::checkForSessionTimeout() {
-	assert(!_stream.empty());
-	for (SpStream stream : _stream) {
+	assert(!_streamVector.empty());
+	for (SpStream stream : _streamVector) {
 		if (stream->streamInUse()) {
 			stream->checkForSessionTimeout();
 		}
@@ -218,13 +219,13 @@ void StreamManager::checkForSessionTimeout() {
 }
 
 std::string StreamManager::getDescribeMediaLevelString(const FeID id) const {
-	assert(!_stream.empty());
-	return _stream[id.getID()]->getDescribeMediaLevelString();
+	assert(!_streamVector.empty());
+	return _streamVector[id.getID()]->getDescribeMediaLevelString();
 }
 
 #ifdef LIBDVBCSA
 input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const FeID id) {
-	return _stream[id.getID()]->getFrontendDecryptInterface();
+	return _streamVector[id.getID()]->getFrontendDecryptInterface();
 }
 #endif
 
@@ -233,9 +234,9 @@ input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterfac
 // =============================================================================
 
 void StreamManager::doFromXML(const std::string &xml) {
-	for (SpStream stream : _stream) {
+	for (SpStream stream : _streamVector) {
 		std::string element;
-		const std::string find = StringConverter::stringFormat("stream@#1", stream->getFeID().getID());
+		const std::string find = StringConverter::stringFormat("stream@#1", stream->getFeID());
 		if (findXMLElement(xml, find, element)) {
 			stream->fromXML(element);
 		}
@@ -249,10 +250,10 @@ void StreamManager::doFromXML(const std::string &xml) {
 }
 
 void StreamManager::doAddToXML(std::string &xml) const {
-	assert(!_stream.empty());
+	assert(!_streamVector.empty());
 
-	for (ScpStream stream : _stream) {
-		ADD_XML_N_ELEMENT(xml, "stream", stream->getFeID().getID(), stream->toXML());
+	for (ScpStream stream : _streamVector) {
+		ADD_XML_N_ELEMENT(xml, "stream", stream->getFeID(), stream->toXML());
 	}
 #ifdef LIBDVBCSA
 	ADD_XML_ELEMENT(xml, "decrypt", _decrypt->toXML());

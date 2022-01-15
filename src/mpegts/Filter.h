@@ -113,7 +113,9 @@ class Filter {
 			SI_LOG_INFO("Frontend: @#1, Closing all active PID filters...", feID);
 			for (int pid = 0; pid < mpegts::PidTable::MAX_PIDS; ++pid) {
 				_pidTable.setPID(pid, false);
-				closePIDFilter_L(feID, pid, closePid);
+				if (_pidTable.shouldPIDClose(pid)) {
+					closePIDFilter_L(feID, pid, closePid);
+				}
 			}
 		}
 
@@ -131,8 +133,12 @@ class Filter {
 			SI_LOG_INFO("Frontend: @#1, Updating PID filters...", feID);
 			for (int pid = 0; pid < mpegts::PidTable::MAX_PIDS; ++pid) {
 				// Check should we close PIDs first then open again
-				closePIDFilter_L(feID, pid, closePid);
-				openPIDFilter_L(feID, pid, openPid);
+				if (_pidTable.shouldPIDClose(pid)) {
+					closePIDFilter_L(feID, pid, closePid);
+				}
+				if (_pidTable.shouldPIDOpen(pid)) {
+					openPIDFilter_L(feID, pid, openPid);
+				}
 			}
 		}
 
@@ -144,16 +150,13 @@ class Filter {
 		/// @param openPid specifies the lambda function to use to open the PID with
 		template<typename OPEN_FUNC>
 		void openPIDFilter_L(const FeID feID, const int pid, OPEN_FUNC openPid) {
-			if (!_pidTable.shouldPIDOpen(pid)) {
-				return;
+			const bool done = openPid(pid);
+			if (done) {
+				_pidTable.setPIDOpened(pid);
+				SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
+					feID, DIGIT(pid, 4),
+					_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
 			}
-			if (!openPid(pid)) {
-				return;
-			}
-			_pidTable.setPIDOpened(pid);
-			SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
-				feID, DIGIT(pid, 4),
-				_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
 		}
 
 		/// Close requesed PID filter
@@ -162,29 +165,25 @@ class Filter {
 		/// @param closePid specifies the lambda function to use to close the PID with
 		template<typename CLOSE_FUNC>
 		void closePIDFilter_L(const FeID feID, const int pid, CLOSE_FUNC closePid) {
-			// Check should we close PIDs first then open again
-			if (!_pidTable.shouldPIDClose(pid)) {
-				return;
-			}
-			if (!closePid(pid)) {
-				return;
-			}
-			SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
-				feID, DIGIT(pid, 4),
-				DIGIT(_pidTable.getPacketCounter(pid), 9),
-				DIGIT(_pidTable.getCCErrors(pid), 6),
-				_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
-			// Clear stats
-			_pidTable.setPIDClosed(pid);
-			// Need to clear the PID Tables as well?
-			const int pcrPID = _pmt->getPCRPid();
-			if (pid == 0) {
-				_pat = std::make_shared<PAT>();
-			} else if (pid == 17) {
-				_sdt = std::make_shared<SDT>();
-			} else if (pcrPID > 0 && pcrPID == pid) {
-				_pmt = std::make_shared<PMT>();
-				_pcr = std::make_shared<PCR>();
+			const bool done = closePid(pid);
+			if (done) {
+				SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
+					feID, DIGIT(pid, 4),
+					DIGIT(_pidTable.getPacketCounter(pid), 9),
+					DIGIT(_pidTable.getCCErrors(pid), 6),
+					_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
+				// Clear stats
+				_pidTable.setPIDClosed(pid);
+				// Need to clear the PID Tables as well?
+				const int pcrPID = _pmt->getPCRPid();
+				if (pid == 0) {
+					_pat = std::make_shared<PAT>();
+				} else if (pid == 17) {
+					_sdt = std::make_shared<SDT>();
+				} else if (pcrPID > 0 && pcrPID == pid) {
+					_pmt = std::make_shared<PMT>();
+					_pcr = std::make_shared<PCR>();
+				}
 			}
 		}
 

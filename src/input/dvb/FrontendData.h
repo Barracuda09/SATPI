@@ -59,8 +59,7 @@ class FrontendData :
 		virtual void doInitialize() final;
 
 		/// @see DeviceData
-		virtual void doParseStreamString(FeID id, const std::string &msg,
-			const std::string &method) final;
+		virtual void doParseStreamString(FeID id, const TransportParamVector& params) final;
 
 		/// @see DeviceData
 		virtual std::string doAttributeDescribeString(FeID id) const final;

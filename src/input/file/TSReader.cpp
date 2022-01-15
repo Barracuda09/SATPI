@@ -126,7 +126,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		return false;
 	}
 	// Add data to Filter
-	_deviceData.addFilterData(_feID, buffer);
+	_deviceData.getFilterData().addData(_feID, buffer);
 	return true;
 }
 
@@ -137,9 +137,8 @@ bool TSReader::capableOf(const input::InputSystem system) const {
 	return false;
 }
 
-bool TSReader::capableToTransform(const std::string &msg,
-		const std::string &method) const {
-	const input::InputSystem system = _transform.getTransformationSystemFor(msg, method);
+bool TSReader::capableToTransform(const TransportParamVector& params) const {
+	const input::InputSystem system = _transform.getTransformationSystemFor(params);
 	return system == input::InputSystem::FILE;
 }
 
@@ -151,13 +150,13 @@ bool TSReader::hasDeviceDataChanged() const {
 	return _deviceData.hasDeviceDataChanged();
 }
 
-void TSReader::parseStreamString(const std::string &msg, const std::string &method) {
+void TSReader::parseStreamString(const TransportParamVector& params) {
 	SI_LOG_INFO("Frontend: @#1, Parsing transport parameters...", _feID);
 
 	// Do we need to transform this request?
-	const std::string msgTrans = _transform.transformStreamString(_feID, msg, method);
+	const TransportParamVector transParams = _transform.transformStreamString(_feID, params);
 
-	_deviceData.parseStreamString(_feID, msgTrans, method);
+	_deviceData.parseStreamString(_feID, transParams);
 	SI_LOG_DEBUG("Frontend: @#1, Parsing transport parameters (Finished)", _feID);
 }
 

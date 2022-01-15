@@ -96,7 +96,7 @@ namespace base {
 				}
 				const std::string freqStr = findAndParseToken(token, "satip-freq=\"");
 				if (!freqStr.empty()) {
-					const double freq = std::atof(freqStr.c_str());
+					const double freq = std::stof(freqStr);
 					if (exist(freq)) {
 						SI_LOG_ERROR("Error: freq: @#1 already exists in file: @#2", freq, filePath);
 						break;
@@ -110,7 +110,7 @@ namespace base {
 				std::getline(file, line);
 				if (!line.empty()) {
 					line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-					element.uri = StringConverter::getPercentDecoding(line);
+					element.uri = line;
 					_transformationMap[element.freq] = element;
 				}
 			}

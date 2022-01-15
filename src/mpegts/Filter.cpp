@@ -65,25 +65,11 @@ void Filter::parsePIDString(const std::string &reqPids,
 			_pidTable.setAllPID(add);
 		}
 	} else {
-		const std::string pids = reqPids + userPids;
-		std::string::size_type begin = 0;
-		for (;; ) {
-			const std::string::size_type end = pids.find_first_of(",", begin);
-			if (end != std::string::npos) {
-				const std::string pid = pids.substr(begin, end - begin);
-				if (std::isdigit(pid[0]) != 0) {
-					_pidTable.setPID(std::stoi(pid), add);
-				}
-				begin = end + 1;
-			} else {
-				// Get the last one
-				if (begin < pids.size()) {
-					const std::string pid = pids.substr(begin, end - begin);
-					if (std::isdigit(pid[0]) != 0) {
-						_pidTable.setPID(std::stoi(pid), add);
-					}
-				}
-				break;
+		const std::string pidlist = reqPids + userPids;
+		StringVector pids = StringConverter::split(pidlist, ",");
+		for (const std::string &pid : pids) {
+			if (std::isdigit(pid[0]) != 0) {
+				_pidTable.setPID(std::stoi(pid), add);
 			}
 		}
 	}
