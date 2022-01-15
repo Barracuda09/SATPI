@@ -38,9 +38,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	// =========================================================================
 	//  -- Constructors and destructor -----------------------------------------
@@ -52,20 +50,20 @@ namespace delivery {
 		_diseqc(new DiSEqcLnb) {
 
 		// Only DVB-S2 have special handling for FBC tuners
-		_fbcSetID = readProcData(id.getID(), "fbc_set_id");
+		_fbcSetID = readProcData(id, "fbc_set_id");
 		_fbcTuner = _fbcSetID >= 0;
 		_fbcConnect = 0;
 		_fbcLinked = false;
 		_fbcRoot = false;
 		_sendDiSEqcViaRootTuner = false;
 		if (_fbcTuner) {
-			readConnectionChoices(id.getID());
+			// Read 'settings' from system
+			readConnectionChoices(id);
 			_fbcRoot = _choices.find(id.getID()) != _choices.end();
-			_fbcConnect = _fbcRoot ? id.getID() : 0;
+			_fbcLinked = readProcData(id, "fbc_link");
+			_fbcConnect = readProcData(id, "fbc_connect");
 		}
 	}
-
-	DVBS::~DVBS() {}
 
 	// =========================================================================
 	//  -- base::XMLSupport ----------------------------------------------------
@@ -319,6 +317,4 @@ namespace delivery {
 		}
 	}
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
