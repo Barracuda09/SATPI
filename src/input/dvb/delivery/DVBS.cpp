@@ -71,16 +71,16 @@ namespace input::dvb::delivery {
 
 	void DVBS::doAddToXML(std::string &xml) const {
 		if (_fbcTuner) {
-			const std::string typeStr = StringConverter::stringFormat("DVB-S(2) FBC@#1 (Slot-@#2)",
-				_fbcRoot ? "-Root" : "", (_fbcSetID >= 1) ? "B" : "A");
+			const std::string typeStr = StringConverter::stringFormat("DVB-S(2) FBC@#1 (Slot @#2)",
+				(_fbcRoot ? "-Root" : ""), ((_fbcSetID == 0) ? "A" : "B"));
 			ADD_XML_ELEMENT(xml, "type", typeStr);
 			ADD_XML_BEGIN_ELEMENT(xml, "fbc");
 				ADD_XML_BEGIN_ELEMENT(xml, "fbcConnection");
 					ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
-					ADD_XML_ELEMENT(xml, "value", _fbcConnect);
+					ADD_XML_ELEMENT(xml, "value", _fbcConnect - (_fbcSetID * 8));
 					ADD_XML_BEGIN_ELEMENT(xml, "list");
 					for (const auto &choice : _choices) {
-						ADD_XML_ELEMENT(xml, "option" + choice.first, choice.second);
+						ADD_XML_ELEMENT(xml, StringConverter::stringFormat("option@#1", choice.first), choice.second);
 					}
 					ADD_XML_END_ELEMENT(xml, "list");
 				ADD_XML_END_ELEMENT(xml, "fbcConnection");
@@ -143,7 +143,7 @@ namespace input::dvb::delivery {
 			writeProcData(_feID, "fbc_link", _fbcLinked ? 1 : 0);
 		}
 		if (findXMLElement(xml, "fbcConnection.value", element)) {
-			_fbcConnect = std::stoi(element);
+			_fbcConnect = std::stoi(element) + (_fbcSetID * 8);
 			writeProcData(_feID, "fbc_connect", _fbcConnect);
 		}
 		if (findXMLElement(xml, "sendDiSEqcViaRootTuner.value", element)) {
