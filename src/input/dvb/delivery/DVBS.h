@@ -87,7 +87,7 @@ class DVBS :
 		void writeProcData(FeID id, const std::string &procEntry, int value);
 
 		///
-		void readConnectionChoices(FeID id);
+		void readConnectionChoices(FeID id, int offset);
 
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------

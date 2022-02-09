@@ -57,8 +57,8 @@ namespace input::dvb::delivery {
 		_fbcRoot = false;
 		_sendDiSEqcViaRootTuner = false;
 		if (_fbcTuner) {
-			// Read 'settings' from system
-			readConnectionChoices(id);
+			// Read 'settings' from system, add offset to address FBC Slots A and B
+			readConnectionChoices(id, _fbcSetID * 8);
 			_fbcRoot = _choices.find(id.getID()) != _choices.end();
 			_fbcLinked = readProcData(id, "fbc_link");
 			_fbcConnect = readProcData(id, "fbc_connect");
@@ -71,11 +71,9 @@ namespace input::dvb::delivery {
 
 	void DVBS::doAddToXML(std::string &xml) const {
 		if (_fbcTuner) {
-			if (_fbcRoot) {
-				ADD_XML_ELEMENT(xml, "type", "DVB-S(2) FBC-Root");
-			} else {
-				ADD_XML_ELEMENT(xml, "type", "DVB-S(2) FBC");
-			}
+			const std::string typeStr = StringConverter::stringFormat("DVB-S(2) FBC@#1 (Slot-@#2)",
+				_fbcRoot ? "-Root" : "", (_fbcSetID >= 1) ? "B" : "A");
+			ADD_XML_ELEMENT(xml, "type", typeStr);
 			ADD_XML_BEGIN_ELEMENT(xml, "fbc");
 				ADD_XML_BEGIN_ELEMENT(xml, "fbcConnection");
 					ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
@@ -160,11 +158,6 @@ namespace input::dvb::delivery {
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
 		SI_LOG_INFO("Frontend: @#1, Start tuning process for DVB-S(2)...", _feID);
 
-		// DiSEqC switch position differs from src and adjust to MAX_LNB
-		const int src = (frontendData.getDiSEqcSource() - 1) % DiSEqc::MAX_LNB;
-		const Lnb::Polarization pol = frontendData.getPolarization();
-		uint32_t freq = frontendData.getFrequency();
-
 		std::string fePathDiseqc(_fePath);
 		int feFDDiseqc = feFD;
 		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
@@ -200,10 +193,13 @@ namespace input::dvb::delivery {
 				}
 			}
 		}
-		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3", _feID, fePathDiseqc, feFDDiseqc);
+		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3",
+				_feID, fePathDiseqc, feFDDiseqc);
 
-		// send diseqc
-		if (_diseqc != nullptr && !_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, src, pol)) {
+		uint32_t freq = frontendData.getFrequency();
+		// send diseqc ('src' differs from 'DiSEqC switch position' so adjust with -1)
+		if (_diseqc != nullptr &&
+			!_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, frontendData.getDiSEqcSource() - 1, frontendData.getPolarization())) {
 			return false;
 		}
 
@@ -288,7 +284,7 @@ namespace input::dvb::delivery {
 		}
 	}
 
-	void DVBS::readConnectionChoices(const FeID id) {
+	void DVBS::readConnectionChoices(const FeID id, int offset) {
 		// File looks something like: 0=A, 1=B
 		const std::string filePath = StringConverter::stringFormat(
 			"/proc/stb/frontend/@#1/fbc_connect_choices", id.getID());
@@ -312,7 +308,7 @@ namespace input::dvb::delivery {
 			std::string name;
 			if (tokenizerChoice.isNextToken(index) &&
 			    tokenizerChoice.isNextToken(name)) {
-				_choices[std::stoi(index)] = name;
+				_choices[std::stoi(index) + offset] = name;
 			}
 		}
 	}
