@@ -480,7 +480,11 @@ namespace input::dvb {
 		}
 #endif
 		SI_LOG_INFO("Frontend Name: @#1", _fe_info.name);
-
+		if (_oldApiCallStats) {
+			SI_LOG_INFO("Frontend Stat: Use legacy signal stats");
+		} else {
+			SI_LOG_INFO("Frontend Stat: Use advanced signal stats");
+		}
 		struct dtv_property dtvProperty;
 #if SIMU
 		dtvProperty.u.buffer.len = 4;
@@ -675,6 +679,7 @@ namespace input::dvb {
 				return false;
 			}
 			_tuned = true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
 			if (sw.getIntervalMS() < _waitOnLockTimeout) {
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
@@ -687,6 +692,8 @@ namespace input::dvb {
 							_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
 							SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
 							break;
+						} else {
+							SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS", _feID);
 						}
 						if (i == 1) {
 							SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
