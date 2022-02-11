@@ -28,17 +28,13 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
 	DVBC::DVBC(FeID id, const std::string &fePath) :
 		input::dvb::delivery::System(id, fePath) {}
-
-	DVBC::~DVBC() {}
 
 	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
@@ -115,6 +111,4 @@ namespace delivery {
 		return true;
 	}
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
