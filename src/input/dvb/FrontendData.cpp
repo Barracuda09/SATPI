@@ -147,8 +147,9 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_pol = Lnb::Polarization::Vertical;
 		}
 	}
+	_src = 1; // default value
 	const int src = params.getIntParameter("src");
-	if (src >= 1) {
+	if (src >= 1 && src <= 255) {
 		_src = src;
 	}
 	const std::string plts = params.getParameter("plts");
