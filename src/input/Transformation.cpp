@@ -146,7 +146,7 @@ input::InputSystem Transformation::getTransformationSystemFor(const TransportPar
 }
 
 std::string Transformation::transformStreamPossible(
-		const FeID id,
+		const FeID UNUSED(id),
 		const TransportParamVector& params) {
 	if (_enabled && _fileParsed) {
 		const double freq = params.getDoubleParameter("freq");
