@@ -679,8 +679,8 @@ namespace input::dvb {
 				return false;
 			}
 			_tuned = true;
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (sw.getIntervalMS() < _waitOnLockTimeout) {
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
 				for (int i = 1;; ++i) {
@@ -704,7 +704,7 @@ namespace input::dvb {
 						SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, waitTime);
 						break;
 					}
-					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 			} else {
 				SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
