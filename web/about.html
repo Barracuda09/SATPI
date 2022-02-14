@@ -15,14 +15,13 @@
 </head>
 <body>
 <div id="menu"></div>
-<div id="footer"></div>
 
 <div class="p-1">
-<div class=" window-start container border rounded-bottom">
+<div class="window-start container border rounded-bottom">
 	<div class="window-name">
 		<p>About</p>
 	</div>
-	<div class="p-1">
+	<div class="p-1 small-text-size">
 		<p>SatPI is an SAT>IP server which supports:<br>
 		DVB-C DVB-T/T2 and DVB-S/S2<br><br>
 		==============================================<br><br>
@@ -38,7 +37,6 @@
 	<script>
 		// make menu
 		document.getElementById("menu").innerHTML = buildmenu();
-		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("about");
 	</script>
 </div>

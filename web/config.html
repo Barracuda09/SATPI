@@ -76,14 +76,13 @@
 </head>
 <body>
 <div id="menu"></div>
-<div id="footer"></div>
 
 <div class="p-1">
 <div class="window-start container border rounded-bottom">
 	<div class="window-name">
 		<p>Configuration</p>
 	</div>
-	<div class="p-1">
+	<div class="p-1 table-responsive table-text-size">
 		<ul class="nav nav-tabs">
 			<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#general">General</a></li>
 			<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#oscam">OSCam</a></li>
@@ -96,7 +95,6 @@
 	<script>
 		// make menu
 		document.getElementById("menu").innerHTML = buildmenu();
-		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("config");
 
 		content = "general";

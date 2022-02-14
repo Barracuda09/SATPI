@@ -18,25 +18,33 @@ body {
 
 textarea.logtext {
 	background-image: url("../images/bg-grain.png");
-	font-size: 10px;
+	font-size: 9px;
 	height: 100%;
 	overflow: scroll;
 	font-style: font-family:monospace;
 	resize: none;
 }
 
+.small-text-size {
+	padding: 0px;
+	font-size: 10px;
+}
+
+.table-text-size {
+	font-size: 10px;
+}
+
 .window-start {
 	text-align: center;
 	padding: 0px;
-	font-size: 12px;	
 }
 
 .window-name {
 	background-color: lightblue;
 	text-align: center;
 	padding: 0px;
-	border: 1px solid #000;
-	font-size: 20px;
+	border: 2px solid #000;
+	font-size: 15px;
 }
 
 .window-name > p {

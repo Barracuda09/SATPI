@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -195,17 +195,15 @@
 </head>
 <body>
 <div id="menu"></div>
-<div id="footer"></div>
 
 <div class="window-start container border rounded-bottom">
 	<div class="window-name">
 		<p>Frontend Info</p>
 	</div>
-	<div class="p-1" id="tableContent"></div>
+	<div class="p-1 table-responsive table-text-size" id="tableContent"></div>
 	<script>
 		// make menu
 		document.getElementById("menu").innerHTML = buildmenu();
-		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("frontend");
 
 		updatePage();

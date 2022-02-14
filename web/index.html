@@ -46,7 +46,7 @@
 		var link = "http://" + ip + ":" + port + "/" + xmldesc;
 		InfoPage.rows[7].cells[1].innerHTML = "<a href=\"" + link + "\" class=\"btn-info btn-sm\" role=\"button\">Show</a>";
 	}
-	
+
 	function stopSatPI() {
 		$("#StopDialog").modal();
 	}
@@ -56,7 +56,6 @@
 </head>
 <body>
 <div id="menu"></div>
-<div id="footer"></div>
 
 <!-- Stop Dialog -->
 <div class="modal fade" id="StopDialog">
@@ -85,7 +84,7 @@
 	<div class="window-name">
 		<p>Server Info Page</p>
 	</div>
-	<div class="p-1 table-responsive">
+	<div class="p-1 table-responsive table-text-size">
 		<table id="InfoPage" class="table table-bordered table-sm">
 			<tr><td class=\"col-xs-1\">Version</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1\">Uptime</td><td class="col-xs-2">...</td> </tr>
@@ -100,7 +99,6 @@
 		<script>
 			// make menu
 			document.getElementById("menu").innerHTML = buildmenu();
-			document.getElementById("footer").innerHTML = buildfooter();
 			setMenuItemActive("index");
 
 			// Call the ajax refresh each refresh_time seconds

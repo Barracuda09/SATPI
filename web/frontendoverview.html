@@ -70,14 +70,13 @@
 </head>
 <body>
 <div id="menu"></div>
-<div id="footer"></div>
 
 <div class="p-1">
 <div class="window-start container border rounded-bottom">
 	<div class="window-name">
 		<p>Frontend Overview</p>
 	</div>
-	<div class="p-1 table-responsive">
+	<div class="p-1 table-responsive table-text-size">
 		<table class="table table-bordered table-sm">
 			<thead class="thead-light"><tr>
 				<th class="col-xs-1">#</th>
@@ -97,7 +96,6 @@
 	<script>
 		// make menu
 		document.getElementById("menu").innerHTML = buildmenu();
-		document.getElementById("footer").innerHTML = buildfooter();
 		setMenuItemActive("frontendoverview");
 
 		updatePage();

@@ -15,26 +15,26 @@ rtsp://@#1/?src=2&fe=2&freq=11914&sr=29900&msys=dvbs2&mtype=8psk&pol=h&fec=23&pi
 #EXTINF:0,5. Animal Planet
 rtsp://@#1/?src=2&fe=2&freq=12109&sr=27500&msys=dvbs2&mtype=8psk&pol=h&fec=34&pids=0,1,16,17,18,57,3500,3510,3550,3660
 
-#EXTINF:0,6. Nederland 3
-rtsp://@#1/?src=2&fe=2&freq=12187.50&sr=27500&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,38,52,106,518,2740
+#EXTINF:0,6.  Astra 23.5E NPO3
+rtsp://@#1/?src=2&freq=12187.50&sr=29900&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,38,52,106,518,2740
 
 #EXTINF:0,7. Astra 19.2E ARD-alpha HD
-rtsp://@#1/?src=2&fe=2&freq=11052.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,1039,5420,5421,5424
+rtsp://@#1/?src=1&freq=11052.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,1039,5420,5421,5424
 
 #EXTINF:0,8. Astra 19.2E CNBC Europe HD
-rtsp://@#1/?src=2&fe=2&freq=11170.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=34&pids=0,1,16,17,18,103,2047,2051,2047
+rtsp://@#1/?src=1&&freq=11170.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=34&pids=0,1,16,17,18,103,2047,2051,2047
 
 #EXTINF:0,9. Astra 19.2E ZDF HD
-rtsp://@#1/?src=2&fe=2&freq=11361.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,6100,6110,6122,6130
+rtsp://@#1/?src=1&freq=11361.75&sr=22000&msys=dvbs2&mtype=8psk&pol=h&fec=23&pids=0,1,16,17,18,6100,6110,6122,6130
 
 #EXTINF:0,10. Astra 23.5E TV8 HD Slovakia
-rtsp://@#1/?src=3&fe=2&freq=12363&sr=29500&msys=dvbs2&mtype=8psk&pol=v&fec=34&pids=0,1,16,17,18,3234,5504,5514,5524
+rtsp://@#1/?src=2&freq=12363&sr=29500&msys=dvbs2&mtype=8psk&pol=v&fec=34&pids=0,1,16,17,18,3234,5504,5514,5524
 
 #EXTINF:0,11. Astra 23.5E Canal Digitaal Infokanal
-rtsp://@#1/?fe=1&src=1&freq=11739&sr=29900&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,82,562,2462
+rtsp://@#1/?src=2&freq=11739&sr=29900&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,82,562,2462
 
 #EXTINF:0,12. Astra 23.5E SES UHD Demo
-rtsp://@#1/?fe=1&src=1&freq=11778&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,511,512,1200
+rtsp://@#1/?src=2&freq=11778&sr=27500&msys=dvbs2&mtype=8psk&pol=v&fec=23&pids=0,1,16,17,18,511,512,1200
 
 #EXTINF:0,13. RTL 4 HD (DVB-C)
 rtsp://@#1/?fe=1&freq=458&sr=6900&msys=dvbc&mtype=256qam&fec=35&pids=0,1,16,17,18,103,2000,2001,2011,2012,2051,2101,2102,2103,8187
@@ -44,3 +44,6 @@ rtsp://@#1/?fe=1&freq=378&sr=6900&msys=dvbc&mtype=256qam&fec=35&pids=0,1,16,17,1
 
 #EXTINF:0,15. TV Noord (DVB-C)
 rtsp://@#1/?freq=418.00&sr=6900&msys=dvbc&mtype=256qam&fec=35&specinv=0&pids=0,1,16,17,18,103,2600,2601,2611
+
+#EXTINF:0,16. Astra 23.5E NPO1
+rtsp://@#1/?src=2&freq=12187.5&sr=29900&msys=dvbs2&mtype=8psk&fec=23&pol=h&pids=0,1,16,17,18,20,99,119,519,1809,2729
