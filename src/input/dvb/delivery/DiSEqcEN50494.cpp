@@ -25,14 +25,12 @@
 
 #include <chrono>
 #include <thread>
-
 #include <cmath>
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
@@ -41,11 +39,7 @@ namespace delivery {
 		DiSEqc(),
 		_pin(256),
 		_chSlot(0),
-		_chFreq(1210),
-		_delayBeforeWrite(8),
-		_delayAfterWrite(15) {}
-
-	DiSEqcEN50494::~DiSEqcEN50494() {}
+		_chFreq(1210) {}
 
 	// =======================================================================
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
@@ -53,15 +47,40 @@ namespace delivery {
 
 	bool DiSEqcEN50494::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
 			int src, Lnb::Polarization pol) {
-		return sendDiseqcUnicable(feFD, id, freq, src, pol);
+
+		bool hiband = false;
+		_lnb.getIntermediateFrequency(freq, hiband, pol);
+
+		// Calculate T
+		const uint32_t t = round((((freq / 1000.0) + _chFreq + 2.0) / 4.0) - 350.0);
+		// Change tuning frequency to 'Channel Freq'
+		freq = _chFreq * 1000;
+
+		// Framing 0xe0: Command from Master, No reply required, First transmission
+		// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
+		// Command 0x5a: Unicable switch
+		// Data 1  0x00: see below
+		// Data 2  0x00: see below
+		dvb_diseqc_master_cmd cmd = {{0xe0, 0x10, 0x5a, 0x00, 0x00}, 5};
+		// Userband-ID (Channel Slot)
+		cmd.msg[3]  = _chSlot << 5;
+		// Sat. pos => src = 0 (posA)  src >= 1 (posB)
+		cmd.msg[3] |= (src >= 1) ? 0x10 : 0x00;
+		cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x8 : 0x0;
+		cmd.msg[3] |= hiband ? 0x4 : 0x0;
+		cmd.msg[3] |= (t >> 8) & 0x03;
+		cmd.msg[4]  = (t & 0xff);
+
+		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] [@#6] - DiSEqC Src: @#7 - UB: @#8",
+			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), HEX(cmd.msg[4], 2), src, _chSlot);
+
+		return sendDiseqcMasterCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, _diseqcRepeat);
 	}
 
 	void DiSEqcEN50494::doNextAddToXML(std::string &xml) const {
 		ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
 		ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 7);
 		ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
-		ADD_XML_NUMBER_INPUT(xml, "delayBeforeWrite", _delayBeforeWrite, 0, 2000);
-		ADD_XML_NUMBER_INPUT(xml, "delayAfterWrite", _delayAfterWrite, 0, 2000);
 		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
 	}
 
@@ -76,70 +95,9 @@ namespace delivery {
 		if (findXMLElement(xml, "pin.value", element)) {
 			_pin = std::stoi(element);
 		}
-		if (findXMLElement(xml, "delayBeforeWrite.value", element)) {
-			_delayBeforeWrite = std::stoi(element);
-		}
-		if (findXMLElement(xml, "delayAfterWrite.value", element)) {
-			_delayAfterWrite = std::stoi(element);
-		}
 		if (findXMLElement(xml, "lnb0", element)) {
 			_lnb.fromXML(element);
 		}
 	}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
-
-	bool DiSEqcEN50494::sendDiseqcUnicable(const int feFD, const FeID id,
-		uint32_t &freq,	const int src, const Lnb::Polarization pol) {
-		bool hiband = false;
-		_lnb.getIntermediateFrequency(freq, hiband, pol);
-
-		// Calculate T
-		const uint32_t t = round((((freq / 1000.0) + _chFreq + 2.0) / 4.0) - 350.0);
-		// Change tuning frequency to 'Channel Freq'
-		freq = _chFreq * 1000;
-
-		// Framing 0xe0: Command from Master, No reply required, First transmission
-		// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
-		// Command 0x5a: Unicable switch
-		// Data 1  0x00: see below
-		// Data 2  0x00: see below
-		dvb_diseqc_master_cmd cmd = {{0xe0, 0x10, 0x5a, 0x00, 0x00, 0x00}, 5};
-
-		cmd.msg[3]  = _chSlot << 5;
-		// sat. pos => src = 0 (posA)  src >= 1 (posB)
-		cmd.msg[3] |= (src >= 1) ? 0x10 : 0x00;
-		cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x8 : 0x0;
-		cmd.msg[3] |= hiband ? 0x4 : 0x0;
-		cmd.msg[3] |= (t >> 8) & 0x03;
-		cmd.msg[4]  = (t & 0xff);
-
-		for (size_t i = 0; i < _diseqcRepeat + 1; ++i) {
-			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
-				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 18V");
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
-			SI_LOG_INFO("Frontend: @#1, Sending DiSEqC [@#2] [@#3] [@#4] [@#5] [@#6] - DiSEqC Src: @#7 - UB: @#8",
-				id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), HEX(cmd.msg[4], 2), src, _chSlot);
-			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
-				SI_LOG_PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
-			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
-				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 13V");
-			}
-			// Should we repeat message
-			if (_diseqcRepeat > 0) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				// Framing 0xe1: Command from master, no reply required, repeated transmission
-				cmd.msg[0] = 0xe1;
-			}
-		}
-		return true;
-	}
-
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}

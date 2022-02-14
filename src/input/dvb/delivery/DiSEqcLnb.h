@@ -39,8 +39,8 @@ namespace delivery {
 			// =======================================================================
 		public:
 
-			DiSEqcLnb();
-			virtual ~DiSEqcLnb();
+			DiSEqcLnb() = default;
+			virtual ~DiSEqcLnb() = default;
 
 			// =======================================================================
 			// -- input::dvb::delivery::DiSEqc ---------------------------------------
@@ -58,15 +58,6 @@ namespace delivery {
 
 			/// @see DiSEqc
 			virtual void doNextFromXML(const std::string &xml) final;
-
-			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
-		private:
-
-			///
-			bool diseqcLnb(int feFD, FeID id, uint32_t &freq,
-				int src, Lnb::Polarization pol);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

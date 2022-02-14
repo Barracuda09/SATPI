@@ -29,17 +29,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
-
-	// =======================================================================
-	//  -- Constructors and destructor ---------------------------------------
-	// =======================================================================
-	DiSEqcLnb::DiSEqcLnb() :
-		DiSEqc() {}
-
-	DiSEqcLnb::~DiSEqcLnb() {}
+namespace input::dvb::delivery {
 
 	// =======================================================================
 	// -- input::dvb::delivery::DiSEqc ---------------------------------------
@@ -47,7 +37,46 @@ namespace delivery {
 
 	bool DiSEqcLnb::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
 			const int src, const Lnb::Polarization pol) {
-		return diseqcLnb(feFD, id, freq, src, pol);
+		bool hiband = false;
+		_lnb.getIntermediateFrequency(freq, hiband, pol);
+
+		SI_LOG_INFO("Frontend: @#1, Sending LNB: Mini-Switch Src: @#2", id, src);
+
+		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
+			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
+			return false;
+		}
+		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
+			SI_LOG_PERROR("FE_SET_TONE failed");
+			return false;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
+
+		const auto b = (src % 2) ? SEC_MINI_B : SEC_MINI_A;
+		if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
+			SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
+			return false;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
+
+		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
+			SI_LOG_PERROR("FE_SET_VOLTAGE failed to 13V");
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+		// Set LNB
+		const auto v = (pol == Lnb::Polarization::Vertical) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
+		if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
+			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
+			return false;
+		}
+
+		const auto tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
+		if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
+			SI_LOG_PERROR("FE_SET_TONE failed");
+			return false;
+		}
+		return true;
 	}
 
 	void DiSEqcLnb::doNextAddToXML(std::string &xml) const {
@@ -61,46 +90,4 @@ namespace delivery {
 		}
 	}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
-
-	bool DiSEqcLnb::diseqcLnb(const int feFD, const FeID id, uint32_t &freq,
-				int src, Lnb::Polarization pol) {
-		bool hiband = false;
-		_lnb.getIntermediateFrequency(freq, hiband, pol);
-
-		SI_LOG_INFO("Frontend: @#1, Sending LNB: Mini-Switch Src: @#2", id, src);
-
-		if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-			SI_LOG_PERROR("FE_SET_TONE failed");
-			return false;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-		const fe_sec_voltage_t v = (pol == Lnb::Polarization::Vertical) ?
-			SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
-		if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
-			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
-			return false;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-		const fe_sec_mini_cmd_t b = (src % 2) ? SEC_MINI_B : SEC_MINI_A;
-		if (ioctl(feFD, FE_DISEQC_SEND_BURST, b) == -1) {
-			SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
-			return false;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-		const fe_sec_tone_mode_t tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
-		if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
-			SI_LOG_PERROR("FE_SET_TONE failed");
-			return false;
-		}
-		return true;
-	}
-
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}

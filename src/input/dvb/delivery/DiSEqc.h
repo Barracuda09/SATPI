@@ -23,11 +23,10 @@
 #include <Defs.h>
 #include <base/XMLSupport.h>
 #include <Unused.h>
+#include <input/dvb/dvbfix.h>
 #include <input/dvb/delivery/Lnb.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	/// The class @c DiSEqc specifies an interface to an connected DiSEqc device
 	class DiSEqc :
@@ -37,9 +36,9 @@ namespace delivery {
 			// =======================================================================
 		public:
 
-			DiSEqc();
+			DiSEqc() = default;
 
-			virtual ~DiSEqc();
+			virtual ~DiSEqc() = default;
 
 			// =======================================================================
 			// -- base::XMLSupport ---------------------------------------------------
@@ -66,6 +65,34 @@ namespace delivery {
 			virtual bool sendDiseqc(int feFD, FeID id, uint32_t &freq,
 				int src, Lnb::Polarization pol) = 0;
 
+		protected:
+
+			///
+			enum class MiniDiSEqCSwitch {
+				DoNotSend,
+				MiniA,
+				MiniB
+			};
+
+			/// This will send the DiSEqc 'Reset' command
+			/// @param feFD the file descriptor the command should be send to
+			/// @param id specifies which frontend id the command is send to
+			void sendDiseqcResetCommand(int feFD, FeID id);
+
+			/// This will send the DiSEqc 'Peripherial Power On' command
+			/// @param feFD the file descriptor the command should be send to
+			/// @param id specifies which frontend id the command is send to
+			void sendDiseqcPeripherialPowerOnCommand(int feFD, FeID id);
+
+			/// This will send the DiSEqc master command
+			/// @param feFD the file descriptor the command should be send to
+			/// @param id specifies which frontend id the command is send to
+			/// @param cmd the command that should be send
+			/// @param sasbBurst specifies the SA/SB tone burst
+			/// @param repeatCmd the number of times this command should be repeated
+			bool sendDiseqcMasterCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
+				MiniDiSEqCSwitch sw, unsigned int repeatCmd);
+
 		private:
 
 			/// Specialization for @see doAddToXML
@@ -83,11 +110,11 @@ namespace delivery {
 
 		protected:
 
-			unsigned int _diseqcRepeat;
+			unsigned int _diseqcRepeat = 0;
+			unsigned int _delayBeforeWrite = 10;
+			unsigned int _delayAfterWrite = 15;
 	};
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_DELIVERY_DISEQC_H_INCLUDE

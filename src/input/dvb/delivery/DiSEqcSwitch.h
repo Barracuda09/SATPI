@@ -25,11 +25,9 @@
 #include <input/dvb/delivery/DiSEqc.h>
 #include <input/dvb/delivery/Lnb.h>
 
-#include <stdint.h>
+#include <cstdint>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	/// The class @c DiSEqcSwitch specifies which type of DiSEqc switch is connected
 	class DiSEqcSwitch :
@@ -39,8 +37,8 @@ namespace delivery {
 			// =======================================================================
 		public:
 
-			DiSEqcSwitch();
-			virtual ~DiSEqcSwitch();
+			DiSEqcSwitch() = default;
+			virtual ~DiSEqcSwitch() = default;
 
 			// =======================================================================
 			// -- input::dvb::delivery::DiSEqc ---------------------------------------
@@ -60,24 +58,15 @@ namespace delivery {
 			virtual void doNextFromXML(const std::string &xml) final;
 
 			// =======================================================================
-			// -- Other member functions ---------------------------------------------
-			// =======================================================================
-		private:
-
-			///
-			bool diseqcSwitch(int feFD, FeID id, uint32_t &freq,
-				int src, Lnb::Polarization pol);
-
-			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
-
 		private:
-			Lnb _lnb[MAX_LNB];
+
+			Lnb _lnb;
+			uint8_t _addressByte = 0x10;
+			uint8_t _commandByte = 0x38;
 	};
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_DELIVERY_DISEQCSWITCH_H_INCLUDE
