@@ -718,7 +718,7 @@ namespace input::dvb {
 			// closePid lambda function
 			[&](const int pid) {
 				if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
+					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(pid));
 					return false;
 				}
 				return true;
@@ -775,11 +775,11 @@ namespace input::dvb {
 					pesFilter.pes_type = DMX_PES_OTHER;
 					pesFilter.flags    = DMX_IMMEDIATE_START;
 					if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, DIGIT(pid, 4));
+						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, PID(pid));
 						return false;
 					}
 				} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
-					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, DIGIT(pid, 4));
+					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(pid));
 					return false;
 				}
 				return true;
@@ -787,7 +787,7 @@ namespace input::dvb {
 			// closePid lambda function
 			[&](const int pid) {
 				if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, DIGIT(pid, 4));
+					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(pid));
 					return false;
 				}
 				return true;

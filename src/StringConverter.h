@@ -185,11 +185,14 @@ class StringConverter  {
 };
 
 #define HEX(value, size) StringConverter::hexString(value, size)
+#define HEX2(value) StringConverter::hexString(value, 2)
 
 #define HEXPL(value, size) StringConverter::hexPlainString(value, size)
 
 #define STR(value, size) StringConverter::alphaString(value, size)
 
 #define DIGIT(value, size) StringConverter::digitString(value, size)
+
+#define PID(value) StringConverter::digitString(value, 4)
 
 #endif // STRING_CONVERTER_H_INCLUDE

@@ -87,12 +87,16 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 		// get PID and CC from TS
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 		const uint8_t  cc  =   ptr[3] & 0x0f;
+		// If pid was not opened, skip this one
+		if (!_pidTable.isPIDOpened(pid)) {
+			continue;
+		}
 		_pidTable.addPIDData(pid, cc);
 
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, false);
+				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, true);
 
 				// Did we finish collecting PAT
 				if (_pat->isCollected()) {
@@ -131,7 +135,7 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, false);
+				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, true);
 
 				// Did we finish collecting SDT
 				if (_sdt->isCollected()) {

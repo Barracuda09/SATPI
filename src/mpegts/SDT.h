@@ -66,6 +66,10 @@ class SDT :
 			return _transportStreamID;
 		}
 
+		int getNetworkID() const {
+			return _networkID;
+		}
+
 		SDT::Data getSDTDataFor(int progID) const;
 
 	protected:

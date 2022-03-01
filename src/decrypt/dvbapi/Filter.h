@@ -26,8 +26,7 @@
 
 #include <string>
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 	/// The class @c Filter are all available filters for OSCam
 	class Filter {
@@ -36,67 +35,43 @@ namespace dvbapi {
 			// =======================================================================
 		public:
 
-			Filter() :
-				_collecting(false),
-				_filter(-1),
-				_demux(-1),
-				_tableID(-1) {}
+			Filter() = default;
 
-			virtual ~Filter() {}
+			virtual ~Filter() = default;
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
 			// =======================================================================
 		public:
 
-			void start(int pid, int demux, int filter,
-			           const unsigned char *filterData, const unsigned char *filterMask) {
+			/// Start and add the requested filter
+			void start(const FeID id, int pid, int demux, int filter,
+					const unsigned char *filterData, const unsigned char *filterMask) {
 				base::MutexLock lock(_mutex);
-				_collecting = false;
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
-					_filterData[demux][filter].set(pid, filterData, filterMask);
+					_filterData[demux][filter].set(id, pid, filterData, filterMask);
 				}
 			}
 
-			bool find(const FeID id, const int pid, const unsigned char *data, int &tableID, int &filter,
-				int &demux, mpegts::TSData &filterData) {
+			/// Find the correct filter for the 'collected' data or ts packet
+			bool find(const FeID id, const int pid, const unsigned char *data, const int tableID,
+					int &filter, int &demux, mpegts::TSData &filterData) {
 				base::MutexLock lock(_mutex);
-				if (_collecting) {
-					// We are collecting, but is this the correct PID for this filter
-					if (_filterData[_demux][_filter].active(pid)) {
-						// Collect raw (true)
-						_filterData[_demux][_filter].collectTableData(id, _tableID, data, true);
-						if (_filterData[_demux][_filter].isTableCollected()) {
-							filter = _filter;
-							demux = _demux;
-							tableID = _tableID;
-							_collecting = false;
-							// Because we collect raw there is only 1
-							filterData = _filterData[demux][filter].getTableData(0);
-							_filterData[demux][filter].resetTableData();
-							return true;
+				for (demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (filter = 0; filter < FILTER_SIZE; ++filter) {
+						// Find filter with correct id and PID
+						if (!_filterData[demux][filter].activeWith(id, pid)) {
+							continue;
 						}
-					}
-				} else {
-					_collecting = false;
-					for (demux = 0; demux < DEMUX_SIZE; ++demux) {
-						for (filter = 0; filter < FILTER_SIZE; ++filter) {
-							if (_filterData[demux][filter].active(pid)) {
-								if (_filterData[demux][filter].match(data)) {
-									// Collect raw (true)
-									_filterData[demux][filter].collectTableData(id, tableID, data, true);
-									if (!_filterData[demux][filter].isTableCollected()) {
-										_collecting = true;
-										_filter = filter;
-										_demux = demux;
-										_tableID = tableID;
-									} else {
-										// Because we collect raw there is only 1
-										filterData = _filterData[demux][filter].getTableData(0);
-										_filterData[demux][filter].resetTableData();
-										return true;
-									}
-								}
+						// Does filter matches with 'data' or already collecting
+						if (_filterData[demux][filter].matchOrCollecting(data)) {
+							// Collect raw => true
+							_filterData[demux][filter].collectTableData(id, tableID, data, true);
+							if (_filterData[demux][filter].isTableCollected()) {
+								// Finished there is only 1 section
+								filterData = _filterData[demux][filter].getTableData(0);
+								_filterData[demux][filter].resetTableData();
+								return true;
 							}
 						}
 					}
@@ -107,22 +82,44 @@ namespace dvbapi {
 				return false;
 			}
 
+			/// Stop the requested filter
 			void stop(int demux, int filter) {
 				base::MutexLock lock(_mutex);
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].clear();
 				}
-				_collecting = false;
 			}
 
 			void clear() {
 				base::MutexLock lock(_mutex);
-				_collecting = false;
 				for (int demux = 0; demux < DEMUX_SIZE; ++demux) {
 					for (int filter = 0; filter < FILTER_SIZE; ++filter) {
 						_filterData[demux][filter].clear();
 					}
 				}
+			}
+
+			std::vector<int> getActiveDemuxFilters() const {
+				std::vector<int> index;
+				for (int demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (int filter = 0; filter < FILTER_SIZE; ++filter) {
+						if (_filterData[demux][filter].active()) {
+							index.emplace_back(demux);
+							break;
+						}
+					}
+				}
+				return index;
+			}
+
+			std::vector<int> getActiveFilterPIDs(int demux) const {
+				std::vector<int> pids;
+				for (int filter = 0; filter < FILTER_SIZE; ++filter) {
+					if (_filterData[demux][filter].active()) {
+						pids.emplace_back(_filterData[demux][filter].getAssociatedPID());
+					}
+				}
+				return pids;
 			}
 
 			// =======================================================================
@@ -131,17 +128,12 @@ namespace dvbapi {
 		private:
 
 			static constexpr int DEMUX_SIZE  = 25;
-			static constexpr int FILTER_SIZE = 25;
+			static constexpr int FILTER_SIZE = 15;
 
 			base::Mutex _mutex;
 			FilterData _filterData[DEMUX_SIZE][FILTER_SIZE];
-			bool _collecting;
-			int _filter;
-			int _demux;
-			int _tableID;
 	};
 
-} // namespace dvbapi
-} // namespace decrypt
+}
 
 #endif // DECRYPT_DVBAPI_FILTER_H_INCLUDE

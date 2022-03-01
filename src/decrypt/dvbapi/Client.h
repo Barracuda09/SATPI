@@ -28,15 +28,16 @@
 
 #include <atomic>
 #include <string>
+#include <map>
 
 FW_DECL_NS0(StreamManager);
 FW_DECL_NS1(mpegts, PacketBuffer);
 FW_DECL_NS1(mpegts, PMT);
+FW_DECL_NS1(mpegts, SDT);
 
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 /*
 ca_pmt () {
@@ -124,7 +125,7 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void sendPMT(FeID id, int pid, const mpegts::PMT &pmt);
+		void sendPMT(FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt);
 
 		///
 		void cleanPMT(unsigned char *data);
@@ -134,6 +135,13 @@ class Client :
 		// =================================================================
 	private:
 
+		using UCharPtr = std::shared_ptr<unsigned char[]>;
+
+		struct PMTEntry {
+			UCharPtr caPtr;
+			int size;
+		};
+
 		SocketClient     _client;
 		std::atomic_bool _connected;
 		std::atomic_bool _enabled;
@@ -142,11 +150,11 @@ class Client :
 		std::atomic<int> _adapterOffset;
 		std::string      _serverIPAddr;
 		std::string      _serverName;
+		std::map<int, PMTEntry> _capmtMap;
 
 		StreamManager &_streamManager;
 };
 
-} // namespace dvbapi
-} // namespace decrypt
+}
 
 #endif // DECRYPT_DVBAPI_CLIENT_H_INCLUDE

@@ -29,8 +29,7 @@
 
 FW_DECL_NS0(dvbcsa_bs_key_s);
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 ///
 class Keys {
@@ -43,9 +42,9 @@ class Keys {
 		// =====================================================================
 	public:
 
-		Keys();
+		Keys() = default;
 
-		virtual ~Keys();
+		virtual ~Keys() = default;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
@@ -70,7 +69,6 @@ class Keys {
 		KeyQueue _key[2];
 };
 
-} // namespace dvbapi
-} // namespace decrypt
+}
 
 #endif // DECRYPT_DVBAPI_KEYS_H_INCLUDE

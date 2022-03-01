@@ -26,8 +26,7 @@ extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 	// ===========================================================================
 	// -- Constructors and destructor --------------------------------------------
@@ -56,6 +55,7 @@ namespace dvbapi {
 		// free keys
 		_keys.freeKeys();
 		_batchCount = 0;
+		_parity = 0;
 		_filter.clear();
 	}
 
@@ -110,5 +110,4 @@ namespace dvbapi {
 		int UNUSED(hops)) {
 	}
 
-} // namespace dvbapi
-} // namespace decrypt
+}

@@ -26,8 +26,7 @@
 #include <cstring>
 #include <cstdint>
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 	/// The class @c FilterData carries all filter data for OSCam
 	class FilterData {
@@ -41,7 +40,7 @@ namespace dvbapi {
 				clear();
 			}
 
-			virtual ~FilterData() {}
+			virtual ~FilterData() = default;
 
 			// =======================================================================
 			//  -- Other member functions --------------------------------------------
@@ -52,6 +51,8 @@ namespace dvbapi {
 			void clear() {
 				_filterActive = false;
 				_pid = -1;
+				_id = -1;
+				_collecting = false;
 				std::memset(_data, 0x00, 16);
 				std::memset(_mask, 0x00, 16);
 				_tableData.clear();
@@ -74,42 +75,56 @@ namespace dvbapi {
 
 			/// Reset/Clear the collected table data
 			void resetTableData() {
+				_collecting = false;
 				_tableData.clear();
 			}
 
 			/// Is the requested pid 'active' in use for filtering
-			bool active(int pid) const {
-				return (_pid == pid) && _filterActive;
+			bool activeWith(const FeID id, const int pid) const {
+				return (_pid == pid) && (_id == id) && _filterActive;
+			}
+
+			/// Is this filtering in use
+			bool active() const {
+				return _filterActive;
+			}
+
+			/// Get the associated PID of this filter
+			int getAssociatedPID() const {
+				return _pid;
 			}
 
 			/// Set the requested filter data and set it active
-			void set(int pid,
-			         const unsigned char *data,
-			         const unsigned char *mask) {
+			void set(const FeID id, int pid, const unsigned char *data, const unsigned char *mask) {
 				_pid = pid;
+				_id = id;
+				_filterActive = true;
+				_collecting = false;
+				_tableData.clear();
 				std::memcpy(_data, data, 16);
 				std::memcpy(_mask, mask, 16);
-				_filterActive = true;
 			}
 
-			/// Check if the requested data matches this filter
-			bool match(const unsigned char *data) const {
-				std::size_t i, k;
-				bool match = true;
-				const uint32_t sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
-				for (i = 0, k = 5; i < 16 && match; i++, k++) {
-					// skip sectionLength bytes
-					if (k == 6) {
-						k += 2;
+			/// Check if the requested data matches this filter or if we already collecting
+			bool matchOrCollecting(const unsigned char *data) const {
+				if (!_collecting) {
+					bool match = true;
+					const uint32_t sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field
+					uint32_t i, k;
+					for (i = 0, k = 5; i < 16 && match; ++i, ++k) {
+						// skip sectionLength bytes
+						if (k == 6) {
+							k += 2;
+						}
+						const unsigned char mask = _mask[i];
+						if (mask != 0x00) {
+							const unsigned char filter = (_data[i] & mask);
+							match = (k <= sectionLength) ? (filter == (data[k] & mask)) : false;
+						}
 					}
-					const unsigned char mask = _mask[i];
-					if (mask != 0x00) {
-						const unsigned char flt = (_data[i] & mask);
-						match = (k <= sectionLength) ? (flt == (data[k] & mask)) : false;
-					}
+					_collecting = (match && i == 16);
 				}
-				// 0 = data does not match with filter, 1 = data matches with filter
-				return (match && i == 16);
+				return _collecting;
 			}
 
 			// =======================================================================
@@ -119,13 +134,14 @@ namespace dvbapi {
 		protected:
 
 			bool _filterActive;
+			FeID _id;
 			int _pid;
 			unsigned char _data[16];
 			unsigned char _mask[16];
 			mpegts::TableData _tableData;
+			mutable bool _collecting = false;
 	};
 
-} // namespace dvbapi
-} // namespace decrypt
+}
 
 #endif // DECRYPT_DVBAPI_FILTERDATA_H_INCLUDE

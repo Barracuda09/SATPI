@@ -113,8 +113,10 @@ class Frontend :
 
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) final;
 
-		virtual bool findOSCamFilterData(FeID id, int pid, const unsigned char *tsPacket, int &tableID,
+		virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) final;
+
+		virtual std::vector<int> getActiveOSCamDemuxFilters() const final;
 
 		virtual void stopOSCamFilters(FeID id) final;
 
@@ -133,6 +135,8 @@ class Frontend :
 		virtual bool isMarkedAsActivePMT(int pid) const final;
 
 		virtual mpegts::SpPMT getPMTData() const final;
+
+		virtual mpegts::SpSDT getSDTData() const final;
 #endif
 
 		// =======================================================================

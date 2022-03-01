@@ -154,7 +154,7 @@ class Filter {
 			if (done) {
 				_pidTable.setPIDOpened(pid);
 				SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
-					feID, DIGIT(pid, 4),
+					feID, PID(pid),
 					_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
 			}
 		}
@@ -168,7 +168,7 @@ class Filter {
 			const bool done = closePid(pid);
 			if (done) {
 				SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
-					feID, DIGIT(pid, 4),
+					feID, PID(pid),
 					DIGIT(_pidTable.getPacketCounter(pid), 9),
 					DIGIT(_pidTable.getCCErrors(pid), 6),
 					_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
@@ -181,6 +181,8 @@ class Filter {
 				} else if (pid == 17) {
 					_sdt = std::make_shared<SDT>();
 				} else if (pcrPID > 0 && pcrPID == pid) {
+					const int pmtPID = _pmt->getAssociatedPID();
+					SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - PCR Changed for PMT: @#3 - Clearing tables", feID, PID(pid), PID(pmtPID));
 					_pmt = std::make_shared<PMT>();
 					_pcr = std::make_shared<PCR>();
 				}

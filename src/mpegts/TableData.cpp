@@ -266,6 +266,14 @@ TSData TableData::getData(const size_t secNr) const {
 	return TSData();
 }
 
+int TableData::getAssociatedPID() const {
+	TableData::Data tableData;
+	if (getDataForSectionNumber(0, tableData)) {
+		return tableData.pid;
+	}
+	return -1;
+}
+
 bool TableData::isCollected() const {
 	if (_collectingFinished) {
 		return true;

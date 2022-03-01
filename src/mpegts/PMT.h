@@ -24,6 +24,7 @@
 #include <mpegts/TableData.h>
 
 #include <string>
+#include <vector>
 
 FW_DECL_SP_NS1(mpegts, PMT);
 
@@ -62,10 +63,14 @@ class PMT :
 			return _programNumber;
 		}
 
-		int  parsePCRPid();
+		int parsePCRPid();
 
 		int getPCRPid() const {
 			return _pcrPID;
+		}
+
+		std::vector<int> getECMPIDs() const {
+			return _ecmPID;
 		}
 
 		bool isReadySend() const {
@@ -84,6 +89,8 @@ class PMT :
 		mpegts::TSData _progInfo;
 		uint16_t _programNumber = 0;
 		int _pcrPID = 0;
+		std::vector<int> _elementaryPID;
+		std::vector<int> _ecmPID;
 		std::size_t _prgLength = 0;
 		mutable bool _send = false;
 };

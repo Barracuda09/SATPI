@@ -26,6 +26,7 @@
 FW_DECL_NS0(dvbcsa_bs_key_s);
 
 FW_DECL_SP_NS1(mpegts, PMT);
+FW_DECL_SP_NS1(mpegts, SDT);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
 namespace input {
@@ -80,9 +81,11 @@ class FrontendDecryptInterface {
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
 
 		///
-		virtual bool findOSCamFilterData(FeID id, int pid,
-			const unsigned char *tsPacket, int &tableID,
+		virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) = 0;
+
+		/// Get the vector of current 'active' OSCam demux filters
+		virtual std::vector<int> getActiveOSCamDemuxFilters() const = 0;
 
 		///
 		virtual void stopOSCamFilters(FeID id) = 0;
@@ -105,6 +108,9 @@ class FrontendDecryptInterface {
 
 		///
 		virtual mpegts::SpPMT getPMTData() const = 0;
+
+		///
+		virtual mpegts::SpSDT getSDTData() const = 0;
 };
 
 } // namespace dvb

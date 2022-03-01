@@ -79,7 +79,7 @@ class TableData {
 		// =====================================================================
 	public:
 
-		///
+		/// Clear the collected table and data
 		virtual void clear();
 
 		/// Get an copy of the requested table data
@@ -95,6 +95,9 @@ class TableData {
 
 		/// Check if Table is collected
 		bool isCollected() const;
+
+		/// Get the associated PID of this table
+		int getAssociatedPID() const;
 
 	protected:
 

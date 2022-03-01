@@ -25,15 +25,7 @@ extern "C" {
 	#include <dvbcsa/dvbcsa.h>
 }
 
-namespace decrypt {
-namespace dvbapi {
-
-	// =========================================================================
-	//  -- Constructors and destructor -----------------------------------------
-	// =========================================================================
-	Keys::Keys() {}
-
-	Keys::~Keys() {}
+namespace decrypt::dvbapi {
 
 	// =========================================================================
 	//  -- Other member functions ----------------------------------------------
@@ -74,5 +66,4 @@ namespace dvbapi {
 		_key[parity].pop();
 	}
 
-} // namespace dvbapi
-} // namespace decrypt
+}

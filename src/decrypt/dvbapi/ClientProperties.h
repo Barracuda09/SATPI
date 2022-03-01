@@ -29,8 +29,7 @@
 
 FW_DECL_NS0(dvbcsa_bs_batch_s);
 
-namespace decrypt {
-namespace dvbapi {
+namespace decrypt::dvbapi {
 
 	///
 	class ClientProperties {
@@ -87,9 +86,9 @@ namespace dvbapi {
 			}
 
 			/// Start and add the requested filter
-			void startOSCamFilterData(int pid, int demux, int filter,
+			void startOSCamFilterData(const FeID id, int pid, int demux, int filter,
 				const unsigned char *filterData, const unsigned char *filterMask) {
-				_filter.start(pid, demux, filter, filterData, filterMask);
+				_filter.start(id, pid, demux, filter, filterData, filterMask);
 			}
 
 			/// Stop the requested filter
@@ -98,9 +97,19 @@ namespace dvbapi {
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
-			bool findOSCamFilterData(const FeID id, int pid, const unsigned char *tsPacket, int &tableID,
+			bool findOSCamFilterData(const FeID id, int pid, const unsigned char *tsPacket, const int tableID,
 				int &filter, int &demux, mpegts::TSData &filterData) {
 				return _filter.find(id, pid, tsPacket, tableID, filter, demux, filterData);
+			}
+
+			/// Get the vector of current 'active' demux filters
+			std::vector<int> getActiveOSCamDemuxFilters() const {
+				return _filter.getActiveDemuxFilters();
+			}
+
+			/// Get the vector of current 'active' PIDs that are being filtered
+			std::vector<int> getActiveFilterPIDs(int demux) const {
+				return _filter.getActiveFilterPIDs(demux);
 			}
 
 			/// Clear all 'active' filters
@@ -135,7 +144,6 @@ namespace dvbapi {
 
 	};
 
-} // namespace dvbapi
-} // namespace decrypt
+}
 
 #endif // DECRYPT_DVBAPI_CLIENT_PROPERTIES_H_INCLUDE

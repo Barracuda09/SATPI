@@ -21,8 +21,7 @@
 
 #include <input/dvb/FrontendData.h>
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 	FeID Frontend::getFeID() const {
 		return _feID;
@@ -58,27 +57,30 @@ namespace dvb {
 
 	void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 		const unsigned char *filterData, const unsigned char *filterMask) {
-		SI_LOG_INFO("Frontend: @#1, Start filter PID: @#2  demux: @#3  filter: @#4 (data @#5 mask @#6 @#7)",
-			_feID, DIGIT(pid, 4), demux, filter, HEX(filterData[0], 2), HEX(filterMask[0], 2), HEX(filterMask[1], 2));
-		_dvbapiData.startOSCamFilterData(pid, demux, filter, filterData, filterMask);
+		SI_LOG_INFO("Frontend: @#1, Start filter PID: @#2  demux: @#3  filter: @#4 (data @#5 @#6 @#7 mask @#8 @#9 @#10 @#11)",
+			_feID, PID(pid), demux, filter,
+			HEX2(filterData[0]), HEX2(filterData[1]), HEX2(filterData[2]),
+			HEX2(filterMask[0]), HEX2(filterMask[1]), HEX2(filterMask[2]), HEX2(filterMask[3]));
+		_dvbapiData.startOSCamFilterData(_feID, pid, demux, filter, filterData, filterMask);
 		_frontendData.getFilterData().setPID(pid, true);
 		// now update frontend, PID list has changed
 		updatePIDFilters();
    }
 
 	void Frontend::stopOSCamFilterData(const int pid, const int demux, const int filter) {
-		SI_LOG_INFO("Frontend: @#1, Stop filter PID: @#2  demux: @#3  filter: @#4",
-			_feID, DIGIT(pid, 4), demux, filter);
+		SI_LOG_INFO("Frontend: @#1, Stop  filter PID: @#2  demux: @#3  filter: @#4",
+			_feID, PID(pid), demux, filter);
 		_dvbapiData.stopOSCamFilterData(demux, filter);
-		if (pid > 17) {
-			_frontendData.getFilterData().setPID(pid, false);
-		}
 		// Do not update frontend or remove the PID!
 	}
 
-	bool Frontend::findOSCamFilterData(const FeID id, const int pid, const unsigned char *tsPacket,
-		int &tableID, int &filter, int &demux, mpegts::TSData &filterData) {
-		return _dvbapiData.findOSCamFilterData(id, pid, tsPacket, tableID, filter, demux, filterData);
+	bool Frontend::findOSCamFilterData(const int pid, const unsigned char *tsPacket,
+			const int tableID, int &filter, int &demux, mpegts::TSData &filterData) {
+		return _dvbapiData.findOSCamFilterData(_feID, pid, tsPacket, tableID, filter, demux, filterData);
+	}
+
+	std::vector<int> Frontend::getActiveOSCamDemuxFilters() const {
+		return _dvbapiData.getActiveOSCamDemuxFilters();
 	}
 
 	void Frontend::stopOSCamFilters(FeID id) {
@@ -101,5 +103,7 @@ namespace dvb {
 		return _frontendData.getFilterData().getPMTData();
 	}
 
-} // namespace dvb
-} // namespace input
+	mpegts::SpSDT Frontend::getSDTData() const {
+		return _frontendData.getFilterData().getSDTData();
+	}
+}

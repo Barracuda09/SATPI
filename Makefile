@@ -119,7 +119,8 @@ endif
 # Add dvbcsa ?
 ifeq "$(LIBDVBCSA)" "yes"
   LDFLAGS += -ldvbcsa
-  CFLAGS  += -DLIBDVBCSA -DUSE_DEPRECATED_DVBAPI
+#  CFLAGS  += -DLIBDVBCSA -DUSE_DEPRECATED_DVBAPI
+  CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
   SOURCES += decrypt/dvbapi/ClientProperties.cpp
   SOURCES += decrypt/dvbapi/Keys.cpp
