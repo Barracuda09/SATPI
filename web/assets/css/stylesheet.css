@@ -21,7 +21,6 @@ textarea.logtext {
 	font-size: 9px;
 	height: 100%;
 	overflow: scroll;
-	font-style: font-family:monospace;
 	resize: none;
 }
 
