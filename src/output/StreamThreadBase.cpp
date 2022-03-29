@@ -29,6 +29,7 @@
 	#include <decrypt/dvbapi/Client.h>
 #endif
 
+#include <array>
 #include <chrono>
 #include <thread>
 
@@ -54,10 +55,13 @@ StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface 
 	// Initialize all TS packets
 	uint32_t ssrc = _stream.getSSRC();
 	long timestamp = _stream.getTimestamp();
-	_tsEmpty.initialize(ssrc, timestamp);
 	for (size_t i = 0; i < MAX_BUF; ++i) {
 		_tsBuffer[i].initialize(ssrc, timestamp);
 	}
+	const std::array<unsigned char, 188> nullPacked{0x47, 0x1F, 0xFF};
+	_tsEmpty.initialize(ssrc, timestamp);
+	std::memcpy(_tsEmpty.getWriteBufferPtr(), nullPacked.data(), 188);
+	_tsEmpty.addAmountOfBytesWritten(188);
 }
 
 StreamThreadBase::~StreamThreadBase() {
