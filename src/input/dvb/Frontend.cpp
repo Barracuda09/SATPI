@@ -682,6 +682,7 @@ namespace input::dvb {
 			SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (sw.getIntervalMS() < _waitOnLockTimeout) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				// check if frontend is locked, if not try a few times (Untill TIMEOUT)
 				for (int i = 1;; ++i) {
 					fe_status_t status = FE_TIMEDOUT;
@@ -782,6 +783,7 @@ namespace input::dvb {
 					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(pid));
 					return false;
 				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				return true;
 			},
 			// closePid lambda function
@@ -790,6 +792,7 @@ namespace input::dvb {
 					SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(pid));
 					return false;
 				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 				return true;
 			});
 	}
