@@ -290,12 +290,13 @@ namespace input::dvb {
 		return capableOf(system);
 	}
 
-	void Frontend::monitorSignal(const bool showStatus) {
+	bool Frontend::monitorSignal(const bool showStatus) {
 #if SIMU
 		(void)showStatus;
 		_frontendData.setMonitorData(FE_HAS_LOCK, 214, 15, 0, 0);
+		return true;
 #else
-		fe_status_t status;
+		fe_status_t status{};
 
 		// first read status
 		if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
@@ -392,6 +393,7 @@ namespace input::dvb {
 		} else {
 			SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS failed", _feID);
 		}
+		return (status & FE_HAS_LOCK) == FE_HAS_LOCK;
 #endif
 	}
 

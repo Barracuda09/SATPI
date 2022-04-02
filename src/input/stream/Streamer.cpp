@@ -133,8 +133,9 @@ bool Streamer::capableToTransform(const TransportParamVector& params) const {
 	return capableOf(system);
 }
 
-void Streamer::monitorSignal(const bool UNUSED(showStatus)) {
+bool Streamer::monitorSignal(const bool UNUSED(showStatus)) {
 	_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
+	return true;
 }
 
 bool Streamer::hasDeviceDataChanged() const {

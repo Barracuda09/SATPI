@@ -142,8 +142,9 @@ bool TSReader::capableToTransform(const TransportParamVector& params) const {
 	return system == input::InputSystem::FILE;
 }
 
-void TSReader::monitorSignal(bool UNUSED(showStatus)) {
+bool TSReader::monitorSignal(bool UNUSED(showStatus)) {
 	_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
+	return true;
 }
 
 bool TSReader::hasDeviceDataChanged() const {

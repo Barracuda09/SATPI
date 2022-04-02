@@ -123,6 +123,7 @@ class StreamThreadBase :
 		StreamInterface &_stream;
 		std::string _protocol;
 		std::atomic<State> _state;
+		std::atomic_bool _signalLock;
 		int _clientID;
 		uint16_t _cseq;
 

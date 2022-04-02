@@ -159,7 +159,7 @@ class Frontend :
 
 		virtual bool capableToTransform(const TransportParamVector& params) const final;
 
-		virtual void monitorSignal(bool showStatus) final;
+		virtual bool monitorSignal(bool showStatus) final;
 
 		virtual bool hasDeviceDataChanged() const final;
 

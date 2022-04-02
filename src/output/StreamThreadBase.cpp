@@ -44,6 +44,7 @@ StreamThreadBase::StreamThreadBase(const std::string &protocol, StreamInterface 
 	_stream(stream),
 	_protocol(protocol),
 	_state(State::Paused),
+	_signalLock(false),
 	_clientID(0),
 	_cseq(0),
 	_threadDeviceMonitor(
@@ -228,7 +229,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 				++_readIndex;
 				_readIndex %= MAX_BUF;
 			}
-		} else {
+		} else if (_signalLock) {
 			writeDataToOutputDevice(_tsEmpty, client);
 		}
 	}
@@ -236,7 +237,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 
 bool StreamThreadBase::threadExecuteDeviceMonitor() {
 	// check do we need to update Device monitor signals
-	_stream.getInputDevice()->monitorSignal(false);
+	_signalLock = _stream.getInputDevice()->monitorSignal(false);
 	const unsigned long interval = 200 * _stream.getRtcpSignalUpdateFrequency();
 	std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 	return true;

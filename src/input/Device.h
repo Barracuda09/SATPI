@@ -78,7 +78,8 @@ class Device :
 		virtual bool capableToTransform(const TransportParamVector& params) const = 0;
 
 		/// Monitor signal of this device
-		virtual void monitorSignal(bool showStatus) = 0;
+		/// @return true meaning there is a Signal Lock
+		virtual bool monitorSignal(bool showStatus) = 0;
 
 		///
 		virtual bool hasDeviceDataChanged() const = 0;
