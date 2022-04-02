@@ -147,14 +147,14 @@ const char* TableData::getTableTXT(const int tableID) const {
 void TableData::collectData(const FeID id, const int tableID, const unsigned char *data, const bool raw) {
 	Data &currentTableData = _dataTable[_currentSectionNumber];
 	const std::size_t tableSize = currentTableData.data.size();
-	const unsigned char options = (data[1u] & 0xE0);
-	if (options == 0x40 && data[4u] == 0x00 && data[5u] == tableID && tableSize == 0) {
-		const int pid                   = ((data[1u] & 0x1F) << 8) | data[2u];
-		const int cc                    =   data[3u] & 0x0F;
-		const std::size_t sectionLength = ((data[6u] & 0x0F) << 8) | data[7u];
-		const int         version       =   data[10u];
-		const std::size_t secNr         =   data[11u];
-		const std::size_t lastSecNr     =   data[12u];
+	const unsigned char options = (data[1] & 0xE0);
+	if (options == 0x40 && data[4] == 0x00 && data[5] == tableID && tableSize == 0) {
+		const int pid                   = ((data[1] & 0x1F) << 8) | data[2];
+		const int cc                    =   data[3] & 0x0F;
+		const std::size_t sectionLength = ((data[6] & 0x0F) << 8) | data[7];
+		const int         version       =   data[10];
+		const std::size_t secNr         =   data[11];
+		const std::size_t lastSecNr     =   data[12];
 
 		if (raw || secNr == _currentSectionNumber) {
 			if (raw) {
@@ -199,11 +199,11 @@ void TableData::collectData(const FeID id, const int tableID, const unsigned cha
 		const std::size_t sectionLength = currentTableData.sectionLength;
 
 		// Get current PID and next CC
-		const int pid = ((data[1u] & 0x1f) << 8) | data[2u];
-		const int cc  =   data[3u] & 0x0f;
+		const int pid = ((data[1] & 0x1f) << 8) | data[2];
+		const int cc  =   data[3] & 0x0f;
 
 		// Add Table Data without TS Header
-		if (addData(tableID, &data[4u], 188 - 4, pid, cc)) { // 4 = TS Header
+		if (addData(tableID, &data[4], 188 - 4, pid, cc)) { // 4 = TS Header
 			const std::size_t tableDataSize = currentTableData.data.size();
 			if (!raw) {
 				SI_LOG_INFO("Frontend: @#1, @#2 - PID @#3: sectionLength: @#4  tableDataSize: @#5  secNr: @#6  lastSecNr: @#7  currSecNr: @#8",
