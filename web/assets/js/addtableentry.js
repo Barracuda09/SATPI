@@ -53,6 +53,7 @@ function addNumberInput(tagPath, input) {
 	entry += "id=\"" + tagPath + "\"";
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onfocusout=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
 	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
@@ -66,6 +67,7 @@ function addTextInput(tagPath, input) {
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
 	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onfocusout=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
 	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
@@ -79,6 +81,7 @@ function addIPInput(tagPath, input) {
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
 	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onfocusout=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
 	entry += "onkeypress=\"myOnkeyPressPostIp(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += "/>";
 	return entry;
@@ -95,6 +98,7 @@ function addSelectionListInput(tagPath, input) {
 	entry += "onfocus=\"autoload = 0\" onblur=\"autoload = 1\"";
 	entry += "onmousedown=\"document.getElementById(id).focus()\"";
 	entry += "onclick=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
+	entry += "onfocusout=\"changeXMLAndPost(document.getElementById(id).name, document.getElementById(id).value)\"";
 	entry += "onkeypress=\"myOnkeyPressPost(document.getElementById(id).name, document.getElementById(id).value, event)\"";
 	entry += ">";
 	for (en = 0; en < optlen; en++) {
