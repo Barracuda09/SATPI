@@ -32,9 +32,9 @@
 /// The class @c Log.
 class Log {
 	public:
-		// =======================================================================
-		// -- Static functions ---------------------------------------------------
-		// =======================================================================
+		// =========================================================================
+		// -- Static functions -----------------------------------------------------
+		// =========================================================================
 		static void openAppLog(const char *deamonName, bool daemonize);
 
 		static void closeAppLog();
@@ -73,7 +73,7 @@ class Log {
 
 			LogElem& operator=(const LogElem& other) = default;
 
-			int priority;
+			int priority = 0;
 			std::string msg;
 			std::string timestamp;
 		};

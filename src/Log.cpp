@@ -34,6 +34,7 @@
 #define LOG_SIZE 550
 
 static base::Mutex logMutex;
+
 bool Log::_syslogOn = false;
 bool Log::_coutLog = true;
 Log::LogBuffer Log::_appLogBuffer;
