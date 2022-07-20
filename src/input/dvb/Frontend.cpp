@@ -296,9 +296,11 @@ namespace input::dvb {
 		_frontendData.setMonitorData(FE_HAS_LOCK, 214, 15, 0, 0);
 		return true;
 #else
-		fe_status_t status{};
-
+		if (_fd_fe == -1) {
+			return false;
+		}
 		// first read status
+		fe_status_t status{};
 		if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
 			uint16_t strength = 0;
 			uint16_t snr = 0;
