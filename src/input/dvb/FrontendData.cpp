@@ -189,6 +189,10 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_fec = FEC_1_2;
 		} else if (fec == "23") {
 			_fec = FEC_2_3;
+#if FULL_DVB_API_VERSION >= 0x0509
+		} else if (fec == "25") {
+			_fec = FEC_2_5;
+#endif
 		} else if (fec == "34") {
 			_fec = FEC_3_4;
 		} else if (fec == "35") {
@@ -208,16 +212,22 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 		} else if (fec == "auto") {
 			_fec = FEC_AUTO;
 		} else {
-			SI_LOG_ERROR("Frontend: @#1, Unknown forward error control [@#2]", id, fec);
+			SI_LOG_ERROR("Frontend: @#1, Unknown forward error control [@#2] using auto", id, fec);
 			_fec = FEC_AUTO;
 		}
 	}
 	const std::string mtype = params.getParameter("mtype");
 	if (!mtype.empty()) {
-		if (mtype == "8psk") {
-			_modtype = PSK_8;
-		} else if (mtype == "qpsk") {
+		if (mtype == "qpsk") {
 			_modtype = QPSK;
+		} else if (mtype == "dqpsk") {
+			_modtype = DQPSK;
+		} else if (mtype == "8psk" || mtype == "psk8") {
+			_modtype = PSK_8;
+		} else if (mtype == "16apsk" || mtype == "apsk16") {
+			_modtype = APSK_16;
+		} else if (mtype == "32apsk" || mtype == "apsk32") {
+			_modtype = APSK_32;
 		} else if (mtype == "16qam" || mtype == "qam16") {
 			_modtype = QAM_16;
 		} else if (mtype == "32qam" || mtype == "qam32") {
