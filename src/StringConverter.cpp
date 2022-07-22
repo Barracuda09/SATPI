@@ -202,6 +202,10 @@ std::string_view StringConverter::fec_to_string(const int fec) {
 		return "12";
 	case FEC_2_3:
 		return "23";
+#if FULL_DVB_API_VERSION >= 0x0509
+	case FEC_2_5:
+		return "25";
+#endif
 	case FEC_3_4:
 		return "34";
 	case FEC_3_5:
@@ -219,7 +223,7 @@ std::string_view StringConverter::fec_to_string(const int fec) {
 	case FEC_9_10:
 		return "910";
 	case FEC_AUTO:
-		return " ";
+		return "";
 	case FEC_NONE:
 		return "";
 	default:
@@ -266,6 +270,12 @@ std::string_view StringConverter::modtype_to_sting(const int modtype) {
 		return "qpsk";
 	case PSK_8:
 		return "8psk";
+	case DQPSK:
+		return "dqpsk";
+	case APSK_16:
+		return "16apsk";
+	case APSK_32:
+		return "32apsk";
 	case QAM_AUTO:
 		return "";
 	default:
