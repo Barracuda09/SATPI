@@ -32,6 +32,12 @@ static constexpr int asInteger(Enumeration value) {
 	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 
+/// Convert an integer to enum class
+template<class Enumeration, class From>
+constexpr Enumeration integerToEnum(From value) {
+	return static_cast<Enumeration>(value);
+}
+
 /// The class @c Utils has some utility functions
 class Utils  {
 	public:
