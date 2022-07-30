@@ -318,7 +318,7 @@ std::string_view StringConverter::transmode_to_string(const int transmission_mod
 	case TRANSMISSION_MODE_8K:
 		return "8k";
 	case TRANSMISSION_MODE_AUTO:
-		return " ";
+		return "";
 	case TRANSMISSION_MODE_4K:
 		return "4k";
 	case TRANSMISSION_MODE_1K:
@@ -349,7 +349,7 @@ std::string_view StringConverter::guardinter_to_string(const int guard_interval)
 	case GUARD_INTERVAL_1_4:
 		return "14";
 	case GUARD_INTERVAL_AUTO:
-		return " ";
+		return "";
 	case GUARD_INTERVAL_1_128:
 		return "1128";
 	case GUARD_INTERVAL_19_128:
