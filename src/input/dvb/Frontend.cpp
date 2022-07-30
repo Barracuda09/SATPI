@@ -73,6 +73,7 @@ namespace input::dvb {
 		_path_to_fe(fe),
 		_path_to_dvr(dvr),
 		_path_to_dmx(dmx),
+		_dvbVersion(0),
 		_transform(appDataPath, _transformFrontendData),
 		_dvbs2(0),
 		_dvbt(0),
@@ -189,6 +190,7 @@ namespace input::dvb {
 		ADD_XML_ELEMENT(xml, "pathname", _path_to_fe);
 		ADD_XML_ELEMENT(xml, "freq", StringConverter::stringFormat("@#1 Hz to @#2 Hz", _fe_info.frequency_min, _fe_info.frequency_max));
 		ADD_XML_ELEMENT(xml, "symbol", StringConverter::stringFormat("@#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max));
+		ADD_XML_ELEMENT(xml, "dvbversion", HEX(_dvbVersion, 4));
 
 		ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 		ADD_XML_NUMBER_INPUT(xml, "waitOnLockTimeout", _waitOnLockTimeout, 0, MAX_WAIT_ON_LOCK_TIMEOUT);
@@ -489,24 +491,26 @@ namespace input::dvb {
 		} else {
 			SI_LOG_INFO("Frontend Stat: Use advanced signal stats");
 		}
-		struct dtv_property dtvProperty;
+		struct dtv_property dtvProperty[2];
 #if SIMU
-		dtvProperty.u.buffer.len = 4;
-		dtvProperty.u.buffer.data[0] = SYS_DVBS;
-		dtvProperty.u.buffer.data[1] = SYS_DVBS2;
-		dtvProperty.u.buffer.data[2] = SYS_DVBT;
+		dtvProperty[0].u.buffer.len = 4;
+		dtvProperty[0].u.buffer.data[0] = SYS_DVBS;
+		dtvProperty[0].u.buffer.data[1] = SYS_DVBS2;
+		dtvProperty[0].u.buffer.data[2] = SYS_DVBT;
 #  if FULL_DVB_API_VERSION >= 0x0505
-		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_A;
+		dtvProperty[0].u.buffer.data[3] = SYS_DVBC_ANNEX_A;
 #  else
-		dtvProperty.u.buffer.data[3] = SYS_DVBC_ANNEX_AC;
+		dtvProperty[0].u.buffer.data[3] = SYS_DVBC_ANNEX_AC;
 #  endif
 #else
-		dtvProperty.cmd = DTV_ENUM_DELSYS;
-		dtvProperty.u.data = DTV_UNDEFINED;
+		dtvProperty[0].cmd    = DTV_ENUM_DELSYS;
+		dtvProperty[0].u.data = DTV_UNDEFINED;
+		dtvProperty[1].cmd    = DTV_API_VERSION;
+		dtvProperty[1].u.data = DTV_UNDEFINED;
 
 		struct dtv_properties dtvProperties;
-		dtvProperties.num = 1;       // size
-		dtvProperties.props = &dtvProperty;
+		dtvProperties.num = 2;
+		dtvProperties.props = dtvProperty;
 		if (::ioctl(fd_fe, FE_GET_PROPERTY, &dtvProperties ) != 0) {
 			// If we are here it can mean we have an DVB-API <= 5.4
 			SI_LOG_DEBUG("Unable to enumerate the delivery systems, retrying via old API Call");
@@ -514,31 +518,31 @@ namespace input::dvb {
 			switch (_fe_info.type) {
 				case FE_QPSK:
 					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBS2;
+						dtvProperty[0].u.buffer.data[index] = SYS_DVBS2;
 						++index;
 					}
-					dtvProperty.u.buffer.data[index] = SYS_DVBS;
+					dtvProperty[0].u.buffer.data[index] = SYS_DVBS;
 					++index;
 					break;
 				case FE_OFDM:
 					if (_fe_info.caps & FE_CAN_2G_MODULATION) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBT2;
+						dtvProperty[0].u.buffer.data[index] = SYS_DVBT2;
 						++index;
 					}
-					dtvProperty.u.buffer.data[index] = SYS_DVBT;
+					dtvProperty[0].u.buffer.data[index] = SYS_DVBT;
 					++index;
 					break;
 				case FE_QAM:
 #  if FULL_DVB_API_VERSION >= 0x0505
-					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_A;
+					dtvProperty[0].u.buffer.data[index] = SYS_DVBC_ANNEX_A;
 #  else
-					dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_AC;
+					dtvProperty[0].u.buffer.data[index] = SYS_DVBC_ANNEX_AC;
 #  endif
 					++index;
 					break;
 				case FE_ATSC:
 					if (_fe_info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)) {
-						dtvProperty.u.buffer.data[index] = SYS_DVBC_ANNEX_B;
+						dtvProperty[0].u.buffer.data[index] = SYS_DVBC_ANNEX_B;
 						++index;
 						break;
 					}
@@ -548,13 +552,13 @@ namespace input::dvb {
 					CLOSE_FD(fd_fe);
 					return;
 			}
-			dtvProperty.u.buffer.len = index;
+			dtvProperty[0].u.buffer.len = index;
 		}
 		CLOSE_FD(fd_fe);
 #endif
 		// get capability of this frontend and count the delivery systems
-		for (std::size_t i = 0; i < dtvProperty.u.buffer.len; ++i) {
-			const int deliveryType = dtvProperty.u.buffer.data[i];
+		for (std::size_t i = 0; i < dtvProperty[0].u.buffer.len; ++i) {
+			const int deliveryType = dtvProperty[0].u.buffer.data[i];
 			switch (deliveryType) {
 				case SYS_DSS:
 					SI_LOG_INFO("Frontend Type: DSS");
@@ -610,15 +614,23 @@ namespace input::dvb {
 		SI_LOG_INFO("Frontend Freq: @#1 Hz to @#2 Hz", _fe_info.frequency_min, _fe_info.frequency_max);
 		SI_LOG_INFO("Frontend srat: @#1 symbols/s to @#2 symbols/s", _fe_info.symbol_rate_min, _fe_info.symbol_rate_max);
 
+		_dvbVersion = FULL_DVB_API_VERSION;
+		if (dtvProperty[1].u.data > 5) {
+			const unsigned int minor = dtvProperty[1].u.buffer.data[0];
+			const unsigned int major = dtvProperty[1].u.buffer.data[1];
+			_dvbVersion = dtvProperty[1].u.data;
+			SI_LOG_INFO("Frontend  API: @#1.@#2 (@#3)", major, minor, HEX(_dvbVersion, 4));
+		}
+
 		// Set delivery systems
 		if (_dvbs2 > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_feID, _path_to_fe)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_feID, _path_to_fe, _dvbVersion)));
 		}
 		if (_dvbt > 0 || _dvbt2 > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_feID, _path_to_fe)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_feID, _path_to_fe, _dvbVersion)));
 		}
 		if (_dvbc > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_feID, _path_to_fe)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_feID, _path_to_fe, _dvbVersion)));
 		}
 	}
 

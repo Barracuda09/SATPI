@@ -86,6 +86,10 @@ void FrontendData::doInitialize() {
 	_pilot = PILOT_AUTO;
 	_src = 1;
 	_pol = Lnb::Polarization::Horizontal;
+	_isId = NO_STREAM_ID;
+	_plsMode = PlsMode::Gold;
+	_plsCode = DEFAULT_GOLD_CODE;
+
 
 	// =========================================================================
 	// -- DVB-C2 Data members --------------------------------------------------
@@ -100,8 +104,8 @@ void FrontendData::doInitialize() {
 	_guard = GUARD_INTERVAL_AUTO;
 	_hierarchy = HIERARCHY_AUTO;
 	_bandwidthHz = 8000000;
-	_plp_id = 0;
-	_t2_system_id = 0;
+	_plpId = NO_STREAM_ID;
+	_t2SystemId = 0;
 	_siso_miso = 0;
 }
 
@@ -130,6 +134,35 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 				_filter.clear();
 			}
 		}
+	}
+	_plpId = NO_STREAM_ID;
+	_isId = NO_STREAM_ID;
+	_plsCode = DEFAULT_GOLD_CODE;
+	_plsMode = PlsMode::Gold;
+	const int isId = params.getIntParameter("isi");
+	if (isId != -1) {
+		if (_isId != isId) {
+			_isId = isId;
+			_changed = true;
+		}
+	}
+	const int plsCode = params.getIntParameter("plsc");
+	if (plsCode != -1) {
+		if (_plsCode != plsCode) {
+			_plsCode = plsCode & 0x3FFFF;
+			_changed = true;
+		}
+	}
+	const int plpId = params.getIntParameter("plp");
+	if (plpId != -1) {
+		if (_plpId != plpId) {
+			_plpId = plpId;
+			_changed = true;
+		}
+	}
+	const int plsMode = params.getIntParameter("plsm");
+	if (plsMode != -1) {
+		_plsMode = integerToEnum<PlsMode>(plsMode & 0x03);
 	}
 	const int sr = params.getIntParameter("sr");
 	if (sr != -1) {
@@ -314,13 +347,9 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_guard = GUARD_INTERVAL_AUTO;
 		}
 	}
-	const int plp = params.getIntParameter("plp");
-	if (plp != -1) {
-		_plp_id = plp;
-	}
 	const int t2id = params.getIntParameter("t2id");
 	if (t2id != -1) {
-		_t2_system_id = t2id;
+		_t2SystemId = t2id;
 	}
 	const int sm = params.getIntParameter("sm");
 	if (sm != -1) {
@@ -493,7 +522,7 @@ int FrontendData::getGuardInverval() const {
 
 int FrontendData::getUniqueIDPlp() const {
 	base::MutexLock lock(_mutex);
-	return _plp_id;
+	return _plpId;
 }
 
 int FrontendData::getSISOMISO() const {
@@ -513,7 +542,22 @@ int FrontendData::getC2TuningFrequencyType() const {
 
 int FrontendData::getUniqueIDT2() const {
 	base::MutexLock lock(_mutex);
-	return _t2_system_id;
+	return _t2SystemId;
+}
+
+int FrontendData::getInputStreamIdentifier() const {
+	base::MutexLock lock(_mutex);
+	return _isId;
+}
+
+FrontendData::PlsMode FrontendData::getPhysicalLayerSignallingMode() const {
+	base::MutexLock lock(_mutex);
+	return _plsMode;
+}
+
+int FrontendData::getPhysicalLayerSignallingCode() const {
+	base::MutexLock lock(_mutex);
+	return _plsCode;
 }
 
 } // namespace

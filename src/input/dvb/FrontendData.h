@@ -32,6 +32,17 @@ namespace input::dvb {
 class FrontendData :
 	public DeviceData {
 		// =====================================================================
+		// -- Static Data members (Multistream) --------------------------------
+		// =====================================================================
+	public:
+		static constexpr int NO_STREAM_ID = NO_STREAM_ID_FILTER;
+		static constexpr int DEFAULT_GOLD_CODE = 0;
+		static constexpr int DEFAULT_ROOT_CODE = 1;
+		enum class PlsMode {
+			Root, Gold, Unknown
+		};
+
+		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
 	public:
@@ -119,6 +130,12 @@ class FrontendData :
 
 		int getC2TuningFrequencyType() const;
 
+		int getInputStreamIdentifier() const;
+
+		PlsMode getPhysicalLayerSignallingMode() const;
+
+		int getPhysicalLayerSignallingCode() const;
+
 	private:
 
 		// =====================================================================
@@ -139,6 +156,9 @@ class FrontendData :
 		int _pilot;              /// pilot tones (on/off)
 		int _src;                /// Source (1-4) => DiSEqC switch position (0-3)
 		input::dvb::delivery::Lnb::Polarization _pol;
+		PlsMode _plsMode;        /// Physical Layer Signalling Mode
+		int _isId;               /// Input Stream Identifier
+		int _plsCode;            /// Physical Layer Signalling Code
 
 		// =====================================================================
 		// -- DVB-C2 Data members ----------------------------------------------
@@ -153,8 +173,8 @@ class FrontendData :
 		int _guard;
 		int _hierarchy;
 		uint32_t _bandwidthHz;
-		int _plp_id;
-		int _t2_system_id;
+		int _plpId;
+		int _t2SystemId;
 		int _siso_miso;
 
 };

@@ -40,10 +40,10 @@
 			page += addTableLineEntry("Attached", xmlDoc, streamID + "attached");
 			page += addTableLineEntry("Type", xmlDoc, streamID + "type");
 			page += addTableLineEntry("Name", xmlDoc, streamID + "frontendname");
-
 			page += addTableLineEntry("Path", xmlDoc, streamID + "pathname");
 			page += addTableLineEntry("Freq Range", xmlDoc, streamID + "freq");
 			page += addTableLineEntry("Symbol Rate Range", xmlDoc, streamID + "symbol");
+			page += addTableLineEntry("Linux DVB API version", xmlDoc, streamID + "dvbversion");
 
 			page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">Stream Info</th></tr>";
 			page += addTableLineURL("Stream URL", buildStreamURL(xmlDoc, streamID));

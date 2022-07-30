@@ -40,12 +40,28 @@
 
 namespace input::dvb::delivery {
 
+	// Copyright (C) 2017 Marcus Metzler <mocm@metzlerbros.de>
+	//                    Ralph Metzler <rjkm@metzlerbros.de>
+	//
+	// https://github.com/DigitalDevices/dddvb/blob/master/apps/pls.c
+	static uint32_t root2gold(uint32_t root) {
+		uint32_t x = 1;
+		uint32_t g = 0;
+		for (; g < 0x3ffff; ++g) {
+			if (root == x) {
+				return g;
+			}
+			x = (((x ^ (x >> 7)) & 1) << 17) | (x >> 1);
+		}
+		return 0x3ffff;
+	}
+
 	// =========================================================================
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 
-	DVBS::DVBS(const FeID id, const std::string &fePath) :
-		input::dvb::delivery::System(id, fePath),
+	DVBS::DVBS(const FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		input::dvb::delivery::System(id, fePath, dvbVersion),
 		_diseqcType(DiseqcType::Lnb),
 		_diseqc(new DiSEqcLnb) {
 
@@ -237,6 +253,29 @@ namespace input::dvb::delivery {
 		FILL_PROP(DTV_INVERSION,       INVERSION_AUTO);
 		FILL_PROP(DTV_ROLLOFF,         frontendData.getRollOff());
 		FILL_PROP(DTV_PILOT,           frontendData.getPilotTones());
+
+		int isId = frontendData.getInputStreamIdentifier();
+		if (isId != FrontendData::NO_STREAM_ID) {
+			if (_dvbVersion >= 0x0500 && _dvbVersion <= 0x050A) {
+				isId =
+					(asInteger(frontendData.getPhysicalLayerSignallingMode()) << 26) |
+					(frontendData.getPhysicalLayerSignallingCode() << 8) |
+					frontendData.getInputStreamIdentifier();
+			}
+			SI_LOG_DEBUG("Frontend: @#1, Set Properties: StreamID @#2", _feID, isId);
+			FILL_PROP(DTV_STREAM_ID,     isId);
+		}
+
+		if (_dvbVersion >= 0x050B &&
+				frontendData.getPhysicalLayerSignallingMode() != FrontendData::PlsMode::Unknown) {
+			auto plsMode = frontendData.getPhysicalLayerSignallingMode();
+			int plsCode = frontendData.getPhysicalLayerSignallingCode();
+			if (plsMode == FrontendData::PlsMode::Root) {
+					plsCode = root2gold(plsCode);
+			}
+			SI_LOG_DEBUG("Frontend: @#1, Set Properties: PLS Code @#2", _feID, plsCode);
+			FILL_PROP(DTV_SCRAMBLING_SEQUENCE_INDEX, plsCode);
+		}
 		FILL_PROP(DTV_TUNE,            DTV_UNDEFINED);
 
 		#undef FILL_PROP

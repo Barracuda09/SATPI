@@ -213,6 +213,7 @@ class Frontend :
 		std::string _path_to_dvr;
 		std::string _path_to_dmx;
 		struct dvb_frontend_info _fe_info;
+		unsigned int _dvbVersion;
 
 		input::dvb::delivery::SystemUpVector _deliverySystem;
 		input::dvb::FrontendData _frontendData;

@@ -30,9 +30,7 @@ FW_DECL_NS2(input, dvb, FrontendData);
 
 FW_DECL_VECTOR_OF_UP_NS3(input, dvb, delivery, System);
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 /// The class @c System specifies the interface to an specific delivery system
 class System :
@@ -42,11 +40,12 @@ class System :
 		// =======================================================================
 	public:
 
-		explicit System(FeID id, const std::string &fePath) :
+		explicit System(FeID id, const std::string &fePath, unsigned int dvbVersion) :
 			_feID(id),
-			_fePath(fePath) {}
+			_fePath(fePath),
+			_dvbVersion(dvbVersion) {}
 
-		virtual ~System() {}
+		virtual ~System() = default;
 
 		// =======================================================================
 		// -- Other member functions ---------------------------------------------
@@ -68,11 +67,9 @@ class System :
 
 		FeID _feID;
 		std::string _fePath;
-
+		unsigned int _dvbVersion;
 };
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE

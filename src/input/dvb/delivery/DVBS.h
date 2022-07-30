@@ -41,7 +41,7 @@ class DVBS :
 		// =========================================================================
 	public:
 
-		explicit DVBS(FeID id, const std::string &fePath);
+		explicit DVBS(FeID id, const std::string &fePath, unsigned int dvbVersion);
 		virtual ~DVBS() = default;
 
 		// =========================================================================

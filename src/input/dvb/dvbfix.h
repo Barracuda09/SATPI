@@ -24,7 +24,7 @@
 #include <linux/dvb/version.h>
 #include <linux/dvb/dmx.h>
 
-#define FULL_DVB_API_VERSION (DVB_API_VERSION << 8 | DVB_API_VERSION_MINOR)
+#define FULL_DVB_API_VERSION ((DVB_API_VERSION << 8) | DVB_API_VERSION_MINOR)
 
 #if FULL_DVB_API_VERSION < 0x0500
 #error Not correct DVB_API_VERSION should be >= 5.0
@@ -37,6 +37,10 @@
 
 #ifndef DTV_STREAM_ID
 #define DTV_STREAM_ID         42
+#endif
+
+#ifndef DTV_SCRAMBLING_SEQUENCE_INDEX
+#define DTV_SCRAMBLING_SEQUENCE_INDEX  70
 #endif
 
 // DMX_SET_SOURCE ioclt and dmx_source enum are removed from Kernel 4.14 and onwards

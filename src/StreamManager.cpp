@@ -65,7 +65,6 @@ void StreamManager::enumerateDevices(
 #ifdef NOT_PREFERRED_DVB_API
 	SI_LOG_ERROR("Not the preferred DVB API version, for correct function it should be 5.5 or higher");
 #endif
-	SI_LOG_INFO("Current DVB_API_VERSION: @#1.@#2", DVB_API_VERSION, DVB_API_VERSION_MINOR);
 	SI_LOG_INFO("Enumerating all devices...");
 
 	// enumerate streams (frontends)

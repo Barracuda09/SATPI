@@ -33,8 +33,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBT::DVBT(FeID id, const std::string &fePath) :
-		input::dvb::delivery::System(id, fePath),
+	DVBT::DVBT(FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		input::dvb::delivery::System(id, fePath, dvbVersion),
 		_lna(1) {}
 
 	DVBT::~DVBT() {}
@@ -82,7 +82,10 @@ namespace delivery {
 		FILL_PROP(DTV_CLEAR, DTV_UNDEFINED);
 		switch (frontendData.getDeliverySystem()) {
 			case input::InputSystem::DVBT2:
-				FILL_PROP(DTV_STREAM_ID,         frontendData.getUniqueIDPlp());
+				if (_dvbVersion >= 0x0502 &&
+						frontendData.getUniqueIDPlp() != FrontendData::NO_STREAM_ID) {
+					FILL_PROP(DTV_STREAM_ID,       frontendData.getUniqueIDPlp());
+				}
 			// Fall-through
 			case input::InputSystem::DVBT:
 				FILL_PROP(DTV_DELIVERY_SYSTEM,   frontendData.convertDeliverySystem());

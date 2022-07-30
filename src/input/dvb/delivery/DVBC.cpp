@@ -33,8 +33,8 @@ namespace input::dvb::delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBC::DVBC(FeID id, const std::string &fePath) :
-		input::dvb::delivery::System(id, fePath) {}
+	DVBC::DVBC(FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		input::dvb::delivery::System(id, fePath, dvbVersion) {}
 
 	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
