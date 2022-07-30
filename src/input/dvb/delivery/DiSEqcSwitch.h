@@ -61,10 +61,14 @@ namespace input::dvb::delivery {
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 		private:
-
+			enum class SwitchType {
+				COMMITTED,
+				UNCOMMITTED
+			};
 			Lnb _lnb;
 			uint8_t _addressByte = 0x10;
 			uint8_t _commandByte = 0x38;
+			SwitchType _switchType = SwitchType::COMMITTED;
 	};
 
 }

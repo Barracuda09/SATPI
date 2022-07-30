@@ -41,16 +41,20 @@ namespace input::dvb::delivery {
 		_lnb.getIntermediateFrequency(freq, hiband, pol);
 
 		// Framing 0xe0: Command from Master, No reply required, First transmission
+		// -------------------------------------------------------------------------
 		// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
 		// Address 0x11: LNB
 		// Address 0x12: LNB with Loop-through switching
 		// Address 0x14: Switcher (d.c. blocking)
 		// Address 0x15: Switcher with d.c. Loop-through
+		// -------------------------------------------------------------------------
 		// Command 0x38: Write to Port group 0 (Committed switches)
 		// Command 0x39: Write to Port group 1 (Uncommitted switches)
+		// -------------------------------------------------------------------------
 		// Data 1  0xf0: see below
 		// Data 2  0x00: not used
 		// Data 3  0x00: not used
+		// -------------------------------------------------------------------------
 		// size    0x04: send x bytes
 		dvb_diseqc_master_cmd cmd = {{0xe0, _addressByte, _commandByte, 0x00}, 4};
 		switch (_addressByte) {
@@ -96,11 +100,34 @@ namespace input::dvb::delivery {
 	}
 
 	void DiSEqcSwitch::doNextAddToXML(std::string &xml) const {
+		ADD_XML_BEGIN_ELEMENT(xml, "switchType");
+			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
+			ADD_XML_ELEMENT(xml, "value", asInteger(_switchType));
+			ADD_XML_BEGIN_ELEMENT(xml, "list");
+			ADD_XML_ELEMENT(xml, "option0", "Committed");
+			ADD_XML_ELEMENT(xml, "option1", "Uncommitted");
+			ADD_XML_END_ELEMENT(xml, "list");
+		ADD_XML_END_ELEMENT(xml, "switchType");
 		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
 	}
 
 	void DiSEqcSwitch::doNextFromXML(const std::string &xml) {
 		std::string element;
+		if (findXMLElement(xml, "switchType.value", element)) {
+			const auto type = integerToEnum<SwitchType>(std::stoi(element));
+			switch (type) {
+				case SwitchType::COMMITTED:
+					_switchType = SwitchType::COMMITTED;
+					_commandByte = 0x38;
+					break;
+				case SwitchType::UNCOMMITTED:
+					_switchType = SwitchType::UNCOMMITTED;
+					_commandByte = 0x39;
+					break;
+				default:
+					SI_LOG_ERROR("Frontend: x, Wrong Switch Type requested, not changing");
+			}
+		}
 		if (findXMLElement(xml, "lnb0", element)) {
 			_lnb.fromXML(element);
 		}
