@@ -17,38 +17,46 @@
 	function updatePage() {
 		loadXMLDoc("SatPI.xml");
 	}
+	function updateEntry(infopage, xmlValue) {
+		if (infopage.innerHTML != xmlValue.innerHTML) {
+			infopage.innerHTML = xmlValue.innerHTML;
+		}
+	}
 	// function called when xml is loaded
 	function xmlloaded(xml) {
-		appdata = xml.getElementsByTagName("appdata");
-		ssdpdata = xml.getElementsByTagName("ssdp");
-		configdata = xml.getElementsByTagName("configdata");
+		appdata = xml.getElementsByTagName('appdata');
+		ssdpdata = xml.getElementsByTagName('ssdp');
+		configdata = xml.getElementsByTagName('configdata');
 
-		var uptime = appdata[0].getElementsByTagName("uptime")[0].innerHTML;
-		var sec = uptime % 60;
-		var min = Math.round((uptime/60) - 0.5);
-		var hours = Math.round((min/60) - 0.5);
-		var days = Math.round((hours/24) - 0.5);
+		let uptime = appdata[0].getElementsByTagName('uptime')[0].innerHTML;
+		let sec = uptime % 60;
+		let min = Math.round((uptime/60) - 0.5);
+		let hours = Math.round((min/60) - 0.5);
+		let days = Math.round((hours/24) - 0.5);
 		min -= (hours * 60);
 		hours -= (days * 24);
 
-		var InfoPage = document.getElementById("InfoPage");
-		InfoPage.rows[0].cells[1].innerHTML = appdata[0].getElementsByTagName("appversion")[0].innerHTML;;
-		InfoPage.rows[1].cells[1].innerHTML = days + " days " + hours + " hours " + min + " min " + sec + " sec";
-		InfoPage.rows[2].cells[1].innerHTML = appdata[0].getElementsByTagName("uuid")[0].innerHTML;
-		InfoPage.rows[3].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("bootID")[0].innerHTML;
-		InfoPage.rows[4].cells[1].innerHTML = ssdpdata[0].getElementsByTagName("deviceID")[0].innerHTML;
-		InfoPage.rows[5].cells[1].innerHTML = configdata[0].getElementsByTagName("ipaddress")[0].getElementsByTagName("value")[0].innerHTML;
-		InfoPage.rows[6].cells[1].innerHTML = configdata[0].getElementsByTagName("rtspport")[0].getElementsByTagName("value")[0].innerHTML;
+		let InfoPage = document.getElementById('InfoPage');
+		InfoPage.rows[1].cells[1].innerHTML = days + ' days ' + hours + ' hours ' + min + ' min ' + sec + ' sec';
 
-		var ip = configdata[0].getElementsByTagName("ipaddress")[0].getElementsByTagName("value")[0].innerHTML;
-		var port = configdata[0].getElementsByTagName("httpport")[0].getElementsByTagName("value")[0].innerHTML;
-		var xmldesc = configdata[0].getElementsByTagName("xmldesc")[0].getElementsByTagName("value")[0].innerHTML;
-		var link = "http://" + ip + ":" + port + "/" + xmldesc;
-		InfoPage.rows[7].cells[1].innerHTML = "<a href=\"" + link + "\" class=\"btn-info btn-sm\" role=\"button\">Show</a>";
+		updateEntry(InfoPage.rows[0].cells[1], appdata[0].getElementsByTagName('appversion')[0]);
+		updateEntry(InfoPage.rows[2].cells[1], appdata[0].getElementsByTagName('uuid')[0]);
+		updateEntry(InfoPage.rows[3].cells[1], ssdpdata[0].getElementsByTagName('bootID')[0]);
+		updateEntry(InfoPage.rows[4].cells[1], ssdpdata[0].getElementsByTagName('deviceID')[0]);
+		updateEntry(InfoPage.rows[5].cells[1], configdata[0].getElementsByTagName('ipaddress')[0].getElementsByTagName('value')[0]);
+		updateEntry(InfoPage.rows[6].cells[1], configdata[0].getElementsByTagName('rtspport')[0].getElementsByTagName('value')[0]);
+
+		if (InfoPage.rows[7].cells[1].innerText == "...") {
+			let ip = configdata[0].getElementsByTagName('ipaddress')[0].getElementsByTagName('value')[0].innerHTML;
+			let port = configdata[0].getElementsByTagName('httpport')[0].getElementsByTagName('value')[0].innerHTML;
+			let xmldesc = configdata[0].getElementsByTagName('xmldesc')[0].getElementsByTagName('value')[0].innerHTML;
+			let link = 'http://' + ip + ':' + port + '/' + xmldesc;
+			InfoPage.rows[7].cells[1].innerHTML = '<a href="' + link + '" class="btn-info btn-sm" role="button">Show</a>';
+		}
 	}
 
 	function stopSatPI() {
-		$("#StopDialog").modal();
+		$('#StopDialog').modal();
 	}
 
 </script>
@@ -98,13 +106,13 @@
 		<button class="btn btn-danger" type="button" onclick="stopSatPI()"><i class="fas fa-power-off"></i> Stop</button>
 		<script>
 			// make menu
-			document.getElementById("menu").innerHTML = buildmenu();
-			setMenuItemActive("index");
+			document.getElementById('menu').innerHTML = buildmenu();
+			setMenuItemActive('index');
 
 			// Call the ajax refresh each refresh_time seconds
 			var refresh_time = 2000;
 			updatePage();
-			setInterval("updatePage()", refresh_time);
+			setInterval('updatePage()', refresh_time);
 		</script>
 	</div>
 </div>
