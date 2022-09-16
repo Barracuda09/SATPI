@@ -254,13 +254,12 @@ namespace input::dvb::delivery {
 		FILL_PROP(DTV_ROLLOFF,         frontendData.getRollOff());
 		FILL_PROP(DTV_PILOT,           frontendData.getPilotTones());
 
+		auto plsMode = frontendData.getPhysicalLayerSignallingMode();
+		int plsCode = frontendData.getPhysicalLayerSignallingCode();
 		int isId = frontendData.getInputStreamIdentifier();
 		if (isId != FrontendData::NO_STREAM_ID) {
 			if (_dvbVersion >= 0x0500 && _dvbVersion <= 0x050A) {
-				isId =
-					(asInteger(frontendData.getPhysicalLayerSignallingMode()) << 26) |
-					(frontendData.getPhysicalLayerSignallingCode() << 8) |
-					frontendData.getInputStreamIdentifier();
+				isId = (asInteger(plsMode) << 26) | (plsCode << 8) | isId;
 			}
 			SI_LOG_DEBUG("Frontend: @#1, Set Properties: StreamID @#2", _feID, isId);
 			FILL_PROP(DTV_STREAM_ID,     isId);
@@ -268,8 +267,6 @@ namespace input::dvb::delivery {
 
 		if (_dvbVersion >= 0x050B &&
 				frontendData.getPhysicalLayerSignallingMode() != FrontendData::PlsMode::Unknown) {
-			auto plsMode = frontendData.getPhysicalLayerSignallingMode();
-			int plsCode = frontendData.getPhysicalLayerSignallingCode();
 			if (plsMode == FrontendData::PlsMode::Root) {
 					plsCode = root2gold(plsCode);
 			}
