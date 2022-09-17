@@ -58,12 +58,21 @@ namespace input::dvb::delivery {
 			virtual void doNextFromXML(const std::string &xml) final;
 
 			// =======================================================================
+			// -- Other member functions ---------------------------------------------
+			// =======================================================================
+		private:
+
+			bool sendDiseqcCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
+				MiniDiSEqCSwitch sw, int src, unsigned int repeatCmd);
+
+			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================
 		private:
 			enum class SwitchType {
 				COMMITTED,
-				UNCOMMITTED
+				UNCOMMITTED,
+				CASCADE
 			};
 			Lnb _lnb;
 			uint8_t _addressByte = 0x10;

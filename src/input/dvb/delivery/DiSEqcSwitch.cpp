@@ -56,19 +56,53 @@ namespace input::dvb::delivery {
 		// Data 3  0x00: not used
 		// -------------------------------------------------------------------------
 		// size    0x04: send x bytes
-		dvb_diseqc_master_cmd cmd = {{0xe0, _addressByte, _commandByte, 0x00}, 4};
+		dvb_diseqc_master_cmd cmd = {{0xe0, _addressByte, _commandByte, 0xf0}, 4};
 		switch (_addressByte) {
 			default:
 				cmd.msg[1] = 0x10;
 				cmd.msg[2] = 0x38;
 				[[fallthrough]];
 			case 0x10:
-				// high nibble: reset bits
-				//  low nibble:   set bits  (option, position, polarizaion, band)
-				cmd.msg[3]  = 0xf0;
-				cmd.msg[3] |= (src << 2) & 0x0f;
-				cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
-				cmd.msg[3] |= hiband ? 0x1 : 0x0;
+				switch (_switchType) {
+					case SwitchType::COMMITTED: {
+						// high nibble: reset bits
+						//  low nibble:   set bits  (option, position, polarizaion, band)
+						cmd.msg[3] |= (src << 2) & 0x0f;
+						cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
+						cmd.msg[3] |= hiband ? 0x1 : 0x0;
+						const auto minisw = (src % 2) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
+						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
+						break;
+					}
+					case SwitchType::UNCOMMITTED: {
+						cmd.msg[3] |= src & 0x0f;
+						const auto minisw = (src % 2) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
+						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
+						break;
+					}
+					case SwitchType::CASCADE: {
+						const int srcCommitted = src & 0x03;
+						const int srcUncommitted = (src >> 2) & 0x0F;
+						const bool uncommittedFirst = (src & 0x40) == 0x40;
+						const auto minisw = ((src & 0x80) == 0x80) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
+						if (uncommittedFirst) {
+							cmd.msg[2] = 0x39;
+							cmd.msg[3] = 0xf0 | srcUncommitted;
+							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0);
+							cmd.msg[2] = 0x38;
+							cmd.msg[3] = 0xf0 | srcCommitted;
+							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0);
+						} else {
+							cmd.msg[2] = 0x38;
+							cmd.msg[3] = 0xf0 | srcCommitted;
+							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0);
+							cmd.msg[2] = 0x39;
+							cmd.msg[3] = 0xf0 | srcUncommitted;
+							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0);
+						}
+						break;
+					}
+				}
 				break;
 			case 0x14:
 			case 0x15:
@@ -76,13 +110,6 @@ namespace input::dvb::delivery {
 				cmd.msg[3] |= src & 0x0f;
 				break;
 		}
-
-		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] - DiSEqC Src: @#6",
-			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), src);
-
-
-		const auto minisw = (src % 2) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
-		sendDiseqcMasterCommand(feFD, id, cmd, minisw, _diseqcRepeat);
 
 		// Setup LNB
 		const auto v = (pol == Lnb::Polarization::Vertical) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
@@ -106,6 +133,7 @@ namespace input::dvb::delivery {
 			ADD_XML_BEGIN_ELEMENT(xml, "list");
 			ADD_XML_ELEMENT(xml, "option0", "Committed");
 			ADD_XML_ELEMENT(xml, "option1", "Uncommitted");
+			ADD_XML_ELEMENT(xml, "option2", "Cascade");
 			ADD_XML_END_ELEMENT(xml, "list");
 		ADD_XML_END_ELEMENT(xml, "switchType");
 		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
@@ -124,6 +152,10 @@ namespace input::dvb::delivery {
 					_switchType = SwitchType::UNCOMMITTED;
 					_commandByte = 0x39;
 					break;
+				case SwitchType::CASCADE:
+					_switchType = SwitchType::CASCADE;
+					_commandByte = 0x39;
+					break;
 				default:
 					SI_LOG_ERROR("Frontend: x, Wrong Switch Type requested, not changing");
 			}
@@ -131,6 +163,18 @@ namespace input::dvb::delivery {
 		if (findXMLElement(xml, "lnb0", element)) {
 			_lnb.fromXML(element);
 		}
+	}
+
+	// ===========================================================================
+	// -- Other member functions -------------------------------------------------
+	// ===========================================================================
+
+	bool DiSEqcSwitch::sendDiseqcCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
+			MiniDiSEqCSwitch sw, const int src, unsigned int repeatCmd) {
+		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] - DiSEqC Src: @#6",
+			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), src);
+
+		return sendDiseqcMasterCommand(feFD, id, cmd, sw, repeatCmd);
 	}
 
 }
