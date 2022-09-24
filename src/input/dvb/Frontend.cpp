@@ -778,7 +778,7 @@ namespace input::dvb {
 						if (offsetFile.is_open()) {
 							offsetFile >> offset;
 						}
-						int n = _feID.getID();
+						int n = _feID.getID() - 1;
 						if (::ioctl(_fd_dmx, DMX_SET_SOURCE, &n) != 0) {
 							SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_SOURCE with (Src: @#2 - Offset: @#3)", _feID, n, offset);
 							return false;

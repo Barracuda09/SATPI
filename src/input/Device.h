@@ -43,7 +43,7 @@ class Device :
 		// =======================================================================
 	public:
 
-		Device(FeID id) : _feID(id), _streamID(id.getID() + 100) {}
+		Device(FeID id) : _feID(id + 1), _streamID(id.getID() + 100) {}
 
 		virtual ~Device() {}
 

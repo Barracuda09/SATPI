@@ -143,9 +143,13 @@
 		if (streams.length > 0) {
 			var len = streams.length;
 			tab += "<ul class=\"nav nav-tabs\">";
-			tab += "<li class=\"nav-item\"><a class=\"nav-link active\" data-toggle=\"tab\" href=\"#stream" + 0 + "\">Frontend " + 0 + "</a></li>"
-			for (en = 1; en < len; en++) {
-				tab += "<li class=\"nav-item\"><a class=\"nav-link\" data-toggle=\"tab\" href=\"#stream" + en + "\">Frontend " + en + "</a></li>"
+			for (en = 1; en <= len; en++) {
+				var streamIndex = xmlDoc.querySelector("stream" + en + " " + "streamindex").innerHTML;
+				tab += "<li class=\"nav-item\"><a class=\"nav-link";
+				if (en == 1) {
+					tab += " active";
+				}
+				tab += "\" data-toggle=\"tab\" href=\"#stream" + streamIndex + "\">Frontend " + streamIndex + "</a></li>"
 			}
 			tab += "</ul>";
 			tab += "<div class=\"tab-content border rounded-bottom\" >";
@@ -179,7 +183,7 @@
 				$(showTab).tab('show');
 				updatePage();
 			} else {
-				content = "stream0";
+				content = "stream1";
 			}
 		}
 		if (autoload == 1) {
