@@ -125,29 +125,30 @@ std::string StreamManager::getRTSPDescribeString() const {
 	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
 }
 
-FeID StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
+std::tuple<FeIndex, FeID> StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
 	for (SpStream stream : _streamVector) {
 		if (stream->getStreamID() == id) {
-			return stream->getFeID();
+			return { stream->getFeIndex(), stream->getFeID() };
 		}
 	}
-	return FeID();
+	return { FeIndex(), FeID() };
 }
 
-std::pair<FeID, StreamID> StreamManager::findFrontendID(const TransportParamVector& params) const {
+std::tuple<FeIndex, FeID, StreamID> StreamManager::findFrontendID(const TransportParamVector& params) const {
 	const StreamID streamID = params.getIntParameter("stream");
-	const FeID feID = params.getIntParameter("fe");
+	FeID feID = params.getIntParameter("fe");
 	// Did we find StreamID an NO FrondendID
 	if (streamID != -1 && feID == -1) {
-		return { findFrontendIDWithStreamID(streamID), streamID };
+		const auto [index, feID] = findFrontendIDWithStreamID(streamID);
+		return { index, feID, streamID };
 	}
 	// Is the requested FrondendID in range, then return this
 	if (feID >= 1 && feID <= static_cast<int>(_streamVector.size())) {
-		// We start with FeID = 0, therefore we subtract 1 from transport parameter 'fe='
-		return { feID - 1, streamID};
+		// The vector starts at 0, therefore we subtract 1 from transport parameter 'fe='/'FeID'
+		return { feID - 1, feID, streamID };
 	}
-	// Out of range, return -1, -1
-	return { FeID(), StreamID() };
+	// Out of range, return -1, -1, -1
+	return { FeIndex(), FeID(), StreamID() };
 }
 
 SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
@@ -156,8 +157,8 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	HeaderVector headers = socketClient.getHeaders();
 	TransportParamVector params = socketClient.getTransportParameters();
 
-	// Now find FrontendID and/or StreamID of this message
-	const auto [feID, streamID] = findFrontendID(params);
+	// Now find index for FrontendID and/or StreamID of this message
+	const auto [feIndex, feID, streamID] = findFrontendID(params);
 
 	std::string sessionID = headers.getFieldParameter("Session");
 	bool newSession = false;
@@ -179,8 +180,8 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		}
 	}
 
-	// if no FeID, then we have to find a suitable one
-	if (feID == -1) {
+	// if no index, then we have to find a suitable one
+	if (feIndex == -1) {
 		SI_LOG_INFO("Found FrondtendID: x (fe=x)  StreamID: x  SessionID: @#1", sessionID);
 		for (SpStream stream : _streamVector) {
 			if (stream->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
@@ -189,11 +190,11 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 			}
 		}
 	} else {
-		SI_LOG_INFO("Found FrondtendID: @#1 (fe=@#2)  StreamID: @#3  SessionID: @#4", feID, feID + 1, streamID, sessionID);
+		SI_LOG_INFO("Found FrondtendID: @#1 (fe=@#2)  StreamID: @#3  SessionID: @#4", feID, feID, streamID, sessionID);
 		// Did we find the StreamClient?
-		if (_streamVector[feID.getID()]->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
-			_streamVector[feID.getID()]->getStreamClient(clientID).setSessionID(sessionID);
-			return _streamVector[feID.getID()];
+		if (_streamVector[feIndex]->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
+			_streamVector[feIndex]->getStreamClient(clientID).setSessionID(sessionID);
+			return _streamVector[feIndex];
 		}
 		// No, Then try to search in other Streams
 		for (SpStream stream : _streamVector) {
@@ -217,14 +218,14 @@ void StreamManager::checkForSessionTimeout() {
 	}
 }
 
-std::string StreamManager::getDescribeMediaLevelString(const FeID id) const {
+std::string StreamManager::getDescribeMediaLevelString(const FeIndex feIndex) const {
 	assert(!_streamVector.empty());
-	return _streamVector[id.getID()]->getDescribeMediaLevelString();
+	return _streamVector[feIndex.getID()]->getDescribeMediaLevelString();
 }
 
 #ifdef LIBDVBCSA
-input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const FeID id) {
-	return _streamVector[id.getID()]->getFrontendDecryptInterface();
+input::dvb::SpFrontendDecryptInterface StreamManager::getFrontendDecryptInterface(const FeIndex feIndex) {
+	return _streamVector[feIndex.getID()]->getFrontendDecryptInterface();
 }
 #endif
 

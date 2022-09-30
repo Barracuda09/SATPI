@@ -82,7 +82,7 @@ namespace stream {
 		std::string desc;
 		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
 		return StringConverter::stringFormat("ver=1.5;tuner=@#1,@#2,@#3,@#4;uri=@#5",
-				id + 1,	getSignalStrength(), hasLock(),
+				id, getSignalStrength(), hasLock(),
 				getSignalToNoiseRatio(), _uri);
 		return desc;
 	}

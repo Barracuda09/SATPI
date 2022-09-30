@@ -70,7 +70,7 @@ void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportPar
 std::string TSReaderData::doAttributeDescribeString(const FeID id) const {
 	// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;exec=<file>
 	return StringConverter::stringFormat("ver=1.5;tuner=@#1,@#2,@#3,@#4;exec=@#5",
-		id + 1, getSignalStrength(), hasLock(),
+		id, getSignalStrength(), hasLock(),
 		getSignalToNoiseRatio(), _filePath);
 }
 

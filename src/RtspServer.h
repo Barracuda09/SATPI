@@ -66,7 +66,7 @@ class RtspServer :
 		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) final;
 
 		///
-		virtual void methodDescribe(const std::string &sessionID, int cseq, FeID id, std::string &htmlBody) final;
+		virtual void methodDescribe(const std::string &sessionID, int cseq, FeIndex index, std::string &htmlBody) final;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

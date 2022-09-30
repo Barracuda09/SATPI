@@ -159,14 +159,14 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const std::string sessionID = headers.getFieldParameter("Session");
 	const StreamID streamID = params.getIntParameter("stream");
 	// Find the FeID with requesed StreamID
-	const FeID feID = _streamManager.findFrontendIDWithStreamID(streamID);
+	const auto [feIndex, feID] = _streamManager.findFrontendIDWithStreamID(streamID);
 
 	const std::string method = client.getMethod();
 	std::string httpcReply;
 	if (sessionID.empty() && method == "OPTIONS") {
 		methodOptions("", cseq, httpcReply);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
-		methodDescribe("", cseq, feID, httpcReply);
+		methodDescribe("", cseq, feIndex, httpcReply);
 	} else {
 		int clientID;
 		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
@@ -201,7 +201,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			} else if (method == "OPTIONS") {
 				methodOptions(sessionID, cseq, httpcReply);
 			} else if (method == "DESCRIBE") {
-				methodDescribe(sessionID, cseq, feID, httpcReply);
+				methodDescribe(sessionID, cseq, feIndex, httpcReply);
 			} else {
 				// method not supported
 				SI_LOG_ERROR("@#1: Method not allowed: @#2", method, client.getRawMessage());

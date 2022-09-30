@@ -61,12 +61,12 @@ namespace input::dvb {
 	// =======================================================================
 
 	Frontend::Frontend(
-			FeID id,
+			FeIndex index,
 			const std::string &appDataPath,
 			const std::string &fe,
 			const std::string &dvr,
 			const std::string &dmx) :
-		Device(id),
+		Device(index),
 		_tuned(false),
 		_fd_fe(-1),
 		_fd_dmx(-1),

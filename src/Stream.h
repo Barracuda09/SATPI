@@ -88,6 +88,8 @@ class Stream :
 
 		virtual FeID getFeID() const final;
 
+		virtual int getFeIndex() const final;
+
 		virtual StreamClient &getStreamClient(int clientID) const final;
 
 		virtual input::SpDevice getInputDevice() const final;

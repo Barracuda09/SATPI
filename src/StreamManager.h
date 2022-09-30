@@ -25,6 +25,7 @@
 #include <base/XMLSupport.h>
 
 #include <string>
+#include <tuple>
 
 FW_DECL_NS0(SocketClient);
 FW_DECL_NS0(TransportParamVector);
@@ -81,7 +82,7 @@ class StreamManager :
 			int &clientID);
 
 		///
-		FeID findFrontendIDWithStreamID(StreamID id) const;
+		std::tuple<FeIndex, FeID> findFrontendIDWithStreamID(StreamID id) const;
 
 		///
 		void checkForSessionTimeout();
@@ -98,17 +99,17 @@ class StreamManager :
 		}
 
 		///
-		std::string getDescribeMediaLevelString(FeID id) const;
+		std::string getDescribeMediaLevelString(FeIndex feIndex) const;
 
 #ifdef LIBDVBCSA
 		///
-		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(FeID id);
+		input::dvb::SpFrontendDecryptInterface getFrontendDecryptInterface(FeIndex feIndex);
 #endif
 
 	private:
 
 		///
-		std::pair<FeID, StreamID> findFrontendID(const TransportParamVector& params) const;
+		std::tuple<FeIndex, FeID, StreamID> findFrontendID(const TransportParamVector& params) const;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

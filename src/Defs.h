@@ -70,6 +70,11 @@ class FeID : public TypeID {
 		FeID(int id=-1) : TypeID(id) {}
 };
 
+class FeIndex : public TypeID {
+	public:
+		FeIndex(int index=-1) : TypeID(index) {}
+};
+
 class StreamID : public TypeID {
 	public:
 		StreamID(int id=-1) : TypeID(id) {}

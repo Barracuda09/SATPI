@@ -36,14 +36,12 @@ namespace file {
 // =============================================================================
 
 TSReader::TSReader(
-		FeID id,
+		FeIndex index,
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) :
-		Device(id),
+		Device(index),
 		_transform(appDataPath, _transformDeviceData),
 		_enableUnsecureFrontends(enableUnsecureFrontends) {}
-
-TSReader::~TSReader() {}
 
 // =============================================================================
 //  -- Static member functions -------------------------------------------------

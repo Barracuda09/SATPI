@@ -56,7 +56,7 @@ class Frontend :
 	public:
 
 		Frontend(
-			FeID id,
+			FeIndex index,
 			const std::string &appDataPath,
 			const std::string &fe,
 			const std::string &dvr,

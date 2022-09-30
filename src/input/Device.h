@@ -26,6 +26,7 @@
 #include <input/InputSystem.h>
 
 #include <string>
+#include <utility>
 
 FW_DECL_NS0(TransportParamVector);
 FW_DECL_NS1(mpegts, PacketBuffer);
@@ -43,9 +44,9 @@ class Device :
 		// =======================================================================
 	public:
 
-		Device(FeID id) : _feID(id + 1), _streamID(id.getID() + 100) {}
+		Device(FeIndex index) : _index(index), _feID(index.getID() + 1), _streamID(index.getID() + 100) {}
 
-		virtual ~Device() {}
+		virtual ~Device() = default;
 
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
@@ -105,6 +106,11 @@ class Device :
 		}
 
 		///
+		int getFeIndex() const {
+			return _index;
+		}
+
+		///
 		StreamID getStreamID() const {
 			return _streamID;
 		}
@@ -114,6 +120,7 @@ class Device :
 		// =======================================================================
 	protected:
 
+		FeIndex _index;
 		FeID _feID;
 		StreamID _streamID;
 };

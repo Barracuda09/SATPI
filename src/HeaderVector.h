@@ -22,6 +22,8 @@
 
 #include <Defs.h>
 
+#include <string_view>
+
 class HeaderVector {
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------

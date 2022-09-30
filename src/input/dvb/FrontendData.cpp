@@ -382,7 +382,7 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 			return StringConverter::stringFormat(
 					"ver=1.0;src=@#1;tuner=@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13;pids=@#14",
 					getDiSEqcSource(),
-					id + 1,
+					id,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -402,7 +402,7 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 			//               <sm>;pids=<pid0>,..,<pidn>
 			return StringConverter::stringFormat(
 					"ver=1.1;tuner=@#1,@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13,@#14;pids=@#15",
-					id + 1,
+					id,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),
@@ -423,7 +423,7 @@ std::string FrontendData::doAttributeDescribeString(const FeID id) const {
 			//               <specinv>;pids=<pid0>,..,<pidn>
 			return StringConverter::stringFormat(
 					"ver=1.2;tuner=@#1,@#2,@#3,@#4,@#5,@#6,@#7,@#8,@#9,@#10,@#11,@#12,@#13;pids=@#14",
-					id + 1,
+					id,
 					getSignalStrength(),
 					hasLock(),
 					getSignalToNoiseRatio(),

@@ -91,9 +91,9 @@ namespace decrypt::dvbapi {
 		joinThread();
 	}
 
-	void Client::decrypt(const FeID id, mpegts::PacketBuffer &buffer) {
+	void Client::decrypt(const FeIndex index, const FeID id, mpegts::PacketBuffer &buffer) {
 		if (_connected && _enabled) {
-			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(id);
+			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(index);
 			const int maxBatchSize = frontend->getMaximumBatchSize();
 			static constexpr std::size_t size = buffer.getNumberOfTSPackets();
 			for (std::size_t i = 0; i < size; ++i) {
@@ -179,7 +179,7 @@ namespace decrypt::dvbapi {
 ///////////////////////////////////////////////////////////////////
 
 						if (frontend->isMarkedAsActivePMT(pid)) {
-							sendPMT(id, *frontend->getSDTData(), *frontend->getPMTData());
+							sendPMT(index, id, *frontend->getSDTData(), *frontend->getPMTData());
 							// Do we need to clean PMT
 							if (_rewritePMT) {
 								cleanPMT(data);
@@ -191,11 +191,11 @@ namespace decrypt::dvbapi {
 		}
 	}
 
-	bool Client::stopDecrypt(const FeID id) {
-		const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(id);
+	bool Client::stopDecrypt(const FeIndex index, const FeID id) {
+		const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(index);
 		if (_connected) {
 			// Stop 9F 80 3f 04 83 02 00 <demux index>
-			const int demux = id.getID() + _adapterOffset;
+			const int demux = index.getID() + _adapterOffset;
 			const uint32_t request = htonl(DVBAPI_AOT_CA_STOP);
 			unsigned char buff[8];
 			std::memcpy(&buff[0], &request, 4);
@@ -222,7 +222,7 @@ namespace decrypt::dvbapi {
 */
 		}
 		// Remove this PMT from the list
-		const auto it = _capmtMap.find(id);
+		const auto it = _capmtMap.find(index.getID());
 		if (it != _capmtMap.end()) {
 			_capmtMap.erase(it);
 		}
@@ -340,7 +340,7 @@ namespace decrypt::dvbapi {
 		}
 	}
 
-	void Client::sendPMT(const FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt) {
+	void Client::sendPMT(const FeIndex index, const FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt) {
 		// Did we collect SDT and PMT
 		if (!sdt.isCollected()) {
 			return;
@@ -349,7 +349,7 @@ namespace decrypt::dvbapi {
 		if (!pmt.isReadySend()) {
 			return;
 		}
-		const int adapterIndex = id.getID() + _adapterOffset;
+		const int adapterIndex = index.getID() + _adapterOffset;
 		const int demuxIndex = adapterIndex;
 
 #if USE_DEPRECATED_DVBAPI
@@ -415,7 +415,7 @@ namespace decrypt::dvbapi {
 		std::memcpy(&caPMT[12], oscamDesc, sizeof(oscamDesc));
 		std::memcpy(&caPMT[12 + sizeof(oscamDesc)], progInfo.data(), progInfo.size());
 		// Save new PMT so we can send it
-		_capmtMap[id] = PMTEntry{ caPMT, totLength + 6 };
+		_capmtMap[index.getID()] = PMTEntry{ caPMT, totLength + 6 };
 
 		// Send the collected PMT list
 		unsigned int i = 0;
@@ -538,7 +538,7 @@ namespace decrypt::dvbapi {
 										const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(adapter);
 										frontend->setKey(cw, parity, index);
 										SI_LOG_DEBUG("Frontend: @#1, Received @#2(@#3) CW: @#4 @#5 @#6 @#7 @#8 @#9 @#10 @#11  index: @#12",
-											adapter, (parity == 0) ? "even" : "odd", HEX2(parity),
+											frontend->getFeID(), (parity == 0) ? "even" : "odd", HEX2(parity),
 											HEX2(cw[0]), HEX2(cw[1]), HEX2(cw[2]), HEX2(cw[3]),
 											HEX2(cw[4]), HEX2(cw[5]), HEX2(cw[6]), HEX2(cw[7]), index);
 
@@ -581,7 +581,7 @@ namespace decrypt::dvbapi {
 										frontend->setECMInfo(pid, serviceID, caID, provID, emcTime,
 														  cardSystem, readerName, sourceName, protocolName, hops);
 										SI_LOG_DEBUG("Frontend: @#1, Receive ECM Info System: @#2  Reader: @#3  Source: @#4  Protocol: @#5  ECM Time: @#6",
-											adapter, cardSystem, readerName, sourceName, protocolName, emcTime);
+											frontend->getFeID(), cardSystem, readerName, sourceName, protocolName, emcTime);
 										break;
 									}
 								default:

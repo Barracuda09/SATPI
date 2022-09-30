@@ -108,10 +108,10 @@ class Client :
 	public:
 
 		///
-		void decrypt(FeID id, mpegts::PacketBuffer &buffer);
+		void decrypt(FeIndex index, FeID id, mpegts::PacketBuffer &buffer);
 
 		///
-		bool stopDecrypt(FeID id);
+		bool stopDecrypt(FeIndex index, FeID id);
 
 	private:
 
@@ -125,7 +125,7 @@ class Client :
 		void sendClientInfo();
 
 		///
-		void sendPMT(FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt);
+		void sendPMT(FeIndex index, FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt);
 
 		///
 		void cleanPMT(unsigned char *data);

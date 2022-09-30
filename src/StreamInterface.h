@@ -49,6 +49,9 @@ class StreamInterface {
 		/// Get the FeID of the Frontend used for this stream
 		virtual FeID getFeID() const = 0;
 
+		/// Get the index of this Frontend used for this stream
+		virtual int getFeIndex() const = 0;
+
 		///
 		virtual StreamClient &getStreamClient(int clientID) const = 0;
 

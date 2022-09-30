@@ -50,11 +50,11 @@ class Streamer :
 	public:
 
 		Streamer(
-			FeID id,
+			FeIndex index,
 			const std::string &bindIPAddress,
 			const std::string &appDataPath);
 
-		virtual ~Streamer();
+		virtual ~Streamer() = default;
 
 		// =====================================================================
 		//  -- Static member functions -----------------------------------------

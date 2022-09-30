@@ -35,18 +35,16 @@ namespace stream {
 // =============================================================================
 
 Streamer::Streamer(
-	FeID id,
+	FeIndex index,
 	const std::string &bindIPAddress,
 	const std::string &appDataPath) :
-	Device(id),
+	Device(index),
 	_transform(appDataPath, _transformDeviceData),
 	_bindIPAddress(bindIPAddress) {
 	_pfd[0].events  = 0;
 	_pfd[0].revents = 0;
 	_pfd[0].fd      = -1;
 }
-
-Streamer::~Streamer() {}
 
 // =============================================================================
 //  -- Static member functions -------------------------------------------------

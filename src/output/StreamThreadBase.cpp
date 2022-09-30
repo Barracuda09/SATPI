@@ -70,7 +70,7 @@ StreamThreadBase::~StreamThreadBase() {
 #ifdef LIBDVBCSA
 	decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 	if (decrypt != nullptr) {
-		decrypt->stopDecrypt(_stream.getFeID());
+		decrypt->stopDecrypt(_stream.getFeIndex(), _stream.getFeID());
 	}
 #endif
 }
@@ -171,7 +171,7 @@ bool StreamThreadBase::pauseStreaming(const int clientID) {
 #ifdef LIBDVBCSA
 		decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 		if (decrypt != nullptr) {
-			decrypt->stopDecrypt(_stream.getFeID());
+			decrypt->stopDecrypt(_stream.getFeIndex(), _stream.getFeID());
 		}
 #endif
 	}
@@ -207,7 +207,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 #ifdef LIBDVBCSA
 			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 			if (decrypt != nullptr) {
-				decrypt->decrypt(_stream.getFeID(), _tsBuffer[_writeIndex]);
+				decrypt->decrypt(_stream.getFeIndex(), _stream.getFeID(), _tsBuffer[_writeIndex]);
 			}
 #endif
 			// goto next, so inc write index

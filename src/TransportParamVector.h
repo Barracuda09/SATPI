@@ -23,6 +23,8 @@
 #include <Defs.h>
 #include <input/InputSystem.h>
 
+#include <string_view>
+
 class TransportParamVector {
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------

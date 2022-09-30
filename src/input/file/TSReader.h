@@ -47,11 +47,11 @@ class TSReader :
 	public:
 
 		TSReader(
-			FeID id,
+			FeIndex index,
 			const std::string &appDataPath,
 			bool enableUnsecureFrontends);
 
-		virtual ~TSReader();
+		virtual ~TSReader() = default;
 
 		// =====================================================================
 		//  -- Static member functions -----------------------------------------

@@ -169,7 +169,7 @@ void RtspServer::methodOptions(
 }
 
 void RtspServer::methodDescribe(
-	const std::string &sessionID, const int cseq, const FeID id, std::string &htmlBody) {
+	const std::string &sessionID, const int cseq, const FeIndex feIndex, std::string &htmlBody) {
 	static const char *RTSP_DESCRIBE  =
 		"@#1" \
 		"CSeq: @#2\r\n" \
@@ -196,20 +196,20 @@ void RtspServer::methodDescribe(
 	std::size_t streamsSetup = 0;
 
 	// Lambda Expression 'setupDescribeMediaLevelString'
-	const auto setupDescribeMediaLevelString = [&](const FeID id) {
-		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(id);
+	const auto setupDescribeMediaLevelString = [&](const FeIndex feIndex) {
+		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(feIndex);
 		if (mediaLevel.size() > 5) {
 			++streamsSetup;
 			desc += mediaLevel;
 		}
 	};
-	// Check if there is a specific Frontend ID requested
-	if (id == -1) {
+	// Check if there is a specific Frontend ID index requested
+	if (feIndex == -1) {
 		for (std::size_t i = 0; i < _streamManager.getMaxStreams(); ++i) {
 			setupDescribeMediaLevelString(i);
 		}
 	} else {
-		setupDescribeMediaLevelString(id);
+		setupDescribeMediaLevelString(feIndex);
 	}
 
 	// check if we are in session, then we need to send the Session ID

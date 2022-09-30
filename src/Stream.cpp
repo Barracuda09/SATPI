@@ -75,6 +75,10 @@ FeID Stream::getFeID() const {
 	return _device->getFeID();
 }
 
+int Stream::getFeIndex() const {
+	return _device->getFeIndex();
+}
+
 StreamClient &Stream::getStreamClient(int clientID) const {
 	return _client[clientID];
 }
