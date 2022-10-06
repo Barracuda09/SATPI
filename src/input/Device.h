@@ -106,7 +106,7 @@ class Device :
 		}
 
 		///
-		int getFeIndex() const {
+		FeIndex getFeIndex() const {
 			return _index;
 		}
 
