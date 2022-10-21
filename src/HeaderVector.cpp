@@ -27,8 +27,13 @@
 
 std::string HeaderVector::getFieldParameter(const std::string_view reqHeader) const {
 	for (const std::string &header : _vector) {
+#ifndef NEED_BACKPORT
 		const auto b = header.find(reqHeader, 0);
 		const auto e = header.find_first_not_of(reqHeader, b);
+#else
+		const auto b = header.find(std::string{reqHeader}, 0);
+		const auto e = header.find_first_not_of(std::string{reqHeader}, b);
+#endif
 		if (b != std::string::npos && reqHeader.size() == e && header[e] == ':') {
 			return StringConverter::trimWhitespace(header.substr(e + 1));
 		}
@@ -44,7 +49,11 @@ std::string HeaderVector::getStringFieldParameter(std::string_view header,
 	}
 	StringVector params = StringConverter::split(field, ";\r\n");
 	for (const std::string &param : params) {
+#ifndef NEED_BACKPORT
 		const auto p = param.find(parameter, 0);
+#else
+		const auto p = param.find(std::string{parameter}, 0);
+#endif
 		if (p != std::string::npos) {
 			StringVector r = StringConverter::split(param, "=");
 			return r.size() == 2 ? StringConverter::trimWhitespace(r[1]) : std::string();

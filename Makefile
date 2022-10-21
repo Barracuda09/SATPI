@@ -11,6 +11,15 @@ CXX ?= $(CXXPREFIX)g++$(CXXSUFFIX)
 # Check compiler support for some functions
 RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf npfunc)
 RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /dev/null ; echo $$? ; rm -rf atomic)
+RESULT_HAS_STRING_VIEW := $(shell $(CXX) -std=c++17 -o string_view checks/string_view.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf string_view)
+RESULT_HAS_AUTO_TUPLE := $(shell $(CXX) -std=c++17 -o auto_tuple checks/auto_tuple.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf auto_tuple)
+
+# Enable Backport mode (ancient compilers previous to C++17)
+ifeq "$(RESULT_HAS_STRING_VIEW)" "1"
+  CFLAGS += -isystem nonstd -DNEED_BACKPORT
+else ifeq "$(RESULT_HAS_AUTO_TUPLE)" "1"
+  CFLAGS += -isystem nonstd -DNEED_BACKPORT
+endif
 
 # Includes needed for proper compilation
 INCLUDES +=

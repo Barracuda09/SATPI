@@ -69,7 +69,8 @@ void PAT::parse(const FeID id) {
 }
 
 bool PAT::isMarkedAsPMT(int pid) const {
-	if (const auto s = _pmtPidTable.find(pid); s != _pmtPidTable.end() && s->second) {
+	const auto s = _pmtPidTable.find(pid);
+	if (s != _pmtPidTable.end() && s->second) {
 		return true;
 	}
 	return false;
