@@ -27,8 +27,8 @@
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
 #include <mpegts/Filter.h>
+#include <TransportParamVector.h>
 
-FW_DECL_NS0(TransportParamVector);
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace input {
@@ -69,6 +69,12 @@ class DeviceData :
 		///
 		std::string attributeDescribeString(FeID id) const;
 
+		/// Generic internal pid filtering Close function
+		void dummyCloseActivePIDFilters(FeID id);
+
+		/// Generic internal pid filtering Update function
+		void dummyUpdatePIDFilters(FeID id);
+
 	private:
 
 		/// Specialization for @see doAddToXML
@@ -85,6 +91,12 @@ class DeviceData :
 
 		/// Specialization for @see attributeDescribeString
 		virtual std::string doAttributeDescribeString(FeID id) const = 0;
+
+		/// Indicates if the concrete device supports internal pid filtering
+		virtual bool capableOfInternalFiltering() const
+		{
+			return false;
+		};
 
 	public:
 
@@ -117,6 +129,9 @@ class DeviceData :
 		///
 		fe_delivery_system convertDeliverySystem() const;
 
+		/// General function to update the pid list
+		void updatePidsTable(const TransportParamVector& params);
+
 		int hasLock() const;
 
 		fe_status_t getSignalStatus() const;
@@ -129,6 +144,9 @@ class DeviceData :
 
 		uint32_t getUncorrectedBlocks() const;
 
+		bool isInternalPidFilteringEnabled() const
+				{ return _internalPidFiltering; };
+
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
 		// =======================================================================
@@ -139,6 +157,7 @@ class DeviceData :
 		bool _changed;
 		input::InputSystem _delsys;
 		mpegts::Filter _filter;
+		bool _internalPidFiltering;
 
 		// =======================================================================
 		// -- Monitor Data members -----------------------------------------------

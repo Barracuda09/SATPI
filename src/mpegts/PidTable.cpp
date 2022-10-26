@@ -179,4 +179,8 @@ void PidTable::setAllPID(const bool use) {
 	setPID(ALL_PIDS, use);
 }
 
+bool PidTable::isAllPID() const {
+	return _data[ALL_PIDS].state == State::Opened;
+}
+
 } // namespace mpegts

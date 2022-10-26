@@ -58,6 +58,11 @@ class TSReaderData :
 		/// @see DeviceData
 		virtual std::string doAttributeDescribeString(FeID id) const final;
 
+		virtual bool capableOfInternalFiltering() const final
+		{
+			return true;
+		};
+
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
 		// =======================================================================
@@ -69,6 +74,8 @@ class TSReaderData :
 		bool hasFilePath() const;
 
 		int getPCRTimer() const;
+
+	private:
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

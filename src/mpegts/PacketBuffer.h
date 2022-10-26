@@ -45,6 +45,8 @@ class PacketBuffer {
 		/// Reset this TS packet
 		void reset() {
 			_decryptPending = false;
+			_purgePending = false;
+			_flushable = false;
 			_writeIndex = RTP_HEADER_LEN;
 		}
 
@@ -57,6 +59,13 @@ class PacketBuffer {
 
 		/// try to sync this buffer
 		bool trySyncing();
+
+		/// Mark one TS packet as invalid indicating the position of the packet
+		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
+		void markTSasInvalid(std::size_t packetNumber);
+
+		/// Purge (remove) filtered invalid packets
+		void purge();
 
 		/// This will tag the RTP header with sequence number and timestamp
 		void tagRTPHeaderWith(uint16_t cseq, long timestamp);
@@ -119,6 +128,9 @@ class PacketBuffer {
 			return &_buffer[index];
 		}
 
+		/// Mark the buffer as ready to be sent even if it is not full.
+		bool markToFlush();
+
 		/// Set the decrypt pending flag, so we should check scramble flag if this
 		/// buffer is ready for sending
 		void setDecryptPending() {
@@ -128,17 +140,7 @@ class PacketBuffer {
 		/// This function checks if this TS packet is ready to be send.
 		/// When the pending decrypt flag was set, all scramble flags should
 		/// be cleared from all TS packets.
-		bool isReadyToSend() const {
-			// can only be ready when buffer is full, so start from there
-			bool ready = full();
-			if (_decryptPending && ready) {
-				for (std::size_t i = 0; i < NUMBER_OF_TS_PACKETS; ++i) {
-					const unsigned char *ts = getTSPacketPtr(i);
-					ready &= ((ts[3] & 0x80) != 0x80);
-				}
-			}
-			return ready;
-		}
+		bool isReadyToSend() const;
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------
@@ -157,6 +159,8 @@ class PacketBuffer {
 		std::size_t   _writeIndex = 0;
 		bool          _initialized = false;
 		bool          _decryptPending = false;
+		bool          _purgePending = false;
+		bool          _flushable = false;
 
 };
 

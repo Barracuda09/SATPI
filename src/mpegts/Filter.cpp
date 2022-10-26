@@ -75,22 +75,29 @@ void Filter::parsePIDString(const std::string &reqPids,
 	}
 }
 
-void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
+void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
 //	base::MutexLock lock(_mutex);
 	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
+//	SI_LOG_INFO("Filter::addDataOrFilter() PIDs Table: @#1", getPidCSV());
 	for (std::size_t i = 0; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
 		// Check is this the beginning of the TS and no Transport error indicator
 		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
+			if (filter && !_pidTable.isAllPID()) {
+				buffer.markTSasInvalid(i);
+			}
 			continue;
 		}
 		// get PID and CC from TS
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
-		const uint8_t  cc  =   ptr[3] & 0x0f;
-		// If pid was not opened, skip this one
+		// If pid was not opened, skip this one (and perhaps filter out it)
 		if (!_pidTable.isPIDOpened(pid)) {
+			if (filter && !_pidTable.isAllPID()) {
+				buffer.markTSasInvalid(i);
+			}
 			continue;
 		}
+		const uint8_t  cc  =   ptr[3] & 0x0f;
 		_pidTable.addPIDData(pid, cc);
 
 		if (pid == 0) {
@@ -170,6 +177,9 @@ void Filter::addData(const FeID id, const mpegts::PacketBuffer &buffer) {
 		} else if (pid == _pmt->getPCRPid()) {
 			_pcr->collectData(id.getID(), ptr);
 		}
+	}
+	if (filter) {
+		buffer.purge();
 	}
 }
 
