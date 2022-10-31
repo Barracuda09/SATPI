@@ -75,6 +75,7 @@ namespace input::dvb {
 		_path_to_dmx(dmx),
 		_dvbVersion(0),
 		_transform(appDataPath, _transformFrontendData),
+		_dvbs(0),
 		_dvbs2(0),
 		_dvbt(0),
 		_dvbt2(0),
@@ -237,10 +238,10 @@ namespace input::dvb {
 			std::size_t &dvbt2,
 			std::size_t &dvbc,
 			std::size_t &dvbc2) {
-		dvbs2 += _transform.advertiseAsDVBS2() ? _dvbc : _dvbs2;
+		dvbs2 += _transform.advertiseAsDVBS2() ? _dvbc : ((_dvbs2 > 0) ? _dvbs2 : _dvbs);
 		dvbt  += _dvbt;
 		dvbt2 += _dvbt2;
-		dvbc  +=  _transform.advertiseAsDVBC() ? _dvbs2 : _dvbc;
+		dvbc  +=  _transform.advertiseAsDVBC() ? ((_dvbs2 > 0) ? _dvbs2 : _dvbs) : _dvbc;
 		dvbc2 += _dvbc2;
 	}
 
@@ -564,7 +565,7 @@ namespace input::dvb {
 					SI_LOG_INFO("Frontend Type: DSS");
 					break;
 				case SYS_DVBS:
-					++_dvbs2;
+					++_dvbs;
 					SI_LOG_INFO("Frontend Type: Satellite (DVB-S)");
 					break;
 				case SYS_DVBS2:
@@ -623,10 +624,10 @@ namespace input::dvb {
 		}
 
 		// Set delivery systems
-		if (_dvbs2 > 0) {
+		if ((_dvbs + _dvbs2) > 0) {
 			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_feID, _path_to_fe, _dvbVersion)));
 		}
-		if (_dvbt > 0 || _dvbt2 > 0) {
+		if ((_dvbt + _dvbt2) > 0) {
 			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_feID, _path_to_fe, _dvbVersion)));
 		}
 		if (_dvbc > 0) {

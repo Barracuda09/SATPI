@@ -222,6 +222,7 @@ class Frontend :
 #endif
 		input::dvb::FrontendData _transformFrontendData;
 		input::Transformation _transform;
+		std::size_t _dvbs;
 		std::size_t _dvbs2;
 		std::size_t _dvbt;
 		std::size_t _dvbt2;
