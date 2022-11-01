@@ -355,21 +355,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (sm != -1) {
 		_siso_miso = sm;
 	}
-	// Always request PID 0 - Program Association Table (PAT)
-	const std::string addUserPids = ",0,1,16,17,18";
-	// Add user defined PIDs
-	const std::string pidsList = params.getParameter("pids");
-	if (!pidsList.empty()) {
-		_filter.parsePIDString(pidsList, addUserPids, true);
-	}
-	const std::string addpidsList = params.getParameter("addpids");
-	if (!addpidsList.empty()) {
-		_filter.parsePIDString(addpidsList, addUserPids, true);
-	}
-	const std::string delpidsList = params.getParameter("delpids");
-	if (!delpidsList.empty()) {
-		_filter.parsePIDString(delpidsList, "", false);
-	}
+	updatePidsTable(params);
 }
 
 std::string FrontendData::doAttributeDescribeString(const FeID id) const {

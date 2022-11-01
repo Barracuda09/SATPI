@@ -19,6 +19,8 @@
 */
 #include <mpegts/PacketBuffer.h>
 
+#include <Log.h>
+
 #include <cassert>
 #include <cstring>
 #include <climits>
@@ -72,6 +74,55 @@ bool PacketBuffer::trySyncing() {
 	return false;
 }
 
+void PacketBuffer::markTSasInvalid(std::size_t packetNumber) {
+	unsigned char *cData = getTSPacketPtr(packetNumber);
+	// Invalid TS packets are labeled 0xFF _after_ the first SYNC Byte.
+	if (cData < getWriteBufferPtr()) {
+		cData[1] = 0xFF;
+		_purgePending = true;
+	}
+}
+
+void PacketBuffer::purge() {
+	if (!_purgePending) {
+		return;
+	}
+	_purgePending = false;
+	std::size_t bufSize = getBufferSize();
+	if (bufSize <= 0) {
+		return;
+	}
+	// i: represents the packet number, and not the packet position!
+	std::size_t skipData = 0;
+	for (std::size_t i = (bufSize / TS_PACKET_SIZE); i > 0 ; --i) {
+		unsigned char *cData = getTSPacketPtr(i-1);
+		if (cData[1] == 0xFF) {
+			if (i > 1 && (cData-TS_PACKET_SIZE)[1] == 0xFF) {
+				skipData += TS_PACKET_SIZE;
+				continue;
+			}
+			// Remove current (plus others) packet from the buffer
+			unsigned char *endData = getWriteBufferPtr();
+			unsigned char *nextData = cData + skipData + TS_PACKET_SIZE;
+			if (nextData < endData) {
+				std::memmove(cData, nextData, endData - nextData);
+			}
+			_writeIndex -= TS_PACKET_SIZE + skipData;
+			skipData = 0;
+		}
+	}
+}
+
+bool PacketBuffer::markToFlush() {
+	if (getBufferSize() <= 0) {
+		SI_LOG_DEBUG("PacketBuffer::markToFlush(): can't be flushed");
+		_flushable = false;
+	} else {
+		_flushable = true;
+	}
+	return _flushable;
+}
+
 void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 	// update sequence number
 	_buffer[2] = ((cseq >> 8) & 0xFF); // sequence number
@@ -82,6 +133,18 @@ void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 	_buffer[5] = (timestamp >> 16) & 0xFF; // timestamp
 	_buffer[6] = (timestamp >>  8) & 0xFF; // timestamp
 	_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+}
+
+bool PacketBuffer::isReadyToSend() const {
+	// can only be ready when buffer is full (or ready to flush), so start from there
+	bool ready = _flushable | full();
+	if (_decryptPending && ready) {
+		for (std::size_t i = 0; i < (_writeIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE; ++i) {
+			const unsigned char *ts = getTSPacketPtr(i);
+			ready &= ((ts[3] & 0x80) != 0x80);
+		}
+	}
+	return ready;
 }
 
 } // namespace

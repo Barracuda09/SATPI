@@ -45,9 +45,9 @@ void TransportParamVector::replaceParameter(
 		const auto e = param.find_first_not_of(parameter, b);
 		if (b != std::string::npos && parameter.size() == e && param[e] == '=') {
 			// Found parameter, so change and return
-            param.erase(e + 1);
-            param += value;
-            return;
+			param.erase(e + 1);
+			param += value;
+			return;
 		}
 	}
 	// Not parameter found, so add it

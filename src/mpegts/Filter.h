@@ -60,10 +60,12 @@ class Filter {
 		void parsePIDString(const std::string &reqPids,
 			const std::string &userPids, const bool add);
 
-		/// Add the filter data to MPEG Tables
+		/// Add the filter data to MPEG Tables and
+		/// optionally purge TS packets from unused pids if filter is on
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
-		void addData(FeID id, const mpegts::PacketBuffer &buffer);
+		/// @param filter enables the pid filtering
+		void addData(FeID id, mpegts::PacketBuffer &buffer, const bool filter = false);
 
 		///
 		bool isMarkedAsActivePMT(int pid) const;

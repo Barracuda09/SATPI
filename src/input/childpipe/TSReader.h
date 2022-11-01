@@ -111,7 +111,15 @@ class TSReader :
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
-	protected:
+	private:
+
+		void updatePIDFilters() {
+			_deviceData.dummyUpdatePIDFilters(_feID);
+		};
+
+		void closeActivePIDFilters() {
+			_deviceData.dummyCloseActivePIDFilters(_feID);
+		};
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

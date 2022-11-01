@@ -86,6 +86,9 @@ class PidTable {
 		/// Set all PID
 		void setAllPID(bool use);
 
+		/// Check if all PIDs (full Transport Stream) is on
+		bool isAllPID() const;
+
 	protected:
 
 		/// Reset the pid data like counters etc.
