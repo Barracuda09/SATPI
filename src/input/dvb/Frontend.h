@@ -171,6 +171,12 @@ class Frontend :
 
 		virtual std::string attributeDescribeString() const final;
 
+		///
+		virtual void updatePIDFilters() final;
+
+		///
+		virtual void closeActivePIDFilters() final;
+
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
 		// =======================================================================
@@ -193,13 +199,8 @@ class Frontend :
 		///
 		bool tune();
 
-		void updatePIDFilters();
-
 		///
 		bool setupAndTune();
-
-		///
-		void closeActivePIDFilters();
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

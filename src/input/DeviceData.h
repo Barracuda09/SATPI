@@ -42,7 +42,7 @@ class DeviceData :
 	public:
 
 		DeviceData();
-		virtual ~DeviceData();
+		virtual ~DeviceData() = default;
 
 		// =======================================================================
 		// -- base::XMLSupport ---------------------------------------------------
@@ -68,12 +68,6 @@ class DeviceData :
 
 		///
 		std::string attributeDescribeString(FeID id) const;
-
-		/// Generic internal pid filtering Close function
-		void dummyCloseActivePIDFilters(FeID id);
-
-		/// Generic internal pid filtering Update function
-		void dummyUpdatePIDFilters(FeID id);
 
 	private:
 

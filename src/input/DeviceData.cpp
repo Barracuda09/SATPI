@@ -40,8 +40,6 @@ DeviceData::DeviceData() {
 	_ublocks = 0;
 }
 
-DeviceData::~DeviceData() {}
-
 // =============================================================================
 //  -- base::XMLSupport --------------------------------------------------------
 // =============================================================================
@@ -93,29 +91,6 @@ void DeviceData::initialize() {
 void DeviceData::parseStreamString(FeID id, const TransportParamVector& params) {
 	base::MutexLock lock(_mutex);
 	doParseStreamString(id, params);
-}
-
-void DeviceData::dummyCloseActivePIDFilters(FeID id) {
-	getFilterData().closeActivePIDFilters(id,
-		// closePid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, (DUMMY) REMOVE_PID: PID @#2", id, PID(pid));
-			return true;
-		});
-}
-
-void DeviceData::dummyUpdatePIDFilters(FeID id) {
-	getFilterData().updatePIDFilters(id,
-		// openPid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, (DUMMY) ADD_PID: PID @#2", id, PID(pid));
-			return true;
-		},
-		// closePid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, (DUMMY) REMOVE_PID: PID @#2", id, PID(pid));
-			return true;
-		});
 }
 
 std::string DeviceData::attributeDescribeString(FeID id) const {

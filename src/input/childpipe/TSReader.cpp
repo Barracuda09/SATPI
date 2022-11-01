@@ -220,6 +220,29 @@ std::string TSReader::attributeDescribeString() const {
 	return "";
 }
 
+void TSReader::updatePIDFilters() {
+	_deviceData.getFilterData().updatePIDFilters(_feID,
+		// openPid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, ADD_PID: PID @#2", _feID, PID(pid));
+			return true;
+		},
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
+}
+
+void TSReader::closeActivePIDFilters() {
+	_deviceData.getFilterData().closeActivePIDFilters(_feID,
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
+}
+
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================

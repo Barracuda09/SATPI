@@ -108,18 +108,14 @@ class TSReader :
 
 		virtual std::string attributeDescribeString() const final;
 
+		virtual void updatePIDFilters() final;
+
+		virtual void closeActivePIDFilters() final;
+
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
 	private:
-
-		void updatePIDFilters() {
-			_deviceData.dummyUpdatePIDFilters(_feID);
-		};
-
-		void closeActivePIDFilters() {
-			_deviceData.dummyCloseActivePIDFilters(_feID);
-		};
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
