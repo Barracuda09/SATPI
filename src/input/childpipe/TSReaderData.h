@@ -43,6 +43,7 @@ class TSReaderData :
 		// -- input::DeviceData --------------------------------------------------
 		// =======================================================================
 	private:
+
 		/// @see DeviceData
 		virtual void doNextAddToXML(std::string &xml) const final;
 
@@ -58,10 +59,10 @@ class TSReaderData :
 		/// @see DeviceData
 		virtual std::string doAttributeDescribeString(FeID id) const final;
 
-		virtual bool capableOfInternalFiltering() const final
-		{
+		/// @see DeviceData
+		virtual bool capableOfInternalFiltering() const final {
 			return true;
-		};
+		}
 
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
@@ -74,8 +75,6 @@ class TSReaderData :
 		bool hasFilePath() const;
 
 		int getPCRTimer() const;
-
-	private:
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

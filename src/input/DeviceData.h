@@ -93,10 +93,9 @@ class DeviceData :
 		virtual std::string doAttributeDescribeString(FeID id) const = 0;
 
 		/// Indicates if the concrete device supports internal pid filtering
-		virtual bool capableOfInternalFiltering() const
-		{
+		virtual bool capableOfInternalFiltering() const {
 			return false;
-		};
+		}
 
 	public:
 
@@ -144,8 +143,9 @@ class DeviceData :
 
 		uint32_t getUncorrectedBlocks() const;
 
-		bool isInternalPidFilteringEnabled() const
-				{ return _internalPidFiltering; };
+		bool isInternalPidFilteringEnabled() const {
+			return _internalPidFiltering;
+		}
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
