@@ -171,6 +171,12 @@ class Frontend :
 
 		virtual std::string attributeDescribeString() const final;
 
+		///
+		virtual void updatePIDFilters() final;
+
+		///
+		virtual void closeActivePIDFilters() final;
+
 		// =======================================================================
 		//  -- Other member functions --------------------------------------------
 		// =======================================================================
@@ -193,13 +199,8 @@ class Frontend :
 		///
 		bool tune();
 
-		void updatePIDFilters();
-
 		///
 		bool setupAndTune();
-
-		///
-		void closeActivePIDFilters();
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------
@@ -222,6 +223,7 @@ class Frontend :
 #endif
 		input::dvb::FrontendData _transformFrontendData;
 		input::Transformation _transform;
+		std::size_t _dvbs;
 		std::size_t _dvbs2;
 		std::size_t _dvbt;
 		std::size_t _dvbt2;

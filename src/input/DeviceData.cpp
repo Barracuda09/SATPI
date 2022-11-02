@@ -31,6 +31,7 @@ namespace input {
 DeviceData::DeviceData() {
 	_delsys = input::InputSystem::UNDEFINED;
 	_changed = false;
+	_internalPidFiltering = false;
 	_status = static_cast<fe_status_t>(0);
 	_strength = 0;
 	_snr = 0;
@@ -38,8 +39,6 @@ DeviceData::DeviceData() {
 	_ublocks = 0;
 	_ublocks = 0;
 }
-
-DeviceData::~DeviceData() {}
 
 // =============================================================================
 //  -- base::XMLSupport --------------------------------------------------------
@@ -58,6 +57,9 @@ void DeviceData::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "ber", _ber);
 	ADD_XML_ELEMENT(xml, "unc", _ublocks);
 
+	if (capableOfInternalFiltering()) {
+		ADD_XML_CHECKBOX(xml, "internalPidFiltering", (_internalPidFiltering ? "true" : "false"));
+	}
 	ADD_XML_ELEMENT(xml, "pidcsv", _filter.getPidCSV());
 	ADD_XML_ELEMENT(xml, "totalCCErrors", _filter.getTotalCCErrors());
 
@@ -65,6 +67,11 @@ void DeviceData::doAddToXML(std::string &xml) const {
 }
 
 void DeviceData::doFromXML(const std::string &xml) {
+	base::MutexLock lock(_mutex);
+	std::string element;
+	if (capableOfInternalFiltering() && findXMLElement(xml, "internalPidFiltering.value", element)) {
+		_internalPidFiltering = (element == "true") ? true : false;
+	}
 	doNextFromXML(xml);
 }
 
@@ -139,6 +146,25 @@ void DeviceData::resetDeviceDataChanged() {
 bool DeviceData::hasDeviceDataChanged() const {
 	base::MutexLock lock(_mutex);
 	return _changed;
+}
+
+// updates the PidsTable using the request parameters "pids","addpids","delpids"
+void DeviceData::updatePidsTable(const TransportParamVector& params) {
+	// Always request PID 0 - Program Association Table (PAT)
+	const std::string addUserPids = ",0,1,16,17,18";
+	// Add user defined PIDs
+	const std::string pidsList = params.getParameter("pids");
+	if (!pidsList.empty()) {
+		_filter.parsePIDString(pidsList, addUserPids, true);
+	}
+	const std::string addpidsList = params.getParameter("addpids");
+	if (!addpidsList.empty()) {
+		_filter.parsePIDString(addpidsList, addUserPids, true);
+	}
+	const std::string delpidsList = params.getParameter("delpids");
+	if (!delpidsList.empty()) {
+		_filter.parsePIDString(delpidsList, "", false);
+	}
 }
 
 void DeviceData::setMonitorData(

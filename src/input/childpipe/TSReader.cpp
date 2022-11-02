@@ -117,15 +117,36 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (!_exec.isOpen()) {
 		return false;
 	}
-	const int bytes = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
-	buffer.addAmountOfBytesWritten(bytes);
-	buffer.trySyncing();
-	if (!buffer.full()) {
-		return false;
-	}
-	// Add data to Filter
-	_deviceData.getFilterData().addData(_feID, buffer);
-	return true;
+	const std::time_t startTime = std::time(nullptr);
+	do {
+		const auto size = buffer.getAmountOfBytesToWrite();
+		const int bytes = _exec.read(buffer.getWriteBufferPtr(), size);
+		if (bytes > 0) {
+			buffer.addAmountOfBytesWritten(bytes);
+			buffer.trySyncing();
+			if (!_deviceData.isInternalPidFilteringEnabled()) { // filtering off
+				// Add data to Filter without pid filtering
+				_deviceData.getFilterData().addData(_feID, buffer);
+				return buffer.full();
+			} else { // filtering on
+				// Add data to Filter with internal pid filtering
+				_deviceData.getFilterData().addData(_feID, buffer, true);
+				if (buffer.full()) {
+					return true;
+				} else {
+					const std::time_t currentTime = std::time(nullptr);
+					if (currentTime - startTime > 0) {
+						SI_LOG_DEBUG("Child PIPE - TS Reader: flush incomplete buffer");
+						return buffer.markToFlush();
+					}
+				}
+				// continue filling the buffer
+			}
+		} else {
+			return false;
+		}
+	} while (1);
+	return false; // Never happens
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
@@ -163,6 +184,7 @@ bool TSReader::update() {
 	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
+		closeActivePIDFilters();
 		_exec.close();
 	}
 	if (!_exec.isOpen()) {
@@ -176,11 +198,14 @@ bool TSReader::update() {
 			SI_LOG_ERROR("Frontend: @#1, Child PIPE - TS Reader unable to use exec: @#2", _feID, execPath);
 		}
 	}
+	updatePIDFilters();
+	SI_LOG_INFO("TSReader::updatePidsTable() PIDs Table: @#1", _deviceData.getFilterData().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
 
 bool TSReader::teardown() {
+	closeActivePIDFilters();
 	_deviceData.initialize();
 	_transform.resetTransformFlag();
 	_exec.close();
@@ -193,6 +218,29 @@ std::string TSReader::attributeDescribeString() const {
 		return data.attributeDescribeString(_feID);
 	}
 	return "";
+}
+
+void TSReader::updatePIDFilters() {
+	_deviceData.getFilterData().updatePIDFilters(_feID,
+		// openPid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, ADD_PID: PID @#2", _feID, PID(pid));
+			return true;
+		},
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
+}
+
+void TSReader::closeActivePIDFilters() {
+	_deviceData.getFilterData().closeActivePIDFilters(_feID,
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
 }
 
 // =============================================================================

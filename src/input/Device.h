@@ -100,13 +100,19 @@ class Device :
 		///
 		virtual std::string attributeDescribeString() const = 0;
 
+		/// Generic internal pid filtering Update function
+		virtual void updatePIDFilters() {}
+
+		/// Generic internal pid filtering Close function
+		virtual void closeActivePIDFilters() {}
+
 		///
 		FeID getFeID() const {
 			return _feID;
 		}
 
 		///
-		int getFeIndex() const {
+		FeIndex getFeIndex() const {
 			return _index;
 		}
 
