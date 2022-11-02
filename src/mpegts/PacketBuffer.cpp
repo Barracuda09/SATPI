@@ -115,7 +115,7 @@ void PacketBuffer::purge() {
 
 bool PacketBuffer::markToFlush() {
 	if (getBufferSize() <= 0) {
-		SI_LOG_DEBUG("PacketBuffer::markToFlush(): can't be flushed");
+		//SI_LOG_DEBUG("PacketBuffer::markToFlush(): can't be flushed");
 		_flushable = false;
 	} else {
 		_flushable = true;
