@@ -199,7 +199,7 @@ bool TSReader::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_INFO("TSReader::updatePidsTable() PIDs Table: @#1", _deviceData.getFilterData().getPidCSV());
+	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilterData().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }

@@ -148,8 +148,7 @@ bool DeviceData::hasDeviceDataChanged() const {
 	return _changed;
 }
 
-// updates the PidsTable using the request parameters "pids","addpids","delpids"
-void DeviceData::updatePidsTable(const TransportParamVector& params) {
+void DeviceData::parseAndUpdatePidsTable(const TransportParamVector& params) {
 	// Always request PID 0 - Program Association Table (PAT)
 	const std::string addUserPids = ",0,1,16,17,18";
 	// Add user defined PIDs

@@ -105,21 +105,22 @@ bool Streamer::isDataAvailable() {
 }
 
 bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
-	if (_udpMultiListen.getFD() != -1) {
-		// Read from stream
-		char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
-		const auto size = buffer.getAmountOfBytesToWrite();
-
-		const ssize_t readSize = _udpMultiListen.recvDatafrom(ptr, size, MSG_DONTWAIT);
-		if (readSize > 0) {
-			buffer.addAmountOfBytesWritten(readSize);
-			buffer.trySyncing();
-		} else {
-			SI_LOG_PERROR("_udpMultiListen");
-		}
-		return buffer.full();
+	if (_udpMultiListen.getFD() == -1) {
+		return false;
 	}
-	return false;
+	// Read from stream
+	char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
+	const auto size = buffer.getAmountOfBytesToWrite();
+	const ssize_t readSize = _udpMultiListen.recvDatafrom(ptr, size, MSG_DONTWAIT);
+	if (readSize > 0) {
+		buffer.addAmountOfBytesWritten(readSize);
+		buffer.trySyncing();
+		// Add data to Filter
+		_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+	} else {
+		SI_LOG_PERROR("_udpMultiListen");
+	}
+	return buffer.full();
 }
 
 bool Streamer::capableOf(const input::InputSystem system) const {
@@ -159,6 +160,7 @@ bool Streamer::update() {
 	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
 	if (_deviceData.hasDeviceDataChanged()) {
 		_deviceData.resetDeviceDataChanged();
+		closeActivePIDFilters();
 		_udpMultiListen.closeFD();
 	}
 	if (_udpMultiListen.getFD() == -1) {
@@ -180,11 +182,14 @@ bool Streamer::update() {
 			SI_LOG_ERROR("Frontend: @#1, Init UDP Multicast socket failed", _feID);
 		}
 	}
+	updatePIDFilters();
+	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilterData().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
 
 bool Streamer::teardown() {
+	closeActivePIDFilters();
 	_deviceData.initialize();
 	_transform.resetTransformFlag();
 	_udpMultiListen.closeFD();
@@ -197,6 +202,29 @@ std::string Streamer::attributeDescribeString() const {
 		return data.attributeDescribeString(_feID);
 	}
 	return "";
+}
+
+void Streamer::updatePIDFilters() {
+	_deviceData.getFilterData().updatePIDFilters(_feID,
+		// openPid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, ADD_PID: PID @#2", _feID, PID(pid));
+			return true;
+		},
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
+}
+
+void Streamer::closeActivePIDFilters() {
+	_deviceData.getFilterData().closeActivePIDFilters(_feID,
+		// closePid lambda function
+		[&](const int pid) {
+			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+			return true;
+		});
 }
 
 // =============================================================================
