@@ -74,7 +74,7 @@ bool PacketBuffer::trySyncing() {
 	return false;
 }
 
-void PacketBuffer::markTSasInvalid(std::size_t packetNumber) {
+void PacketBuffer::markTSForPurging(std::size_t packetNumber) {
 	unsigned char *cData = getTSPacketPtr(packetNumber);
 	// Invalid TS packets are labeled 0xFF _after_ the first SYNC Byte.
 	if (cData < getWriteBufferPtr()) {
@@ -97,6 +97,7 @@ void PacketBuffer::purge() {
 	for (std::size_t i = (bufSize / TS_PACKET_SIZE); i > 0 ; --i) {
 		unsigned char *cData = getTSPacketPtr(i-1);
 		if (cData[1] == 0xFF) {
+			// Next packet needs to be purged as well, then continue to next
 			if (i > 1 && (cData-TS_PACKET_SIZE)[1] == 0xFF) {
 				skipData += TS_PACKET_SIZE;
 				continue;

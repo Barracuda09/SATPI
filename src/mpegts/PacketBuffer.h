@@ -60,11 +60,11 @@ class PacketBuffer {
 		/// try to sync this buffer
 		bool trySyncing();
 
-		/// Mark one TS packet as invalid indicating the position of the packet
+		/// Mark one TS packet for purging (remove)
 		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
-		void markTSasInvalid(std::size_t packetNumber);
+		void markTSForPurging(std::size_t packetNumber);
 
-		/// Purge (remove) filtered invalid packets
+		/// Purge (remove) marked filtered packets
 		void purge();
 
 		/// This will tag the RTP header with sequence number and timestamp

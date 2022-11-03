@@ -84,7 +84,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 		// Check is this the beginning of the TS and no Transport error indicator
 		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
 			if (filter && !_pidTable.isAllPID()) {
-				buffer.markTSasInvalid(i);
+				buffer.markTSForPurging(i);
 			}
 			continue;
 		}
@@ -93,7 +93,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 		// If pid was not opened, skip this one (and perhaps filter out it)
 		if (!_pidTable.isPIDOpened(pid)) {
 			if (filter && !_pidTable.isAllPID()) {
-				buffer.markTSasInvalid(i);
+				buffer.markTSForPurging(i);
 			}
 			continue;
 		}
