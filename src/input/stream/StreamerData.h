@@ -60,6 +60,11 @@ class StreamerData :
 		/// @see DeviceData
 		virtual std::string doAttributeDescribeString(FeID id) const final;
 
+		/// @see DeviceData
+		virtual bool capableOfInternalFiltering() const final {
+			return true;
+		}
+
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
