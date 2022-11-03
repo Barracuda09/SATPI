@@ -355,7 +355,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (sm != -1) {
 		_siso_miso = sm;
 	}
-	updatePidsTable(params);
+	parseAndUpdatePidsTable(params);
 }
 
 std::string FrontendData::doAttributeDescribeString(const FeID id) const {

@@ -122,8 +122,10 @@ class DeviceData :
 		///
 		fe_delivery_system convertDeliverySystem() const;
 
-		/// General function to update the pid list
-		void updatePidsTable(const TransportParamVector& params);
+		/// General function to parse and update the pid list.
+		/// Using the request parameters "pids","addpids","delpids"
+		/// @param params
+		void parseAndUpdatePidsTable(const TransportParamVector& params);
 
 		int hasLock() const;
 

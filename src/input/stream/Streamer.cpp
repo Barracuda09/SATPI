@@ -108,34 +108,19 @@ bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (_udpMultiListen.getFD() == -1) {
 		return false;
 	}
-	do {
-		// Read from stream
-		char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
-		const auto size = buffer.getAmountOfBytesToWrite();
-		const ssize_t readSize = _udpMultiListen.recvDatafrom(ptr, size, MSG_DONTWAIT);
-		if (readSize > 0) {
-			buffer.addAmountOfBytesWritten(readSize);
-			buffer.trySyncing();
-			if (!_deviceData.isInternalPidFilteringEnabled()) { // filtering off
-				// Add data to Filter without pid filtering
-				_deviceData.getFilterData().addData(_feID, buffer);
-				return buffer.full();
-			} else { // filtering on
-				// Add data to Filter with internal pid filtering
-				_deviceData.getFilterData().addData(_feID, buffer, true);
-				if (buffer.full()) {
-					return true;
-				} else {
-					return buffer.markToFlush();
-				}
-				// continue filling the buffer
-			}
-		} else {
-			SI_LOG_PERROR("_udpMultiListen");
-			return false;
-		}
-	} while (1);
-	return false; // Never happens
+	// Read from stream
+	char *ptr = reinterpret_cast<char *>(buffer.getWriteBufferPtr());
+	const auto size = buffer.getAmountOfBytesToWrite();
+	const ssize_t readSize = _udpMultiListen.recvDatafrom(ptr, size, MSG_DONTWAIT);
+	if (readSize > 0) {
+		buffer.addAmountOfBytesWritten(readSize);
+		buffer.trySyncing();
+		// Add data to Filter
+		_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+	} else {
+		SI_LOG_PERROR("_udpMultiListen");
+	}
+	return buffer.full();
 }
 
 bool Streamer::capableOf(const input::InputSystem system) const {
@@ -198,7 +183,7 @@ bool Streamer::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_INFO("STreamer::updatePidsTable() PIDs Table: @#1", _deviceData.getFilterData().getPidCSV());
+	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilterData().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
