@@ -127,7 +127,6 @@ bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 					return true;
 				} else {
 					return buffer.markToFlush();
-					}
 				}
 				// continue filling the buffer
 			}
