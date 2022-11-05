@@ -28,7 +28,7 @@
 				var visibleStream = xmlDoc.getElementsByTagName("stream" + index)[0];
 				var attached = xmlDoc.querySelector(streamID + "attached").innerHTML;
 				if (attached == "yes") {
-					page += "<tr class=\"table-info\">";
+					page += '<tr class="table-info">';
 				} else {
 					page += "<tr>";
 				}
@@ -63,6 +63,7 @@
 		if (autoload == 1) {
 			xmlLoaded = xml;
 			document.getElementById("body").innerHTML = buildcontent(xml);
+			$('#body').append('<tr class="table-info"><td align="left">' + '5' + '</td><td/></tr>');
 		}
 	}
 </script>
@@ -103,6 +104,7 @@
 		// Call the ajax refresh each refresh_time seconds
 		var refresh_time = 2000;
 		setInterval("updatePage()", refresh_time);
+
 	</script>
 </div>
 </div>
