@@ -60,13 +60,13 @@ namespace input::dvb::delivery {
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 
-	DVBS::DVBS(const FeID id, const std::string &fePath, unsigned int dvbVersion) :
-		input::dvb::delivery::System(id, fePath, dvbVersion),
+	DVBS::DVBS(const FeIndex index, const FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		input::dvb::delivery::System(index, id, fePath, dvbVersion),
 		_diseqcType(DiseqcType::Lnb),
 		_diseqc(new DiSEqcLnb) {
 
 		// Only DVB-S2 have special handling for FBC tuners
-		_fbcSetID = readProcData(id, "fbc_set_id");
+		_fbcSetID = readProcData(index, "fbc_set_id");
 		_fbcTuner = _fbcSetID >= 0;
 		_fbcConnect = 0;
 		_fbcLinked = false;
@@ -74,10 +74,10 @@ namespace input::dvb::delivery {
 		_sendDiSEqcViaRootTuner = false;
 		if (_fbcTuner) {
 			// Read 'settings' from system, add offset to address FBC Slots A and B
-			readConnectionChoices(id, _fbcSetID * 8);
-			_fbcRoot = _choices.find(id.getID()) != _choices.end();
-			_fbcLinked = readProcData(id, "fbc_link");
-			_fbcConnect = readProcData(id, "fbc_connect");
+			readConnectionChoices(index, _fbcSetID * 8);
+			_fbcRoot = _choices.find(index.getID()) != _choices.end();
+			_fbcLinked = readProcData(index, "fbc_link");
+			_fbcConnect = readProcData(index, "fbc_connect");
 		}
 	}
 
@@ -156,11 +156,11 @@ namespace input::dvb::delivery {
 		}
 		if (findXMLElement(xml, "fbcLinked.value", element)) {
 			_fbcLinked = (element == "true") ? true : false;
-			writeProcData(_feID, "fbc_link", _fbcLinked ? 1 : 0);
+			writeProcData(_index, "fbc_link", _fbcLinked ? 1 : 0);
 		}
 		if (findXMLElement(xml, "fbcConnection.value", element)) {
 			_fbcConnect = std::stoi(element) + (_fbcSetID * 8);
-			writeProcData(_feID, "fbc_connect", _fbcConnect);
+			writeProcData(_index, "fbc_connect", _fbcConnect);
 		}
 		if (findXMLElement(xml, "sendDiSEqcViaRootTuner.value", element)) {
 			_sendDiSEqcViaRootTuner =  (element == "true") ? true : false;
@@ -299,9 +299,9 @@ namespace input::dvb::delivery {
 	//  -- FBC member functions ------------------------------------------------
 	// =========================================================================
 
-	int DVBS::readProcData(const FeID id, const std::string &procEntry) const {
+	int DVBS::readProcData(const FeIndex index, const std::string &procEntry) const {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", id.getID(), procEntry);
+			"/proc/stb/frontend/@#1/@#2", index.getID(), procEntry);
 		std::ifstream file(filePath);
 		if (file.is_open()) {
 			int value;
@@ -311,19 +311,19 @@ namespace input::dvb::delivery {
 		return -1;
 	}
 
-	void DVBS::writeProcData(const FeID id, const std::string &procEntry, int value) {
+	void DVBS::writeProcData(const FeIndex index, const std::string &procEntry, int value) {
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", id.getID(), procEntry);
+			"/proc/stb/frontend/@#1/@#2", index.getID(), procEntry);
 		std::ofstream file(filePath);
 		if (file.is_open()) {
 			file << value;
 		}
 	}
 
-	void DVBS::readConnectionChoices(const FeID id, int offset) {
+	void DVBS::readConnectionChoices(const FeIndex index, int offset) {
 		// File looks something like: 0=A, 1=B
 		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/fbc_connect_choices", id.getID());
+			"/proc/stb/frontend/@#1/fbc_connect_choices", index.getID());
 		std::ifstream file(filePath);
 		if (!file.is_open()) {
 			return;

@@ -38,7 +38,7 @@ class DVBT :
 		// =======================================================================
 	public:
 
-		explicit DVBT(FeID id, const std::string &fePath, unsigned int dvbVersion);
+		explicit DVBT(FeIndex index, FeID id, const std::string &fePath, unsigned int dvbVersion);
 		virtual ~DVBT();
 
 		// =======================================================================

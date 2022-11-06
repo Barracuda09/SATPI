@@ -33,8 +33,8 @@ namespace delivery {
 	// =======================================================================
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
-	DVBT::DVBT(FeID id, const std::string &fePath, unsigned int dvbVersion) :
-		input::dvb::delivery::System(id, fePath, dvbVersion),
+	DVBT::DVBT(const FeIndex index, const FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		input::dvb::delivery::System(index, id, fePath, dvbVersion),
 		_lna(1) {}
 
 	DVBT::~DVBT() {}

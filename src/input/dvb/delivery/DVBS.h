@@ -41,7 +41,7 @@ class DVBS :
 		// =========================================================================
 	public:
 
-		explicit DVBS(FeID id, const std::string &fePath, unsigned int dvbVersion);
+		explicit DVBS(FeIndex index, FeID id, const std::string &fePath, unsigned int dvbVersion);
 		virtual ~DVBS() = default;
 
 		// =========================================================================
@@ -81,13 +81,13 @@ class DVBS :
 		// -- FBC member functions -------------------------------------------------
 		// =========================================================================
 		///
-		int readProcData(FeID id, const std::string &procEntry) const;
+		int readProcData(FeIndex index, const std::string &procEntry) const;
 
 		///
-		void writeProcData(FeID id, const std::string &procEntry, int value);
+		void writeProcData(FeIndex index, const std::string &procEntry, int value);
 
 		///
-		void readConnectionChoices(FeID id, int offset);
+		void readConnectionChoices(FeIndex index, int offset);
 
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------

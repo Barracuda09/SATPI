@@ -708,13 +708,16 @@ namespace input::dvb {
 
 		// Set delivery systems
 		if ((_dvbs + _dvbs2) > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBS(_feID, _path_to_fe, _dvbVersion)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(
+				new input::dvb::delivery::DVBS(_index, _feID, _path_to_fe, _dvbVersion)));
 		}
 		if ((_dvbt + _dvbt2) > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBT(_feID, _path_to_fe, _dvbVersion)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(
+				new input::dvb::delivery::DVBT(_index, _feID, _path_to_fe, _dvbVersion)));
 		}
 		if (_dvbc > 0) {
-			_deliverySystem.push_back(input::dvb::delivery::UpSystem(new input::dvb::delivery::DVBC(_feID, _path_to_fe, _dvbVersion)));
+			_deliverySystem.push_back(input::dvb::delivery::UpSystem(
+				new input::dvb::delivery::DVBC(_index, _feID, _path_to_fe, _dvbVersion)));
 		}
 	}
 

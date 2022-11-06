@@ -40,7 +40,8 @@ class System :
 		// =======================================================================
 	public:
 
-		explicit System(FeID id, const std::string &fePath, unsigned int dvbVersion) :
+		explicit System(FeIndex index, FeID id, const std::string &fePath, unsigned int dvbVersion) :
+			_index(index),
 			_feID(id),
 			_fePath(fePath),
 			_dvbVersion(dvbVersion) {}
@@ -65,6 +66,7 @@ class System :
 		// =======================================================================
 	protected:
 
+		FeIndex _index;
 		FeID _feID;
 		std::string _fePath;
 		unsigned int _dvbVersion;
