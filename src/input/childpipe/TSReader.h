@@ -108,14 +108,15 @@ class TSReader :
 
 		virtual std::string attributeDescribeString() const final;
 
-		virtual void updatePIDFilters() final;
-
-		virtual void closeActivePIDFilters() final;
+		virtual mpegts::Filter &getFilterData() final
+		{
+			return _deviceData.getFilterData();
+		}
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
 		// =====================================================================
-	private:
+	protected:
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
