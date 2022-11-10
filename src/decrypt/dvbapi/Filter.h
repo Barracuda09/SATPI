@@ -65,8 +65,8 @@ namespace decrypt::dvbapi {
 						}
 						// Does filter matches with 'data' or already collecting
 						if (_filterData[demux][filter].matchOrCollecting(data)) {
-							// Collect raw => true
-							_filterData[demux][filter].collectTableData(id, tableID, data, true);
+							// Collect table data
+							_filterData[demux][filter].collectRawTableData(id, tableID, data, false);
 							if (_filterData[demux][filter].isTableCollected()) {
 								// Finished there is only 1 section
 								filterData = _filterData[demux][filter].getTableData(0);

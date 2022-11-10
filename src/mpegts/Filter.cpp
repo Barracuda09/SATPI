@@ -103,7 +103,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, true);
+				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting PAT
 				if (_pat->isCollected()) {
@@ -114,7 +114,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 			// Did we finish collecting PMT
 			if (!_pmt->isCollected()) {
 				// collect PMT data
-				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, true);
+				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, false);
 				if (_pmt->isCollected()) {
 					// Collected, check if this is the PMT we need, by getting PCR Pid
 					const int pcrPID = _pmt->parsePCRPid();
@@ -142,7 +142,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, true);
+				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, false);
 
 				// Did we finish collecting SDT
 				if (_sdt->isCollected()) {

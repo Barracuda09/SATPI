@@ -88,7 +88,14 @@ class TableData {
 		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
 
 		/// Collect Table data for tableID
-		void collectData(FeID id, int tableID, const unsigned char *data, bool raw);
+		void collectData(FeID id, int tableID, const unsigned char *data, bool trace) {
+			collectData(id, tableID, data, trace, false);
+		}
+
+		/// Collect Raw Table data for tableID
+		void collectRawData(FeID id, int tableID, const unsigned char *data, bool trace) {
+			collectData(id, tableID, data, trace, true);
+		}
 
 		/// Get the collected Table Data
 		TSData getData(size_t secNr) const;
@@ -109,6 +116,11 @@ class TableData {
 
 		///
 		const char* getTableTXT(int tableID) const;
+
+	private:
+
+		/// Collect Table data for tableID
+		void collectData(FeID id, int tableID, const unsigned char *data, bool trace, bool raw);
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------

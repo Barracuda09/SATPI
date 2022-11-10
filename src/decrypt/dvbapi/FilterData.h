@@ -59,8 +59,8 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Collect Table data for tableID
-			void collectTableData(const FeID id, const int tableID, const unsigned char *data, bool raw) {
-				_tableData.collectData(id, tableID, data, raw);
+			void collectRawTableData(const FeID id, const int tableID, const unsigned char *data, bool trace) {
+				_tableData.collectRawData(id, tableID, data, trace);
 			}
 
 			/// Check if Table is collected for tableID

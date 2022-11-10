@@ -144,7 +144,8 @@ const char* TableData::getTableTXT(const int tableID) const {
 	}
 }
 
-void TableData::collectData(const FeID id, const int tableID, const unsigned char *data, const bool raw) {
+void TableData::collectData(const FeID id, const int tableID,
+		const unsigned char *data, const bool trace, const bool raw) {
 	Data &currentTableData = _dataTable[_currentSectionNumber];
 	const std::size_t tableSize = currentTableData.data.size();
 	const unsigned char options = (data[1] & 0xE0);
@@ -169,7 +170,7 @@ void TableData::collectData(const FeID id, const int tableID, const unsigned cha
 
 			// Add Table Data
 			if (addData(tableID, data, 188, pid, cc)) {
-				if (!raw) {
+				if (trace) {
 					SI_LOG_INFO("Frontend: @#1, @#2 - PID @#3: sectionLength: @#4  tableDataSize: @#5  secNr: @#6  lastSecNr: @#7  currSecNr: @#8",
 						id, getTableTXT(tableID), DIGIT(pid, 4), sectionLength, currentTableData.data.size(), secNr, lastSecNr, _currentSectionNumber);
 				}
