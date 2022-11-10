@@ -64,6 +64,8 @@ namespace input::dvb::delivery {
 				[[fallthrough]];
 			case 0x10:
 				switch (_switchType) {
+					default:
+						// default to committed switch
 					case SwitchType::COMMITTED: {
 						// high nibble: reset bits
 						//  low nibble:   set bits  (option, position, polarizaion, band)
