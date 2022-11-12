@@ -40,7 +40,7 @@ TSReader::TSReader(
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) :
 		Device(index),
-		_transform(appDataPath, _transformDeviceData),
+		_transform(appDataPath),
 		_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
 // =============================================================================
@@ -117,36 +117,17 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (!_exec.isOpen()) {
 		return false;
 	}
-	const std::time_t startTime = std::time(nullptr);
-	do {
-		const auto size = buffer.getAmountOfBytesToWrite();
-		const int bytes = _exec.read(buffer.getWriteBufferPtr(), size);
-		if (bytes > 0) {
-			buffer.addAmountOfBytesWritten(bytes);
-			buffer.trySyncing();
-			if (!_deviceData.isInternalPidFilteringEnabled()) { // filtering off
-				// Add data to Filter without pid filtering
-				_deviceData.getFilterData().addData(_feID, buffer);
-				return buffer.full();
-			} else { // filtering on
-				// Add data to Filter with internal pid filtering
-				_deviceData.getFilterData().addData(_feID, buffer, true);
-				if (buffer.full()) {
-					return true;
-				} else {
-					const std::time_t currentTime = std::time(nullptr);
-					if (currentTime - startTime > 0) {
-						SI_LOG_DEBUG("Child PIPE - TS Reader: flush incomplete buffer");
-						return buffer.markToFlush();
-					}
-				}
-				// continue filling the buffer
-			}
-		} else {
-			return false;
+	const int readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+	if (readSize > 0) {
+		buffer.addAmountOfBytesWritten(readSize);
+		buffer.trySyncing();
+		if (buffer.full()) {
+			// Add data to Filter
+			_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 		}
-	} while (1);
-	return false; // Never happens
+	}
+	// Check again if buffer is still full
+	return buffer.full();
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
@@ -223,13 +204,11 @@ std::string TSReader::attributeDescribeString() const {
 void TSReader::updatePIDFilters() {
 	_deviceData.getFilterData().updatePIDFilters(_feID,
 		// openPid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, ADD_PID: PID @#2", _feID, PID(pid));
+		[&](const int) {
 			return true;
 		},
 		// closePid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+		[&](const int) {
 			return true;
 		});
 }
@@ -237,8 +216,7 @@ void TSReader::updatePIDFilters() {
 void TSReader::closeActivePIDFilters() {
 	_deviceData.getFilterData().closeActivePIDFilters(_feID,
 		// closePid lambda function
-		[&](const int pid) {
-			SI_LOG_DEBUG("Frontend: @#1, REMOVE_PID: PID @#2", _feID, PID(pid));
+		[&](const int) {
 			return true;
 		});
 }

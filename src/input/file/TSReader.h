@@ -120,7 +120,6 @@ class TSReader :
 
 		std::ifstream _file;
 		TSReaderData _deviceData;
-		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
 		const bool _enableUnsecureFrontends;
 

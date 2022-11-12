@@ -39,7 +39,7 @@ Streamer::Streamer(
 	const std::string &bindIPAddress,
 	const std::string &appDataPath) :
 	Device(index),
-	_transform(appDataPath, _transformDeviceData),
+	_transform(appDataPath),
 	_bindIPAddress(bindIPAddress) {
 	_pfd[0].events  = 0;
 	_pfd[0].revents = 0;
@@ -115,11 +115,12 @@ bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (readSize > 0) {
 		buffer.addAmountOfBytesWritten(readSize);
 		buffer.trySyncing();
-		// Add data to Filter
-		_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
-	} else {
-		SI_LOG_PERROR("_udpMultiListen");
+		if (buffer.full()) {
+			// Add data to Filter
+			_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+		}
 	}
+	// Check again if buffer is still full
 	return buffer.full();
 }
 

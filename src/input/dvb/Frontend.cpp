@@ -74,7 +74,7 @@ namespace input::dvb {
 		_path_to_dvr(dvr),
 		_path_to_dmx(dmx),
 		_dvbVersion(0),
-		_transform(appDataPath, _transformFrontendData),
+		_transform(appDataPath),
 		_dvbs(0),
 		_dvbs2(0),
 		_dvbt(0),
@@ -263,20 +263,20 @@ namespace input::dvb {
 
 	bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		// try read maximum amount of bytes from DMX
-		const auto bytes = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
-		if (bytes > 0) {
-			buffer.addAmountOfBytesWritten(bytes);
+		const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		if (readSize > 0) {
+			buffer.addAmountOfBytesWritten(readSize);
 			if (buffer.full()) {
 				// Add data to Filter
 				_frontendData.getFilterData().addData(_feID, buffer);
-				return true;
 			}
-		} else if (bytes < 0) {
+		} else if (readSize < 0) {
 			SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
 		} else {
 			SI_LOG_ERROR("Frontend: @#1, Error reading data: 0 Bytes available..", _feID);
 		}
-		return false;
+		// Check again if buffer is still full
+		return buffer.full();
 	}
 
 	bool Frontend::capableOf(const input::InputSystem system) const {

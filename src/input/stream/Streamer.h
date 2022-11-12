@@ -124,7 +124,6 @@ class Streamer :
 	private:
 
 		StreamerData _deviceData;
-		StreamerData _transformDeviceData;
 		input::Transformation _transform;
 
 		pollfd _pfd[1];

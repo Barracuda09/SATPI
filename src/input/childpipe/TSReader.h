@@ -124,7 +124,6 @@ class TSReader :
 
 		base::ChildPIPEReader _exec;
 		TSReaderData _deviceData;
-		TSReaderData _transformDeviceData;
 		input::Transformation _transform;
 		const bool _enableUnsecureFrontends;
 

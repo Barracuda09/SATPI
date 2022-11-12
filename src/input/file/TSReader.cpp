@@ -40,7 +40,7 @@ TSReader::TSReader(
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) :
 		Device(index),
-		_transform(appDataPath, _transformDeviceData),
+		_transform(appDataPath),
 		_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
 // =============================================================================

@@ -221,7 +221,6 @@ class Frontend :
 #ifdef LIBDVBCSA
 		decrypt::dvbapi::ClientProperties _dvbapiData;
 #endif
-		input::dvb::FrontendData _transformFrontendData;
 		input::Transformation _transform;
 		std::size_t _dvbs;
 		std::size_t _dvbs2;

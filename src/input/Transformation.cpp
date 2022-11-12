@@ -35,20 +35,15 @@ namespace input {
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
-Transformation::Transformation(
-		const std::string &appDataPath,
-		input::DeviceData &transformedDeviceData) :
+Transformation::Transformation(const std::string &appDataPath) :
 		_enabled(false),
 		_transform(false),
 		_advertiseAs(AdvertiseAs::NONE),
 		_appDataPath(appDataPath),
 		_transformFileM3U("mapping.m3u"),
-		_transformedDeviceData(transformedDeviceData),
 		_transformFreq(0) {
 	_fileParsed = _m3u.parse(_appDataPath + "/" + _transformFileM3U);
 }
-
-Transformation::~Transformation() {}
 
 // =============================================================================
 //  -- base::XMLSupport --------------------------------------------------------
@@ -124,6 +119,7 @@ bool Transformation::advertiseAsDVBC() const {
 
 void Transformation::resetTransformFlag() {
 	base::MutexLock lock(_mutex);
+	_transformedDeviceData.initialize();
 	_transform = false;
 	_transformFreq = 0;
 }
@@ -174,10 +170,20 @@ TransportParamVector Transformation::transformStreamString(
 	// Transformation possible
 	_transform = true;
 
-	const input::InputSystem msys = params.getMSYSParameter();
-	if (msys != input::InputSystem::UNDEFINED) {
-		_transformedDeviceData.setDeliverySystem(msys);
-	}
+	// Parse the Stream String to the 'dummy' FrontendData and update PID filters
+	// for correct RTCP Attribute Describe String when transforming request
+	_transformedDeviceData.parseStreamString(id, params);
+	_transformedDeviceData.getFilterData().updatePIDFilters(id,
+		// openPid lambda function
+		[&](const int) {
+			return true;
+		},
+		// closePid lambda function
+		[&](const int) {
+			return true;
+		});
+
+	//
 	TransportParamVector transParams = TransportParamVector(
 			StringConverter::split(uriTransform, " /?&"));
 
@@ -197,8 +203,7 @@ TransportParamVector Transformation::transformStreamString(
 	return transParams;
 }
 
-const DeviceData &Transformation::transformDeviceData(
-		const DeviceData &deviceData) const {
+const DeviceData &Transformation::transformDeviceData(const DeviceData &deviceData) const {
 	base::MutexLock lock(_mutex);
 	if (_enabled && _fileParsed) {
 		const fe_status_t status = deviceData.getSignalStatus();

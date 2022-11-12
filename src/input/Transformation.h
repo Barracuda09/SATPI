@@ -26,6 +26,7 @@
 #include <base/M3UParser.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
+#include <input/dvb/FrontendData.h>
 
 #include <string>
 
@@ -43,11 +44,9 @@ class Transformation :
 		// =====================================================================
 	public:
 
-		Transformation(
-			const std::string &appDataPath,
-			input::DeviceData &transformedDeviceData);
+		Transformation(const std::string &appDataPath);
 
-		virtual ~Transformation();
+		virtual ~Transformation() = default;
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------
@@ -85,8 +84,7 @@ class Transformation :
 		TransportParamVector transformStreamString(FeID id, const TransportParamVector& params);
 
 		/// This function may return the transformed Device Data
-		const DeviceData &transformDeviceData(
-			const DeviceData &deviceData) const;
+		const DeviceData &transformDeviceData(const DeviceData &deviceData) const;
 
 	private:
 
@@ -114,7 +112,7 @@ class Transformation :
 		base::M3UParser _m3u;
 		std::string _appDataPath;
 		std::string _transformFileM3U;
-		input::DeviceData &_transformedDeviceData;
+		mutable input::dvb::FrontendData _transformedDeviceData;
 		uint32_t _transformFreq;
 };
 
