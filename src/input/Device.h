@@ -24,6 +24,7 @@
 #include <FwDecl.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
+#include <mpegts/Filter.h>
 
 #include <string>
 #include <utility>
@@ -100,11 +101,30 @@ class Device :
 		///
 		virtual std::string attributeDescribeString() const = 0;
 
-		/// Generic internal pid filtering Update function
-		virtual void updatePIDFilters() {}
+		///
+		virtual mpegts::Filter &getFilterData() = 0;
 
-		/// Generic internal pid filtering Close function
-		virtual void closeActivePIDFilters() {}
+		/// Generic pid filtering Update function
+		virtual void updatePIDFilters() {
+			getFilterData().updatePIDFilters(_feID,
+				// openPid lambda function
+				[&](const int) {
+					return true;
+				},
+				// closePid lambda function
+				[&](const int) {
+					return true;
+				});
+		}
+
+		/// Generic pid filtering Close function
+		virtual void closeActivePIDFilters() {
+			getFilterData().closeActivePIDFilters(_feID,
+				// closePid lambda function
+				[&](const int) {
+					return true;
+				});
+		}
 
 		///
 		FeID getFeID() const {

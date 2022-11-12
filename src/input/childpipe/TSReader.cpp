@@ -201,26 +201,6 @@ std::string TSReader::attributeDescribeString() const {
 	return "";
 }
 
-void TSReader::updatePIDFilters() {
-	_deviceData.getFilterData().updatePIDFilters(_feID,
-		// openPid lambda function
-		[&](const int) {
-			return true;
-		},
-		// closePid lambda function
-		[&](const int) {
-			return true;
-		});
-}
-
-void TSReader::closeActivePIDFilters() {
-	_deviceData.getFilterData().closeActivePIDFilters(_feID,
-		// closePid lambda function
-		[&](const int) {
-			return true;
-		});
-}
-
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
