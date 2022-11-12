@@ -24,8 +24,7 @@
 
 #include <string>
 
-namespace input {
-namespace stream {
+namespace input::stream {
 
 /// The class @c StreamerData carries all the data/information for Reading
 /// from an Child PIPE
@@ -90,7 +89,6 @@ class StreamerData :
 
 };
 
-} // namespace stream
-} // namespace input
+}
 
 #endif // INPUT_STREAM_STREAMER_DATA_H_INCLUDE

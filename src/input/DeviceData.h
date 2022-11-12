@@ -27,6 +27,7 @@
 #include <input/InputSystem.h>
 #include <input/dvb/dvbfix.h>
 #include <mpegts/Filter.h>
+#include <mpegts/Generator.h>
 #include <TransportParamVector.h>
 
 FW_DECL_NS1(mpegts, PacketBuffer);
@@ -107,17 +108,20 @@ class DeviceData :
 		/// Reset/clear the 'Channel Data changed' flag
 		void resetDeviceDataChanged();
 
-		/// Set the current Delivery System
-		void setDeliverySystem(input::InputSystem system);
-
 		/// Get the current Delivery System
 		input::InputSystem getDeliverySystem() const;
 
 		///
-		const mpegts::Filter &getFilterData() const;
+		const mpegts::Filter &getFilter() const;
 
 		///
-		mpegts::Filter &getFilterData();
+		mpegts::Filter &getFilter();
+
+		///
+		const mpegts::Generator &getPSIGenerator() const;
+
+		///
+		mpegts::Generator &getPSIGenerator();
 
 		///
 		fe_delivery_system convertDeliverySystem() const;
@@ -153,6 +157,7 @@ class DeviceData :
 		bool _changed;
 		input::InputSystem _delsys;
 		mpegts::Filter _filter;
+		mpegts::Generator _generator;
 		bool _internalPidFiltering;
 
 		// =======================================================================

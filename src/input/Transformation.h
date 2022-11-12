@@ -44,7 +44,10 @@ class Transformation :
 		// =====================================================================
 	public:
 
-		Transformation(const std::string &appDataPath);
+		Transformation(const std::string &appDataPath) :
+			Transformation(appDataPath, input::InputSystem::UNDEFINED) {}
+
+		Transformation(const std::string &appDataPath, input::InputSystem ownInputSystem);
 
 		virtual ~Transformation() = default;
 
@@ -109,11 +112,13 @@ class Transformation :
 		bool _transform;
 		bool _fileParsed;
 		AdvertiseAs _advertiseAs;
+		input::InputSystem _ownInputSystem;
 		base::M3UParser _m3u;
 		std::string _appDataPath;
 		std::string _transformFileM3U;
 		mutable input::dvb::FrontendData _transformedDeviceData;
 		uint32_t _transformFreq;
+		uint32_t _generatePSIFreq;
 };
 
 } // namespace input

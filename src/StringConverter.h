@@ -124,6 +124,18 @@ class StringConverter  {
 			return stream.str();
 		}
 
+		///
+		template<class T>
+		static std::string toStringFrom4BitBCD(const T bcd, const int charNr) {
+			std::ostringstream stream;
+			if (charNr > 0) {
+				for (int i = 0; i < charNr; ++i) {
+					stream << std::right << ((bcd >> ((charNr - 1 - i) * 4)) & 0xF);
+				}
+			}
+			return stream.str();
+		}
+
 		/// Get next line with line_delim (if available) from msg
 		/// @return @c line or empty line
 		static std::string getline(std::string_view msg,
@@ -134,9 +146,6 @@ class StringConverter  {
 
 		///
 		static std::string stringToUpper(std::string_view str);
-
-		///
-		static std::string getProtocol(const std::string &msg);
 
 		///
 		static void splitPath(const std::string &fullPath, std::string &path, std::string &file);

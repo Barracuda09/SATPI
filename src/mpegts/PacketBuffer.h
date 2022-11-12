@@ -46,7 +46,6 @@ class PacketBuffer {
 		void reset() {
 			_decryptPending = false;
 			_purgePending = false;
-			_flushable = false;
 			_writeIndex = RTP_HEADER_LEN;
 		}
 
@@ -128,9 +127,6 @@ class PacketBuffer {
 			return &_buffer[index];
 		}
 
-		/// Mark the buffer as ready to be sent even if it is not full.
-		bool markToFlush();
-
 		/// Set the decrypt pending flag, so we should check scramble flag if this
 		/// buffer is ready for sending
 		void setDecryptPending() {
@@ -160,7 +156,6 @@ class PacketBuffer {
 		bool          _initialized = false;
 		bool          _decryptPending = false;
 		bool          _purgePending = false;
-		bool          _flushable = false;
 
 };
 

@@ -123,6 +123,9 @@ const char* TableData::getTableTXT(const int tableID) const {
 			return "CAT";
 		case PMT_TABLE_ID:
 			return "PMT";
+		case NIT_TABLE_ID:
+		case NIT_OTHER_TABLE_ID:
+			return "NIT";
 		case SDT_TABLE_ID:
 			return "SDT";
 		case EIT1_TABLE_ID:
@@ -153,7 +156,8 @@ void TableData::collectData(const FeID id, const int tableID,
 		const int pid                   = ((data[1] & 0x1F) << 8) | data[2];
 		const int cc                    =   data[3] & 0x0F;
 		const std::size_t sectionLength = ((data[6] & 0x0F) << 8) | data[7];
-		const int         version       =   data[10];
+		const int         version       =  (data[10] & 0x1F) >> 1;
+		const int         nextIndicator =   data[10] & 0x1;
 		const std::size_t secNr         =   data[11];
 		const std::size_t lastSecNr     =   data[12];
 
@@ -165,6 +169,7 @@ void TableData::collectData(const FeID id, const int tableID,
 			}
 			currentTableData.sectionLength = sectionLength;
 			currentTableData.version       = version;
+			currentTableData.nextIndicator = nextIndicator;
 			currentTableData.secNr         = secNr;
 			currentTableData.lastSecNr     = lastSecNr;
 
@@ -206,7 +211,7 @@ void TableData::collectData(const FeID id, const int tableID,
 		// Add Table Data without TS Header
 		if (addData(tableID, &data[4], 188 - 4, pid, cc)) { // 4 = TS Header
 			const std::size_t tableDataSize = currentTableData.data.size();
-			if (!raw) {
+			if (trace) {
 				SI_LOG_INFO("Frontend: @#1, @#2 - PID @#3: sectionLength: @#4  tableDataSize: @#5  secNr: @#6  lastSecNr: @#7  currSecNr: @#8",
 					id, getTableTXT(tableID), DIGIT(pid, 4), sectionLength, tableDataSize, currentTableData.secNr, currentTableData.lastSecNr, _currentSectionNumber);
 			}

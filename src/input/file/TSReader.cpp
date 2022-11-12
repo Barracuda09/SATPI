@@ -95,7 +95,7 @@ void TSReader::addDeliverySystemCount(
 }
 
 bool TSReader::isDataAvailable() {
-	const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
+	const std::int64_t pcrDelta = _deviceData.getFilter().getPCRData()->getPCRDelta();
 	if (pcrDelta != 0) {
 		_t2 = _t1;
 		_t1 = std::chrono::steady_clock::now();
@@ -105,7 +105,7 @@ bool TSReader::isDataAvailable() {
 			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}
 		_t1 = std::chrono::steady_clock::now();
-		_deviceData.getFilterData().getPCRData()->clearPCRDelta();
+		_deviceData.getFilter().getPCRData()->clearPCRDelta();
 	} else {
 		std::this_thread::sleep_for(std::chrono::microseconds(150));
 	}
@@ -124,7 +124,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		return false;
 	}
 	// Add data to Filter
-	_deviceData.getFilterData().addData(_feID, buffer);
+	_deviceData.getFilter().filterData(_feID, buffer);
 	return true;
 }
 

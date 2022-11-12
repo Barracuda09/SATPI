@@ -108,9 +108,8 @@ class TSReader :
 
 		virtual std::string attributeDescribeString() const final;
 
-		virtual mpegts::Filter &getFilterData() final
-		{
-			return _deviceData.getFilterData();
+		virtual mpegts::Filter &getFilter() final {
+			return _deviceData.getFilter();
 		}
 
 		// =====================================================================

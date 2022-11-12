@@ -24,8 +24,7 @@
 #include <StringConverter.h>
 #include <TransportParamVector.h>
 
-namespace input {
-namespace stream {
+namespace input::stream {
 
 	// =======================================================================
 	// -- Constructors and destructor ----------------------------------------
@@ -108,5 +107,4 @@ namespace stream {
 		return _uri != "None";
 	}
 
-} // namespace stream
-} // namespace input
+}

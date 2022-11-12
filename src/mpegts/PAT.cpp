@@ -76,4 +76,17 @@ bool PAT::isMarkedAsPMT(int pid) const {
 	return false;
 }
 
+mpegts::TSData PAT::generateFrom(
+		FeID id, const base::M3UParser::TransformationMap &info) {
+	mpegts::TSData data;
+
+	int transportStreamID = 0;
+	int prognr = 0;
+	for (auto [freq, element] : info) {
+		SI_LOG_DEBUG("Frontend: @#1, Generating PAT: TID: @#2  Prog NR: @#3 - @#4  PMT PID: @#5",
+			id, transportStreamID, HEX(prognr, 4), DIGIT(prognr, 5), element.freq);
+	}
+	return data;
+}
+
 } // namespace

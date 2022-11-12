@@ -24,8 +24,7 @@
 
 #include <string>
 
-namespace input {
-namespace childpipe {
+namespace input::childpipe {
 
 /// The class @c TSReaderData carries all the data/information for Reading
 /// from an Child PIPE
@@ -86,7 +85,6 @@ class TSReaderData :
 
 };
 
-} // namespace childpipe
-} // namespace input
+}
 
 #endif // INPUT_CHILD_PIPE_TSREADER_DATA_H_INCLUDE

@@ -1,4 +1,4 @@
-/* PAT.h
+/* NIT.h
 
    Copyright (C) 2014 - 2021 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,8 +17,8 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef MPEGTS_PAT_DATA_H_INCLUDE
-#define MPEGTS_PAT_DATA_H_INCLUDE MPEGTS_PAT_DATA_H_INCLUDE
+#ifndef MPEGTS_NIT_DATA_H_INCLUDE
+#define MPEGTS_NIT_DATA_H_INCLUDE MPEGTS_NIT_DATA_H_INCLUDE
 
 #include <FwDecl.h>
 #include <base/M3UParser.h>
@@ -27,20 +27,20 @@
 #include <map>
 #include <string>
 
-FW_DECL_SP_NS1(mpegts, PAT);
+FW_DECL_SP_NS1(mpegts, NIT);
 
 namespace mpegts {
 
-class PAT :
+class NIT :
 	public TableData {
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
 		// =====================================================================
 	public:
 
-		PAT() = default;
+		NIT() = default;
 
-		virtual ~PAT() = default;
+		virtual ~NIT() = default;
 
 		// =====================================================================
 		// -- mpegts::TableData ------------------------------------------------
@@ -56,8 +56,6 @@ class PAT :
 
 		void parse(FeID id);
 
-		bool isMarkedAsPMT(int pid) const;
-
 		TSData generateFrom(
 				FeID id, const base::M3UParser::TransformationMap &info);
 
@@ -66,10 +64,9 @@ class PAT :
 		// =====================================================================
 	private:
 
-		uint16_t _tid = 0;
-		std::map<int, bool> _pmtPidTable;
+		uint16_t _nid = 0;
 };
 
 } // namespace
 
-#endif // MPEGTS_PAT_DATA_H_INCLUDE
+#endif // MPEGTS_NIT_DATA_H_INCLUDE

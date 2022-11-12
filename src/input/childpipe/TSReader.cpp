@@ -28,8 +28,7 @@
 #include <chrono>
 #include <thread>
 
-namespace input {
-namespace childpipe {
+namespace input::childpipe {
 
 // =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
@@ -96,7 +95,7 @@ void TSReader::addDeliverySystemCount(
 
 bool TSReader::isDataAvailable() {
 	const int pcrTimer = _deviceData.getPCRTimer();
-	const std::int64_t pcrDelta = _deviceData.getFilterData().getPCRData()->getPCRDelta();
+	const std::int64_t pcrDelta = _deviceData.getFilter().getPCRData()->getPCRDelta();
 	if (pcrDelta != 0 && pcrTimer == 0) {
 		_t2 = _t1;
 		_t1 = std::chrono::steady_clock::now();
@@ -106,7 +105,7 @@ bool TSReader::isDataAvailable() {
 			std::this_thread::sleep_for(std::chrono::microseconds(interval));
 		}
 		_t1 = std::chrono::steady_clock::now();
-		_deviceData.getFilterData().getPCRData()->clearPCRDelta();
+		_deviceData.getFilter().getPCRData()->clearPCRDelta();
 	} else {
 		std::this_thread::sleep_for(std::chrono::microseconds(150 + pcrTimer));
 	}
@@ -123,7 +122,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		buffer.trySyncing();
 		if (buffer.full()) {
 			// Add data to Filter
-			_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 		}
 	}
 	// Check again if buffer is still full
@@ -180,7 +179,7 @@ bool TSReader::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilterData().getPidCSV());
+	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilter().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
@@ -205,5 +204,4 @@ std::string TSReader::attributeDescribeString() const {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-} // namespace childpipe
-} // namespace input
+}

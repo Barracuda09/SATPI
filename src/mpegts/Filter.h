@@ -24,6 +24,7 @@
 #include <FwDecl.h>
 #include <Log.h>
 #include <base/Mutex.h>
+#include <mpegts/NIT.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PCR.h>
 #include <mpegts/PidTable.h>
@@ -65,7 +66,7 @@ class Filter {
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
 		/// @param filter enables the pid filtering
-		void addData(FeID id, mpegts::PacketBuffer &buffer, const bool filter = false);
+		void filterData(FeID id, mpegts::PacketBuffer &buffer, const bool filter = false);
 
 		///
 		bool isMarkedAsActivePMT(int pid) const;
@@ -199,6 +200,7 @@ class Filter {
 		mutable base::Mutex _mutex;
 
 		mutable mpegts::PidTable _pidTable;
+		mutable mpegts::SpNIT _nit;
 		mutable mpegts::SpPAT _pat;
 		mutable mpegts::SpPCR _pcr;
 		mutable mpegts::SpPMT _pmt;

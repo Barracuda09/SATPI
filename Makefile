@@ -89,6 +89,8 @@ SOURCES = Version.cpp \
 	input/stream/Streamer.cpp \
 	input/stream/StreamerData.cpp \
 	mpegts/Filter.cpp \
+	mpegts/Generator.cpp \
+	mpegts/NIT.cpp \
 	mpegts/PacketBuffer.cpp \
 	mpegts/PAT.cpp \
 	mpegts/PCR.cpp \

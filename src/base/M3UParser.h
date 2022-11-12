@@ -68,6 +68,11 @@ namespace base {
 			/// transformation
 			bool exist(const double freq) const;
 
+			/// This will return a copy of the M3U map
+			TransformationMap getTransformationMap() const {
+				return _transformationMap;
+			}
+
 			// =======================================================================
 			// -- Data members -------------------------------------------------------
 			// =======================================================================

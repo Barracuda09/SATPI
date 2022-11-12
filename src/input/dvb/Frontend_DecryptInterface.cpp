@@ -62,7 +62,7 @@ namespace input::dvb {
 			HEX2(filterData[0]), HEX2(filterData[1]), HEX2(filterData[2]),
 			HEX2(filterMask[0]), HEX2(filterMask[1]), HEX2(filterMask[2]), HEX2(filterMask[3]));
 		_dvbapiData.startOSCamFilterData(_feID, pid, demux, filter, filterData, filterMask);
-		_frontendData.getFilterData().setPID(pid, true);
+		_frontendData.getFilter().setPID(pid, true);
 		// now update frontend, PID list has changed
 		updatePIDFilters();
    }
@@ -96,14 +96,14 @@ namespace input::dvb {
 	}
 
 	bool Frontend::isMarkedAsActivePMT(int pid) const {
-		return _frontendData.getFilterData().isMarkedAsActivePMT(pid);
+		return _frontendData.getFilter().isMarkedAsActivePMT(pid);
 	}
 
 	mpegts::SpPMT Frontend::getPMTData() const {
-		return _frontendData.getFilterData().getPMTData();
+		return _frontendData.getFilter().getPMTData();
 	}
 
 	mpegts::SpSDT Frontend::getSDTData() const {
-		return _frontendData.getFilterData().getSDTData();
+		return _frontendData.getFilter().getSDTData();
 	}
 }

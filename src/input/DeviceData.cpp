@@ -98,22 +98,25 @@ std::string DeviceData::attributeDescribeString(FeID id) const {
 	return doAttributeDescribeString(id);
 }
 
-void DeviceData::setDeliverySystem(const input::InputSystem system) {
-	base::MutexLock lock(_mutex);
-	_delsys = system;
-}
-
 input::InputSystem DeviceData::getDeliverySystem() const {
 	base::MutexLock lock(_mutex);
 	return _delsys;
 }
 
-const mpegts::Filter &DeviceData::getFilterData() const {
+const mpegts::Filter &DeviceData::getFilter() const {
 	return _filter;
 }
 
-mpegts::Filter &DeviceData::getFilterData() {
+mpegts::Filter &DeviceData::getFilter() {
 	return _filter;
+}
+
+const mpegts::Generator &DeviceData::getPSIGenerator() const {
+	return _generator;
+}
+
+mpegts::Generator &DeviceData::getPSIGenerator() {
+	return _generator;
 }
 
 fe_delivery_system DeviceData::convertDeliverySystem() const {

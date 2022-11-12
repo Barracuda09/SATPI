@@ -171,8 +171,8 @@ class Frontend :
 
 		virtual std::string attributeDescribeString() const final;
 
-		virtual mpegts::Filter &getFilterData() final {
-			return _frontendData.getFilterData();
+		virtual mpegts::Filter &getFilter() final {
+			return _frontendData.getFilter();
 		}
 
 		///

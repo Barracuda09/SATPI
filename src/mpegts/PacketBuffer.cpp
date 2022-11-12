@@ -114,16 +114,6 @@ void PacketBuffer::purge() {
 	}
 }
 
-bool PacketBuffer::markToFlush() {
-	if (getBufferSize() <= 0) {
-		//SI_LOG_DEBUG("PacketBuffer::markToFlush(): can't be flushed");
-		_flushable = false;
-	} else {
-		_flushable = true;
-	}
-	return _flushable;
-}
-
 void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 	// update sequence number
 	_buffer[2] = ((cseq >> 8) & 0xFF); // sequence number
@@ -138,7 +128,7 @@ void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 
 bool PacketBuffer::isReadyToSend() const {
 	// can only be ready when buffer is full (or ready to flush), so start from there
-	bool ready = _flushable | full();
+	bool ready = full();
 	if (_decryptPending && ready) {
 		for (std::size_t i = 0; i < (_writeIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE; ++i) {
 			const unsigned char *ts = getTSPacketPtr(i);

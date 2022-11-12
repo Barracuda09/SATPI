@@ -49,6 +49,8 @@ class TableData {
 		#define PAT_TABLE_ID           0x00
 		#define CAT_TABLE_ID           0x01
 		#define PMT_TABLE_ID           0x02
+		#define NIT_TABLE_ID           0x40
+		#define NIT_OTHER_TABLE_ID     0x41
 		#define SDT_TABLE_ID           0x42
 		#define EIT1_TABLE_ID          0x4E
 		#define EIT2_TABLE_ID          0x4F
@@ -117,6 +119,32 @@ class TableData {
 		///
 		const char* getTableTXT(int tableID) const;
 
+		///
+		uint8_t getByte(size_t &i, const unsigned char *buf) {
+			uint8_t d = buf[i];
+			++i;
+			return d;
+		}
+
+		///
+		uint16_t getWord(size_t &i, const unsigned char *buf) {
+			uint16_t d = (buf[i] << 8) | buf[i + 1];
+			i += 2;
+			return d;
+		}
+
+		uint32_t get24Bits(size_t &i, const unsigned char *buf) {
+			uint32_t d = (buf[i] << 16) | (buf[i + 1] << 8) | buf[i + 2];
+			i += 3;
+			return d;
+		}
+
+		uint32_t getDWord(size_t &i, const unsigned char *buf) {
+			uint32_t d = (buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
+			i += 4;
+			return d;
+		}
+
 	private:
 
 		/// Collect Table data for tableID
@@ -131,6 +159,7 @@ class TableData {
 			int tableID;
 			std::size_t sectionLength;
 			int version;
+			int nextIndicator;
 			int secNr;
 			int lastSecNr;
 			uint32_t crc;

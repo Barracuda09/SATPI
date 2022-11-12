@@ -33,8 +33,7 @@ FW_DECL_SP_NS2(input, childpipe, TSReader);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
-namespace input {
-namespace childpipe {
+namespace input::childpipe {
 
 /// The class @c TSReader is for reading from an Child PIPE as input device
 /// Some example for opening a TS file with 'cat /dir/test.ts':
@@ -108,8 +107,8 @@ class TSReader :
 
 		virtual std::string attributeDescribeString() const final;
 
-		virtual mpegts::Filter &getFilterData() final {
-			return _deviceData.getFilterData();
+		virtual mpegts::Filter &getFilter() final {
+			return _deviceData.getFilter();
 		}
 
 		// =====================================================================
@@ -131,7 +130,6 @@ class TSReader :
 		std::chrono::steady_clock::time_point _t2;
 };
 
-} // namespace childpipe
-} // namespace input
+}
 
 #endif // INPUT_CHILD_PIPE_TSREADER_H_INCLUDE

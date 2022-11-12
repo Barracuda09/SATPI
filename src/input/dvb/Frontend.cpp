@@ -268,7 +268,7 @@ namespace input::dvb {
 			buffer.addAmountOfBytesWritten(readSize);
 			if (buffer.full()) {
 				// Add data to Filter
-				_frontendData.getFilterData().addData(_feID, buffer);
+				_frontendData.getFilter().filterData(_feID, buffer);
 			}
 		} else if (readSize < 0) {
 			SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
@@ -460,7 +460,7 @@ namespace input::dvb {
 	}
 
 	void Frontend::closeActivePIDFilters() {
-		_frontendData.getFilterData().closeActivePIDFilters(_feID,
+		_frontendData.getFilter().closeActivePIDFilters(_feID,
 			// closePid lambda function
 			[&](const int pid) {
 				if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
@@ -476,7 +476,7 @@ namespace input::dvb {
 			SI_LOG_INFO("Frontend: @#1, Update PID filters requested, but frontend not tuned!", _feID);
 			return;
 		}
-		_frontendData.getFilterData().updatePIDFilters(_feID,
+		_frontendData.getFilter().updatePIDFilters(_feID,
 			// openPid lambda function
 			[&](const int pid) {
 				// Check if we have already a DMX open

@@ -27,8 +27,7 @@
 
 #include <cstring>
 
-namespace input {
-namespace stream {
+namespace input::stream {
 
 // =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
@@ -117,7 +116,7 @@ bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		buffer.trySyncing();
 		if (buffer.full()) {
 			// Add data to Filter
-			_deviceData.getFilterData().addData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 		}
 	}
 	// Check again if buffer is still full
@@ -184,7 +183,7 @@ bool Streamer::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilterData().getPidCSV());
+	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilter().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }
@@ -209,5 +208,4 @@ std::string Streamer::attributeDescribeString() const {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-} // namespace stream
-} // namespace input
+}

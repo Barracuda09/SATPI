@@ -35,6 +35,7 @@ namespace mpegts {
 // =============================================================================
 
 Filter::Filter() {
+	_nit = std::make_shared<NIT>();
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
 	_pmt = std::make_shared<PMT>();
@@ -47,6 +48,7 @@ Filter::Filter() {
 
 void Filter::clear() {
 	base::MutexLock lock(_mutex);
+	_nit = std::make_shared<NIT>();
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
 	_pmt = std::make_shared<PMT>();
@@ -75,10 +77,9 @@ void Filter::parsePIDString(const std::string &reqPids,
 	}
 }
 
-void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
+void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
 //	base::MutexLock lock(_mutex);
 	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
-//	SI_LOG_INFO("Filter::addDataOrFilter() PIDs Table: @#1", getPidCSV());
 	for (std::size_t i = 0; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
 		// Check is this the beginning of the TS and no Transport error indicator
@@ -97,24 +98,23 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 			}
 			continue;
 		}
-		const uint8_t  cc  =   ptr[3] & 0x0f;
+		const uint8_t cc = ptr[3] & 0x0f;
 		_pidTable.addPIDData(pid, cc);
 
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat->collectData(id.getID(), PAT_TABLE_ID, ptr, false);
-
+				_pat->collectData(id, PAT_TABLE_ID, ptr, false);
 				// Did we finish collecting PAT
 				if (_pat->isCollected()) {
-					_pat->parse(id.getID());
+					_pat->parse(id);
 				}
 			}
 		} else if (_pat->isMarkedAsPMT(pid)) {
 			// Did we finish collecting PMT
 			if (!_pmt->isCollected()) {
 				// collect PMT data
-				_pmt->collectData(id.getID(), PMT_TABLE_ID, ptr, false);
+				_pmt->collectData(id, PMT_TABLE_ID, ptr, false);
 				if (_pmt->isCollected()) {
 					// Collected, check if this is the PMT we need, by getting PCR Pid
 					const int pcrPID = _pmt->parsePCRPid();
@@ -125,7 +125,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 							id, DIGIT(pid, 4), DIGIT(pcrPID, 4));
 					} else {
 						// Yes, the correct one, then parse it
-						_pmt->parse(id.getID());
+						_pmt->parse(id);
 					}
 				}
 #ifdef ADDDVBCA
@@ -139,14 +139,23 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 				}
 #endif
 			}
+		} else if (pid == 16) {
+			if (!_nit->isCollected()) {
+				// collect NIT data
+				_nit->collectData(id, NIT_TABLE_ID, ptr, false);
+
+				// Did we finish collecting SDT
+				if (_nit->isCollected()) {
+					_nit->parse(id);
+				}
+			}
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt->collectData(id.getID(), SDT_TABLE_ID, ptr, false);
-
+				_sdt->collectData(id, SDT_TABLE_ID, ptr, false);
 				// Did we finish collecting SDT
 				if (_sdt->isCollected()) {
-					_sdt->parse(id.getID());
+					_sdt->parse(id);
 				}
 			}
 		} else if (pid == 20) {
@@ -175,7 +184,7 @@ void Filter::addData(const FeID id, mpegts::PacketBuffer &buffer, const bool fil
 			}
 #endif
 		} else if (pid == _pmt->getPCRPid()) {
-			_pcr->collectData(id.getID(), ptr);
+			_pcr->collectData(id, ptr);
 		}
 	}
 	if (filter) {

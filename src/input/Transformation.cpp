@@ -35,13 +35,17 @@ namespace input {
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
-Transformation::Transformation(const std::string &appDataPath) :
+Transformation::Transformation(
+			const std::string &appDataPath,
+			const input::InputSystem ownInputSystem) :
 		_enabled(false),
 		_transform(false),
 		_advertiseAs(AdvertiseAs::NONE),
+		_ownInputSystem(ownInputSystem),
 		_appDataPath(appDataPath),
 		_transformFileM3U("mapping.m3u"),
-		_transformFreq(0) {
+		_transformFreq(0),
+		_generatePSIFreq(10111) {
 	_fileParsed = _m3u.parse(_appDataPath + "/" + _transformFileM3U);
 }
 
@@ -173,7 +177,7 @@ TransportParamVector Transformation::transformStreamString(
 	// Parse the Stream String to the 'dummy' FrontendData and update PID filters
 	// for correct RTCP Attribute Describe String when transforming request
 	_transformedDeviceData.parseStreamString(id, params);
-	_transformedDeviceData.getFilterData().updatePIDFilters(id,
+	_transformedDeviceData.getFilter().updatePIDFilters(id,
 		// openPid lambda function
 		[&](const int) {
 			return true;

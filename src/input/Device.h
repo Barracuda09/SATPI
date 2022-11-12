@@ -102,11 +102,11 @@ class Device :
 		virtual std::string attributeDescribeString() const = 0;
 
 		///
-		virtual mpegts::Filter &getFilterData() = 0;
+		virtual mpegts::Filter &getFilter() = 0;
 
 		/// Generic pid filtering Update function
 		virtual void updatePIDFilters() {
-			getFilterData().updatePIDFilters(_feID,
+			getFilter().updatePIDFilters(_feID,
 				// openPid lambda function
 				[&](const int) {
 					return true;
@@ -119,7 +119,7 @@ class Device :
 
 		/// Generic pid filtering Close function
 		virtual void closeActivePIDFilters() {
-			getFilterData().closeActivePIDFilters(_feID,
+			getFilter().closeActivePIDFilters(_feID,
 				// closePid lambda function
 				[&](const int) {
 					return true;
