@@ -218,4 +218,4 @@ void Filter::setPID(const int pid, const bool val) {
 	_pidTable.setPID(pid, val);
 }
 
-} // namespace mpegts
+}

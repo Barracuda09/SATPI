@@ -304,4 +304,4 @@ void TableData::setCollected() {
 	}
 }
 
-} // namespace
+}

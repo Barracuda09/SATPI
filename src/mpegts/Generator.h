@@ -71,6 +71,6 @@ class Generator {
 		mutable mpegts::SpSDT _sdt;
 };
 
-} // namespace mpegts
+}
 
 #endif // MPEGTS_GENERATOR_H_INCLUDE

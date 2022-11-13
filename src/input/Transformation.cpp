@@ -226,4 +226,4 @@ const DeviceData &Transformation::transformDeviceData(const DeviceData &deviceDa
 	return (_transform && _enabled && _fileParsed) ? _transformedDeviceData : deviceData;
 }
 
-} // namespace input
+}

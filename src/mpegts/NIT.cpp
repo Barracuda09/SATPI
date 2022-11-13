@@ -267,4 +267,4 @@ mpegts::TSData NIT::generateFrom(
 	return data;
 }
 
-} // namespace
+}

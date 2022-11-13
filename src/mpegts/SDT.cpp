@@ -115,4 +115,4 @@ SDT::Data SDT::getSDTDataFor(const int progID) const {
 	return { "Not Found", "Not Found" };
 }
 
-} // namespace
+}

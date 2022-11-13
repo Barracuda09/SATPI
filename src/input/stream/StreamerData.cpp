@@ -26,85 +26,85 @@
 
 namespace input::stream {
 
-	// =======================================================================
-	// -- Constructors and destructor ----------------------------------------
-	// =======================================================================
+// =============================================================================
+// -- Constructors and destructor ----------------------------------------------
+// =============================================================================
 
-	StreamerData::StreamerData() {
-		doInitialize();
-	}
+StreamerData::StreamerData() {
+	doInitialize();
+}
 
-	StreamerData::~StreamerData() {}
+StreamerData::~StreamerData() {}
 
-	// =======================================================================
-	// -- input::DeviceData --------------------------------------------------
-	// =======================================================================
+// =============================================================================
+// -- input::DeviceData --------------------------------------------------------
+// =============================================================================
 
-	void StreamerData::doNextAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "pathname", _uri);
-	}
+void StreamerData::doNextAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "pathname", _uri);
+}
 
-	void StreamerData::doNextFromXML(const std::string &UNUSED(xml)) {}
+void StreamerData::doNextFromXML(const std::string &UNUSED(xml)) {}
 
-	void StreamerData::doInitialize() {
-		_uri = "None";
-		_multiAddr = "0.0.0.0";
-		_port = 0;
-		_udp = false;
-	}
+void StreamerData::doInitialize() {
+	_uri = "None";
+	_multiAddr = "0.0.0.0";
+	_port = 0;
+	_udp = false;
+}
 
-	void StreamerData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
-		const std::string uri = params.getURIParameter("uri");
-		if (uri.empty() || (hasFilePath() && uri == _uri)) {
-			parseAndUpdatePidsTable(params);
-			return;
-		}
-		initialize();
-		_changed = true;
-		_uri = uri;
-
-		// Parse uri ex. udp@224.0.1.3:1234
-		_udp = _uri.find("udp") != std::string::npos;
-		std::string::size_type begin = _uri.find("@");
-		if (begin != std::string::npos) {
-			std::string::size_type end = _uri.find_first_of(":", begin);
-			if (end != std::string::npos) {
-				begin += 1;
-				_multiAddr = _uri.substr(begin, end - begin);
-				begin = end + 1;
-				end = _uri.size();
-				_port = std::stoi(_uri.substr(begin, end - begin));
-			}
-		}
+void StreamerData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+	const std::string uri = params.getURIParameter("uri");
+	if (uri.empty() || (hasFilePath() && uri == _uri)) {
 		parseAndUpdatePidsTable(params);
+		return;
 	}
+	initialize();
+	_changed = true;
+	_uri = uri;
 
-	std::string StreamerData::doAttributeDescribeString(const FeID id) const {
-		std::string desc;
-		// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
-		return StringConverter::stringFormat("ver=1.5;tuner=@#1,@#2,@#3,@#4;uri=@#5",
-				id, getSignalStrength(), hasLock(),
-				getSignalToNoiseRatio(), _uri);
-		return desc;
+	// Parse uri ex. udp@224.0.1.3:1234
+	_udp = _uri.find("udp") != std::string::npos;
+	std::string::size_type begin = _uri.find("@");
+	if (begin != std::string::npos) {
+		std::string::size_type end = _uri.find_first_of(":", begin);
+		if (end != std::string::npos) {
+			begin += 1;
+			_multiAddr = _uri.substr(begin, end - begin);
+			begin = end + 1;
+			end = _uri.size();
+			_port = std::stoi(_uri.substr(begin, end - begin));
+		}
 	}
+	parseAndUpdatePidsTable(params);
+}
 
-	// =======================================================================
-	//  -- Other member functions --------------------------------------------
-	// =======================================================================
+std::string StreamerData::doAttributeDescribeString(const FeID id) const {
+	std::string desc;
+	// ver=1.5;tuner=<feID>,<level>,<lock>,<quality>;uri=<file>
+	return StringConverter::stringFormat("ver=1.5;tuner=@#1,@#2,@#3,@#4;uri=@#5",
+			id, getSignalStrength(), hasLock(),
+			getSignalToNoiseRatio(), _uri);
+	return desc;
+}
 
-	std::string StreamerData::getMultiAddr() const {
-		base::MutexLock lock(_mutex);
-		return _multiAddr;
-	}
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
-	int StreamerData::getPort() const {
-		base::MutexLock lock(_mutex);
-		return _port;
-	}
+std::string StreamerData::getMultiAddr() const {
+	base::MutexLock lock(_mutex);
+	return _multiAddr;
+}
 
-	bool StreamerData::hasFilePath() const {
-		base::MutexLock lock(_mutex);
-		return _uri != "None";
-	}
+int StreamerData::getPort() const {
+	base::MutexLock lock(_mutex);
+	return _port;
+}
+
+bool StreamerData::hasFilePath() const {
+	base::MutexLock lock(_mutex);
+	return _uri != "None";
+}
 
 }

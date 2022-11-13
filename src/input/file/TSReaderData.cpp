@@ -24,8 +24,7 @@
 #include <StringConverter.h>
 #include <TransportParamVector.h>
 
-namespace input {
-namespace file {
+namespace input::file {
 
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
@@ -84,5 +83,4 @@ bool TSReaderData::hasFilePath() const {
 	return _filePath != "None";
 }
 
-} // namespace file
-} // namespace input
+}

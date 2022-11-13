@@ -183,4 +183,4 @@ bool PidTable::isAllPID() const {
 	return _data[ALL_PIDS].state == State::Opened;
 }
 
-} // namespace mpegts
+}

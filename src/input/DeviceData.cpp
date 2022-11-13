@@ -213,4 +213,4 @@ uint32_t DeviceData::getUncorrectedBlocks() const {
 	return _ublocks;
 }
 
-} // namespace input
+}

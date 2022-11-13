@@ -28,8 +28,7 @@
 #include <chrono>
 #include <thread>
 
-namespace input {
-namespace file {
+namespace input::file {
 
 // =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
@@ -199,5 +198,4 @@ std::string TSReader::attributeDescribeString() const {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-} // namespace file
-} // namespace input
+}

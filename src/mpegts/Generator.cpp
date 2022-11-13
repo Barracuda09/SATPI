@@ -52,4 +52,4 @@ mpegts::PacketBuffer Generator::generatePSIFrom(
 	return packet;
 }
 
-} // namespace mpegts
+}
