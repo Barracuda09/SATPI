@@ -260,7 +260,14 @@ mpegts::TSData NIT::generateFrom(
 	mpegts::TSData data;
 
 	int prognr = 0;
+#ifndef NEED_BACKPORT
 	for (auto [freq, element] : info) {
+#else
+	for (auto entry : info) {
+		auto freq    = entry.first;
+		auto element = entry.second;
+		(void) freq; /* unused */
+#endif
 		SI_LOG_DEBUG("Frontend: @#1, Generating NIT: Prog NR: @#2 - @#3  PMT PID: @#4",
 			id, HEX(prognr, 4), DIGIT(prognr, 5), element.freq);
 	}
