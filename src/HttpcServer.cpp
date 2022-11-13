@@ -165,6 +165,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const auto retval  = _streamManager.findFrontendIDWithStreamID(streamID);
 	const auto feIndex = std::get<0>(retval);
 	const auto feID    = std::get<1>(retval);
+	(void) feID; /* unused */
 #endif
 
 	const std::string method = client.getMethod();
