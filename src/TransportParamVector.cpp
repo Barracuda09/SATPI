@@ -28,8 +28,13 @@
 
 std::string TransportParamVector::getParameter(const std::string_view parameter) const {
 	for (const std::string &param : _vector) {
+#ifndef NEED_BACKPORT
 		const auto b = param.find(parameter, 0);
 		const auto e = param.find_first_not_of(parameter, b);
+#else
+		const auto b = param.find(std::string{parameter}, 0);
+		const auto e = param.find_first_not_of(std::string{parameter}, b);
+#endif
 		if (b != std::string::npos && parameter.size() == e && param[e] == '=') {
 			return StringConverter::trimWhitespace(param.substr(e + 1));
 		}
@@ -41,12 +46,21 @@ void TransportParamVector::replaceParameter(
 		const std::string_view parameter,
 		const std::string_view value) {
 	for (std::string &param : _vector) {
+#ifndef NEED_BACKPORT
 		const auto b = param.find(parameter, 0);
 		const auto e = param.find_first_not_of(parameter, b);
+#else
+		const auto b = param.find(std::string{parameter}, 0);
+		const auto e = param.find_first_not_of(std::string{parameter}, b);
+#endif
 		if (b != std::string::npos && parameter.size() == e && param[e] == '=') {
 			// Found parameter, so change and return
 			param.erase(e + 1);
+#ifndef NEED_BACKPORT
 			param += value;
+#else
+			param += std::string{value};
+#endif
 			return;
 		}
 	}

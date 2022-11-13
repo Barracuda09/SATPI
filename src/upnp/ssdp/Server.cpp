@@ -227,7 +227,11 @@ void Server::checkDefendDeviceID(
 		}
 	} else if (servers.find(otherDeviceID) == servers.end()) {
 		SI_LOG_INFO("Found SAT>IP Server @#1: with DEVICEID @#2", ip_addr, otherDeviceID);
+#ifndef NEED_BACKPORT
 		servers[otherDeviceID] = ip_addr;
+#else
+		servers[otherDeviceID] = std::string{ip_addr};
+#endif
 	}
 }
 
