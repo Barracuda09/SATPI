@@ -63,7 +63,8 @@ namespace input::dvb::delivery {
 	DVBS::DVBS(const FeIndex index, const FeID id, const std::string &fePath, unsigned int dvbVersion) :
 		input::dvb::delivery::System(index, id, fePath, dvbVersion),
 		_diseqcType(DiseqcType::Lnb),
-		_diseqc(new DiSEqcLnb) {
+		_diseqc(new DiSEqcLnb),
+		_turnoffLNBPower(false) {
 
 		// Only DVB-S2 have special handling for FBC tuners
 		_fbcSetID = readProcData(index, "fbc_set_id");
@@ -107,6 +108,8 @@ namespace input::dvb::delivery {
 			ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
 		}
 
+		ADD_XML_CHECKBOX(xml, "turnoffLNBPower", (_turnoffLNBPower ? "true" : "false"));
+
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
 			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
 			ADD_XML_ELEMENT(xml, "value", asInteger(_diseqcType));
@@ -125,6 +128,9 @@ namespace input::dvb::delivery {
 
 	void DVBS::doFromXML(const std::string &xml) {
 		std::string element;
+		if (findXMLElement(xml, "turnoffLNBPower.value", element)) {
+			_turnoffLNBPower = (element == "true") ? true : false;
+		}
 		if (findXMLElement(xml, "diseqcType.value", element)) {
 			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
 			switch (type) {
@@ -229,6 +235,13 @@ namespace input::dvb::delivery {
 			return false;
 		}
 		return true;
+	}
+
+	void DVBS::teardown(int feFD) const {
+		if (_turnoffLNBPower) {
+			SI_LOG_INFO("Frontend: @#1, Turning off LNB Power", _feID);
+			_diseqc->turnOffLNBPower(feFD);
+		}
 	}
 
 	// =========================================================================

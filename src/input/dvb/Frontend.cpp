@@ -447,6 +447,10 @@ bool Frontend::teardown() {
 	// Close active PIDs
 	closeActivePIDFilters();
 	_tuned = false;
+	// Do teardown of frontends before closing FE
+	for (const input::dvb::delivery::UpSystem &deliverySystem : _deliverySystem) {
+		deliverySystem->teardown(_fd_fe);
+	}
 	closeDMX();
 	closeFE();
 	_frontendData.initialize();

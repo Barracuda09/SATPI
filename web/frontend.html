@@ -88,6 +88,7 @@
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 			page += addTableLineEntry("Internal Software Pid Filtering", xmlDoc, streamID + "internalPidFiltering");
 			page += addTableLineEntry("Wait On Tuning Lock Timeout (ms)", xmlDoc, streamID + "waitOnLockTimeout");
+			page += addTableLineEntry("Turn off LNB Power during teardown", xmlDoc, streamID + "turnoffLNBPower");
 
 			var transformation = visibleStream.getElementsByTagName("transformation");
 			if (transformation.length > 0) {

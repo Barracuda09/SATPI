@@ -65,6 +65,10 @@ namespace input::dvb::delivery {
 			virtual bool sendDiseqc(int feFD, FeID id, uint32_t &freq,
 				int src, Lnb::Polarization pol) = 0;
 
+			/// This will turn off the power to the LNB
+			/// @param feFD
+			virtual void turnOffLNBPower(int feFD) const;
+
 		protected:
 
 			///

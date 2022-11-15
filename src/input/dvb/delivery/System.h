@@ -21,6 +21,7 @@
 #define INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE INPUT_DVB_DELIVERY_SYSTEM_H_INCLUDE
 
 #include <FwDecl.h>
+#include <Unused.h>
 #include <base/XMLSupport.h>
 #include <input/InputSystem.h>
 
@@ -60,6 +61,9 @@ class System :
 
 		///
 		virtual bool isCapableOf(input::InputSystem system) const = 0;
+
+		///
+		virtual void teardown(int UNUSED(feFD)) const {}
 
 		// =======================================================================
 		// -- Data members -------------------------------------------------------

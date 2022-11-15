@@ -59,6 +59,12 @@ namespace input::dvb::delivery {
 	//  -- Other member functions ------------------------------------------------
 	// ===========================================================================
 
+	void DiSEqc::turnOffLNBPower(int feFD) const {
+		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_OFF) == -1) {
+			SI_LOG_PERROR("FE_SET_VOLTAGE failed to switch off");
+		}
+	}
+
 	void DiSEqc::sendDiseqcResetCommand(int feFD, FeID id) {
 		dvb_diseqc_master_cmd cmd = {{0xe0, 0x00, 0x00}, 3};
 
