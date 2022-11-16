@@ -202,6 +202,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 		availableSize %= MAX_BUF;
 	}
 //		SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+	bool nextDone = false;
 	if (inputDevice->isDataAvailable() && availableSize > 1) {
 		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
@@ -213,7 +214,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			// goto next, so inc write index
 			++_writeIndex;
 			_writeIndex %= MAX_BUF;
-
+			nextDone = true;
 			// reset next
 			_tsBuffer[_writeIndex].reset();
 		}
@@ -224,10 +225,17 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	if (interval > _sendInterval) {
 		_t1 = _t2;
 		if (_tsBuffer[_readIndex].isReadyToSend()) {
+			// Send the packet completed or not
 			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 				// inc read index only when send is successful
 				++_readIndex;
 				_readIndex %= MAX_BUF;
+				// If it's a flush of an incomplete packet then advance the write index
+				if (!nextDone) {
+					++_writeIndex;
+					_writeIndex %= MAX_BUF;
+					_tsBuffer[_writeIndex].reset();
+				}
 			}
 		} else if (_signalLock) {
 			writeDataToOutputDevice(_tsEmpty, client);
