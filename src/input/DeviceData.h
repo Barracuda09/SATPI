@@ -131,6 +131,11 @@ class DeviceData :
 		/// @param params
 		void parseAndUpdatePidsTable(const TransportParamVector& params);
 
+		///
+		void copyFilterPidsTable(const DeviceData &source) {
+			_filter.copyPidTable(source._filter);
+		}
+
 		int hasLock() const;
 
 		fe_status_t getSignalStatus() const;

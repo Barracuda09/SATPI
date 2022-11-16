@@ -222,6 +222,10 @@ const DeviceData &Transformation::transformDeviceData(const DeviceData &deviceDa
 			snr = 15;
 		}
 		_transformedDeviceData.setMonitorData(status, strength, snr, ber, ublocks);
+
+		// copy the pid filtering list
+		_transformedDeviceData.copyFilterPidsTable(deviceData);
+
 	}
 	return (_transform && _enabled && _fileParsed) ? _transformedDeviceData : deviceData;
 }
