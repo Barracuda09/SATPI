@@ -123,10 +123,8 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
 			buffer.trySyncing();
-			if (buffer.full()) {
-				// Add data to Filter
-				_deviceData.getFilter().filterData(_feID, buffer, start);
-			}
+			// Add data to Filter
+			_deviceData.getFilter().filterData(_feID, buffer, start);
 		}
 	}
 
