@@ -130,7 +130,7 @@ bool PacketBuffer::isReadyToSend() const {
 	// can only be ready when buffer is full (or ready to flush), so start from there
 	bool ready = (getBufferSize() > 0) ? true : false;
 	if (_decryptPending && ready) {
-		for (std::size_t i = 0; i < (_writeIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE; ++i) {
+		for (std::size_t i = 0; i < getNumberOfCompletePackets(); ++i) {
 			const unsigned char *ts = getTSPacketPtr(i);
 			ready &= ((ts[3] & 0x80) != 0x80);
 		}
