@@ -196,27 +196,36 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 
 void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	const input::SpDevice inputDevice = _stream.getInputDevice();
+	bool advanceCompleted = false;
+
+	// lambda function to process the packet and send/flush it out
+	auto decryptAndAdvance = [&]() {
+		if (advanceCompleted) {
+			return;
+		}
+#ifdef LIBDVBCSA
+		decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
+		if (decrypt != nullptr) {
+			decrypt->decrypt(_stream.getFeIndex(), _stream.getFeID(), _tsBuffer[_writeIndex]);
+		}
+#endif
+		// goto next, so inc write index
+		++_writeIndex;
+		_writeIndex %= MAX_BUF;
+		// reset next
+		_tsBuffer[_writeIndex].reset();
+
+		advanceCompleted = true;
+	};
 
 	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;
 	}
-//		SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
-	bool nextDone = false;
+//	SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
 	if (inputDevice->isDataAvailable() && availableSize > 1) {
 		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
-#ifdef LIBDVBCSA
-			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
-			if (decrypt != nullptr) {
-				decrypt->decrypt(_stream.getFeIndex(), _stream.getFeID(), _tsBuffer[_writeIndex]);
-			}
-#endif
-			// goto next, so inc write index
-			++_writeIndex;
-			_writeIndex %= MAX_BUF;
-			nextDone = true;
-			// reset next
-			_tsBuffer[_writeIndex].reset();
+			decryptAndAdvance();
 		}
 	}
 	// calculate interval
@@ -226,16 +235,11 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 		_t1 = _t2;
 		if (_tsBuffer[_readIndex].isReadyToSend()) {
 			// Send the packet completed or not
+			decryptAndAdvance();
 			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 				// inc read index only when send is successful
 				++_readIndex;
 				_readIndex %= MAX_BUF;
-				// If it's a flush of an incomplete packet then advance the write index
-				if (!nextDone) {
-					++_writeIndex;
-					_writeIndex %= MAX_BUF;
-					_tsBuffer[_writeIndex].reset();
-				}
 			}
 		} else if (_signalLock) {
 			writeDataToOutputDevice(_tsEmpty, client);
