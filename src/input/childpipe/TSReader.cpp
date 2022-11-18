@@ -117,7 +117,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 		return false;
 	}
 	int readSize = 1;
-	for (int i = 0; i < 7 && !buffer.full() && readSize > 0; ++i) {
+	for (int i = 7; i > 0 && !buffer.full() && readSize > 0; --i) {
 		readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
