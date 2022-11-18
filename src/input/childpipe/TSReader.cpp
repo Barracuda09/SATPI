@@ -118,13 +118,14 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	}
 	int readSize = 1;
 	for (int i = 7; i > 0 && !buffer.full() && readSize > 0; --i) {
+		std::size_t start = !_deviceData.isInternalPidFilteringEnabled() ? -1 : buffer.getNumberOfCompletePackets();
 		readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
 			buffer.trySyncing();
 			if (buffer.full()) {
 				// Add data to Filter
-				_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+				_deviceData.getFilter().filterData(_feID, buffer, start);
 			}
 		}
 	}

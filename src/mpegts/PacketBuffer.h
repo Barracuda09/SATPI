@@ -75,6 +75,12 @@ class PacketBuffer {
 			return NUMBER_OF_TS_PACKETS;
 		}
 
+		/// This function will return the number of completed TS Packets that are
+		/// in this TS Packet
+		std::size_t getNumberOfCompletePackets() const {
+			return (_writeIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE;
+		}
+
 		/// get the amount of data that CAN be written to this TS packet
 		static constexpr std::size_t getMaxBufferSize() {
 			return MTU_MAX_TS_PACKET_SIZE;
