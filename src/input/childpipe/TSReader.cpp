@@ -116,8 +116,8 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (!_exec.isOpen()) {
 		return false;
 	}
-	int readSize;
-	do {
+	int readSize = -1;
+	for (int i = 0; i < 7 && !buffer.full() && readSize != 0; ++i) {
 		readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
@@ -127,7 +127,7 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 				_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 			}
 		}
-	} while (!buffer.full() && readSize != 0);
+	}
 
 	// Check again if buffer is still not full
 	return buffer.full();
