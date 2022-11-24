@@ -129,6 +129,10 @@ Build
     - To buils just run (Or some other build you like)<br/>
     `make debug`<br/>
 
+- If you see building errors, then perhaps your toolchain is not C++17 compatible. In this case try this before compiling:
+
+    `make non-c++17`<br/>
+
 - If you like to build the documentation, use:
 
     `make docu   (!! you need Doxygen and Graphviz/dot !!)`<br/>
