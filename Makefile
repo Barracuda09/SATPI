@@ -244,6 +244,7 @@ help:
 	@echo " - Make PlantUML graph                  :  make plantuml"
 	@echo " - Make Doxygen docmumentation          :  make docu"
 	@echo " - Make Uncrustify Code Beautifier      :  make uncrustify"
+	@echo " - Enable compatibility with non-C++17  :  make non-c++17"
 
 # Download PlantUML from http://plantuml.com/download.html
 # and put it into the root of the project directory
@@ -256,6 +257,12 @@ uncrustify:
 	uncrustify -c SatPI.uncrustify --replace $(SOURCES_UNC)
 	uncrustify -c SatPI.uncrustify --replace $(HEADERS)
 	@echo uncrustify Done
+
+# Enable compatibility with non-C++17 compilers
+# wget -P backports/ https://github.com/Barracuda09/SATPI/pull/173.diff
+non-c++17:
+	patch -p1 < backports/173.diff
+	@echo patching Done
 
 checkcpp:
 	~/cppcheck/cppcheck -DENIGMA -DLIBDVBCSA -DDVB_API_VERSION=5 -DDVB_API_VERSION_MINOR=5 -I ./src --enable=all --std=posix --std=c++11 ./src 1> cppcheck.log 2>&1
