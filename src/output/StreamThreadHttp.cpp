@@ -73,7 +73,7 @@ int StreamThreadHttp::getStreamSocketPort(const int clientID) const {
 
 bool StreamThreadHttp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, StreamClient &client) {
 	const long timestamp = base::TimeCounter::getTicks() * 90;
-	const size_t dataSize = buffer.getBufferSize();
+	const size_t dataSize = buffer.getCurrentBufferSize();
 
 	// RTP packet octet count (Bytes)
 	_stream.addRtpData(dataSize, timestamp);

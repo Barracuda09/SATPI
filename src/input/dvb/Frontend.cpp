@@ -261,7 +261,7 @@ bool Frontend::isDataAvailable() {
 	return false;
 }
 
-bool Frontend::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
 	// try read maximum amount of bytes from DMX
 	const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (readSize > 0) {

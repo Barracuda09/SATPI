@@ -90,7 +90,7 @@ class Streamer :
 
 		virtual bool isDataAvailable() final;
 
-		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) final;
+		virtual bool readTSPackets(mpegts::PacketBuffer &buffer, bool finalCall) final;
 
 		virtual bool capableOf(input::InputSystem msys) const final;
 

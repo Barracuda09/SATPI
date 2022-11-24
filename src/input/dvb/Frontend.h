@@ -153,7 +153,7 @@ class Frontend :
 
 		virtual bool isDataAvailable() final;
 
-		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) final;
+		virtual bool readTSPackets(mpegts::PacketBuffer &buffer, bool finalCall) final;
 
 		virtual bool capableOf(InputSystem system) const final;
 

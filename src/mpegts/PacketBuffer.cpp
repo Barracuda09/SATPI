@@ -49,11 +49,14 @@ void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
 	_buffer[10] = (ssrc >>  8) & 0xff;      // synchronization source
 	_buffer[11] = (ssrc >>  0) & 0xff;      // synchronization source
 
-	_writeIndex = RTP_HEADER_LEN;
 	_initialized = true;
 }
 
 bool PacketBuffer::trySyncing() {
+	const std::size_t size = getCurrentBufferSize();
+	if (size < (TS_PACKET_SIZE * 3)) {
+		return false;
+	}
 	if (isSynced()) {
 		return true;
 	}
@@ -65,6 +68,7 @@ bool PacketBuffer::trySyncing() {
 			// found sync, now move it to begin of buffer
 			const size_t cpySize = (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - i;
 			_writeIndex = _writeIndex - (i - RTP_HEADER_LEN);
+			_processedIndex = _writeIndex;
 			std::memmove(_buffer + RTP_HEADER_LEN, cData, cpySize);
 			return true;
 		}
@@ -75,21 +79,21 @@ bool PacketBuffer::trySyncing() {
 }
 
 void PacketBuffer::markTSForPurging(std::size_t packetNumber) {
-	unsigned char *cData = getTSPacketPtr(packetNumber);
-	// Invalid TS packets are labeled 0xFF _after_ the first SYNC Byte.
-	if (cData < getWriteBufferPtr()) {
+	if (packetNumber <= NUMBER_OF_TS_PACKETS) {
+		// Invalid TS packets are labeled 0xFF _after_ the first SYNC Byte.
+		unsigned char *cData = getTSPacketPtr(packetNumber);
 		cData[1] = 0xFF;
-		_purgePending = true;
+		++_purgePending;
 	}
 }
 
 void PacketBuffer::purge() {
-	if (!_purgePending) {
+	if (_purgePending == 0) {
 		return;
 	}
-	_purgePending = false;
-	std::size_t bufSize = getBufferSize();
-	if (bufSize <= 0) {
+	_purgePending = 0;
+	const std::size_t bufSize = getCurrentBufferSize();
+	if (bufSize == 0) {
 		return;
 	}
 	// i: represents the packet number, and not the packet position!
@@ -102,7 +106,7 @@ void PacketBuffer::purge() {
 				skipData += TS_PACKET_SIZE;
 				continue;
 			}
-			// Remove current (plus others) packet from the buffer
+			// Remove current (plus other) packet from the buffer
 			unsigned char *endData = getWriteBufferPtr();
 			unsigned char *nextData = cData + skipData + TS_PACKET_SIZE;
 			if (nextData < endData) {
@@ -127,10 +131,12 @@ void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 }
 
 bool PacketBuffer::isReadyToSend() const {
-	// can only be ready when buffer is full (or ready to flush), so start from there
-	bool ready = (getBufferSize() > 0) ? true : false;
+	// ready to send, when there is something in the buffer in TS_PACKET_SIZE chucks
+	// and if all scramble flags are cleared
+	bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
 	if (_decryptPending && ready) {
-		for (std::size_t i = 0; i < getNumberOfCompletePackets(); ++i) {
+		const std::size_t size = getNumberOfCompletedPackets();
+		for (std::size_t i = 0; i < size; ++i) {
 			const unsigned char *ts = getTSPacketPtr(i);
 			ready &= ((ts[3] & 0x80) != 0x80);
 		}
@@ -138,4 +144,4 @@ bool PacketBuffer::isReadyToSend() const {
 	return ready;
 }
 
-} // namespace
+}

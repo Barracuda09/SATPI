@@ -65,8 +65,8 @@ class Filter {
 		/// optionally purge TS packets from unused pids if start is not negative
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
-		/// @param start enables the pid filtering starting from the packet indicated
-		void filterData(FeID id, mpegts::PacketBuffer &buffer, const int start = -1);
+		/// @param filter enables the software pid filtering
+		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter = false);
 
 		///
 		bool isMarkedAsActivePMT(int pid) const;

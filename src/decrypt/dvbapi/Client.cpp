@@ -95,7 +95,7 @@ namespace decrypt::dvbapi {
 		if (_connected && _enabled) {
 			const input::dvb::SpFrontendDecryptInterface frontend = _streamManager.getFrontendDecryptInterface(index);
 			const int maxBatchSize = frontend->getMaximumBatchSize();
-			static constexpr std::size_t size = buffer.getNumberOfTSPackets();
+			const std::size_t size = buffer.getNumberOfCompletedPackets();
 			for (std::size_t i = 0; i < size; ++i) {
 				// Get TS packet from the buffer
 				unsigned char *data = buffer.getTSPacketPtr(i);

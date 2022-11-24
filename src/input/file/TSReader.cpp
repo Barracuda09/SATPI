@@ -111,7 +111,7 @@ bool TSReader::isDataAvailable() {
 	return true;
 }
 
-bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
 	if (!_file.is_open()) {
 		return false;
 	}

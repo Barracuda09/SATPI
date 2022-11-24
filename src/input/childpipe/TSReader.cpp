@@ -112,27 +112,24 @@ bool TSReader::isDataAvailable() {
 	return true;
 }
 
-bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
 	if (!_exec.isOpen()) {
 		return false;
 	}
-	int readSize = 1;
-	for (int i = 7; i > 0 && !buffer.full() && readSize > 0; --i) {
-		int start = !_deviceData.isInternalPidFilteringEnabled() ? -1 : buffer.getNumberOfCompletePackets();
-		readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+	for (int i = 0; i < 7; ++i) {
+		const int readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
-			// Add data to Filter
-			if (buffer.isSynced()) {
-				_deviceData.getFilter().filterData(_feID, buffer, start);
-			} else if (buffer.trySyncing()) {
-				_deviceData.getFilter().filterData(_feID, buffer, start < 0 ? -1 : 0);
+			buffer.trySyncing();
+			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+			if (buffer.full() || finalCall) {
+				break;
 			}
 		}
+		std::this_thread::sleep_for(std::chrono::microseconds(5));
 	}
-
-	// Check again if buffer is still not full
-	return buffer.full();
+	// Check again if buffer is full or final call before sending
+	return buffer.full() || (finalCall && buffer.isReadyToSend());
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
@@ -185,7 +182,6 @@ bool TSReader::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilter().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }

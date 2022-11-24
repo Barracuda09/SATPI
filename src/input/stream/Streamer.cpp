@@ -103,7 +103,7 @@ bool Streamer::isDataAvailable() {
 	return false;
 }
 
-bool Streamer::readFullTSPacket(mpegts::PacketBuffer &buffer) {
+bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
 	if (_udpMultiListen.getFD() == -1) {
 		return false;
 	}
@@ -183,7 +183,6 @@ bool Streamer::update() {
 		}
 	}
 	updatePIDFilters();
-	SI_LOG_DEBUG("Frontend: @#1, PIDs Table: @#2", _feID, _deviceData.getFilter().getPidCSV());
 	SI_LOG_DEBUG("Frontend: @#1, Updating frontend (Finished)", _feID);
 	return true;
 }

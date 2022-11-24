@@ -34,8 +34,6 @@ TSReaderData::TSReaderData() {
 	doInitialize();
 }
 
-TSReaderData::~TSReaderData() {}
-
 // =============================================================================
 // -- input::DeviceData --------------------------------------------------------
 // =============================================================================
@@ -53,6 +51,7 @@ void TSReaderData::doInitialize() {
 
 void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
 	const std::string filePath = params.getURIParameter("exec");
+	// Check did we receive an new path or just the same again
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
 		parseAndUpdatePidsTable(params);
 		return;
