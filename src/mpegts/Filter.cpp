@@ -77,14 +77,14 @@ void Filter::parsePIDString(const std::string &reqPids,
 	}
 }
 
-void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
+void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const int start) {
 //	base::MutexLock lock(_mutex);
 	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
-	for (std::size_t i = 0; i < size; ++i) {
+	for (std::size_t i = start < 0 ? 0 : start; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
 		// Check is this the beginning of the TS and no Transport error indicator
 		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
-			if (filter && !_pidTable.isAllPID()) {
+			if (start >= 0 && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);
 			}
 			continue;
@@ -93,7 +93,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
 		// If pid was not opened, skip this one (and perhaps filter out it)
 		if (!_pidTable.isPIDOpened(pid)) {
-			if (filter && !_pidTable.isAllPID()) {
+			if (start >= 0  && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);
 			}
 			continue;
@@ -187,7 +187,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			_pcr->collectData(id, ptr);
 		}
 	}
-	if (filter) {
+	if (start >= 0) {
 		buffer.purge();
 	}
 }

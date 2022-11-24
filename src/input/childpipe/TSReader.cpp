@@ -116,16 +116,22 @@ bool TSReader::readFullTSPacket(mpegts::PacketBuffer &buffer) {
 	if (!_exec.isOpen()) {
 		return false;
 	}
-	const int readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
-	if (readSize > 0) {
-		buffer.addAmountOfBytesWritten(readSize);
-		buffer.trySyncing();
-		if (buffer.full()) {
+	int readSize = 1;
+	for (int i = 7; i > 0 && !buffer.full() && readSize > 0; --i) {
+		int start = !_deviceData.isInternalPidFilteringEnabled() ? -1 : buffer.getNumberOfCompletePackets();
+		readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
+		if (readSize > 0) {
+			buffer.addAmountOfBytesWritten(readSize);
 			// Add data to Filter
-			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+			if (buffer.isSynced()) {
+				_deviceData.getFilter().filterData(_feID, buffer, start);
+			} else if (buffer.trySyncing()) {
+				_deviceData.getFilter().filterData(_feID, buffer, start < 0 ? -1 : 0);
+			}
 		}
 	}
-	// Check again if buffer is still full
+
+	// Check again if buffer is still not full
 	return buffer.full();
 }
 
