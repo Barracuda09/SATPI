@@ -9,7 +9,7 @@
 ##                     +-- tuner ID
 
 ## Execute cleanup() when these signals are trapped
-trap cleanup TERM INT KILL EXIT HUP QUIT STOP ABRT ERR
+trap cleanup TERM INT KILL EXIT HUP QUIT STOP ABRT
 
 ## Set here your variables
 IP=$1
@@ -24,10 +24,10 @@ preexec() {
 
 	## Input Field Separator
 	IFS=","
-	for row in ${PIDSTR[@]}
+	for row in ${PIDSTR}
 	do
 		cols=$row
-		for col in ${cols[@]}
+		for col in ${cols}
 		do
 			hexstr=$(printf "%s 0x%.4X" $hexstr $col)
 		done
