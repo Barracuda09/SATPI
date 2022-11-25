@@ -20,6 +20,9 @@ rtsp://@#1/?msys=childpipe&exec="wget%20-qO-%20http:%2F%2F192.168.0.104:8875%2F%
 #EXTINF:-1 satip-freq="204", Translation to: ChildPIPE exec="wget -qO- http://192.168.0.112:8875/?freq=418%26sr=6900%26msys=dvbc%26mtype=256qam%26fec=35%26pids=0,1,16,17,18,2600,2601,2611"
 rtsp://@#1/?msys=childpipe&exec="wget%20-qO-%20http:%2F%2F192.168.0.112:8875%2F%3Ffreq=418%%26sr=6900%%26msys=dvbc%%26mtype=256qam%%26fec=35%%26pids=0,1,16,17,18,2600,2601,2611"
 
+#EXTINF:-1 satip-freq="205", Translation to: ChildPIPE exec="childpipe-hdhomerun-example.sh 192.168.0.115 0 auto:386000000 0,1,16,17,18,3200,3201,3211"
+rtsp://%1/?msys=childpipe&exec="childpipe-hdhomerun-example.sh%20192.168.0.115%200%20auto:386000000%200,1,16,17,18,2000,2001,2011,2100,2101,2111,3200,3201,3211"
+
 #EXTINF:-1 satip-freq="10123", Translation to: File uri="test.ts"
 rtsp://@#1/?msys=file&uri="test.ts"
 
