@@ -172,6 +172,7 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	const FeID id = _device->getFeID();
 	const TransportParamVector params = socketClient.getTransportParameters();
 	const input::InputSystem msys = params.getMSYSParameter();
+	const double reqFreq = params.getDoubleParameter("freq");
 
 	// Check if the input device is set, else this stream is not usable
 	if (!_device) {
@@ -189,11 +190,11 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			return false;
 		} else if (!_device->capableOf(msys)) {
 			if (_device->capableToTransform(params)) {
-				SI_LOG_INFO("Frontend: @#1, Capable of transforming msys=@#2",
-					id, StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: @#1, Capable of transforming msys=@#2 with freq=@#3",
+					id, StringConverter::delsys_to_string(msys), reqFreq);
 			} else {
-				SI_LOG_INFO("Frontend: @#1, Not capable of handling msys=@#2",
-					id, StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: @#1, Not capable of handling msys=@#2 with freq=@#3",
+					id, StringConverter::delsys_to_string(msys), reqFreq);
 				return false;
 			}
 		}
