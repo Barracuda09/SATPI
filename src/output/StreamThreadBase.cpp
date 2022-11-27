@@ -197,13 +197,18 @@ bool StreamThreadBase::restartStreaming(const int clientID) {
 void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 	const input::SpDevice inputDevice = _stream.getInputDevice();
 
+	// calculate interval
+	_t2 = std::chrono::steady_clock::now();
+	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
+	const bool intervalExeeded = interval > _sendInterval;
+
 	size_t availableSize = (MAX_BUF - (_writeIndex - _readIndex));
 	if (availableSize > MAX_BUF) {
 		availableSize %= MAX_BUF;
 	}
-//		SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
+//	SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
 	if (inputDevice->isDataAvailable() && availableSize > 1) {
-		if (inputDevice->readFullTSPacket(_tsBuffer[_writeIndex])) {
+		if (inputDevice->readTSPackets(_tsBuffer[_writeIndex], intervalExeeded)) {
 #ifdef LIBDVBCSA
 			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
 			if (decrypt != nullptr) {
@@ -213,16 +218,13 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			// goto next, so inc write index
 			++_writeIndex;
 			_writeIndex %= MAX_BUF;
-
 			// reset next
 			_tsBuffer[_writeIndex].reset();
 		}
 	}
-	// calculate interval
-	_t2 = std::chrono::steady_clock::now();
-	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
-	if (interval > _sendInterval) {
+	if (intervalExeeded) {
 		_t1 = _t2;
+		// Send the packet full or not, else send null packet
 		if (_tsBuffer[_readIndex].isReadyToSend()) {
 			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 				// inc read index only when send is successful

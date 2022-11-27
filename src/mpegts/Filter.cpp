@@ -79,8 +79,10 @@ void Filter::parsePIDString(const std::string &reqPids,
 
 void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
 //	base::MutexLock lock(_mutex);
-	static constexpr std::size_t size = mpegts::PacketBuffer::getNumberOfTSPackets();
-	for (std::size_t i = 0; i < size; ++i) {
+	const std::size_t size = buffer.getNumberOfCompletedPackets();
+	const std::size_t begin = buffer.getBeginOfUnFilteredPackets();
+
+	for (std::size_t i = begin; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
 		// Check is this the beginning of the TS and no Transport error indicator
 		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {

@@ -36,7 +36,7 @@ class TSReaderData :
 	public:
 
 		TSReaderData();
-		virtual ~TSReaderData();
+		virtual ~TSReaderData() = default;
 
 		// =========================================================================
 		// -- input::DeviceData ----------------------------------------------------

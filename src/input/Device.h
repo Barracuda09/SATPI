@@ -67,8 +67,9 @@ class Device :
 		virtual bool isDataAvailable() = 0;
 
 		/// Read the available data from this device
-		/// @param buffer
-		virtual bool readFullTSPacket(mpegts::PacketBuffer &buffer) = 0;
+		/// @param buffer this is the buffer were to wirite to
+		/// @param finalCall this should be the last try and should return as soon as possible
+		virtual bool readTSPackets(mpegts::PacketBuffer &buffer, bool finalCall) = 0;
 
 		/// Check the capability of this device
 		/// @param system

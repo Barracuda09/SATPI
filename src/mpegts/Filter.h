@@ -62,11 +62,11 @@ class Filter {
 			const std::string &userPids, const bool add);
 
 		/// Add the filter data to MPEG Tables and
-		/// optionally purge TS packets from unused pids if filter is on
+		/// optionally purge TS packets from unused pids if start is not negative
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
-		/// @param filter enables the pid filtering
-		void filterData(FeID id, mpegts::PacketBuffer &buffer, const bool filter = false);
+		/// @param filter enables the software pid filtering
+		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter = false);
 
 		///
 		bool isMarkedAsActivePMT(int pid) const;

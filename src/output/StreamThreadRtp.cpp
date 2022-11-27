@@ -89,7 +89,7 @@ bool StreamThreadRtp::writeDataToOutputDevice(mpegts::PacketBuffer &buffer, Stre
 	++_cseq;
 	buffer.tagRTPHeaderWith(_cseq, timestamp);
 
-	const size_t dataSize = buffer.getBufferSize();
+	const size_t dataSize = buffer.getCurrentBufferSize();
 	const size_t len = dataSize + mpegts::PacketBuffer::RTP_HEADER_LEN;
 
 	// RTP packet octet count (Bytes)
