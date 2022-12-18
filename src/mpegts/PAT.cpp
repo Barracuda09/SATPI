@@ -82,7 +82,14 @@ mpegts::TSData PAT::generateFrom(
 
 	int transportStreamID = 0;
 	int prognr = 0;
+#ifndef NEED_BACKPORT
 	for (auto [freq, element] : info) {
+#else
+	for (auto entry : info) {
+		auto freq    = entry.first;
+		auto element = entry.second;
+		(void) freq; /* unused */
+#endif
 		SI_LOG_DEBUG("Frontend: @#1, Generating PAT: TID: @#2  Prog NR: @#3 - @#4  PMT PID: @#5",
 			id, transportStreamID, HEX(prognr, 4), DIGIT(prognr, 5), element.freq);
 	}

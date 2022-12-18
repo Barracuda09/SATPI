@@ -159,7 +159,14 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const std::string sessionID = headers.getFieldParameter("Session");
 	const StreamID streamID = params.getIntParameter("stream");
 	// Find the FeID with requesed StreamID
+#ifndef NEED_BACKPORT
 	const auto [feIndex, feID] = _streamManager.findFrontendIDWithStreamID(streamID);
+#else
+	const auto retval  = _streamManager.findFrontendIDWithStreamID(streamID);
+	const auto feIndex = std::get<0>(retval);
+	const auto feID    = std::get<1>(retval);
+	(void) feID; /* unused */
+#endif
 
 	const std::string method = client.getMethod();
 	std::string httpcReply;

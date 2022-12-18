@@ -1,0 +1,18 @@
+/* string_view
+
+   Free public domain license
+
+   Including string_view_lite from:
+     https://github.com/martinmoene/string-view-lite
+     wget https://raw.githubusercontent.com/martinmoene/string-view-lite/master/include/nonstd/string_view.hpp
+*/
+#ifndef NONSTD__STRING_VIEW_
+#define NONSTD__STRING_VIEW_
+
+#include "string_view.hpp"
+
+namespace std {
+  using string_view = nonstd::string_view;
+}
+
+#endif // NONSTD__STRING_VIEW_

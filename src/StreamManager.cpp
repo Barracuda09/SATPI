@@ -139,7 +139,13 @@ std::tuple<FeIndex, FeID, StreamID> StreamManager::findFrontendID(const Transpor
 	FeID feID = params.getIntParameter("fe");
 	// Did we find StreamID an NO FrondendID
 	if (streamID != -1 && feID == -1) {
+#ifndef NEED_BACKPORT
 		const auto [index, feID] = findFrontendIDWithStreamID(streamID);
+#else
+		const auto retval = findFrontendIDWithStreamID(streamID);
+		const auto index  = std::get<0>(retval);
+		const auto feID   = std::get<1>(retval);
+#endif
 		return { index, feID, streamID };
 	}
 	// Is the requested FrondendID in range, then return this
@@ -158,7 +164,14 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 	TransportParamVector params = socketClient.getTransportParameters();
 
 	// Now find index for FrontendID and/or StreamID of this message
+#ifndef NEED_BACKPORT
 	const auto [feIndex, feID, streamID] = findFrontendID(params);
+#else
+	const auto retval   = findFrontendID(params);
+	const auto feIndex  = std::get<0>(retval);
+	const auto feID     = std::get<1>(retval);
+	const auto streamID = std::get<2>(retval);
+#endif
 
 	std::string sessionID = headers.getFieldParameter("Session");
 	bool newSession = false;

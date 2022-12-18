@@ -61,7 +61,9 @@ namespace input::dvb::delivery {
 			default:
 				cmd.msg[1] = 0x10;
 				cmd.msg[2] = 0x38;
+#ifndef NEED_BACKPORT
 				[[fallthrough]];
+#endif
 			case 0x10:
 				switch (_switchType) {
 					default:
