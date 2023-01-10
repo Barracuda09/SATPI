@@ -133,6 +133,9 @@ input::InputSystem Transformation::getTransformationSystemFor(const TransportPar
 	if (_enabled && _fileParsed) {
 		const double freq = params.getDoubleParameter("freq");
 		if (freq > 0.0) {
+			if (freq == _generatePSIFreq) {
+				return _ownInputSystem;
+			}
 			const int src = params.getIntParameter("src");
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);
@@ -151,6 +154,9 @@ std::string Transformation::transformStreamPossible(
 	if (_enabled && _fileParsed) {
 		const double freq = params.getDoubleParameter("freq");
 		if (freq > 0.0) {
+			if (freq == _generatePSIFreq) {
+				return "genPSI=yes";
+			}
 			const int src = params.getIntParameter("src");
 			const base::M3UParser::TransformationElement element =
 				_m3u.findTransformationElementFor(freq);

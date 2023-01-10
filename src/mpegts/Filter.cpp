@@ -38,7 +38,6 @@ Filter::Filter() {
 	_nit = std::make_shared<NIT>();
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
-	_pmt = std::make_shared<PMT>();
 	_sdt = std::make_shared<SDT>();
 }
 
@@ -51,8 +50,8 @@ void Filter::clear() {
 	_nit = std::make_shared<NIT>();
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
-	_pmt = std::make_shared<PMT>();
 	_sdt = std::make_shared<SDT>();
+	_pmtMap.clear();
 	_pidTable.clear();
 }
 
@@ -114,21 +113,12 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			}
 		} else if (_pat->isMarkedAsPMT(pid)) {
 			// Did we finish collecting PMT
-			if (!_pmt->isCollected()) {
+			_pmtMap.try_emplace(pid, std::make_shared<PMT>());
+			if (!_pmtMap[pid]->isCollected()) {
 				// collect PMT data
-				_pmt->collectData(id, PMT_TABLE_ID, ptr, false);
-				if (_pmt->isCollected()) {
-					// Collected, check if this is the PMT we need, by getting PCR Pid
-					const int pcrPID = _pmt->parsePCRPid();
-					if (!_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) == 0) {
-						// Probably not the correct PMT, so clear it and try again
-						_pmt = std::make_shared<PMT>();
-						SI_LOG_INFO("Frontend: @#1, Found PMT, but probably not the correct PMT: @#2  PCR-PID: @#3, Retrying...",
-							id, DIGIT(pid, 4), DIGIT(pcrPID, 4));
-					} else {
-						// Yes, the correct one, then parse it
-						_pmt->parse(id);
-					}
+				_pmtMap[pid]->collectData(id, PMT_TABLE_ID, ptr, false);
+				if (_pmtMap[pid]->isCollected()) {
+					_pmtMap[pid]->parse(id);
 				}
 #ifdef ADDDVBCA
 				{
@@ -185,8 +175,13 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 				}
 			}
 #endif
-		} else if (pid == _pmt->getPCRPid()) {
-			_pcr->collectData(id, ptr);
+		} else {
+			for (const auto &[_, pmt] : _pmtMap) {
+				const int pcrPID = pmt->getPCRPid();
+				if (pid == pcrPID && _pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
+					_pcr->collectData(id, ptr);
+				}
+			}
 		}
 	}
 	if (filter) {
@@ -196,13 +191,30 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 
 bool Filter::isMarkedAsActivePMT(const int pid) const {
 	// Do not use lock here, its used for decrypt (Uses to much time)
-	if (_pat->isMarkedAsPMT(pid)) {
-		const int pcrPID = _pmt->getPCRPid();
-		if (_pidTable.isPIDOpened(pcrPID) || _pidTable.getPacketCounter(pcrPID) != 0) {
+	if (_pat->isMarkedAsPMT(pid) && _pmtMap.find(pid) != _pmtMap.end()) {
+		const int pcrPID = _pmtMap[pid]->getPCRPid();
+		if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
 			return true;
 		}
 	}
 	return false;
+}
+
+mpegts::SpPMT Filter::getPMTData(const int pid) const {
+	base::MutexLock lock(_mutex);
+	if (pid == 0) {
+		// Try to find current PMT based on open PCR
+		for (const auto &[_, pmt] : _pmtMap) {
+			const int pcrPID = pmt->getPCRPid();
+			if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
+				return pmt;
+			}
+		}
+	}
+	if (_pmtMap.find(pid) != _pmtMap.end()) {
+		return _pmtMap[pid];
+	}
+	return std::make_shared<PMT>();
 }
 
 uint32_t Filter::getTotalCCErrors() const {

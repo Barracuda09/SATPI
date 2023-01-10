@@ -20,6 +20,8 @@
 #include <mpegts/PAT.h>
 #include <Log.h>
 
+#include <array>
+
 namespace mpegts {
 
 // =============================================================================
@@ -78,15 +80,76 @@ bool PAT::isMarkedAsPMT(int pid) const {
 
 mpegts::TSData PAT::generateFrom(
 		FeID id, const base::M3UParser::TransformationMap &info) {
-	mpegts::TSData data;
+	static int cc = 0;
 
+	int version = 5;
+	int currIndicator = 1;
+	int pid = 0; // for PAT
+	int payloadStart = 1;
+	int payloadOnly = 1;
+	int scrambled = 0;
 	int transportStreamID = 0;
-	int prognr = 0;
+
+	std::array<unsigned char, 188> tmp;
+	tmp[0]  = 0x47;
+	tmp[1]  = 0x40 | (pid & 0x1F) >> 8;
+	tmp[2]  = (pid & 0xFF);
+	tmp[3]  = (scrambled & 0x3) << 6 | (payloadOnly & 0x3) << 4 | (cc & 0xF);
+	tmp[4]  = 0x00; // P1
+	tmp[5]  = PAT_TABLE_ID;
+	tmp[6]  = 0x00; // Length
+	tmp[7]  = 0x00; // Length
+	tmp[8]  = (transportStreamID & 0xFF00) >> 8; // TID
+	tmp[9]  = (transportStreamID & 0x00FF);      // TID
+	tmp[10] = (0xC0 | ((version & 0x1F) << 1) | (currIndicator & 0x01));
+	tmp[11] = 0x00; // section number
+	tmp[12] = 0x00; // last section number
+
+	++cc;
+	cc %= 0x10;
+
+	int index = 13;
+
+	// First program is NIT
+	tmp[index + 0] = 0x00; //
+	tmp[index + 1] = 0x00; //
+	tmp[index + 2] = 0x00; //
+	tmp[index + 3] = 0x10; //
+	index += 4;
+
+	int prognr = 0x4000;
+	int pmtPid = 0x0100;
+
 	for (auto [freq, element] : info) {
-		SI_LOG_DEBUG("Frontend: @#1, Generating PAT: TID: @#2  Prog NR: @#3 - @#4  PMT PID: @#5",
-			id, transportStreamID, HEX(prognr, 4), DIGIT(prognr, 5), element.freq);
+//		SI_LOG_DEBUG("Frontend: @#1, Generating PAT: TID: @#2  Prog NR: @#3 - @#4  PMT PID: @#5  CC: @#6",
+//			id, transportStreamID, HEX(prognr, 4), DIGIT(prognr, 5), element.freq, cc);
+		tmp[index + 0] = (prognr & 0xFF00) >> 8;
+		tmp[index + 1] = (prognr & 0x00FF);
+		tmp[index + 2] = (pmtPid & 0x1F00) >> 8; //
+		tmp[index + 3] = (pmtPid & 0x00FF); //
+		index += 4;
+
+		// Increment program and pid
+		++prognr;
+		pmtPid += 0x10;
 	}
-	return data;
+	// Adjust lenght
+	int len = index - 8 + 4;
+	tmp[6]  = (len & 0xFF00) >> 8;
+	tmp[7]  = len & 0xFF;
+
+	// append calculated CRC
+	const uint32_t crc = mpegts::TableData::calculateCRC32(&tmp[5], len - 4 + 3);
+	tmp[index + 0] = ((crc >> 24) & 0xFF);
+	tmp[index + 1] = ((crc >> 16) & 0xFF);
+	tmp[index + 2] = ((crc >>  8) & 0xFF);
+	tmp[index + 3] = ((crc >>  0) & 0xFF);
+	index += 4;
+
+	// Stuffing
+	std::memset(&tmp[index], 0xFF, tmp.size() - index);
+
+	return TSData(tmp.data(), tmp.size());
 }
 
-} // namespace
+}

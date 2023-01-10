@@ -151,8 +151,8 @@ void TableData::collectData(const FeID id, const int tableID,
 		const unsigned char *data, const bool trace, const bool raw) {
 	Data &currentTableData = _dataTable[_currentSectionNumber];
 	const std::size_t tableSize = currentTableData.data.size();
-	const unsigned char options = (data[1] & 0xE0);
-	if (options == 0x40 && data[4] == 0x00 && data[5] == tableID && tableSize == 0) {
+	const bool payloadStart = (data[1] & 0x40) == 0x40;
+	if (payloadStart && data[4] == 0x00 && data[5] == tableID && tableSize == 0) {
 		const int pid                   = ((data[1] & 0x1F) << 8) | data[2];
 		const int cc                    =   data[3] & 0x0F;
 		const std::size_t sectionLength = ((data[6] & 0x0F) << 8) | data[7];

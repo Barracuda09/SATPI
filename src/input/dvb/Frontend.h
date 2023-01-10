@@ -134,7 +134,7 @@ class Frontend :
 
 		virtual bool isMarkedAsActivePMT(int pid) const final;
 
-		virtual mpegts::SpPMT getPMTData() const final;
+		virtual mpegts::SpPMT getPMTData(int pid) const final;
 
 		virtual mpegts::SpSDT getSDTData() const final;
 #endif

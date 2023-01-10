@@ -45,11 +45,12 @@ Generator::Generator() {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-mpegts::PacketBuffer Generator::generatePSIFrom(
+TSData Generator::generatePSIFrom(
 		FeID id, const base::M3UParser::TransformationMap &info) {
-	mpegts::PacketBuffer packet;
-	_pat->generateFrom(id, info);
-	return packet;
+	TSData pat = _pat->generateFrom(id, info);
+
+
+	return pat;
 }
 
 }

@@ -89,6 +89,11 @@ class Transformation :
 		/// This function may return the transformed Device Data
 		const DeviceData &transformDeviceData(const DeviceData &deviceData) const;
 
+		/// This will return a copy of the M3U map
+		base::M3UParser::TransformationMap getTransformationMap() const {
+			return _m3u.getTransformationMap();
+		}
+
 	private:
 
 		/// This function will check if transformation is possible and returns

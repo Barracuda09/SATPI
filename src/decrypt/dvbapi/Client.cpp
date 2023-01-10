@@ -179,10 +179,9 @@ namespace decrypt::dvbapi {
 ///////////////////////////////////////////////////////////////////
 
 						if (frontend->isMarkedAsActivePMT(pid)) {
-							sendPMT(index, id, *frontend->getSDTData(), *frontend->getPMTData());
-							// Do we need to clean PMT
+							sendPMT(index, id, *frontend->getSDTData(), *frontend->getPMTData(pid));
 							if (_rewritePMT) {
-								cleanPMT(data);
+								mpegts::PMT::cleanPI(data);
 							}
 						}
 					}
@@ -267,76 +266,6 @@ namespace decrypt::dvbapi {
 
 		if (!_client.sendData(buff.get(), 7 + len, MSG_DONTWAIT)) {
 			SI_LOG_ERROR("write failed");
-		}
-	}
-
-	void Client::cleanPMT(unsigned char *data) {
-		const unsigned char options = (data[1] & 0xE0);
-		if (options == 0x40 && data[5] == PMT_TABLE_ID) {
-//			const FeID feID = frontend->getFeID();
-
-//			const int pid           = ((data[1] & 0x1f) << 8) | data[2];
-//			const int cc            =   data[3] & 0x0f;
-			const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
-			const int prgLength     = ((data[15] & 0x0F) << 8) | data[16];
-
-			std::string pmt;
-			// Copy first part to new PMT buffer
-			pmt.append((const char *)&data[0], 17);
-
-			// Clear sectionLength
-			pmt[6]  &= 0xF0;
-			pmt[7]   = 0x00;
-
-			//
-			pmt[10] ^= 0x3F;
-
-			// Clear prgLength
-			pmt[15] &= 0xF0;
-			pmt[16]  = 0x00;
-
-			const std::size_t len = sectionLength - 4 - 9 - prgLength; // 4 = CRC   9 = PMT Header from section length
-			// skip to ES Table begin and iterate over entries
-			const unsigned char *ptr = &data[17 + prgLength];
-			for (std::size_t i = 0; i < len; ) {
-//				const int streamType    =   ptr[i + 0];
-//				const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
-				const int esInfoLength  = ((ptr[i + 3] & 0x0F) << 8) | ptr[i + 4];
-				// Append
-				pmt.append((const char *)&ptr[i + 0], 5);
-				pmt[pmt.size() - 2] &= 0xF0;  // Clear esInfoLength
-				pmt[pmt.size() - 1]  = 0x00;
-
-				// goto next ES entry
-				i += esInfoLength + 5;
-
-			}
-			// adjust section length
-			const int newSectionLength = pmt.size() - 6 - 2 + 4; // 6 = PMT Header  2 = section Length  4 = CRC
-			pmt[6] |= ((newSectionLength >> 8) & 0xFF);
-			pmt[7]  =  (newSectionLength & 0xFF);
-
-			// append calculated CRC
-			const uint32_t crc = mpegts::TableData::calculateCRC32(reinterpret_cast<const unsigned char *>(pmt.c_str() + 5), pmt.size() - 5);
-			pmt += ((crc >> 24) & 0xFF);
-			pmt += ((crc >> 16) & 0xFF);
-			pmt += ((crc >>  8) & 0xFF);
-			pmt += ((crc >>  0) & 0xFF);
-
-			// clear rest of packet
-			for (int i = pmt.size(); i < 188; ++i) {
-				pmt += 0xFF;
-			}
-			// copy new PMT to buffer
-			memcpy(data, pmt.c_str(), 188);
-
-//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, NEW PMT data", id);
-
-		} else {
-//			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, Not handled Cleaning PMT data!", id);
-			// Clear PID to NULL packet
-			data[1] = 0x1F;
-			data[2] = 0xFF;
 		}
 	}
 

@@ -127,9 +127,6 @@ class Client :
 		///
 		void sendPMT(FeIndex index, FeID id, const mpegts::SDT &sdt, const mpegts::PMT &pmt);
 
-		///
-		void cleanPMT(unsigned char *data);
-
 		// =================================================================
 		// -- Data members -------------------------------------------------
 		// =================================================================

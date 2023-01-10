@@ -54,7 +54,7 @@ class Generator {
 		/// This will generate PSI metadata for the given TransformationMap
 		/// @param feID specifies the frontend ID
 		/// @param info specifies the info for generating the PSI metadata
-		mpegts::PacketBuffer generatePSIFrom(
+		TSData generatePSIFrom(
 				FeID id, const base::M3UParser::TransformationMap &info); 
 
 		// =========================================================================

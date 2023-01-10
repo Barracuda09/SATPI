@@ -107,7 +107,7 @@ class FrontendDecryptInterface {
 		virtual bool isMarkedAsActivePMT(int pid) const = 0;
 
 		///
-		virtual mpegts::SpPMT getPMTData() const = 0;
+		virtual mpegts::SpPMT getPMTData(int pid) const = 0;
 
 		///
 		virtual mpegts::SpSDT getSDTData() const = 0;

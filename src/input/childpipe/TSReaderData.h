@@ -75,6 +75,10 @@ class TSReaderData :
 
 		int getPCRTimer() const;
 
+		bool generatePSI() const {
+			return _genPSI;
+		}
+
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------
 		// =========================================================================
@@ -82,6 +86,7 @@ class TSReaderData :
 
 		std::string _filePath;
 		int _pcrTimer;
+		bool _genPSI;
 
 };
 

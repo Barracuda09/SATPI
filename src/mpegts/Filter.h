@@ -68,14 +68,17 @@ class Filter {
 		/// @param filter enables the software pid filtering
 		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter = false);
 
-		///
+		/// This will return true if the requested pid is the active/current one
+		/// accoording to the PCR that is openend
+		/// @param pid specifies the PID to retrieve if it does not exists it will
+		/// return an empty PMT.
 		bool isMarkedAsActivePMT(int pid) const;
 
-		///
-		mpegts::SpPMT getPMTData() const {
-			base::MutexLock lock(_mutex);
-			return _pmt;
-		}
+		/// This will return the requested PMT for pid
+		/// @param pid specifies the PID to retrieve if it does not exists it will
+		/// return an empty PMT. When set to 0 it will try to return the current PMT
+		/// accoording the PCR that is openeds
+		mpegts::SpPMT getPMTData(int pid) const;
 
 		///
 		mpegts::SpPCR getPCRData() const {
@@ -178,16 +181,23 @@ class Filter {
 				// Clear stats
 				_pidTable.setPIDClosed(pid);
 				// Need to clear the PID Tables as well?
-				const int pcrPID = _pmt->getPCRPid();
 				if (pid == 0) {
 					_pat = std::make_shared<PAT>();
 				} else if (pid == 17) {
 					_sdt = std::make_shared<SDT>();
-				} else if (pcrPID > 0 && pcrPID == pid) {
-					const int pmtPID = _pmt->getAssociatedPID();
-					SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - PCR Changed for PMT: @#3 - Clearing tables", feID, PID(pid), PID(pmtPID));
-					_pmt = std::make_shared<PMT>();
-					_pcr = std::make_shared<PCR>();
+				} else if (_pmtMap.find(pid) != _pmtMap.end()) {
+					_pmtMap.erase(pid);
+				}
+
+				// Did we close the PCR Pid
+				for (const auto &[pid, pmt] : _pmtMap) {
+					const int pcrPID = pmt->getPCRPid();
+					if (pcrPID > 0 && pcrPID == pid) {
+						const int pmtPID = pmt->getAssociatedPID();
+						SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - PCR Changed for PMT: @#3 - Clearing tables", feID, PID(pid), PID(pmtPID));
+						_pcr = std::make_shared<PCR>();
+						break;
+					}
 				}
 			}
 		}
@@ -199,11 +209,14 @@ class Filter {
 
 		mutable base::Mutex _mutex;
 
+		using PMTMap = std::map<int, mpegts::SpPMT>;
+
+		mutable PMTMap _pmtMap;
+
 		mutable mpegts::PidTable _pidTable;
 		mutable mpegts::SpNIT _nit;
 		mutable mpegts::SpPAT _pat;
 		mutable mpegts::SpPCR _pcr;
-		mutable mpegts::SpPMT _pmt;
 		mutable mpegts::SpSDT _sdt;
 };
 

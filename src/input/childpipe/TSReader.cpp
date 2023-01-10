@@ -23,6 +23,7 @@
 #include <Unused.h>
 #include <Stream.h>
 #include <StringConverter.h>
+#include <mpegts/Generator.h>
 #include <mpegts/PacketBuffer.h>
 
 #include <chrono>
@@ -39,7 +40,7 @@ TSReader::TSReader(
 		const std::string &appDataPath,
 		const bool enableUnsecureFrontends) :
 		Device(index),
-		_transform(appDataPath),
+		_transform(appDataPath, input::InputSystem::CHILDPIPE),
 		_enableUnsecureFrontends(enableUnsecureFrontends) {}
 
 // =============================================================================
@@ -113,6 +114,19 @@ bool TSReader::isDataAvailable() {
 }
 
 bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
+///////////////////////
+	if (_deviceData.generatePSI()) {
+		const mpegts::TSData data = _deviceData.getPSIGenerator().generatePSIFrom(
+			_feID, _transform.getTransformationMap());
+
+		std::memcpy(buffer.getWriteBufferPtr(), data.data(), data.size());
+		buffer.addAmountOfBytesWritten(data.size());
+
+		_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
+
+		return buffer.full();
+	}
+///////////////////////
 	if (!_exec.isOpen()) {
 		return false;
 	}

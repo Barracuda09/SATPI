@@ -47,9 +47,19 @@ void TSReaderData::doNextFromXML(const std::string &UNUSED(xml)) {}
 void TSReaderData::doInitialize() {
 	_filePath = "None";
 	_pcrTimer = 0;
+	_genPSI = false;
 }
 
 void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+	const std::string genPSI = params.getParameter("genPSI");
+	if (genPSI == "yes") {
+		initialize();
+		parseAndUpdatePidsTable(params);
+		_changed = true;
+		_genPSI = true;
+		_pcrTimer = 100;
+		return;
+	}
 	const std::string filePath = params.getURIParameter("exec");
 	// Check did we receive an new path or just the same again
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {

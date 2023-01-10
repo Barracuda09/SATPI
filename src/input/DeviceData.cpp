@@ -46,7 +46,7 @@ DeviceData::DeviceData() {
 
 void DeviceData::doAddToXML(std::string &xml) const {
 	const mpegts::SDT::Data sdtData = _filter.getSDTData()->getSDTDataFor(
-			_filter.getPMTData()->getProgramNumber());
+			_filter.getPMTData(0)->getProgramNumber());
 	ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
 	ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 

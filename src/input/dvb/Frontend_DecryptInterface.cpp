@@ -99,8 +99,8 @@ bool Frontend::isMarkedAsActivePMT(int pid) const {
 	return _frontendData.getFilter().isMarkedAsActivePMT(pid);
 }
 
-mpegts::SpPMT Frontend::getPMTData() const {
-	return _frontendData.getFilter().getPMTData();
+mpegts::SpPMT Frontend::getPMTData(int pid) const {
+	return _frontendData.getFilter().getPMTData(pid);
 }
 
 mpegts::SpSDT Frontend::getSDTData() const {

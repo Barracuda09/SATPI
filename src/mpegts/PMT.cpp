@@ -38,6 +38,76 @@ void PMT::clear() {
 }
 
 // =============================================================================
+// -- Static member functions --------------------------------------------------
+// =============================================================================
+
+void PMT::cleanPI(unsigned char *data) {
+	const bool payloadStart = (data[1] & 0x40) == 0x40;
+	if (payloadStart && data[5] == PMT_TABLE_ID) {
+		const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
+		const int prgLength     = ((data[15] & 0x0F) << 8) | data[16];
+
+		mpegts::TSData pmt;
+		// Copy first part to new PMT buffer
+		pmt.append(&data[0], 17);
+
+		// Clear Section Length
+		pmt[6]  &= 0xF0;
+		pmt[7]   = 0x00;
+
+		// Clear Program Info Length
+		pmt[15] &= 0xF0;
+		pmt[16]  = 0x00;
+
+		// 4 = CRC   9 = PMT Header from section length
+		const std::size_t len = sectionLength - 4 - 9 - prgLength;
+
+		// skip to ES Table begin and iterate over entries
+		const unsigned char *ptr = &data[17 + prgLength];
+		for (std::size_t i = 0; i < len; ) {
+//				const int streamType    =   ptr[i + 0];
+//				const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
+			const int esInfoLength  = ((ptr[i + 3] & 0x0F) << 8) | ptr[i + 4];
+			// Append
+			pmt.append(&ptr[i + 0], esInfoLength + 5);
+
+			// goto next ES entry
+			i += esInfoLength + 5;
+
+		}
+		// adjust section length --  6 = PMT Header  2 = section Length  4 = CRC
+		const std::size_t newSectionLength = pmt.size() - 6 - 2 + 4;
+		pmt[6] |= ((newSectionLength >> 8) & 0xFF);
+		pmt[7]  =  (newSectionLength & 0xFF);
+
+		// append calculated CRC
+		const uint32_t crc = mpegts::TableData::calculateCRC32(pmt.c_str() + 5, pmt.size() - 5);
+		pmt += ((crc >> 24) & 0xFF);
+		pmt += ((crc >> 16) & 0xFF);
+		pmt += ((crc >>  8) & 0xFF);
+		pmt += ((crc >>  0) & 0xFF);
+
+		// Stuff the rest of the packet
+		for (int i = pmt.size(); i < 188; ++i) {
+			pmt += 0xFF;
+		}
+		// copy new PMT to buffer
+		memcpy(data, pmt.c_str(), 188);
+
+		static bool once = true;
+		if (once) {
+			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, NEW PMT data", 99);
+			once = false;
+		}
+
+	} else {
+		// Clear PID to NULL packet
+		data[1] = 0x1F;
+		data[2] = 0xFF;
+	}
+}
+
+// =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
@@ -115,4 +185,4 @@ void PMT::parse(const FeID id) {
 	}
 }
 
-} // namespace mpegts
+}
