@@ -62,22 +62,21 @@ class Filter {
 			const std::string &userPids, const bool add);
 
 		/// Add the filter data to MPEG Tables and
-		/// optionally purge TS packets from unused pids if start is not negative
+		/// optionally purge TS packets from unused pids if filter is true
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
 		/// @param filter enables the software pid filtering
 		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter = false);
 
 		/// This will return true if the requested pid is the active/current one
-		/// accoording to the PCR that is openend
-		/// @param pid specifies the PID to retrieve if it does not exists it will
-		/// return an empty PMT.
+		/// accoording to the PCR that is open.
+		/// @param pid specifies the PID to check if it is the current one
 		bool isMarkedAsActivePMT(int pid) const;
 
-		/// This will return the requested PMT for pid
+		/// This will return the requested PMT for the specified pid
 		/// @param pid specifies the PID to retrieve if it does not exists it will
 		/// return an empty PMT. When set to 0 it will try to return the current PMT
-		/// accoording the PCR that is openeds
+		/// accoording the PCR that is open
 		mpegts::SpPMT getPMTData(int pid) const;
 
 		///
