@@ -162,9 +162,9 @@ void PidTable::setPIDClosed(const int pid) {
 			_data[pid].state = State::Closed;
 			break;
 	}
-	_data[pid].cc          = 0x80;
-	_data[pid].cc_error    = 0;
-	_data[pid].count       = 0;
+	_data[pid].cc       = 0x80;
+	_data[pid].cc_error = 0;
+	_data[pid].count    = 0;
 }
 
 bool PidTable::shouldPIDOpen(const int pid) const {
@@ -172,7 +172,7 @@ bool PidTable::shouldPIDOpen(const int pid) const {
 }
 
 void PidTable::setPIDOpened(const int pid) {
-	_data[pid].state       = State::Opened;
+	_data[pid].state = State::Opened;
 }
 
 void PidTable::setAllPID(const bool use) {

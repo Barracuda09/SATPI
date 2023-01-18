@@ -66,7 +66,7 @@ class Filter {
 		/// @param feID specifies the frontend ID
 		/// @param buffer specifies the mpegts buffer from the frontend
 		/// @param filter enables the software pid filtering
-		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter = false);
+		void filterData(FeID id, mpegts::PacketBuffer &buffer, bool filter);
 
 		/// This will return true if the requested pid is the active/current one
 		/// accoording to the PCR that is open.

@@ -261,22 +261,19 @@ bool Frontend::isDataAvailable() {
 	return false;
 }
 
-bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
+bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
 	// try read maximum amount of bytes from DMX
 	const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (readSize > 0) {
 		buffer.addAmountOfBytesWritten(readSize);
-		if (buffer.full()) {
-			// Add data to Filter
-			_frontendData.getFilter().filterData(_feID, buffer);
-		}
+		_frontendData.getFilter().filterData(_feID, buffer, false);
 	} else if (readSize < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
 	} else {
 		SI_LOG_ERROR("Frontend: @#1, Error reading data: 0 Bytes available..", _feID);
 	}
-	// Check again if buffer is still full
-	return buffer.full();
+	// Check again if buffer is full or final call before sending
+	return buffer.full() || (finalCall && buffer.isReadyToSend());
 }
 
 bool Frontend::capableOf(const input::InputSystem system) const {

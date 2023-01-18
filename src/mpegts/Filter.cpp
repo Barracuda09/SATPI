@@ -92,7 +92,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		}
 		// get PID and CC from TS
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
-		// If pid was not opened, skip this one (and perhaps filter out it)
+		// If pid was not opened, skip this one (and perhaps purge it)
 		if (!_pidTable.isPIDOpened(pid)) {
 			if (filter && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);

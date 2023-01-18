@@ -103,7 +103,7 @@ bool Streamer::isDataAvailable() {
 	return false;
 }
 
-bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
+bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
 	if (_udpMultiListen.getFD() == -1) {
 		return false;
 	}
@@ -114,13 +114,11 @@ bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(fin
 	if (readSize > 0) {
 		buffer.addAmountOfBytesWritten(readSize);
 		buffer.trySyncing();
-		if (buffer.full()) {
-			// Add data to Filter
-			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
-		}
+		// Add data to Filter
+		_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 	}
-	// Check again if buffer is still full
-	return buffer.full();
+	// Check again if buffer is full or final call before sending
+	return buffer.full() || (finalCall && buffer.isReadyToSend());
 }
 
 bool Streamer::capableOf(const input::InputSystem system) const {

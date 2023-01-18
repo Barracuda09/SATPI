@@ -19,6 +19,7 @@
 */
 #include <mpegts/PAT.h>
 #include <Log.h>
+#include <Unused.h>
 
 #include <array>
 
@@ -79,13 +80,13 @@ bool PAT::isMarkedAsPMT(int pid) const {
 }
 
 mpegts::TSData PAT::generateFrom(
-		FeID id, const base::M3UParser::TransformationMap &info) {
+		FeID UNUSED(id), const base::M3UParser::TransformationMap &info) {
 	static int cc = 0;
 
 	int version = 5;
 	int currIndicator = 1;
 	int pid = 0; // for PAT
-	int payloadStart = 1;
+//	int payloadStart = 1;
 	int payloadOnly = 1;
 	int scrambled = 0;
 	int transportStreamID = 0;

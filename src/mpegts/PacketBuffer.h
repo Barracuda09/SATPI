@@ -87,6 +87,9 @@ class PacketBuffer {
 		/// This function will return the number of completed TS Packets that are
 		/// in this TS buffer
 		std::size_t getNumberOfCompletedPackets() const {
+			if (full()) {
+				return NUMBER_OF_TS_PACKETS;
+			}
 			return (_writeIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE;
 		}
 
@@ -95,6 +98,9 @@ class PacketBuffer {
 		std::size_t getBeginOfUnFilteredPackets() const {
 			const std::size_t index = _processedIndex;
 			_processedIndex = _writeIndex;
+			if (index == RTP_HEADER_LEN) {
+				return 0;
+			}
 			return (index - RTP_HEADER_LEN) / TS_PACKET_SIZE;
 		}
 

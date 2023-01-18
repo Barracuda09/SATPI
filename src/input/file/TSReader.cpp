@@ -111,20 +111,20 @@ bool TSReader::isDataAvailable() {
 	return true;
 }
 
-bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
+bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
 	if (!_file.is_open()) {
 		return false;
 	}
 	_file.read(reinterpret_cast<char *>(buffer.getWriteBufferPtr()),
 			buffer.getAmountOfBytesToWrite());
-	buffer.addAmountOfBytesWritten(_file.gcount());
-	buffer.trySyncing();
-	if (!buffer.full()) {
-		return false;
+	if (_file.gcount() > 0) {
+		buffer.addAmountOfBytesWritten(_file.gcount());
+		buffer.trySyncing();
+		// Add data to Filter
+		_deviceData.getFilter().filterData(_feID, buffer, false);
 	}
-	// Add data to Filter
-	_deviceData.getFilter().filterData(_feID, buffer);
-	return true;
+	// Check again if buffer is full or final call before sending
+	return buffer.full() || (finalCall && buffer.isReadyToSend());
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
