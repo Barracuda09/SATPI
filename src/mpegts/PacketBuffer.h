@@ -86,7 +86,7 @@ class PacketBuffer {
 
 		/// This function will return the number of completed TS Packets that are
 		/// in this TS buffer
-		std::size_t getNumberOfCompletedPackets() const {
+		inline std::size_t getNumberOfCompletedPackets() const {
 			if (full()) {
 				return NUMBER_OF_TS_PACKETS;
 			}
@@ -95,7 +95,7 @@ class PacketBuffer {
 
 		/// This function will return the first un-filtered TS Packets AND RESETS to
 		/// be processed.
-		std::size_t getBeginOfUnFilteredPackets() const {
+		inline std::size_t getBeginOfUnFilteredPackets() const {
 			const std::size_t index = _processedIndex;
 			_processedIndex = _writeIndex;
 			if (index == RTP_HEADER_LEN) {
@@ -105,45 +105,45 @@ class PacketBuffer {
 		}
 
 		/// get the amount of data that is in this TS buffer
-		std::size_t getCurrentBufferSize() const {
+		inline std::size_t getCurrentBufferSize() const {
 			return _writeIndex - RTP_HEADER_LEN;
 		}
 
 		/// This will return the amount of bytes that can still be written to
 		/// this TS buffer
-		std::size_t getAmountOfBytesToWrite() const {
+		inline std::size_t getAmountOfBytesToWrite() const {
 			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
 		}
 
 		/// Add the amount of bytes written, by increment the write index
 		/// @param index specifies the amount written to TS packet
-		void addAmountOfBytesWritten(std::size_t index) {
+		inline void addAmountOfBytesWritten(std::size_t index) {
 			_writeIndex += index;
 		}
 
 		/// Get the write pointer for this TS buffer
-		unsigned char *getWriteBufferPtr() {
+		inline unsigned char *getWriteBufferPtr() {
 			return &_buffer[_writeIndex];
 		}
 
 		/// This function will return the begin of this RTP packet
-		unsigned char *getReadBufferPtr() {
+		inline unsigned char *getReadBufferPtr() {
 			return _buffer;
 		}
 
 		/// This function will return the begin of the first TS packet in this TS buffer
 		/// so without RTP header
-		unsigned char *getTSReadBufferPtr() {
+		inline unsigned char *getTSReadBufferPtr() {
 			return &_buffer[RTP_HEADER_LEN];
 		}
 
 		/// Get the TS packet pointer for packets 0 up until NUMBER_OF_TS_PACKETS
 		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
-		unsigned char *getTSPacketPtr(std::size_t packetNumber) {
+		inline unsigned char *getTSPacketPtr(std::size_t packetNumber) {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
-		const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
+		inline const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
@@ -155,9 +155,22 @@ class PacketBuffer {
 		}
 
 		/// This function checks if this TS buffer is ready to be send.
+		/// There should be something in the buffer, in TS_PACKET_SIZE chucks.
 		/// When the pending decrypt flag was set, all scramble flags should
 		/// be cleared from all TS packets.
-		bool isReadyToSend() const;
+		bool isReadyToSend() const {
+			// ready to send, when there is something in the buffer in TS_PACKET_SIZE chucks
+			// and if all scramble flags are cleared
+			bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
+			if (_decryptPending && ready) {
+				const std::size_t size = getNumberOfCompletedPackets();
+				for (std::size_t i = 0; i < size; ++i) {
+					const unsigned char *ts = getTSPacketPtr(i);
+					ready &= ((ts[3] & 0x80) != 0x80);
+				}
+			}
+			return ready;
+		}
 
 	protected:
 

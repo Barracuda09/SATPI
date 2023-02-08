@@ -130,18 +130,4 @@ void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
 	_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
 }
 
-bool PacketBuffer::isReadyToSend() const {
-	// ready to send, when there is something in the buffer in TS_PACKET_SIZE chucks
-	// and if all scramble flags are cleared
-	bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
-	if (_decryptPending && ready) {
-		const std::size_t size = getNumberOfCompletedPackets();
-		for (std::size_t i = 0; i < size; ++i) {
-			const unsigned char *ts = getTSPacketPtr(i);
-			ready &= ((ts[3] & 0x80) != 0x80);
-		}
-	}
-	return ready;
-}
-
 }
