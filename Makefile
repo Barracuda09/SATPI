@@ -121,12 +121,16 @@ endif
 # Add dvbcsa ?
 ifeq "$(LIBDVBCSA)" "yes"
   LDFLAGS += -ldvbcsa
-#  CFLAGS  += -DLIBDVBCSA -DUSE_DEPRECATED_DVBAPI
+#  CFLAGS  += -DUSE_DEPRECATED_DVBAPI
   CFLAGS  += -DLIBDVBCSA
   SOURCES += decrypt/dvbapi/Client.cpp
   SOURCES += decrypt/dvbapi/ClientProperties.cpp
   SOURCES += decrypt/dvbapi/Keys.cpp
   SOURCES += input/dvb/Frontend_DecryptInterface.cpp
+# Need to build with ICAM support
+ifeq "$(ICAM)" "yes"
+  CFLAGS += -DICAM
+endif
 endif
 
 # Add dvbca ?

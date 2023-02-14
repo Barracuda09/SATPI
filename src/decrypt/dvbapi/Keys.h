@@ -26,6 +26,7 @@
 
 #include <utility>
 #include <queue>
+#include <tuple>
 
 FW_DECL_NS0(dvbcsa_bs_key_s);
 
@@ -34,24 +35,27 @@ namespace decrypt::dvbapi {
 ///
 class Keys {
 	public:
-		using KeyPair = std::pair<long, dvbcsa_bs_key_s *>;
-		using KeyQueue = std::queue<KeyPair>;
+		using KeyTuple = std::tuple<long, dvbcsa_bs_key_s *>;
+		using KeyQueue = std::queue<KeyTuple>;
+		using ICAMQueue = std::queue<unsigned char>;
 
-		// =====================================================================
-		//  -- Constructors and destructor -------------------------------------
-		// =====================================================================
+		// =========================================================================
+		//  -- Constructors and destructor -----------------------------------------
+		// =========================================================================
 	public:
 
 		Keys() = default;
 
 		virtual ~Keys() = default;
 
-		// =====================================================================
-		//  -- Other member functions ------------------------------------------
-		// =====================================================================
+		// =========================================================================
+		//  -- Other member functions ----------------------------------------------
+		// =========================================================================
 	public:
 
 		void set(const unsigned char *cw, int parity, int index);
+
+		void setICAM(const unsigned char ecm, int parity);
 
 		const dvbcsa_bs_key_s *get(int parity) const;
 
@@ -67,6 +71,7 @@ class Keys {
 	private:
 
 		KeyQueue _key[2];
+		ICAMQueue _icam[2];
 };
 
 }

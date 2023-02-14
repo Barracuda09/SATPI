@@ -55,6 +55,10 @@ void Frontend::setKey(const unsigned char *cw, int parity, int index) {
 	_dvbapiData.setKey(cw, parity, index);
 }
 
+void Frontend::setICAM(const unsigned char ecm, const int parity) {
+	_dvbapiData.setICAM(ecm, parity);
+}
+
 void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
 	const unsigned char *filterData, const unsigned char *filterMask) {
 	SI_LOG_INFO("Frontend: @#1, Start filter PID: @#2  demux: @#3  filter: @#4 (data @#5 @#6 @#7 mask @#8 @#9 @#10 @#11)",

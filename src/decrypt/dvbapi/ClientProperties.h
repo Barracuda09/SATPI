@@ -80,6 +80,10 @@ namespace decrypt::dvbapi {
 				_keys.set(cw, parity, index);
 			}
 
+			void setICAM(const unsigned char ecm, const int parity) {
+				_keys.setICAM(ecm, parity);
+			}
+
 			/// Get the active key for the requested parity
 			const dvbcsa_bs_key_s *getKey(int parity) const {
 				return _keys.get(parity);

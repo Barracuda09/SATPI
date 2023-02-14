@@ -29,8 +29,7 @@ FW_DECL_SP_NS1(mpegts, PMT);
 FW_DECL_SP_NS1(mpegts, SDT);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
-namespace input {
-namespace dvb {
+namespace input::dvb {
 
 /// The class @c FrontendDecryptInterface is an interface to an @c Stream for decrypting
 class FrontendDecryptInterface {
@@ -74,6 +73,9 @@ class FrontendDecryptInterface {
 		virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
 
 		///
+		virtual void setICAM(unsigned char ecm, int parity) = 0;
+
+		///
 		virtual void startOSCamFilterData(int pid, int demux, int filter,
 				   const unsigned char *filterData, const unsigned char *filterMask) = 0;
 
@@ -113,7 +115,6 @@ class FrontendDecryptInterface {
 		virtual mpegts::SpSDT getSDTData() const = 0;
 };
 
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_FRONTENDDECRYPTINTERFACE_H_INCLUDE

@@ -69,11 +69,12 @@ namespace decrypt::dvbapi {
 	}
 
 	void ClientProperties::decryptBatch() {
-		if (_keys.get(_parity) != nullptr) {
+		const auto key = _keys.get(_parity);
+		if (key != nullptr) {
 			// terminate batch buffer
 			setBatchData(nullptr, 0, _parity, nullptr);
 			// decrypt it
-			dvbcsa_bs_decrypt(_keys.get(_parity), _batch, 184);
+			dvbcsa_bs_decrypt(key, _batch, 184);
 
 			// clear scramble flags, so we can send it.
 			unsigned int i = 0;

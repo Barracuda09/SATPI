@@ -146,8 +146,7 @@ namespace decrypt::dvbapi {
 							data[3] &= 0x3F;
 						}
 					} else {
-
-///////////////////////////////////////////////////////////////////
+						// Need to filter this packet to OSCam
 						int demux = 0;
 						int filter = 0;
 						int tableID = data[5];
@@ -158,7 +157,13 @@ namespace decrypt::dvbapi {
 							} else {
 								const unsigned char *tableData = filterData.c_str();
 								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
-
+#ifdef ICAM
+								// Check for ICAM ECM
+								if ((tableID == mpegts::TableData::ECM0_ID ||
+									tableID == mpegts::TableData::ECM1_ID) && (tableData[7] - tableData[9])) {
+										frontend->setICAM(tableData[26], tableID & 0x01);
+								}
+#endif
 								std::unique_ptr<unsigned char[]> clientData(new unsigned char[sectionLength + 25]);
 								const uint32_t request = htonl(DVBAPI_FILTER_DATA);
 								std::memcpy(&clientData[0], &request, 4);
@@ -176,7 +181,6 @@ namespace decrypt::dvbapi {
 								}
 							}
 						}
-///////////////////////////////////////////////////////////////////
 
 						if (frontend->isMarkedAsActivePMT(pid)) {
 							sendPMT(index, id, *frontend->getSDTData(), *frontend->getPMTData(pid));
@@ -207,18 +211,6 @@ namespace decrypt::dvbapi {
 				SI_LOG_ERROR("Frontend: @#1, Stop CA Decrypt with demux index @#2 - send data to server failed", id, demux);
 				return false;
 			}
-/*
-			const std::vector<int> demuxVector = frontend->getActiveOSCamDemuxFilters();
-			SI_LOG_DEBUG("Frontend: @#1, Stop CA Decrypt, number of active OSCam Demux: @#2", id, demuxVector.size());
-			for (const int demux : demuxVector) {
-				buff[7] = demux;
-				SI_LOG_DEBUG("Frontend: @#1, Stop CA Decrypt with demux index @#2", id, demux);
-				if (!_client.sendData(buff, sizeof(buff), MSG_DONTWAIT)) {
-					SI_LOG_ERROR("Frontend: @#1, Stop CA Decrypt with demux index @#2 - send data to server failed", id, demux);
-					return false;
-				}
-			}
-*/
 		}
 		// Remove this PMT from the list
 		const auto it = _capmtMap.find(index.getID());

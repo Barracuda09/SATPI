@@ -23,47 +23,67 @@
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
+#ifdef ICAM
+	void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key);
+#endif
 }
 
 namespace decrypt::dvbapi {
 
-	// =========================================================================
-	//  -- Other member functions ----------------------------------------------
-	// =========================================================================
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
-	void Keys::set(const unsigned char *cw, int parity, int UNUSED(index)) {
-		dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
-		dvbcsa_bs_key_set(cw, k);
-		_key[parity].push(std::make_pair(base::TimeCounter::getTicks(), k));
-		//
-		while (_key[parity].size() > 1) {
-			remove(parity);
-		}
+void Keys::set(const unsigned char *cw, int parity, int UNUSED(index)) {
+	dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
+#ifdef ICAM
+	const unsigned char icamECM = _icam[parity].back();
+	dvbcsa_bs_key_set_ecm(icamECM, cw, k);
+#else
+	dvbcsa_bs_key_set(cw, k);
+#endif
+	_key[parity].push(std::make_tuple(base::TimeCounter::getTicks(), k));
+	while (_key[parity].size() > 1) {
+		remove(parity);
 	}
+}
 
-	const dvbcsa_bs_key_s *Keys::get(int parity) const {
-		if (!_key[parity].empty()) {
-			const KeyPair pair = _key[parity].back();
-//			const long duration = base::TimeCounter::getTicks() - pair.first;
-			return pair.second;
-		} else {
-			return nullptr;
-		}
+void Keys::setICAM(const unsigned char ecm, int parity) {
+	_icam[parity].push(ecm);
+	while (_icam[parity].size() > 1) {
+		_icam[parity].pop();
 	}
+}
 
-	void Keys::freeKeys() {
-		while (!_key[0].empty()) {
-			remove(0);
-		}
-		while (!_key[1].empty()) {
-			remove(1);
-		}
+const dvbcsa_bs_key_s * Keys::get(int parity) const {
+	if (!_key[parity].empty()) {
+		const KeyTuple tup = _key[parity].back();
+//		const long duration = base::TimeCounter::getTicks() - pair.first;
+		return std::get<1>(tup);
+	} else {
+		return nullptr;
 	}
+}
 
-	void Keys::remove(int parity) {
-		const KeyPair pair = _key[parity].front();
-		dvbcsa_bs_key_free(pair.second);
-		_key[parity].pop();
+void Keys::freeKeys() {
+	while (!_key[0].empty()) {
+		remove(0);
 	}
+	while (!_key[1].empty()) {
+		remove(1);
+	}
+	while (_icam[0].size() > 1) {
+		_icam[0].pop();
+	}
+	while (_icam[1].size() > 1) {
+		_icam[1].pop();
+	}
+}
+
+void Keys::remove(int parity) {
+	const KeyTuple tup = _key[parity].front();
+	dvbcsa_bs_key_free(std::get<1>(tup));
+	_key[parity].pop();
+}
 
 }

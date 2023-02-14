@@ -108,6 +108,8 @@ class Frontend :
 
 		virtual void setKey(const unsigned char *cw, int parity, int index) final;
 
+		virtual void setICAM(const unsigned char ecm, int parity) final;
+
 		virtual void startOSCamFilterData(int pid, int demux, int filter,
 			const unsigned char *filterData, const unsigned char *filterMask) final;
 
