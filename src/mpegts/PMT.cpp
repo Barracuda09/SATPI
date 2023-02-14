@@ -43,7 +43,7 @@ void PMT::clear() {
 
 void PMT::cleanPI(unsigned char *data) {
 	const bool payloadStart = (data[1] & 0x40) == 0x40;
-	if (payloadStart && data[5] == PMT_TABLE_ID) {
+	if (payloadStart && data[5] == TableData::PMT_ID) {
 		const int sectionLength = ((data[6] & 0x0F) << 8) | data[7];
 		const int prgLength     = ((data[15] & 0x0F) << 8) | data[16];
 

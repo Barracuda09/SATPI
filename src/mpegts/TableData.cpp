@@ -117,30 +117,30 @@ void TableData::clear() {
 
 const char* TableData::getTableTXT(const int tableID) const {
 	switch (tableID) {
-		case PAT_TABLE_ID:
+		case PAT_ID:
 			return "PAT";
-		case CAT_TABLE_ID:
+		case CAT_ID:
 			return "CAT";
-		case PMT_TABLE_ID:
+		case PMT_ID:
 			return "PMT";
-		case NIT_TABLE_ID:
-		case NIT_OTHER_TABLE_ID:
+		case NIT_ID:
+		case NIT_OTHER_ID:
 			return "NIT";
-		case SDT_TABLE_ID:
+		case SDT_ID:
 			return "SDT";
-		case EIT1_TABLE_ID:
+		case EIT1_ID:
 			// Fall Through
-		case EIT2_TABLE_ID:
+		case EIT2_ID:
 			return "EIT";
-		case ECM0_TABLE_ID:
+		case ECM0_ID:
 			// Fall Through
-		case ECM1_TABLE_ID:
+		case ECM1_ID:
 			return "ECM";
-		case EMM1_TABLE_ID:
+		case EMM1_ID:
 			// Fall Through
-		case EMM2_TABLE_ID:
+		case EMM2_ID:
 			// Fall Through
-		case EMM3_TABLE_ID:
+		case EMM3_ID:
 			return "EMM";
 		default:
 			return "Unknown Table ID";

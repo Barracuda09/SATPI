@@ -97,7 +97,7 @@ mpegts::TSData PAT::generateFrom(
 	tmp[2]  = (pid & 0xFF);
 	tmp[3]  = (scrambled & 0x3) << 6 | (payloadOnly & 0x3) << 4 | (cc & 0xF);
 	tmp[4]  = 0x00; // P1
-	tmp[5]  = PAT_TABLE_ID;
+	tmp[5]  = TableData::PAT_ID;
 	tmp[6]  = 0x00; // Length
 	tmp[7]  = 0x00; // Length
 	tmp[8]  = (transportStreamID & 0xFF00) >> 8; // TID

@@ -46,19 +46,19 @@ class TableData {
 			(data[sectionLength - 4 + 8 + 2] <<  8) | \
 			 data[sectionLength - 4 + 8 + 3]
 
-		#define PAT_TABLE_ID           0x00
-		#define CAT_TABLE_ID           0x01
-		#define PMT_TABLE_ID           0x02
-		#define NIT_TABLE_ID           0x40
-		#define NIT_OTHER_TABLE_ID     0x41
-		#define SDT_TABLE_ID           0x42
-		#define EIT1_TABLE_ID          0x4E
-		#define EIT2_TABLE_ID          0x4F
-		#define ECM0_TABLE_ID          0x80
-		#define ECM1_TABLE_ID          0x81
-		#define EMM1_TABLE_ID          0x82
-		#define EMM2_TABLE_ID          0x83
-		#define EMM3_TABLE_ID          0x84
+		static constexpr int PAT_ID       = 0x00;
+		static constexpr int CAT_ID       = 0x01;
+		static constexpr int PMT_ID       = 0x02;
+		static constexpr int NIT_ID       = 0x40;
+		static constexpr int NIT_OTHER_ID = 0x41;
+		static constexpr int SDT_ID       = 0x42;
+		static constexpr int EIT1_ID      = 0x4E;
+		static constexpr int EIT2_ID      = 0x4F;
+		static constexpr int ECM0_ID      = 0x80;
+		static constexpr int ECM1_ID      = 0x81;
+		static constexpr int EMM1_ID      = 0x82;
+		static constexpr int EMM2_ID      = 0x83;
+		static constexpr int EMM3_ID      = 0x84;
 
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------

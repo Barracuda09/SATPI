@@ -105,7 +105,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		if (pid == 0) {
 			if (!_pat->isCollected()) {
 				// collect PAT data
-				_pat->collectData(id, PAT_TABLE_ID, ptr, false);
+				_pat->collectData(id, TableData::PAT_ID, ptr, false);
 				// Did we finish collecting PAT
 				if (_pat->isCollected()) {
 					_pat->parse(id);
@@ -116,7 +116,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			_pmtMap.try_emplace(pid, std::make_shared<PMT>());
 			if (!_pmtMap[pid]->isCollected()) {
 				// collect PMT data
-				_pmtMap[pid]->collectData(id, PMT_TABLE_ID, ptr, false);
+				_pmtMap[pid]->collectData(id, TableData::PMT_ID, ptr, false);
 				if (_pmtMap[pid]->isCollected()) {
 					_pmtMap[pid]->parse(id);
 				}
@@ -134,7 +134,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		} else if (pid == 16) {
 			if (!_nit->isCollected()) {
 				// collect NIT data
-				_nit->collectData(id, NIT_TABLE_ID, ptr, false);
+				_nit->collectData(id, TableData::NIT_ID, ptr, false);
 
 				// Did we finish collecting SDT
 				if (_nit->isCollected()) {
@@ -144,7 +144,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		} else if (pid == 17) {
 			if (!_sdt->isCollected()) {
 				// collect SDT data
-				_sdt->collectData(id, SDT_TABLE_ID, ptr, false);
+				_sdt->collectData(id, TableData::SDT_ID, ptr, false);
 				// Did we finish collecting SDT
 				if (_sdt->isCollected()) {
 					_sdt->parse(id);
