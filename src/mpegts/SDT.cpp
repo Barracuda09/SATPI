@@ -72,7 +72,7 @@ void SDT::parse(const FeID id) {
 							subLength = ptr[j + i];
 							copyToUTF8(sdtData.channelNameUTF8, &ptr[j + i + 1u], subLength);
 							j += subLength + 1;
-							SI_LOG_INFO("Frontend: @#1,  serviceID: @#2 - @#3  EIT: @#4  NetworkName: @#5  ChannelName: @#6",
+							SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1,  serviceID: @#2 - @#3  EIT: @#4  NetworkName: @#5  ChannelName: @#6",
 								id, HEX(serviceID, 4), DIGIT(serviceID, 5), HEX(eit, 2), sdtData.networkNameUTF8, sdtData.channelNameUTF8);
 							_sdtTable[serviceID] = sdtData;
 							break;

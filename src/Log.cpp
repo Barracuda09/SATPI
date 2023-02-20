@@ -61,6 +61,9 @@ bool Log::getSysLogState() {
 }
 
 void Log::log(const int priority, const std::string &msg) {
+	if ((priority & MPEGTS_TABLES) == MPEGTS_TABLES) {
+		return;
+	}
 	// set timestamp
 	struct timespec timeStamp;
 	struct tm result;

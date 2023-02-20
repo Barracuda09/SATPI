@@ -47,7 +47,7 @@ void PAT::parse(const FeID id) {
 
 //		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
 
-		SI_LOG_INFO("Frontend: @#1, PAT: Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
+		SI_LOG_INFO("Frontend: @#1, PAT - Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
 			id, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
 
 		// 4 = CRC  5 = PAT Table begin from section length
@@ -60,10 +60,10 @@ void PAT::parse(const FeID id) {
 			const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
 			const int pid    = ((ptr[i + 2u] & 0x1F) << 8) | ptr[i + 3u];
 			if (prognr == 0u) {
-				SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  NIT PID: @#4",
+				SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PAT: Prog NR: @#2 - @#3  NIT PID: @#4",
 					id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
 			} else {
-				SI_LOG_INFO("Frontend: @#1, PAT: Prog NR: @#2 - @#3  PMT PID: @#4",
+				SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PAT: Prog NR: @#2 - @#3  PMT PID: @#4",
 					id, HEX(prognr, 4), DIGIT(prognr, 5), DIGIT(pid, 4));
 				_pmtPidTable[pid] = true;
 			}

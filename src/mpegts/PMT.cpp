@@ -144,7 +144,7 @@ void PMT::parse(const FeID id) {
 				if (_progInfo[i + 0u] == 0x09 && subLength > 0) {
 					const int caid   =  (_progInfo[i + 2u] << 8u)         | _progInfo[i + 3u];
 					const int ecmpid = ((_progInfo[i + 4u] & 0x1F) << 8u) | _progInfo[i + 5u];
-					SI_LOG_INFO("Frontend: @#1, PMT - CAID: @#2  ECM-PID: @#3  ES-Length: @#4",
+					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - CAID: @#2  ECM-PID: @#3  ES-Length: @#4",
 						id, HEX(caid, 4), PID(ecmpid), DIGIT(subLength, 3));
 				}
 				i += subLength + 2u;
@@ -161,7 +161,7 @@ void PMT::parse(const FeID id) {
 			const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];
 			const std::size_t esInfoLength  = ((ptr[i + 3u] & 0x0F) << 8u) | ptr[i + 4u];
 			_elementaryPID.emplace_back(elementaryPID);
-			SI_LOG_INFO("Frontend: @#1, PMT - Stream Type: @#2  ES PID: @#3  ES-Length: @#4",
+			SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - Stream Type: @#2  ES PID: @#3  ES-Length: @#4",
 				id, DIGIT(streamType, 2), PID(elementaryPID), DIGIT(esInfoLength, 3));
 			for (std::size_t j = 0u; j < esInfoLength; ) {
 				const std::size_t subLength = ptr[j + i + 6u];
@@ -171,7 +171,7 @@ void PMT::parse(const FeID id) {
 					const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 					const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
 					_ecmPID.emplace_back(ecmpid);
-					SI_LOG_INFO("Frontend: @#1, PMT - ECM-PID - CAID: @#2  ECM-PID: @#3  PROVID: @#4 ES-Length: @#5",
+					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - ECM-PID - CAID: @#2  ECM-PID: @#3  PROVID: @#4 ES-Length: @#5",
 						id, HEX(caid, 4), PID(ecmpid), HEX(provid, 6), DIGIT(subLength, 3));
 
 					_progInfo.append(&ptr[j + i + 5u], subLength + 2u);

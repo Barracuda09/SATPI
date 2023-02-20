@@ -180,7 +180,7 @@ void NIT::parse(const FeID id) {
 						while (index < descLenEnd) {
 							name += static_cast<char>(getByte(index, data));
 						}
-						SI_LOG_INFO("Frontend: @#1, NIT - Network Name Descriptor: @#2", id, name);
+						SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, NIT - Network Name Descriptor: @#2", id, name);
 						break;
 					}
 					case 0x4A: // linkageDescriptor
@@ -212,7 +212,7 @@ void NIT::parse(const FeID id) {
 							const int rolloff = ((d1 >> 3) & 0x3);
 							const int sb = d2 >> 4;
 							const int fec = d2 & 0x3;
-							SI_LOG_INFO("Frontend: @#1, NIT - TID: @#2  ID: @#3  Orbit: @#4  WEFlag: @#5  Freq: @#6  SymbolRate: @#7  msys: @#8  mtype: @#9  fec: @#10  pol: @#11  ro: @#12", id,
+							SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, NIT - TID: @#2  ID: @#3  Orbit: @#4  WEFlag: @#5  Freq: @#6  SymbolRate: @#7  msys: @#8  mtype: @#9  fec: @#10  pol: @#11  ro: @#12", id,
 								transportStreamID,
 								HEX(originalNetworkID, 4),
 								StringConverter::toStringFrom4BitBCD(orbit, 4),
@@ -234,7 +234,7 @@ void NIT::parse(const FeID id) {
 							const int mtype = (d1 & 0xFF);
 							const int sb = d2 >> 4;
 							const int fecInner = d2 & 0xF;
-							SI_LOG_INFO("Frontend: @#1, NIT - TID: @#2  ID: @#3  Freq: @#4  SymbolRate: @#5  mtype: @#6  fec-inner: @#7  fec-outer: @#8", id,
+							SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, NIT - TID: @#2  ID: @#3  Freq: @#4  SymbolRate: @#5  mtype: @#6  fec-inner: @#7  fec-outer: @#8", id,
 								transportStreamID,
 								HEX(originalNetworkID, 4),
 								StringConverter::toStringFrom4BitBCD(freq, 8),
