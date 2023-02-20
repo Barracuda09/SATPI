@@ -31,6 +31,8 @@
 #include <mpegts/PMT.h>
 #include <mpegts/SDT.h>
 
+#include <unordered_map>
+
 FW_DECL_NS1(mpegts, PacketBuffer);
 
 namespace mpegts {
@@ -186,16 +188,16 @@ class Filter {
 					_sdt = std::make_shared<SDT>();
 				} else if (_pmtMap.find(pid) != _pmtMap.end()) {
 					_pmtMap.erase(pid);
-				}
-
-				// Did we close the PCR Pid
-				for (const auto &[pid, pmt] : _pmtMap) {
-					const int pcrPID = pmt->getPCRPid();
-					if (pcrPID > 0 && pcrPID == pid) {
-						const int pmtPID = pmt->getAssociatedPID();
-						SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - PCR Changed for PMT: @#3 - Clearing tables", feID, PID(pid), PID(pmtPID));
-						_pcr = std::make_shared<PCR>();
-						break;
+				} else {
+					// Did we close the PCR Pid
+					for (const auto &[pid, pmt] : _pmtMap) {
+						const int pcrPID = pmt->getPCRPid();
+						if (pcrPID > 0 && pcrPID == pid) {
+							const int pmtPID = pmt->getAssociatedPID();
+							SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - PCR Changed for PMT: @#3 - Clearing tables", feID, PID(pid), PID(pmtPID));
+							_pcr = std::make_shared<PCR>();
+							break;
+						}
 					}
 				}
 			}
@@ -208,7 +210,7 @@ class Filter {
 
 		mutable base::Mutex _mutex;
 
-		using PMTMap = std::map<int, mpegts::SpPMT>;
+		using PMTMap = std::unordered_map<int, mpegts::SpPMT>;
 
 		mutable PMTMap _pmtMap;
 

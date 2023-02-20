@@ -19,6 +19,7 @@
 */
 #include <mpegts/Filter.h>
 
+#include <Log.h>
 #include <Utils.h>
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>

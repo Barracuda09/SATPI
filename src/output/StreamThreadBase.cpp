@@ -207,7 +207,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 		availableSize %= MAX_BUF;
 	}
 //	SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  S @#5", _stream.getFeID(), MAX_BUF, _writeIndex, _readIndex, availableSize);
-	if (inputDevice->isDataAvailable() && availableSize > 1) {
+	if (inputDevice->isDataAvailable() && availableSize >= 1) {
 		if (inputDevice->readTSPackets(_tsBuffer[_writeIndex], intervalExeeded)) {
 #ifdef LIBDVBCSA
 			decrypt::dvbapi::SpClient decrypt = _stream.getDecryptDevice();
@@ -222,10 +222,11 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			_tsBuffer[_writeIndex].reset();
 		}
 	}
-	if (intervalExeeded) {
+	const bool readytoSend = _tsBuffer[_readIndex].isReadyToSend();
+	if (intervalExeeded || readytoSend) {
 		_t1 = _t2;
 		// Send the packet full or not, else send null packet
-		if (_tsBuffer[_readIndex].isReadyToSend()) {
+		if (readytoSend) {
 			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 				// inc read index only when send is successful
 				++_readIndex;
