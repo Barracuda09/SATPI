@@ -266,6 +266,7 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall)
 	const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (readSize > 0) {
 		buffer.addAmountOfBytesWritten(readSize);
+		buffer.trySyncing();
 		_frontendData.getFilter().filterData(_feID, buffer, false);
 	} else if (readSize < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
@@ -784,9 +785,9 @@ bool Frontend::setupAndTune() {
 		}
 		_tuned = true;
 		SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		if (sw.getIntervalMS() < _waitOnLockTimeout) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			// check if frontend is locked, if not try a few times (Untill TIMEOUT)
 			for (int i = 1;; ++i) {
 				fe_status_t status = FE_TIMEDOUT;
@@ -809,7 +810,7 @@ bool Frontend::setupAndTune() {
 					SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, waitTime);
 					break;
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			}
 		} else {
 			SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
