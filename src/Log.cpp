@@ -60,7 +60,7 @@ bool Log::getSysLogState() {
 	return _syslogOn;
 }
 
-void Log::log(int priority, const std::string &msg) {
+void Log::log(const int priority, const std::string &msg) {
 	// set timestamp
 	struct timespec timeStamp;
 	struct tm result;

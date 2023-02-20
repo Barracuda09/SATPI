@@ -54,10 +54,10 @@ void PidTable::clear() {
 }
 
 void PidTable::resetPidData(const int pid) {
-	_data[pid].state       = State::Closed;
-	_data[pid].cc          = 0x80;
-	_data[pid].cc_error    = 0;
-	_data[pid].count       = 0;
+	_data[pid].state    = State::Closed;
+	_data[pid].cc       = 0x80;
+	_data[pid].cc_error = 0;
+	_data[pid].count    = 0;
 }
 
 uint32_t PidTable::getPacketCounter(const int pid) const {
