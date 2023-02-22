@@ -89,7 +89,7 @@ class Log {
 
 #ifdef NDEBUG
 #define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  format, ##__VA_ARGS__)
-#define SB_LOG_INFO(sybsys, format, ...)      Log::applog(LOG_INFO | sybsys,  format, ##__VA_ARGS__)
+#define SB_LOG_INFO(subsys, format, ...)      Log::applog(LOG_INFO | subsys,  format, ##__VA_ARGS__)
 #define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   format, ##__VA_ARGS__)
 #define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, format, ##__VA_ARGS__)
 #define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
@@ -98,7 +98,7 @@ class Log {
 #define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
 #else
 #define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
-#define SB_LOG_INFO(sybsys, format, ...)      Log::applog(LOG_INFO | sybsys, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
+#define SB_LOG_INFO(subsys, format, ...)      Log::applog(LOG_INFO | subsys, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
 #define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
 #define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
 #define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "[@#1:@#2] @#3: @#4 (code @#5)", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
