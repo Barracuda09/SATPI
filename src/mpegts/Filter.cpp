@@ -67,7 +67,7 @@ void Filter::parsePIDString(const std::string &reqPids,
 			_pidTable.setAllPID(add);
 		}
 	} else {
-		const std::string pidlist = reqPids + userPids;
+		const std::string pidlist = reqPids + "," + userPids;
 		StringVector pids = StringConverter::split(pidlist, ",");
 		for (const std::string &pid : pids) {
 			if (std::isdigit(pid[0]) != 0) {

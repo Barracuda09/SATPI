@@ -222,6 +222,7 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 			_tsBuffer[_writeIndex].reset();
 		}
 	}
+
 	const bool readytoSend = _tsBuffer[_readIndex].isReadyToSend();
 	if (intervalExeeded || readytoSend) {
 		_t1 = _t2;

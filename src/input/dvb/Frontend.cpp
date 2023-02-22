@@ -226,6 +226,7 @@ void Frontend::doFromXML(const std::string &xml) {
 	if (findXMLElement(xml, "transformation", element)) {
 		_transform.fromXML(element);
 	}
+	_frontendData.fromXML(xml);
 }
 
 // =============================================================================

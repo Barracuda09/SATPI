@@ -38,6 +38,7 @@ DeviceData::DeviceData() {
 	_ber = 0;
 	_ublocks = 0;
 	_ublocks = 0;
+	_userPids = "0,1,16,17,18";
 }
 
 // =============================================================================
@@ -62,6 +63,7 @@ void DeviceData::doAddToXML(std::string &xml) const {
 	}
 	ADD_XML_ELEMENT(xml, "pidcsv", _filter.getPidCSV());
 	ADD_XML_ELEMENT(xml, "totalCCErrors", _filter.getTotalCCErrors());
+	ADD_XML_TEXT_INPUT(xml, "addUserPids", _userPids);
 
 	doNextAddToXML(xml);
 }
@@ -71,6 +73,18 @@ void DeviceData::doFromXML(const std::string &xml) {
 	std::string element;
 	if (capableOfInternalFiltering() && findXMLElement(xml, "internalPidFiltering.value", element)) {
 		_internalPidFiltering = (element == "true") ? true : false;
+	}
+	if (findXMLElement(xml, "addUserPids.value", element)) {
+		if (element.size() > 0) {
+			if (element[0] == ',') {
+				element.erase(0, 1);
+			}
+			const auto s = element.size();
+			if (s > 0 && element[s - 1] == ',') {
+				element.erase(s - 1, 1);
+			}
+		}
+		_userPids = element;
 	}
 	doNextFromXML(xml);
 }
@@ -152,16 +166,13 @@ bool DeviceData::hasDeviceDataChanged() const {
 }
 
 void DeviceData::parseAndUpdatePidsTable(const TransportParamVector& params) {
-	// Always request PID 0 - Program Association Table (PAT)
-	const std::string addUserPids = ",0,1,16,17,18";
-	// Add user defined PIDs
 	const std::string pidsList = params.getParameter("pids");
 	if (!pidsList.empty()) {
-		_filter.parsePIDString(pidsList, addUserPids, true);
+		_filter.parsePIDString(pidsList, _userPids, true);
 	}
 	const std::string addpidsList = params.getParameter("addpids");
 	if (!addpidsList.empty()) {
-		_filter.parsePIDString(addpidsList, addUserPids, true);
+		_filter.parsePIDString(addpidsList, _userPids, true);
 	}
 	const std::string delpidsList = params.getParameter("delpids");
 	if (!delpidsList.empty()) {
