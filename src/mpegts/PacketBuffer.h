@@ -48,12 +48,12 @@ class PacketBuffer {
 		}
 
 		/// Check if we have written all of the TS Packets
-		bool full() const {
+		inline bool full() const {
 			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
 		}
 
 		/// Check if we have written all of the TS Packets
-		bool empty() const {
+		inline bool empty() const {
 			return RTP_HEADER_LEN == _writeIndex;
 		}
 
