@@ -161,7 +161,8 @@ class PacketBuffer {
 		bool isReadyToSend() const {
 			// ready to send, when there is something in the buffer in TS_PACKET_SIZE chucks
 			// and if all scramble flags are cleared
-			bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
+//			bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
+			bool ready = full();
 			if (_decryptPending && ready) {
 				const std::size_t size = getNumberOfCompletedPackets();
 				for (std::size_t i = 0; i < size; ++i) {
