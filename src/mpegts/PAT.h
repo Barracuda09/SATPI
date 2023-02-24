@@ -24,8 +24,8 @@
 #include <base/M3UParser.h>
 #include <mpegts/TableData.h>
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 FW_DECL_SP_NS1(mpegts, PAT);
 
@@ -67,7 +67,7 @@ class PAT :
 	private:
 
 		uint16_t _tid = 0;
-		std::map<int, bool> _pmtPidTable;
+		std::unordered_map<int, bool> _pmtPidTable;
 };
 
 }
