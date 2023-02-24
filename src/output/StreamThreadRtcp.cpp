@@ -70,7 +70,11 @@ void StreamThreadRtcp::doSendDataToClient(const int clientID,
 
 	const int len = srlen + sdeslen + applen;
 	PacketPtr data(new uint8_t[len]);
-
+	if (data == nullptr) {
+		SI_LOG_ERROR("Frontend: @#1, Error (out of memory) sending @#2 data to @#3:@#4", _stream.getFeID(),
+			_protocol, client.getIPAddressOfStream(), getStreamSocketPort(clientID));
+		return;
+	}
 	std::memcpy(data.get(), sr.get(), srlen);
 	std::memcpy(data.get() + srlen, sdes.get(), sdeslen);
 	std::memcpy(data.get() + srlen + sdeslen, app.get(), applen);

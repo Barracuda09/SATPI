@@ -98,6 +98,10 @@ bool StreamThreadRtcpBase::threadExecuteFunction() {
 
 	if (sr != nullptr && sdes != nullptr && app != nullptr) {
 		doSendDataToClient(_clientID, sr, srlen, sdes, sdeslen, app, applen);
+	} else {
+		const StreamClient &client = _stream.getStreamClient(_clientID);
+		SI_LOG_ERROR("Frontend: @#1, Error (out of memory) sending @#2 data to @#3:@#4", _stream.getFeID(),
+			_protocol, client.getIPAddressOfStream(), getStreamSocketPort(_clientID));
 	}
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	return true;
