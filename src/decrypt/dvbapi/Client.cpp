@@ -355,10 +355,10 @@ namespace decrypt::dvbapi {
 			}
 			if (entry.caPtr[13] == 0x81) {
 				SI_LOG_BIN_DEBUG(entry.caPtr.get(), entry.size, "Frontend: @#1, PMT data to OSCam with adapter: @#2  demux: @#3  list_management: @#4",
-					static_cast<int>(index), static_cast<int>(entry.caPtr[25]), static_cast<int>(entry.caPtr[32]), HEX2(entry.caPtr[6]));
+					id, static_cast<int>(entry.caPtr[25]), static_cast<int>(entry.caPtr[32]), HEX2(entry.caPtr[6]));
 			} else {
 				SI_LOG_BIN_DEBUG(entry.caPtr.get(), entry.size, "Frontend: @#1, PMT data to OSCam with adapter: @#2  demux: @#3  list_management: @#4",
-					static_cast<int>(index), static_cast<int>(entry.caPtr[16]), static_cast<int>(entry.caPtr[15]), HEX2(entry.caPtr[6]));
+					id, static_cast<int>(entry.caPtr[16]), static_cast<int>(entry.caPtr[15]), HEX2(entry.caPtr[6]));
 			}
 
 			if (!_client.sendData(entry.caPtr.get(), entry.size, MSG_DONTWAIT)) {
