@@ -223,11 +223,11 @@ void StreamThreadBase::readDataFromInputDevice(StreamClient &client) {
 		}
 	}
 
-	const bool readytoSend = _tsBuffer[_readIndex].isReadyToSend();
-	if (intervalExeeded || readytoSend) {
+	const bool readyToSend = _tsBuffer[_readIndex].isReadyToSend();
+	if (intervalExeeded || readyToSend) {
 		_t1 = _t2;
 		// Send the packet full or not, else send null packet
-		if (readytoSend) {
+		if (readyToSend) {
 			if (writeDataToOutputDevice(_tsBuffer[_readIndex], client)) {
 				// inc read index only when send is successful
 				++_readIndex;
