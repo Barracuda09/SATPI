@@ -96,11 +96,12 @@ class PacketBuffer {
 		/// This function will return the first un-filtered TS Packets AND RESETS to
 		/// be processed.
 		inline std::size_t getBeginOfUnFilteredPackets() const {
-			const std::size_t index = _processedIndex;
-			_processedIndex = _writeIndex;
-			if (index == RTP_HEADER_LEN) {
+			if (_processedIndex == RTP_HEADER_LEN) {
+				_processedIndex = _writeIndex;
 				return 0;
 			}
+			const std::size_t index = _processedIndex;
+			_processedIndex = _writeIndex;
 			return (index - RTP_HEADER_LEN) / TS_PACKET_SIZE;
 		}
 

@@ -51,8 +51,8 @@ namespace input::dvb {
 // -- Static const data --------------------------------------------------------
 // =============================================================================
 
-static constexpr unsigned int DEFAULT_DVR_BUFFER_SIZE       = 18;
-static constexpr unsigned int MAX_DVR_BUFFER_SIZE           = 18 * 10;
+static constexpr unsigned int DEFAULT_DVR_BUFFER_SIZE       = 3;
+static constexpr unsigned int MAX_DVR_BUFFER_SIZE           = 3 * 10;
 static constexpr unsigned long MAX_WAIT_ON_LOCK_TIMEOUT     = 3500;
 static constexpr unsigned long DEFAULT_WAIT_ON_LOCK_TIMEOUT = 1000;
 
@@ -267,14 +267,16 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(fin
 	const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (readSize > 0) {
 		buffer.addAmountOfBytesWritten(readSize);
-		_frontendData.getFilter().filterData(_feID, buffer, false);
+		if (buffer.full()) {
+			_frontendData.getFilter().filterData(_feID, buffer, false);
+		}
 	} else if (readSize < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
 	} else {
 		SI_LOG_ERROR("Frontend: @#1, Error reading data: 0 Bytes available..", _feID);
 	}
 	// Check again if buffer is full or final call before sending
-	return buffer.full() /*|| (finalCall && buffer.isReadyToSend())*/;
+	return buffer.full();
 }
 
 bool Frontend::capableOf(const input::InputSystem system) const {
