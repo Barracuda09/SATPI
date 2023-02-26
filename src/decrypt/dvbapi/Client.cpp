@@ -159,9 +159,9 @@ namespace decrypt::dvbapi {
 								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
 #ifdef ICAM
 								// Check for ICAM ECM
-								if ((tableID == mpegts::TableData::ECM0_ID ||
-									tableID == mpegts::TableData::ECM1_ID) && (tableData[7] - tableData[9])) {
-										frontend->setICAM(tableData[26], tableID & 0x01);
+								if ((tableID == mpegts::TableData::ECM0_ID ||	tableID == mpegts::TableData::ECM1_ID)) {
+										frontend->setICAM(
+											((tableData[7] - tableData[9]) == 4) ? tableData[26] : 0, tableID & 0x01);
 								}
 #endif
 								std::unique_ptr<unsigned char[]> clientData(new unsigned char[sectionLength + 25]);
