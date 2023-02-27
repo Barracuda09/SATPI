@@ -26,24 +26,22 @@
 namespace base {
 
 class CharPointerArray {
-     public:
-		// =====================================================================
-		//  -- Constructors and destructor -------------------------------------
-		// =====================================================================
+	public:
+		// =========================================================================
+		//  -- Constructors and destructor -----------------------------------------
+		// =========================================================================
 		template<class Container>
 		CharPointerArray(const Container &container) {
-			// Allocate Size of container + null terminator
-			_data = new char *[container.size() + 1];
+			// Allocate Size of container + null terminator (and nullptr it)
+			_data = new char *[container.size() + 1]{nullptr};
 			int counter = 0;
 			for (const std::string &str : container) {
-				// Allocate Size of str + null terminator
-				_data[counter] = new char [str.size() + 1];
-				// Copy str + null terminator
-				std::strcpy(_data[counter], str.c_str());
+				// Allocate Size of str + null terminator (and zero it)
+				_data[counter] = new char [str.size() + 1]{0};
+				// Copy str
+				std::memcpy(_data[counter], str.data(), str.size());
 				++counter;
 			}
-			// null terminator
-			_data[counter] = nullptr;
 		}
 
 		virtual ~CharPointerArray() {
@@ -53,18 +51,18 @@ class CharPointerArray {
 			delete [] _data;
 		}
 
-		// =====================================================================
-		//  -- Other member functions ------------------------------------------
-		// =====================================================================
+		// =========================================================================
+		//  -- Other member functions ----------------------------------------------
+		// =========================================================================
 	public:
 
 		char **getData() const {
 			return _data;
 		}
 
-		// =====================================================================
-		// -- Data members -----------------------------------------------------
-		// =====================================================================
+		// =========================================================================
+		// -- Data members ---------------------------------------------------------
+		// =========================================================================
 	private:
 		char **_data;
 };
