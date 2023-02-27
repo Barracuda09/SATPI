@@ -89,19 +89,20 @@ bool StreamThreadRtcpBase::restartStreaming(const int clientID) {
 
 bool StreamThreadRtcpBase::threadExecuteFunction() {
 	// RTCP compound packets must start with a SR, SDES then APP
-	int srlen   = 0;
-	int sdeslen = 0;
-	int applen  = 0;
-	PacketPtr sr   = getSR(srlen);
-	PacketPtr sdes = getSDES(sdeslen);
-	PacketPtr app  = getAPP(applen);
+	try {
+		int srlen   = 0;
+		int sdeslen = 0;
+		int applen  = 0;
+		PacketPtr sr   = getSR(srlen);
+		PacketPtr sdes = getSDES(sdeslen);
+		PacketPtr app  = getAPP(applen);
 
-	if (sr != nullptr && sdes != nullptr && app != nullptr) {
 		doSendDataToClient(_clientID, sr, srlen, sdes, sdeslen, app, applen);
-	} else {
+	} catch (const std::bad_alloc& e) {
 		const StreamClient &client = _stream.getStreamClient(_clientID);
-		SI_LOG_ERROR("Frontend: @#1, Error (out of memory) sending @#2 data to @#3:@#4", _stream.getFeID(),
-			_protocol, client.getIPAddressOfStream(), getStreamSocketPort(_clientID));
+		SI_LOG_ERROR("Frontend: @#1, Error (@#2) sending @#3 data to @#4:@#5", _stream.getFeID(),
+			_protocol, e.what(), client.getIPAddressOfStream(), getStreamSocketPort(_clientID));
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	return true;
@@ -140,17 +141,15 @@ PacketPtr StreamThreadRtcpBase::getAPP(int &len) {
 
 	// Alloc and copy data and adjust length
 	PacketPtr appPtr(new uint8_t[len]);
-	if (appPtr != nullptr) {
-		std::memset(appPtr.get(), 0, len);
-		std::memcpy(appPtr.get(), app, sizeof(app));
-		std::memcpy(appPtr.get() + sizeof(app), desc.c_str(), desc.size());
-		const int ws = (len / 4) - 1;
-		appPtr[2] = (ws >> 8) & 0xff;
-		appPtr[3] = (ws >> 0) & 0xff;
-		const int ss = len - sizeof(app);
-		appPtr[14] = (ss >> 8) & 0xff;
-		appPtr[15] = (ss >> 0) & 0xff;
-	}
+	std::memset(appPtr.get(), 0, len);
+	std::memcpy(appPtr.get(), app, sizeof(app));
+	std::memcpy(appPtr.get() + sizeof(app), desc.c_str(), desc.size());
+	const int ws = (len / 4) - 1;
+	appPtr[2] = (ws >> 8) & 0xff;
+	appPtr[3] = (ws >> 0) & 0xff;
+	const int ss = len - sizeof(app);
+	appPtr[14] = (ss >> 8) & 0xff;
+	appPtr[15] = (ss >> 0) & 0xff;
 	return appPtr;
 }
 
@@ -200,12 +199,10 @@ PacketPtr StreamThreadRtcpBase::getSR(int &len) {
 
 	// Alloc and copy data and adjust length
 	PacketPtr srPtr(new uint8_t[len]);
-	if (srPtr != nullptr) {
-		std::memcpy(srPtr.get(), sr, sizeof(sr));
-		const int ws = (len / 4) - 1;
-		srPtr[2] = (ws >> 8) & 0xff;
-		srPtr[3] = (ws >> 0) & 0xff;
-	}
+	std::memcpy(srPtr.get(), sr, sizeof(sr));
+	const int ws = (len / 4) - 1;
+	srPtr[2] = (ws >> 8) & 0xff;
+	srPtr[3] = (ws >> 0) & 0xff;
 	return srPtr;
 }
 
@@ -243,12 +240,10 @@ PacketPtr StreamThreadRtcpBase::getSDES(int &len) {
 
 	// Alloc and copy data and adjust length
 	PacketPtr sdesPtr(new uint8_t[len]);
-	if (sdesPtr != nullptr) {
-		std::memcpy(sdesPtr.get(), sdes, sizeof(sdes));
-		const int ws = (len / 4) - 1;
-		sdesPtr[2] = (ws >> 8) & 0xff;
-		sdesPtr[3] = (ws >> 0) & 0xff;
-	}
+	std::memcpy(sdesPtr.get(), sdes, sizeof(sdes));
+	const int ws = (len / 4) - 1;
+	sdesPtr[2] = (ws >> 8) & 0xff;
+	sdesPtr[3] = (ws >> 0) & 0xff;
 	return sdesPtr;
 }
 
