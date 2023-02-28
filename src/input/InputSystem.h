@@ -27,6 +27,7 @@ namespace input {
 		DVBT,
 		DVBS,
 		DVBS2,
+		DVBS2X,
 		DVBT2,
 		DVBC,
 		FILE,

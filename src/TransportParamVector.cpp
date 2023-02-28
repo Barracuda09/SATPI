@@ -74,7 +74,7 @@ int TransportParamVector::getIntParameter(std::string_view parameter) const {
 input::InputSystem TransportParamVector::getMSYSParameter() const {
 	const std::string val = getParameter("msys");
 	if (!val.empty()) {
-		if (val == "dvbs2") {
+		if (val == "dvbs2" || val == "dvbs2x") {
 			return input::InputSystem::DVBS2;
 		} else if (val == "dvbs") {
 			return input::InputSystem::DVBS;

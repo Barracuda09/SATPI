@@ -143,6 +143,7 @@ fe_delivery_system DeviceData::convertDeliverySystem() const {
 		case input::InputSystem::DVBS:
 			return SYS_DVBS;
 		case input::InputSystem::DVBS2:
+		case input::InputSystem::DVBS2X:
 			return SYS_DVBS2;
 		case input::InputSystem::DVBC:
 #if FULL_DVB_API_VERSION >= 0x0505

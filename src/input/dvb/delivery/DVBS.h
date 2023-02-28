@@ -65,8 +65,9 @@ class DVBS :
 			const input::dvb::FrontendData &frontendData) final;
 
 		virtual bool isCapableOf(input::InputSystem system) const final {
-			return system == input::InputSystem::DVBS2 ||
-				   system == input::InputSystem::DVBS;
+			return system == input::InputSystem::DVBS2X ||
+				system == input::InputSystem::DVBS2 ||
+				system == input::InputSystem::DVBS;
 		}
 
 		///
