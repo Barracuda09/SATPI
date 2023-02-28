@@ -66,8 +66,14 @@ namespace input::dvb::delivery {
 				int src, Lnb::Polarization pol) = 0;
 
 			/// This will turn off the power to the LNB
-			/// @param feFD
+			/// @param feFD specifies the file descriptor for the frontend
 			virtual void turnOffLNBPower(int feFD) const;
+
+			/// This will enable an slightly higher voltages instead of 13/18V,
+			/// in order to compensate for long antenna cables.
+			/// @param feFD specifies the file descriptor for the frontend
+			/// @param higherVoltage when <code>true</code> the LNB voltage will be slightly higher
+			virtual void enableHigherLnbVoltage(int feFD, bool higherVoltage) const;
 
 		protected:
 

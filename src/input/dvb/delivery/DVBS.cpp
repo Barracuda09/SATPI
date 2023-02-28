@@ -64,7 +64,8 @@ namespace input::dvb::delivery {
 		input::dvb::delivery::System(index, id, fePath, dvbVersion),
 		_diseqcType(DiseqcType::Lnb),
 		_diseqc(new DiSEqcLnb),
-		_turnoffLNBPower(false) {
+		_turnoffLnbVoltage(false),
+		_higherLnbVoltage(false) {
 
 		// Only DVB-S2 have special handling for FBC tuners
 		_fbcSetID = readProcData(index, "fbc_set_id");
@@ -108,7 +109,8 @@ namespace input::dvb::delivery {
 			ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
 		}
 
-		ADD_XML_CHECKBOX(xml, "turnoffLNBPower", (_turnoffLNBPower ? "true" : "false"));
+		ADD_XML_CHECKBOX(xml, "turnoffLNBPower", (_turnoffLnbVoltage ? "true" : "false"));
+		ADD_XML_CHECKBOX(xml, "higherLnbVoltage", (_higherLnbVoltage ? "true" : "false"));
 
 		ADD_XML_BEGIN_ELEMENT(xml, "diseqcType");
 			ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
@@ -129,7 +131,10 @@ namespace input::dvb::delivery {
 	void DVBS::doFromXML(const std::string &xml) {
 		std::string element;
 		if (findXMLElement(xml, "turnoffLNBPower.value", element)) {
-			_turnoffLNBPower = (element == "true") ? true : false;
+			_turnoffLnbVoltage = (element == "true") ? true : false;
+		}
+		if (findXMLElement(xml, "higherLnbVoltage.value", element)) {
+			_higherLnbVoltage = (element == "true") ? true : false;
 		}
 		if (findXMLElement(xml, "diseqcType.value", element)) {
 			const DiseqcType type = static_cast<DiseqcType>(std::stoi(element));
@@ -218,6 +223,8 @@ namespace input::dvb::delivery {
 		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3",
 				_feID, fePathDiseqc, feFDDiseqc);
 
+		_diseqc->enableHigherLnbVoltage(feFDDiseqc, _higherLnbVoltage);
+
 		uint32_t freq = frontendData.getFrequency();
 		// send diseqc ('src' differs from 'DiSEqC switch position' so adjust with -1)
 		if (_diseqc != nullptr &&
@@ -238,7 +245,7 @@ namespace input::dvb::delivery {
 	}
 
 	void DVBS::teardown(int feFD) const {
-		if (_turnoffLNBPower) {
+		if (_turnoffLnbVoltage) {
 			SI_LOG_INFO("Frontend: @#1, Turning off LNB Power", _feID);
 			_diseqc->turnOffLNBPower(feFD);
 		}

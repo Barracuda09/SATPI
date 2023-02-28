@@ -88,7 +88,8 @@
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 			page += addTableLineEntry("Internal Software Pid Filtering", xmlDoc, streamID + "internalPidFiltering");
 			page += addTableLineEntry("Wait On Tuning Lock Timeout (ms)", xmlDoc, streamID + "waitOnLockTimeout");
-			page += addTableLineEntry("Turn off LNB Power during teardown", xmlDoc, streamID + "turnoffLNBPower");
+			page += addTableLineEntry("Turn off LNB Voltage during teardown", xmlDoc, streamID + "turnoffLNBPower");
+			page += addTableLineEntry("Enable slightly higher LNB Voltage", xmlDoc, streamID + "higherLnbVoltage");
 			page += addTableLineEntry("List of PIDs to add to requests (CSV)", xmlDoc, streamID + "addUserPids");
 
 			var transformation = visibleStream.getElementsByTagName("transformation");

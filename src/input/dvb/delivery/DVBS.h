@@ -106,7 +106,8 @@ class DVBS :
 		};
 		DiseqcType _diseqcType;
 		UpDiSEqc _diseqc;
-		bool _turnoffLNBPower;
+		bool _turnoffLnbVoltage;
+		bool _higherLnbVoltage;
 
 		// =========================================================================
 		// -- FBC Data members -----------------------------------------------------

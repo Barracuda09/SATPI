@@ -60,8 +60,14 @@ namespace input::dvb::delivery {
 	// ===========================================================================
 
 	void DiSEqc::turnOffLNBPower(int feFD) const {
-		if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_OFF) == -1) {
+		if (::ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_OFF) == -1) {
 			SI_LOG_PERROR("FE_SET_VOLTAGE failed to switch off");
+		}
+	}
+
+	void DiSEqc::enableHigherLnbVoltage(int feFD, bool higherVoltage) const {
+		if (::ioctl(feFD, FE_ENABLE_HIGH_LNB_VOLTAGE, higherVoltage ? 1 : 0) == -1) {
+			SI_LOG_PERROR("FE_ENABLE_HIGH_LNB_VOLTAGE failed to switch off");
 		}
 	}
 
@@ -90,21 +96,21 @@ namespace input::dvb::delivery {
 	bool DiSEqc::sendDiseqcMasterCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
 			MiniDiSEqCSwitch sw, unsigned int repeatCmd) {
 		while (1) {
-			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
+			if (::ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
 				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 18V");
 			}
-			if (ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
+			if (::ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 				SI_LOG_PERROR("FE_SET_TONE failed");
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
-			if (ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
+			if (::ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
 				SI_LOG_PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
 			if (sw != MiniDiSEqCSwitch::DoNotSend) {
 				fe_sec_mini_cmd_t sasbBurst = (sw == MiniDiSEqCSwitch::MiniA) ? SEC_MINI_A : SEC_MINI_B;
-				if (ioctl(feFD, FE_DISEQC_SEND_BURST, sasbBurst) == -1) {
+				if (::ioctl(feFD, FE_DISEQC_SEND_BURST, sasbBurst) == -1) {
 					SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
 					return false;
 				}
