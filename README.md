@@ -4,7 +4,7 @@
 
 # SatPI
 
-An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, BeagleBone or any other linux box.
+An SAT>IP server for linux, suitable for running on an Raspberry Pi, VU+, GigaBlue or any other linux box.
 
 <a href="https://github.com/Barracuda09/SATPI/wiki/02.-Build-SatPI">See wiki on how to build SatPI</a>
 
@@ -14,14 +14,20 @@ Currently supporting:
 - Web Interface for monitoring and configuring various things (http port 8875)
 	- http://ip.of.your.box:8875
 - Transform for example DVB-S(2) requests to DVB-C
-- RTP/AVP over UDP and TCP
+- RTP/AVP and RTP/AVP/TCP streaming
+- HTTP streaming
 - Decrypting of channels via DVB-API protocol implemented by OSCam, therefore you need the dvbcsa library and an official subscription
-- FILE input, reading from an TS File
-- STREAMER input, reading from an multicast/unicast input
-- CHILDPIPE input, reading from an PIPE input for example wget
+- ICAM support needs an updated dvbcsa library
+- Virtual tuners
+  - FILE input, reading from an TS File
+  - STREAMER input, reading from an multicast/unicast input
+  - CHILDPIPE input, reading from an PIPE input for example wget and [childpipe-hdhomerun-example.sh](https://github.com/Barracuda09/SATPI/blob/master/scripts/childpipe-hdhomerun-example.sh) in combination with [mapping.m3u](https://github.com/Barracuda09/SATPI/blob/master/mapping.m3u)
 -------
 - The Description xml can be found like:
 	- http://ip.of.your.box:8875/desc.xml
+
+- The settings are in SatPI.xml and the Web interface uses this to build the content of the pages:
+	- http://ip.of.your.box:8875/satPI.xml
 
 - The SatPI wiki can be found here:
 	- https://github.com/Barracuda09/SATPI/wiki
@@ -79,6 +85,8 @@ Tested Hardware
 
 Build
 -----
+<a href="https://github.com/Barracuda09/SATPI/wiki/02.-Build-SatPI">See wiki on how to build SatPI</a>
+
 - Always Update the Web folder as well, as it may contain new features
 
 - To build SatPI just run these commands:
@@ -111,6 +119,10 @@ Build
 
     `make debug LIBDVBCSA=yes`<br/>
 
+- If you like to try OSCam with DVBAPI and ICAM, use:
+
+    `make debug LIBDVBCSA=yes ICAM=yes`<br/>
+
 - If you like to run it on an Enigma2 box **_(With the correct toolchain)_**, use:
 
     `make debug ENIGMA=yes`<br/>
@@ -118,16 +130,6 @@ Build
 - Here is an toolchain I use for Vu+ Receivers (Broadcom CPU) it has MIPS and ARM cross-compiler:
 
     `https://github.com/Broadcom/stbgcc-6.3/releases`<br/>
-
-- For Cross Compiling, here are some tips you can try _**(I did not try this myself)**_:
-
-    - get the sys root like headers and libraries for your device and copy it to dir<br/>
-    `export INCLUDES=--sysroot=dir`<br/>
-    - for pointing to a different compiler for your device<br/>
-    `export CXXPREFIX=arm-linux-gnueabihf-`<br/>
-    `export CXXSUFFIX=`<br/>
-    - To buils just run (Or some other build you like)<br/>
-    `make debug`<br/>
 
 - If you see building errors, then perhaps your toolchain is not C++17 compatible. In this case try this before compiling:
 
