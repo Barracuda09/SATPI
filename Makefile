@@ -11,6 +11,7 @@ CXX ?= $(CXXPREFIX)g++$(CXXSUFFIX)
 # Check compiler support for some functions
 RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf npfunc)
 RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /dev/null ; echo $$? ; rm -rf atomic)
+RESULT_HAS_BACKTRACE_FUNCTIONS := $(shell $(CXX) -o backtrace checks/backtrace.cpp 2> /dev/null ; echo $$? ; rm -rf backtrace)
 
 # Includes needed for proper compilation
 INCLUDES +=
@@ -20,9 +21,15 @@ CFLAGS += $(CPU_FLAGS)
 
 # Libraries needed for linking
 LDFLAGS += -pthread -lrt
+
 # RESULT_HAS_ATOMIC_FUNCTIONS = 1 if compile fails
 ifeq "$(RESULT_HAS_ATOMIC_FUNCTIONS)" "1"
   LDFLAGS += -latomic
+endif
+
+# RESULT_HAS_BACKTRACE_FUNCTIONS = 1 if compile fails
+ifeq "$(RESULT_HAS_BACKTRACE_FUNCTIONS)" "1"
+  CFLAGS += -DHAS_NO_BACKTRACE_FUNCTIONS
 endif
 
 # Set Compiler Flags

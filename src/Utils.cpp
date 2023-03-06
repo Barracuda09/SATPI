@@ -29,6 +29,10 @@
 #include <fcntl.h>
 #include <execinfo.h>
 
+#ifdef HAS_NO_BACKTRACE_FUNCTIONS
+void Utils::createBackTrace(const char *) {
+#warning Compiling with no backtrace!
+#else
 void Utils::createBackTrace(const char *file) {
 	// DO NOT alloc memory on heap!!
 	void *array[25];
@@ -44,6 +48,7 @@ void Utils::createBackTrace(const char *file) {
 	} else {
 		backtrace_symbols_fd(array, size, STDOUT_FILENO);
 	}
+#endif
 }
 
 void Utils::annotateBackTrace(const char *app, const char *file) {
