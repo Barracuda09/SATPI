@@ -85,7 +85,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 	for (std::size_t i = begin; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
 		// Check is this the beginning of the TS and no Transport error indicator
-		if (!(ptr[0] == 0x47 && (ptr[1] & 0x80) != 0x80)) {
+		if (ptr[0] != 0x47 || (ptr[1] & 0x80) == 0x80) {
 			if (filter && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);
 			}
@@ -103,86 +103,100 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 		const uint8_t cc = ptr[3] & 0x0f;
 		_pidTable.addPIDData(pid, cc);
 
-		if (pid == 0) {
-			if (!_pat->isCollected()) {
-				// collect PAT data
-				_pat->collectData(id, TableData::PAT_ID, ptr, false);
-				// Did we finish collecting PAT
-				if (_pat->isCollected()) {
-					_pat->parse(id);
-				}
-			}
-		} else if (_pat->isMarkedAsPMT(pid)) {
-			// Did we finish collecting PMT
-			_pmtMap.try_emplace(pid, std::make_shared<PMT>());
-			if (!_pmtMap[pid]->isCollected()) {
-				// collect PMT data
-				_pmtMap[pid]->collectData(id, TableData::PMT_ID, ptr, false);
-				if (_pmtMap[pid]->isCollected()) {
-					_pmtMap[pid]->parse(id);
-				}
-#ifdef ADDDVBCA
-				{
-					const char fileFIFO[] = "/tmp/fifo";
-					int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
-					if (fd > 0) {
-						::write(fd, ptr, 188);
-						::close(fd);
+		switch (pid) {
+			case 0:
+				if (!_pat->isCollected()) {
+					// collect PAT data
+					_pat->collectData(id, TableData::PAT_ID, ptr, false);
+					// Did we finish collecting PAT
+					if (_pat->isCollected()) {
+						_pat->parse(id);
 					}
 				}
-#endif
-			}
-		} else if (pid == 16) {
-			if (!_nit->isCollected()) {
-				// collect NIT data
-				_nit->collectData(id, TableData::NIT_ID, ptr, false);
+				break;
+			case 1:
+				// Empty
+				break;
+			case 16:
+				if (!_nit->isCollected()) {
+					// collect NIT data
+					_nit->collectData(id, TableData::NIT_ID, ptr, false);
 
-				// Did we finish collecting SDT
-				if (_nit->isCollected()) {
-					_nit->parse(id);
+					// Did we finish collecting SDT
+					if (_nit->isCollected()) {
+						_nit->parse(id);
+					}
 				}
-			}
-		} else if (pid == 17) {
-			if (!_sdt->isCollected()) {
-				// collect SDT data
-				_sdt->collectData(id, TableData::SDT_ID, ptr, false);
-				// Did we finish collecting SDT
-				if (_sdt->isCollected()) {
-					_sdt->parse(id);
+				break;
+			case 17:
+				if (!_sdt->isCollected()) {
+					// collect SDT data
+					_sdt->collectData(id, TableData::SDT_ID, ptr, false);
+					// Did we finish collecting SDT
+					if (_sdt->isCollected()) {
+						_sdt->parse(id);
+					}
 				}
-			}
-		} else if (pid == 20) {
-			const unsigned int tableID = ptr[5];
-			const unsigned int mjd = (ptr[8] << 8) | (ptr[9]);
-			const unsigned int y1 = static_cast<unsigned int>((mjd - 15078.2) / 365.25);
-			const unsigned int m1 = static_cast<unsigned int>((mjd - 14956.1 - static_cast<unsigned int>(y1 * 365.25)) / 30.6001);
-			const unsigned int d = static_cast<unsigned int>(mjd - 14956.0 - static_cast<unsigned int>(y1 * 365.25) - static_cast<unsigned int>(m1 * 30.6001 ));
-			const unsigned int k = (m1 == 14 || m1 ==15) ? 1 : 0;
-			const unsigned int y = y1 + k + 1900;
-			const unsigned int m = m1 - 1 - (k * 12);
-			const unsigned int h = ptr[10];
-			const unsigned int mi = ptr[11];
-			const unsigned int s = ptr[12];
+				break;
+			case 18:
+				// Empty
+				break;
+			case 20: {
+				const unsigned int tableID = ptr[5];
+				const unsigned int mjd = (ptr[8] << 8) | (ptr[9]);
+				const unsigned int y1 = static_cast<unsigned int>((mjd - 15078.2) / 365.25);
+				const unsigned int m1 = static_cast<unsigned int>((mjd - 14956.1 - static_cast<unsigned int>(y1 * 365.25)) / 30.6001);
+				const unsigned int d = static_cast<unsigned int>(mjd - 14956.0 - static_cast<unsigned int>(y1 * 365.25) - static_cast<unsigned int>(m1 * 30.6001 ));
+				const unsigned int k = (m1 == 14 || m1 ==15) ? 1 : 0;
+				const unsigned int y = y1 + k + 1900;
+				const unsigned int m = m1 - 1 - (k * 12);
+				const unsigned int h = ptr[10];
+				const unsigned int mi = ptr[11];
+				const unsigned int s = ptr[12];
 
-			SI_LOG_INFO("Frontend: @#1, TDT - Table ID: @#2  Date: @#3-@#4-@#5  Time: @#6:@#7.@#8  MJD: @#9",
-				id, HEX(tableID, 2), y, m, d, DIGIT(h, 2), DIGIT(mi, 2), DIGIT(s, 2), HEX(mjd, 4));
+				SI_LOG_INFO("Frontend: @#1, TDT - Table ID: @#2  Date: @#3-@#4-@#5  Time: @#6:@#7.@#8  MJD: @#9",
+					id, HEX(tableID, 2), y, m, d, DIGIT(h, 2), DIGIT(mi, 2), DIGIT(s, 2), HEX(mjd, 4));
 #ifdef ADDDVBCA
-			{
 				const char fileFIFO[] = "/tmp/fifo";
 				int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
 				if (fd > 0) {
 					::write(fd, ptr, 188);
 					::close(fd);
 				}
-			}
 #endif
-		} else {
-			for (const auto &[_, pmt] : _pmtMap) {
-				const int pcrPID = pmt->getPCRPid();
-				if (pid == pcrPID && _pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
-					_pcr->collectData(id, ptr);
 				}
-			}
+				break;
+			case 21:
+				// Empty
+				break;
+			default:
+				if (_pat->isMarkedAsPMT(pid)) {
+					// Did we finish collecting PMT
+					_pmtMap.try_emplace(pid, std::make_shared<PMT>());
+					if (!_pmtMap[pid]->isCollected()) {
+						// collect PMT data
+						_pmtMap[pid]->collectData(id, TableData::PMT_ID, ptr, false);
+						if (_pmtMap[pid]->isCollected()) {
+							_pmtMap[pid]->parse(id);
+						}
+#ifdef ADDDVBCA
+						const char fileFIFO[] = "/tmp/fifo";
+						int fd = ::open(fileFIFO, O_WRONLY | O_NONBLOCK);
+						if (fd > 0) {
+							::write(fd, ptr, 188);
+							::close(fd);
+						}
+#endif
+					}
+				} else {
+					for (const auto &[_, pmt] : _pmtMap) {
+						const int pcrPID = pmt->getPCRPid();
+						if (pid == pcrPID && _pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
+							_pcr->collectData(id, ptr);
+						}
+					}
+				}
+				break;
 		}
 	}
 	if (filter) {
