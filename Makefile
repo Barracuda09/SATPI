@@ -38,12 +38,15 @@ CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -pthread $(INC
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"
   # "Debug" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+  CFLAGS += -O0 -g3 -gdwarf-2 -DDEBUG -fstack-protector-all -Wswitch-default
   LDFLAGS += -rdynamic
 else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
   CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
   LDFLAGS += -rdynamic
+else ifeq "$(BUILD)" "speed"
+  # "Debug" build - with optimization, with debugging symbols
+  CFLAGS += -Os -s -DNDEBUG
 else ifeq "$(BUILD)" "simu"
   # "Debug Simu" build - no optimization, with debugging symbols
   CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
@@ -224,6 +227,9 @@ debug:
 debug1:
 	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes
 
+speed:
+	$(MAKE) "BUILD=speed" LIBDVBCSA=yes
+
 # Create a 'simulation' version
 simu:
 	$(MAKE) "BUILD=simu"
@@ -250,8 +256,10 @@ help:
 	@echo " - Make project clean                   :  make clean"
 	@echo " - Make debug version                   :  make debug"
 	@echo " - Make debug version with DVBAPI       :  make debug LIBDVBCSA=yes"
+	@echo " - Make debug version with DVBAPI(ICAM) :  make debug LIBDVBCSA=yes ICAM=yes"
 	@echo " - Make debug version for ENIGMA        :  make debug ENIGMA=yes"
 	@echo " - Make production version with DVBAPI  :  make LIBDVBCSA=yes"
+	@echo " - Make production version with DVBAPI  :  make speed LIBDVBCSA=yes"
 	@echo " - Make PlantUML graph                  :  make plantuml"
 	@echo " - Make Doxygen docmumentation          :  make docu"
 	@echo " - Make Uncrustify Code Beautifier      :  make uncrustify"
