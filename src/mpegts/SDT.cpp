@@ -48,7 +48,7 @@ void SDT::parse(const FeID id) {
 //				SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, SDT data", id);
 
 			SI_LOG_INFO("Frontend: @#1, SDT - Section Length: @#2  Transport Stream ID: @#3  Version: @#4  secNr: @#5  lastSecNr: @#6  NetworkID: @#7  CRC: @#8",
-				id, tableData.sectionLength, _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, DIGIT(_networkID, 4), HEX(tableData.crc, 4));
+				id, DIGIT(tableData.sectionLength, 4), _transportStreamID, tableData.version, tableData.secNr, tableData.lastSecNr, DIGIT(_networkID, 4), HEX(tableData.crc, 4));
 
 			// 4 = CRC   8 = SDT Header from section length
 			const std::size_t len = tableData.sectionLength - 4u - 8u;

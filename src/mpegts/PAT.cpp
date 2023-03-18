@@ -48,7 +48,7 @@ void PAT::parse(const FeID id) {
 //		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
 
 		SI_LOG_INFO("Frontend: @#1, PAT - Section Length: @#2  TID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
-			id, tableData.sectionLength, _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
+			id, DIGIT(tableData.sectionLength, 4), _tid, tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
 
 		// 4 = CRC  5 = PAT Table begin from section length
 		const size_t len = tableData.sectionLength - 4u - 5u;

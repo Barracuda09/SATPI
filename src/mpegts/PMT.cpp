@@ -131,7 +131,7 @@ void PMT::parse(const FeID id) {
 //		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PMT data", id);
 
 		SI_LOG_INFO("Frontend: @#1, PMT - PID: @#2 - Section Length: @#3  Prog NR: @#4  Version: @#5  secNr: @#6  lastSecNr: @#7  PCR-PID: @#8  Program Length: @#9  CRC: @#10",
-			id, PID(tableData.pid), tableData.sectionLength, DIGIT(_programNumber, 5), tableData.version,
+			id, PID(tableData.pid), DIGIT(tableData.sectionLength, 4), DIGIT(_programNumber, 5), tableData.version,
 			tableData.secNr, tableData.lastSecNr, PID(_pcrPID), _prgLength, HEX(tableData.crc, 4));
 
 		// To save the Program Info

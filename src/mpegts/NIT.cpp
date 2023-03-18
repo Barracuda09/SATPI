@@ -166,7 +166,7 @@ void NIT::parse(const FeID id) {
 //			SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, NIT data", id);
 
 			SI_LOG_INFO("Frontend: @#1, NIT - Section Length: @#2  NID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
-				id, tableData.sectionLength, DIGIT(_nid, 4), tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
+				id, DIGIT(tableData.sectionLength, 4), DIGIT(_nid, 4), tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
 			
 			// Network Descriptors
 			index = 13;
