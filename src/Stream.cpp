@@ -138,7 +138,7 @@ void Stream::doAddToXML(std::string &xml) const {
 
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
-	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 0, 5);
+	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 1, 5);
 	ADD_XML_ELEMENT(xml, "spc", _spc.load());
 	ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
 
