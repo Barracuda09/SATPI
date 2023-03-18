@@ -247,7 +247,7 @@ void Frontend::addDeliverySystemCount(
 }
 
 bool Frontend::isDataAvailable() {
-	pollfd pfd;
+	thread_local pollfd pfd;
 	pfd.fd = _fd_dmx;
 	pfd.events = POLLIN;
 	pfd.revents = 0;
@@ -269,14 +269,14 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(fin
 		buffer.addAmountOfBytesWritten(readSize);
 		if (buffer.full()) {
 			_frontendData.getFilter().filterData(_feID, buffer, false);
+			return true;
 		}
 	} else if (readSize < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Error reading data..", _feID);
 	} else {
 		SI_LOG_ERROR("Frontend: @#1, Error reading data: 0 Bytes available..", _feID);
 	}
-	// Check again if buffer is full or final call before sending
-	return buffer.full();
+	return false;
 }
 
 bool Frontend::capableOf(const input::InputSystem system) const {
