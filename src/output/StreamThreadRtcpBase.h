@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 FW_DECL_NS0(StreamInterface);
 
@@ -96,9 +97,9 @@ class StreamThreadRtcpBase {
 			const PacketPtr& UNUSED(app), int UNUSED(applen)) {}
 
 		///
-		PacketPtr getAPP(int &len);
-		PacketPtr getSDES(int &len);
-		PacketPtr getSR(int &len);
+		std::pair<PacketPtr, int> getAPP();
+		std::pair<PacketPtr, int> getSDES();
+		std::pair<PacketPtr, int> getSR();
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------
