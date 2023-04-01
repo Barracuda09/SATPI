@@ -48,12 +48,12 @@ class PacketBuffer {
 		}
 
 		/// Check if we have written all of the TS Packets
-		inline bool full() const {
+		bool full() const {
 			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) == _writeIndex;
 		}
 
 		/// Check if we have written all of the TS Packets
-		inline bool empty() const {
+		bool empty() const {
 			return RTP_HEADER_LEN == _writeIndex;
 		}
 
@@ -86,7 +86,7 @@ class PacketBuffer {
 
 		/// This function will return the number of completed TS Packets that are
 		/// in this TS buffer
-		inline std::size_t getNumberOfCompletedPackets() const {
+		std::size_t getNumberOfCompletedPackets() const {
 			if (full()) {
 				return NUMBER_OF_TS_PACKETS;
 			}
@@ -95,7 +95,7 @@ class PacketBuffer {
 
 		/// This function will return the first un-filtered TS Packets AND RESETS to
 		/// be processed.
-		inline std::size_t getBeginOfUnFilteredPackets() const {
+		std::size_t getBeginOfUnFilteredPackets() const {
 			if (_processedIndex == RTP_HEADER_LEN) {
 				_processedIndex = _writeIndex;
 				return 0;
@@ -106,45 +106,45 @@ class PacketBuffer {
 		}
 
 		/// get the amount of data that is in this TS buffer
-		inline std::size_t getCurrentBufferSize() const {
+		std::size_t getCurrentBufferSize() const {
 			return _writeIndex - RTP_HEADER_LEN;
 		}
 
 		/// This will return the amount of bytes that can still be written to
 		/// this TS buffer
-		inline std::size_t getAmountOfBytesToWrite() const {
+		std::size_t getAmountOfBytesToWrite() const {
 			return (MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN) - _writeIndex;
 		}
 
 		/// Add the amount of bytes written, by increment the write index
 		/// @param index specifies the amount written to TS packet
-		inline void addAmountOfBytesWritten(std::size_t index) {
+		void addAmountOfBytesWritten(std::size_t index) {
 			_writeIndex += index;
 		}
 
 		/// Get the write pointer for this TS buffer
-		inline unsigned char *getWriteBufferPtr() {
+		unsigned char *getWriteBufferPtr() {
 			return &_buffer[_writeIndex];
 		}
 
 		/// This function will return the begin of this RTP packet
-		inline unsigned char *getReadBufferPtr() {
+		unsigned char *getReadBufferPtr() {
 			return _buffer;
 		}
 
 		/// This function will return the begin of the first TS packet in this TS buffer
 		/// so without RTP header
-		inline unsigned char *getTSReadBufferPtr() {
+		unsigned char *getTSReadBufferPtr() {
 			return &_buffer[RTP_HEADER_LEN];
 		}
 
 		/// Get the TS packet pointer for packets 0 up until NUMBER_OF_TS_PACKETS
 		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
-		inline unsigned char *getTSPacketPtr(std::size_t packetNumber) {
+		unsigned char *getTSPacketPtr(std::size_t packetNumber) {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
-		inline const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
+		const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
