@@ -30,7 +30,7 @@ namespace input {
 		DVBS2X,
 		DVBT2,
 		DVBC,
-		FILE,
+		FILE_SRC,
 		STREAMER,
 		CHILDPIPE,
 		IPTV

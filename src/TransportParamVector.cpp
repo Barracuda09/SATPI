@@ -85,7 +85,7 @@ input::InputSystem TransportParamVector::getMSYSParameter() const {
 		} else if (val == "dvbc") {
 			return input::InputSystem::DVBC;
 		} else if (val == "file") {
-			return input::InputSystem::FILE;
+			return input::InputSystem::FILE_SRC;
 		} else if (val == "streamer") {
 			return input::InputSystem::STREAMER;
 		} else if (val == "childpipe") {

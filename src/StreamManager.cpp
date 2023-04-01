@@ -139,8 +139,8 @@ std::tuple<FeIndex, FeID, StreamID> StreamManager::findFrontendID(const Transpor
 	FeID feID = params.getIntParameter("fe");
 	// Did we find StreamID an NO FrondendID
 	if (streamID != -1 && feID == -1) {
-		const auto [index, feID] = findFrontendIDWithStreamID(streamID);
-		return { index, feID, streamID };
+		const auto [index, feIDFound] = findFrontendIDWithStreamID(streamID);
+		return { index, feIDFound, streamID };
 	}
 	// Is the requested FrondendID in range, then return this
 	if (feID >= 1 && feID <= static_cast<int>(_streamVector.size())) {

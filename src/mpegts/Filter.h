@@ -190,7 +190,7 @@ class Filter {
 					_pmtMap.erase(pid);
 				} else {
 					// Did we close the PCR Pid
-					for (const auto &[pid, pmt] : _pmtMap) {
+					for (const auto &[_, pmt] : _pmtMap) {
 						const int pcrPID = pmt->getPCRPid();
 						if (pcrPID > 0 && pcrPID == pid) {
 							const int pmtPID = pmt->getAssociatedPID();

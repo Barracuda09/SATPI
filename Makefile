@@ -33,7 +33,7 @@ ifeq "$(RESULT_HAS_BACKTRACE_FUNCTIONS)" "1"
 endif
 
 # Set Compiler Flags
-CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -pthread $(INCLUDES)
+CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"

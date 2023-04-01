@@ -340,7 +340,7 @@ namespace decrypt::dvbapi {
 
 		// Send the collected PMT list
 		unsigned int i = 0;
-		for (const auto& [index, entry] : _capmtMap) {
+		for (const auto& [_, entry] : _capmtMap) {
 			++i;
 			if (i == 1) {
 				if (_capmtMap.size() == 1) {

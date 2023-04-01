@@ -210,8 +210,8 @@ void RtspServer::methodDescribe(
 	std::size_t streamsSetup = 0;
 
 	// Lambda Expression 'setupDescribeMediaLevelString'
-	const auto setupDescribeMediaLevelString = [&](const FeIndex feIndex) {
-		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(feIndex);
+	const auto setupDescribeMediaLevelString = [&](const FeIndex feIdx) {
+		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(feIdx);
 		if (mediaLevel.size() > 5) {
 			++streamsSetup;
 			desc += mediaLevel;

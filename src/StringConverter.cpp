@@ -243,7 +243,7 @@ std::string_view StringConverter::delsys_to_string(const input::InputSystem syst
 			return "dvbt2";
 		case input::InputSystem::CHILDPIPE:
 			return "childPIPE";
-		case input::InputSystem::FILE:
+		case input::InputSystem::FILE_SRC:
 			return "file";
 		case input::InputSystem::STREAMER:
 			return "streamer";

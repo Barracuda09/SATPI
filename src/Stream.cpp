@@ -269,7 +269,7 @@ bool Stream::update(int clientID) {
 				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTP/TCP", id);
 				_streaming.reset(new output::StreamThreadRtpTcp(*this));
 				break;
-			case StreamingType::FILE:
+			case StreamingType::FILE_SRC:
 				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: FILE", id);
 				_streaming.reset(new output::StreamThreadTSWriter(*this, "test.ts"));
 				break;

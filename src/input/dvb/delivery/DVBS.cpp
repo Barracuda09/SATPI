@@ -360,11 +360,11 @@ namespace input::dvb::delivery {
 				choice.erase(pos);
 			}
 			base::StringTokenizer tokenizerChoice(choice, "=");
-			std::string index;
+			std::string idx;
 			std::string name;
-			if (tokenizerChoice.isNextToken(index) &&
+			if (tokenizerChoice.isNextToken(idx) &&
 			    tokenizerChoice.isNextToken(name)) {
-				_choices[std::stoi(index) + offset] = name;
+				_choices[std::stoi(idx) + offset] = name;
 			}
 		}
 	}

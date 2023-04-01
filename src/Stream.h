@@ -56,7 +56,7 @@ class Stream :
 			RTSP_UNICAST,
 			RTSP_MULTICAST,
 			RTP_TCP,
-			FILE
+			FILE_SRC
 		};
 
 		// =======================================================================

@@ -129,14 +129,14 @@ bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall)
 
 bool TSReader::capableOf(const input::InputSystem system) const {
 	if (_enableUnsecureFrontends) {
-		return system == input::InputSystem::FILE;
+		return system == input::InputSystem::FILE_SRC;
 	}
 	return false;
 }
 
 bool TSReader::capableToTransform(const TransportParamVector& params) const {
 	const input::InputSystem system = _transform.getTransformationSystemFor(params);
-	return system == input::InputSystem::FILE;
+	return system == input::InputSystem::FILE_SRC;
 }
 
 bool TSReader::monitorSignal(bool UNUSED(showStatus)) {
