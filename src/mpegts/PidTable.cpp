@@ -34,6 +34,7 @@ PidTable::PidTable() {
 	}
 	_changed = false;
 	_totalCCErrors = 0;
+	_totalCCErrorsBegin = 0;
 }
 
 // =============================================================================
@@ -41,7 +42,7 @@ PidTable::PidTable() {
 // =============================================================================
 void PidTable::clear() {
 	_changed = false;
-	_totalCCErrors = 0;
+	_totalCCErrorsBegin = 0;
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		// Check PID still open.
 		// Then set PID not used, to handle and close them later
@@ -68,16 +69,8 @@ uint32_t PidTable::getCCErrors(const int pid) const {
 	return _data[pid].cc_error;
 }
 
-uint32_t PidTable::getTotalCCErrors() const {
-	return _totalCCErrors;
-}
-
 void PidTable::resetPIDTableChanged() {
 	_changed = false;
-}
-
-bool PidTable::hasPIDTableChanged() const {
-	return _changed;
 }
 
 std::string PidTable::getPidCSV() const {
@@ -106,6 +99,9 @@ void PidTable::addPIDData(const int pid, const uint8_t cc) {
 		++data.cc;
 		data.cc %= 0x10;
 		if (data.cc != cc) {
+			if (_totalCCErrorsBegin == 0) {
+				_totalCCErrorsBegin = _totalCCErrors;
+			}
 			int diff = cc - data.cc;
 			if (diff < 0) {
 				diff += 0x10;
@@ -143,10 +139,6 @@ void PidTable::setPID(const int pid, const bool use) {
 	}
 }
 
-bool PidTable::isPIDOpened(int pid) const {
-	return _data[pid].state == State::Opened;
-}
-
 bool PidTable::shouldPIDClose(const int pid) const {
 	return _data[pid].state == State::ShouldClose ||
 		_data[pid].state == State::ShouldCloseReopen;
@@ -177,10 +169,6 @@ void PidTable::setPIDOpened(const int pid) {
 
 void PidTable::setAllPID(const bool use) {
 	setPID(ALL_PIDS, use);
-}
-
-bool PidTable::isAllPID() const {
-	return _data[ALL_PIDS].state == State::Opened;
 }
 
 }

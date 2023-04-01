@@ -48,7 +48,9 @@ class PidTable {
 		void resetPIDTableChanged();
 
 		/// Check if the PID has changed
-		bool hasPIDTableChanged() const;
+		bool hasPIDTableChanged() const {
+			return _changed;
+		}
 
 		/// Get the amount of packet that were received of this pid
 		uint32_t getPacketCounter(int pid) const;
@@ -57,7 +59,9 @@ class PidTable {
 		uint32_t getCCErrors(int pid) const;
 
 		/// Get the total amount of Continuity Counter Error
-		uint32_t getTotalCCErrors() const;
+		uint32_t getTotalCCErrors() const {
+			return _totalCCErrors - _totalCCErrorsBegin;
+		}
 
 		/// Get the CSV of all the requested PID
 		std::string getPidCSV() const;
@@ -69,7 +73,9 @@ class PidTable {
 		void setPID(int pid, bool use);
 
 		/// Check if this pid is opened
-		bool isPIDOpened(int pid) const;
+		bool isPIDOpened(int pid) const {
+			return _data[pid].state == State::Opened;
+		}
 
 		/// Check if this pid should be closed
 		bool shouldPIDClose(int pid) const;
@@ -87,7 +93,9 @@ class PidTable {
 		void setAllPID(bool use);
 
 		/// Check if all PIDs (full Transport Stream) is on
-		bool isAllPID() const;
+		bool isAllPID() const {
+			return _data[ALL_PIDS].state == State::Opened;
+		}
 
 	protected:
 
@@ -122,6 +130,7 @@ class PidTable {
 			uint32_t count;    /// the number of times this pid occurred
 		};
 		uint32_t _totalCCErrors;
+		uint32_t _totalCCErrorsBegin;
 		bool _changed;
 		PidData _data[MAX_PIDS];
 };
