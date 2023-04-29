@@ -22,6 +22,7 @@
 
 #include <Defs.h>
 
+#include <cstdint>
 #include <string>
 #include <map>
 
