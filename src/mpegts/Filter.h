@@ -99,6 +99,13 @@ class Filter {
 			return _sdt;
 		}
 
+		///
+		void copyPidTable(const Filter &source) {
+			base::MutexLock lock(_mutex);
+			_pidTable = source._pidTable;
+			return;
+		}
+
 		// =========================================================================
 		// =========================================================================
 
