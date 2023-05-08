@@ -45,6 +45,7 @@ namespace upnp::ssdp {
 // =============================================================================
 
 Server::Server(
+		const int ssdpTTL,
 		const std::string &bindIPAddress,
 		const Properties &properties) :
 	XMLSupport(),
@@ -55,7 +56,8 @@ Server::Server(
 	_location("Not Set"),
 	_announceTimeSec(60),
 	_bootID(0),
-	_deviceID(1) {}
+	_deviceID(1),
+	_ttl(ssdpTTL) {}
 
 Server::~Server() {
 	cancelThread();
@@ -71,6 +73,7 @@ void Server::doAddToXML(std::string &xml) const {
 	ADD_XML_NUMBER_INPUT(xml, "annouceTime", _announceTimeSec, 0, 1800);
 	ADD_XML_ELEMENT(xml, "bootID", _bootID);
 	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
+	ADD_XML_ELEMENT(xml, "ttl", _ttl);
 	size_t i = 0;
 	for (auto server : servers) {
 		ADD_XML_N_ELEMENT(xml, "satipserver", i, server.second);
@@ -98,14 +101,15 @@ void Server::doFromXML(const std::string &xml) {
 
 void Server::threadEntry() {
 	incrementBootID();
-	SI_LOG_INFO("Setting up SSDP server with BOOTID: @#1  annouce interval: @#2 Sec", _bootID, _announceTimeSec);
+	SI_LOG_INFO("Setting up SSDP server with BOOTID: @#1  annouce interval: @#2 Sec  TTL: @#3",
+			_bootID, _announceTimeSec, _ttl);
 
 	// Get file and constuct new location
 	constructLocation();
 
 	SocketClient udpMultiSend;
 	SocketClient udpMultiListen;
-	initUDPSocket(udpMultiSend, "239.255.255.250", SSDP_PORT);
+	initUDPSocket(udpMultiSend, "239.255.255.250", SSDP_PORT, _ttl);
 	initMutlicastUDPSocket(udpMultiListen, "239.255.255.250", _bindIPAddress, SSDP_PORT);
 
 	std::time_t repeat_time = 0;
@@ -207,7 +211,7 @@ void Server::checkDefendDeviceID(
 	if (_deviceID == otherDeviceID) {
 		SI_LOG_INFO("Found SAT>IP Server @#1: with clashing DEVICEID @#2 defending", ip_addr, otherDeviceID);
 		SocketClient udpSend;
-		initUDPSocket(udpSend, ip_addr, SSDP_PORT);
+		initUDPSocket(udpSend, ip_addr, SSDP_PORT, _ttl);
 		// send message back
 		const char *UPNP_M_SEARCH =
 				"M-SEARCH * HTTP/1.1\r\n" \

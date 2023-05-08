@@ -93,6 +93,12 @@ class SocketAttr {
 		/// Set the Receive and Send timeout in Sec for this socket
 		void setSocketTimeoutInSec(unsigned int timeout);
 
+		/// Set the time-to-live value of outgoing multicast packets for this socket
+		bool setSocketMutlicastTTL(int ttl);
+
+		/// Set the time-to-live value of outgoing unicast packets for this socket
+		bool setSocketUnicastTTL(int ttl);
+
 		/// Get the file descriptor of this Socket
 		int getFD() const;
 

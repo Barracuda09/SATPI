@@ -43,15 +43,16 @@
 		updateEntry(InfoPage.rows[2].cells[1], appdata[0].getElementsByTagName('uuid')[0]);
 		updateEntry(InfoPage.rows[3].cells[1], ssdpdata[0].getElementsByTagName('bootID')[0]);
 		updateEntry(InfoPage.rows[4].cells[1], ssdpdata[0].getElementsByTagName('deviceID')[0]);
-		updateEntry(InfoPage.rows[5].cells[1], configdata[0].getElementsByTagName('ipaddress')[0].getElementsByTagName('value')[0]);
-		updateEntry(InfoPage.rows[6].cells[1], configdata[0].getElementsByTagName('rtspport')[0].getElementsByTagName('value')[0]);
+		updateEntry(InfoPage.rows[5].cells[1], ssdpdata[0].getElementsByTagName('ttl')[0]);
+		updateEntry(InfoPage.rows[6].cells[1], configdata[0].getElementsByTagName('ipaddress')[0].getElementsByTagName('value')[0]);
+		updateEntry(InfoPage.rows[7].cells[1], configdata[0].getElementsByTagName('rtspport')[0].getElementsByTagName('value')[0]);
 
-		if (InfoPage.rows[7].cells[1].innerText == "...") {
+		if (InfoPage.rows[8].cells[1].innerText == "...") {
 			let ip = configdata[0].getElementsByTagName('ipaddress')[0].getElementsByTagName('value')[0].innerHTML;
 			let port = configdata[0].getElementsByTagName('httpport')[0].getElementsByTagName('value')[0].innerHTML;
 			let xmldesc = configdata[0].getElementsByTagName('xmldesc')[0].getElementsByTagName('value')[0].innerHTML;
 			let link = 'http://' + ip + ':' + port + '/' + xmldesc;
-			InfoPage.rows[7].cells[1].innerHTML = '<a href="' + link + '" class="btn-info btn-sm" role="button">Show</a>';
+			InfoPage.rows[8].cells[1].innerHTML = '<a href="' + link + '" class="btn-info btn-sm" role="button">Show</a>';
 		}
 	}
 
@@ -99,6 +100,7 @@
 			<tr><td class=\"col-xs-1\">UUID</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1\">Boot ID</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1\">Device ID</td><td class="col-xs-2">...</td> </tr>
+			<tr><td class=\"col-xs-1\">SSDP TTL</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1\">IP Address</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1\">RTSP Port</td><td class="col-xs-2">...</td> </tr>
 			<tr><td class=\"col-xs-1 \">Satip Description XML</td><td class="col-xs-2">...</td> </tr>

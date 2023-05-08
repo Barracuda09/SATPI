@@ -197,6 +197,7 @@ static void printUsage(const char *prog_name) {
 		"\t--http-port <port>            set http port default 8875 (1024 - 65535)\r\n" \
 		"\t--rtsp-port <port>            set rtsp port default 554  ( 554 - 65535)\r\n" \
 		"\t--backtrace <file>            backtrace 'file'\r\n" \
+		"\t--ssdp-ttl <hops>             set the TTL that is used for SSDP server (1 - 15)\r\n" \
 		"\t--childpipe <number>          enabled number amount of Frontends 'Child PIPE - TS Reader' (0 - 25)\r\n" \
 		"\t--enable-unsecure-frontends   enable to use 'Child PIPE - TS Reader' in command directly\r\n" \
 		"\t--no-daemon                   do NOT daemonize\r\n" \
@@ -292,7 +293,7 @@ int main(int argc, char *argv[]) {
 				if (i + 1 < argc) {
 					++i;
 					params.rtspPort = std::stoi(argv[i]);
-					if (params.rtspPort <  Properties::RTSP_PORT_MIN ||
+					if (params.rtspPort < Properties::RTSP_PORT_MIN ||
 					    params.rtspPort > Properties::TCP_PORT_MAX) {
 						printUsage(argv[0]);
 						return EXIT_FAILURE;
@@ -309,6 +310,18 @@ int main(int argc, char *argv[]) {
 				}
 				printUsage(argv[0]);
 				return EXIT_FAILURE;
+			} else if (strcmp(argv[i], "--ssdp-ttl") == 0) {
+				if (i + 1 < argc) {
+					++i;
+					params.ssdpTTL = std::stoi(argv[i]);
+					if (params.ssdpTTL < 1 || params.ssdpTTL > 15) {
+						printUsage(argv[0]);
+						return EXIT_FAILURE;
+					}
+				} else {
+					printUsage(argv[0]);
+					return EXIT_FAILURE;
+				}
 			} else if (strcmp(argv[i], "--version") == 0) {
 				std::cout << "SatPI version: " << satpi_version << "\r\n";
 				return EXIT_SUCCESS;

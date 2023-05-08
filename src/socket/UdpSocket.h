@@ -46,12 +46,14 @@ class UdpSocket :
 
 		/// Initialize an UDP socket
 		/// @param server
+		/// @param ipAddr
 		/// @param port
-		/// @param s_addr
+		/// @param ttl
 		bool initUDPSocket(
 			SocketClient& server,
 			std::string_view ipAddr,
-			int port);
+			int port,
+			int ttl);
 
 		/// Initialize an Multicast UDP socket
 		/// @param server

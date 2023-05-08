@@ -50,6 +50,7 @@ class SatPI :
 			unsigned int rtspPort = 0;
 			int numberOfChildPIPE = 0;
 			bool enableUnsecureFrontends = false;
+			int ssdpTTL = 1;
 		};
 
 		// =====================================================================
@@ -59,7 +60,7 @@ class SatPI :
 
 		SatPI(const SatPI::Params &params);
 
-		virtual ~SatPI();
+		virtual ~SatPI() = default;
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------

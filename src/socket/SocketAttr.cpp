@@ -239,3 +239,19 @@
 		}
 		return true;
 	}
+
+	bool SocketAttr::setSocketMutlicastTTL(int ttl) {
+		if (::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) == -1) {
+			SI_LOG_PERROR("setsockopt: IP_MULTICAST_TTL");
+			return false;
+		}
+		return true;
+	}
+
+	bool SocketAttr::setSocketUnicastTTL(int ttl) {
+		if (::setsockopt(_fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
+			SI_LOG_PERROR("setsockopt: IP_MULTICAST_TTL");
+			return false;
+		}
+		return true;
+	}

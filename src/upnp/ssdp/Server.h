@@ -44,7 +44,7 @@ class Server :
 		// =====================================================================
 	public:
 
-		Server(const std::string &bindIPAddress, const Properties &properties);
+		Server(int ssdpTTL, const std::string &bindIPAddress, const Properties &properties);
 
 		virtual ~Server();
 
@@ -136,6 +136,7 @@ class Server :
 		std::size_t _announceTimeSec;
 		std::size_t _bootID;
 		std::size_t _deviceID;
+		int _ttl;
 };
 
 }

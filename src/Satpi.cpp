@@ -37,7 +37,7 @@ SatPI::SatPI(const SatPI::Params &params) :
 		_interface.getIPAddress(), params.httpPort, params.rtspPort),
 	_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
 	_rtspServer(_streamManager, _interface.getIPAddress()),
-	_ssdpServer(_interface.getIPAddress(), _properties) {
+	_ssdpServer(params.ssdpTTL, _interface.getIPAddress(), _properties) {
 	_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	//
@@ -58,8 +58,6 @@ SatPI::SatPI(const SatPI::Params &params) :
 		_ssdpServer.startThread();
 	}
 }
-
-SatPI::~SatPI() {}
 
 // =============================================================================
 // -- base::XMLSupport ---------------------------------------------------------

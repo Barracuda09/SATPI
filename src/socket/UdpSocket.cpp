@@ -31,7 +31,8 @@
 bool UdpSocket::initUDPSocket(
 		SocketClient& server,
 		const std::string_view ipAddr,
-		int port) {
+		int port,
+		int ttl) {
 	// fill in the socket structure with host information
 	server.setupSocketStructure(ipAddr, port);
 
@@ -39,6 +40,8 @@ bool UdpSocket::initUDPSocket(
 		SI_LOG_ERROR("UDP Server handle failed");
 		return false;
 	}
+	server.setSocketMutlicastTTL(ttl);
+	server.setSocketUnicastTTL(ttl);
 	return true;
 }
 
