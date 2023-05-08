@@ -24,6 +24,7 @@
 #include <FwDecl.h>
 #include <Log.h>
 #include <base/Mutex.h>
+#include <base/XMLSupport.h>
 #include <mpegts/NIT.h>
 #include <mpegts/PAT.h>
 #include <mpegts/PCR.h>
@@ -38,7 +39,8 @@ FW_DECL_NS1(mpegts, PacketBuffer);
 namespace mpegts {
 
 /// The class @c Filter carries the PID Tables
-class Filter {
+class Filter :
+	public base::XMLSupport {
 		// =========================================================================
 		//  -- Constructors and destructor -----------------------------------------
 		// =========================================================================
@@ -47,6 +49,17 @@ class Filter {
 		Filter();
 
 		virtual ~Filter() = default;
+
+		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
@@ -58,10 +71,8 @@ class Filter {
 
 		/// Parse the CSV PID string with requested PIDs and update @see PidTable
 		/// @param reqPids specifies the requested PIDs
-		/// @param userPids specifies the user defined PIDs
 		/// @param add specifies if true to open all the PIDs or false to close
-		void parsePIDString(const std::string &reqPids,
-			const std::string &userPids, const bool add);
+		void parsePIDString(const std::string &reqPids, bool add);
 
 		/// Add the filter data to MPEG Tables and
 		/// optionally purge TS packets from unused pids if filter is true
@@ -97,6 +108,12 @@ class Filter {
 		mpegts::SpSDT getSDTData() const {
 			base::MutexLock lock(_mutex);
 			return _sdt;
+		}
+
+		///
+		mpegts::SpNIT getNITData() const {
+			base::MutexLock lock(_mutex);
+			return _nit;
 		}
 
 		// =========================================================================
@@ -219,6 +236,8 @@ class Filter {
 		mutable mpegts::SpPAT _pat;
 		mutable mpegts::SpPCR _pcr;
 		mutable mpegts::SpSDT _sdt;
+		bool _filterPCR = false;
+		std::string _userPids;
 };
 
 }

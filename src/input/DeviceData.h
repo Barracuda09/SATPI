@@ -159,7 +159,6 @@ class DeviceData :
 		mpegts::Filter _filter;
 		mpegts::Generator _generator;
 		bool _internalPidFiltering;
-		std::string _userPids;
 
 		// =========================================================================
 		// -- Monitor Data members -------------------------------------------------

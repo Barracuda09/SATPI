@@ -38,6 +38,26 @@ void PMT::clear() {
 }
 
 // =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
+
+void PMT::doAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "serviceID", DIGIT(_programNumber, 6));
+	for (const auto &pid : _elementaryPID) {
+		ADD_XML_ELEMENT(xml, "elementaryPID", pid);
+	}
+	for (const auto &data : _ecmPID) {
+		std::string name = "caid_" + HEX(data.caid, 4);
+		ADD_XML_BEGIN_ELEMENT(xml, name);
+			ADD_XML_ELEMENT(xml, "ecmPID", data.ecmpid);
+			ADD_XML_ELEMENT(xml, "provid", data.provid);
+		ADD_XML_END_ELEMENT(xml, name);
+	}
+}
+
+void PMT::doFromXML(const std::string &UNUSED(xml)) {}
+
+// =============================================================================
 // -- Static member functions --------------------------------------------------
 // =============================================================================
 
@@ -144,6 +164,7 @@ void PMT::parse(const FeID id) {
 				if (_progInfo[i + 0u] == 0x09 && subLength > 0) {
 					const int caid   =  (_progInfo[i + 2u] << 8u)         | _progInfo[i + 3u];
 					const int ecmpid = ((_progInfo[i + 4u] & 0x1F) << 8u) | _progInfo[i + 5u];
+					_ecmPID.emplace_back(ECMData{caid, ecmpid, 0});
 					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - CAID: @#2  ECM-PID: @#3  ES-Length: @#4",
 						id, HEX(caid, 4), PID(ecmpid), DIGIT(subLength, 3));
 				}
@@ -170,7 +191,7 @@ void PMT::parse(const FeID id) {
 					const int caid   =  (ptr[j + i +  7u] << 8u) | ptr[j + i + 8u];
 					const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 					const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
-					_ecmPID.emplace_back(ecmpid);
+					_ecmPID.emplace_back(ECMData{caid, ecmpid, provid});
 					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - ECM-PID - CAID: @#2  ECM-PID: @#3  PROVID: @#4 ES-Length: @#5",
 						id, HEX(caid, 4), PID(ecmpid), HEX(provid, 6), DIGIT(subLength, 3));
 

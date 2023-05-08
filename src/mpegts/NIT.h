@@ -22,17 +22,19 @@
 
 #include <FwDecl.h>
 #include <base/M3UParser.h>
+#include <base/XMLSupport.h>
 #include <mpegts/TableData.h>
 
-#include <map>
 #include <string>
+#include <vector>
 
 FW_DECL_SP_NS1(mpegts, NIT);
 
 namespace mpegts {
 
 class NIT :
-	public TableData {
+	public TableData,
+	public base::XMLSupport {
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
 		// =========================================================================
@@ -50,6 +52,17 @@ class NIT :
 		virtual void clear() final;
 
 		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
+
+		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
 		// =========================================================================
 	public:
@@ -65,6 +78,23 @@ class NIT :
 	private:
 
 		uint16_t _nid = 0;
+		std::string _networkName;
+		struct Data {
+			uint16_t transportStreamID;
+			uint16_t originalNetworkID;
+			std::string freq;
+			std::string mtype;
+			std::string msys;
+			std::string srate;
+			std::string fec;
+			std::string fecOut;
+			std::string rolloff;
+			std::string inversion;
+			std::string pilot;
+			std::string pol;
+		};
+		std::vector<Data> _table;
+
 };
 
 }

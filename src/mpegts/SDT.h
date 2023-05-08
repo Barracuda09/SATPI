@@ -21,6 +21,7 @@
 #define MPEGTS_SDT_DATA_H_INCLUDE MPEGTS_SDT_DATA_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/XMLSupport.h>
 #include <mpegts/TableData.h>
 
 #include <map>
@@ -31,7 +32,8 @@ FW_DECL_SP_NS1(mpegts, SDT);
 namespace mpegts {
 
 class SDT :
-	public TableData {
+	public TableData,
+	public base::XMLSupport {
 		// =========================================================================
 		// -- Forward declaration --------------------------------------------------
 		// =========================================================================
@@ -54,6 +56,17 @@ class SDT :
 	public:
 
 		virtual void clear() final;
+
+		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
 		// =========================================================================
 		//  -- Other member functions ----------------------------------------------

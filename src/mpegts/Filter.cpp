@@ -40,6 +40,49 @@ Filter::Filter() {
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
 	_sdt = std::make_shared<SDT>();
+	_userPids = "0,1,16,17,18";
+}
+
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
+
+void Filter::doAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "pidcsv", getPidCSV());
+	ADD_XML_ELEMENT(xml, "totalCCErrors", getTotalCCErrors());
+	ADD_XML_CHECKBOX(xml, "filterPCR", (_filterPCR ? "true" : "false"));
+	ADD_XML_TEXT_INPUT(xml, "addUserPids", _userPids);
+
+	const SDT::Data sdtData = getSDTData()->getSDTDataFor(
+			getPMTData(0)->getProgramNumber());
+	ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
+	ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
+
+	ADD_XML_ELEMENT(xml, "pat", getPATData()->toXML());
+	for (const auto &[pid, pmt] : _pmtMap) {
+		ADD_XML_ELEMENT(xml, "pmt_" + DIGIT(pid, 4), pmt->toXML());
+	}
+	ADD_XML_ELEMENT(xml, "sdt", getSDTData()->toXML());
+	ADD_XML_ELEMENT(xml, "nit", getNITData()->toXML());
+}
+
+void Filter::doFromXML(const std::string &xml) {
+	std::string element;
+	if (findXMLElement(xml, "addUserPids.value", element)) {
+		if (element.size() > 0) {
+			if (element[0] == ',') {
+				element.erase(0, 1);
+			}
+			const auto s = element.size();
+			if (s > 0 && element[s - 1] == ',') {
+				element.erase(s - 1, 1);
+			}
+		}
+		_userPids = element;
+	}
+	if (findXMLElement(xml, "filterPCR.value", element)) {
+		_filterPCR = (element == "true") ? true : false;
+	}
 }
 
 // =============================================================================
@@ -56,8 +99,7 @@ void Filter::clear() {
 	_pidTable.clear();
 }
 
-void Filter::parsePIDString(const std::string &reqPids,
-	const std::string &userPids, const bool add) {
+void Filter::parsePIDString(const std::string &reqPids, const bool add) {
 	base::MutexLock lock(_mutex);
 	if (reqPids.find("all") != std::string::npos ||
 		reqPids.find("none") != std::string::npos) {
@@ -67,7 +109,7 @@ void Filter::parsePIDString(const std::string &reqPids,
 			_pidTable.setAllPID(add);
 		}
 	} else {
-		const std::string pidlist = reqPids + "," + userPids;
+		const std::string pidlist = reqPids + ((add) ? ("," + _userPids) : "");
 		StringVector pids = StringConverter::split(pidlist, ",");
 		for (const std::string &pid : pids) {
 			if (std::isdigit(pid[0]) != 0) {
@@ -188,7 +230,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 						}
 #endif
 					}
-				} else {
+				} else if (_filterPCR && PCR::isPCRTableData(ptr)) {
 					for (const auto &[_, pmt] : _pmtMap) {
 						const int pcrPID = pmt->getPCRPid();
 						if (pid == pcrPID && _pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {

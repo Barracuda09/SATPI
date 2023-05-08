@@ -37,7 +37,18 @@ class PCR {
 
 		PCR();
 
-		virtual ~PCR();
+		virtual ~PCR() = default;
+
+		// =========================================================================
+		//  -- Static member functions ---------------------------------------------
+		// =========================================================================
+	public:
+
+		/// This will check for 'adaptation field flag' and 'PCR field present' to
+		/// indicate this is an PCR table
+		static bool isPCRTableData(const unsigned char *data) {
+			return ((data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10);
+		}
 
 		// =========================================================================
 		//  -- Other member functions ----------------------------------------------

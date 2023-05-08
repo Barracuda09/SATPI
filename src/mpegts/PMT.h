@@ -21,6 +21,7 @@
 #define MPEGTS_PMT_DATA_H_INCLUDE MPEGTS_PMT_DATA_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/XMLSupport.h>
 #include <mpegts/TableData.h>
 
 #include <string>
@@ -31,7 +32,15 @@ FW_DECL_SP_NS1(mpegts, PMT);
 namespace mpegts {
 
 class PMT :
-	public TableData {
+	public TableData,
+	public base::XMLSupport {
+		// =========================================================================
+		// -- Forward declaration --------------------------------------------------
+		// =========================================================================
+	public:
+
+		struct ECMData;
+
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
 		// =========================================================================
@@ -58,6 +67,17 @@ class PMT :
 		virtual void clear() final;
 
 		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
+
+		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
 		// =========================================================================
 	public:
@@ -78,7 +98,7 @@ class PMT :
 			return _pcrPID;
 		}
 
-		std::vector<int> getECMPIDs() const {
+		std::vector<ECMData> getECMPIDs() const {
 			return _ecmPID;
 		}
 
@@ -93,13 +113,21 @@ class PMT :
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------
 		// =========================================================================
+	public:
+
+		struct ECMData {
+			int caid;
+			int ecmpid;
+			int provid;
+		};
+
 	private:
 
 		mpegts::TSData _progInfo;
 		uint16_t _programNumber = 0;
 		int _pcrPID = 0;
 		std::vector<int> _elementaryPID;
-		std::vector<int> _ecmPID;
+		std::vector<ECMData> _ecmPID;
 		std::size_t _prgLength = 0;
 		mutable bool _send = false;
 };

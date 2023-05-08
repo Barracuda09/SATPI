@@ -32,15 +32,12 @@ PCR::PCR() :
 	_pcrPrev(0),
 	_pcrDelta(0) {}
 
-PCR::~PCR() {}
-
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
 void PCR::collectData(const FeID UNUSED(id), const unsigned char *data) {
-	// Check for 'adaptation field flag' and 'PCR field present'
-	if ((data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10) {
+	if (isPCRTableData(data)) {
 		//        4           3          2          1          0
 		// 76543210 98765432 10987654 32109876 54321098 76543210
 		// xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xRRRRRRx xxxxxxxx

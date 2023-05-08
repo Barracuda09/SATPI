@@ -36,6 +36,18 @@ void PAT::clear() {
 }
 
 // =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
+
+void PAT::doAddToXML(std::string &xml) const {
+	for (const auto &[pid, _] : _pmtPidTable) {
+		ADD_XML_ELEMENT(xml, "pmt", pid);
+	}
+}
+
+void PAT::doFromXML(const std::string &UNUSED(xml)) {}
+
+// =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
@@ -69,14 +81,6 @@ void PAT::parse(const FeID id) {
 			}
 		}
 	}
-}
-
-bool PAT::isMarkedAsPMT(int pid) const {
-	const auto s = _pmtPidTable.find(pid);
-	if (s != _pmtPidTable.end()) {
-		return s->second;
-	}
-	return false;
 }
 
 mpegts::TSData PAT::generateFrom(

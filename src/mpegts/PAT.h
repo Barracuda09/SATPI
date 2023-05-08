@@ -22,6 +22,7 @@
 
 #include <FwDecl.h>
 #include <base/M3UParser.h>
+#include <base/XMLSupport.h>
 #include <mpegts/TableData.h>
 
 #include <string>
@@ -32,7 +33,8 @@ FW_DECL_SP_NS1(mpegts, PAT);
 namespace mpegts {
 
 class PAT :
-	public TableData {
+	public TableData,
+	public base::XMLSupport {
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
 		// =========================================================================
@@ -50,13 +52,30 @@ class PAT :
 		virtual void clear() final;
 
 		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
+
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
+
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
+
+		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
 		// =========================================================================
 	public:
 
 		void parse(FeID id);
 
-		bool isMarkedAsPMT(int pid) const;
+		bool isMarkedAsPMT(const int pid) const {
+			const auto s = _pmtPidTable.find(pid);
+			if (s != _pmtPidTable.end()) {
+				return s->second;
+			}
+			return false;
+		}
 
 		TSData generateFrom(
 				FeID id, const base::M3UParser::TransformationMap &info);

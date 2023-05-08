@@ -68,7 +68,6 @@
 				page += addTableLineEntry("Tune Frequency (kHz)", xmlDoc, streamID + "tunefreq");
 				page += addTableLineEntry("Modulation", xmlDoc, streamID + "modulation");
 				page += addTableLineEntry("Fec", xmlDoc, streamID + "fec");
-				page += addTableLineEntry("PID", xmlDoc, streamID + "pidcsv");
 				page += addTableLineEntry("Symbol Rate", xmlDoc, streamID + "tunesymbol");
 				page += addTableLineEntry("Rolloff", xmlDoc, streamID + "rolloff");
 				page += addTableLineEntry("Source", xmlDoc, streamID + "src");
@@ -80,6 +79,10 @@
 				page += addTableLineEntry("snr", xmlDoc, streamID + "snr");
 				page += addTableLineEntry("ber", xmlDoc, streamID + "ber");
 				page += addTableLineEntry("unc", xmlDoc, streamID + "unc");
+			}
+			var filter = visibleStream.getElementsByTagName("filter");
+			if (filter.length > 0) {
+				page += addTableLineEntry("PID", xmlDoc, streamID + "pidcsv");
 				page += addTableLineEntry("CC Errors", xmlDoc, streamID + "totalCCErrors");
 			}
 
@@ -87,6 +90,7 @@
 			page += addTableLineEntry("DVR Buffer (MB)", xmlDoc, streamID + "dvrbuffer");
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 			page += addTableLineEntry("Internal Software Pid Filtering", xmlDoc, streamID + "internalPidFiltering");
+			page += addTableLineEntry("Filter PCR for timing", xmlDoc, streamID + "filterPCR");
 			page += addTableLineEntry("Wait On Tuning Lock Timeout (ms)", xmlDoc, streamID + "waitOnLockTimeout");
 			page += addTableLineEntry("Turn off LNB Voltage during teardown", xmlDoc, streamID + "turnoffLNBPower");
 			page += addTableLineEntry("Enable slightly higher LNB Voltage", xmlDoc, streamID + "higherLnbVoltage");

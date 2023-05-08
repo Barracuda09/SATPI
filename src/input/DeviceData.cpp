@@ -38,7 +38,6 @@ DeviceData::DeviceData() {
 	_ber = 0;
 	_ublocks = 0;
 	_ublocks = 0;
-	_userPids = "0,1,16,17,18";
 }
 
 // =============================================================================
@@ -46,11 +45,6 @@ DeviceData::DeviceData() {
 // =============================================================================
 
 void DeviceData::doAddToXML(std::string &xml) const {
-	const mpegts::SDT::Data sdtData = _filter.getSDTData()->getSDTDataFor(
-			_filter.getPMTData(0)->getProgramNumber());
-	ADD_XML_ELEMENT(xml, "channelname", sdtData.channelNameUTF8);
-	ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
-
 	// Monitor
 	ADD_XML_ELEMENT(xml, "status", _status);
 	ADD_XML_ELEMENT(xml, "signal", _strength);
@@ -61,9 +55,7 @@ void DeviceData::doAddToXML(std::string &xml) const {
 	if (capableOfInternalFiltering()) {
 		ADD_XML_CHECKBOX(xml, "internalPidFiltering", (_internalPidFiltering ? "true" : "false"));
 	}
-	ADD_XML_ELEMENT(xml, "pidcsv", _filter.getPidCSV());
-	ADD_XML_ELEMENT(xml, "totalCCErrors", _filter.getTotalCCErrors());
-	ADD_XML_TEXT_INPUT(xml, "addUserPids", _userPids);
+	ADD_XML_ELEMENT(xml, "filter", _filter.toXML());
 
 	doNextAddToXML(xml);
 }
@@ -74,17 +66,8 @@ void DeviceData::doFromXML(const std::string &xml) {
 	if (capableOfInternalFiltering() && findXMLElement(xml, "internalPidFiltering.value", element)) {
 		_internalPidFiltering = (element == "true") ? true : false;
 	}
-	if (findXMLElement(xml, "addUserPids.value", element)) {
-		if (element.size() > 0) {
-			if (element[0] == ',') {
-				element.erase(0, 1);
-			}
-			const auto s = element.size();
-			if (s > 0 && element[s - 1] == ',') {
-				element.erase(s - 1, 1);
-			}
-		}
-		_userPids = element;
+	if (findXMLElement(xml, "filter", element)) {
+		_filter.fromXML(element);
 	}
 	doNextFromXML(xml);
 }
@@ -169,15 +152,15 @@ bool DeviceData::hasDeviceDataChanged() const {
 void DeviceData::parseAndUpdatePidsTable(const TransportParamVector& params) {
 	const std::string pidsList = params.getParameter("pids");
 	if (!pidsList.empty()) {
-		_filter.parsePIDString(pidsList, _userPids, true);
+		_filter.parsePIDString(pidsList, true);
 	}
 	const std::string addpidsList = params.getParameter("addpids");
 	if (!addpidsList.empty()) {
-		_filter.parsePIDString(addpidsList, _userPids, true);
+		_filter.parsePIDString(addpidsList, true);
 	}
 	const std::string delpidsList = params.getParameter("delpids");
 	if (!delpidsList.empty()) {
-		_filter.parsePIDString(delpidsList, "", false);
+		_filter.parsePIDString(delpidsList, false);
 	}
 }
 
