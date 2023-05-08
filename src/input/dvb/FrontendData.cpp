@@ -178,6 +178,10 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_pol = Lnb::Polarization::Horizontal;
 		} else if (pol == "v") {
 			_pol = Lnb::Polarization::Vertical;
+		} else if (pol == "l") {
+			_pol = Lnb::Polarization::CircularLeft;
+		} else if (pol == "r") {
+			_pol = Lnb::Polarization::CircularRight;
 		}
 	}
 	_src = 1; // default value

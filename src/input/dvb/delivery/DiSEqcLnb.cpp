@@ -65,7 +65,7 @@ namespace input::dvb::delivery {
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
 		// Set LNB
-		const auto v = (pol == Lnb::Polarization::Vertical) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
+		const auto v = (pol == Lnb::Polarization::Vertical || pol == Lnb::Polarization::CircularRight) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
 		if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
 			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
 			return false;
