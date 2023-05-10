@@ -201,7 +201,9 @@ void NIT::parse(const FeID id) {
 				switch (tag) {
 					case 0x40: { // networkNameDescriptor
 						while (index < descLenEnd) {
-							_networkName += static_cast<char>(getByte(index, data));
+							if (const char c = static_cast<char>(getByte(index, data)); c > 0) {
+								_networkName += c;
+							}
 						}
 						SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, NIT - Network Name Descriptor: @#2", id, _networkName);
 						break;
