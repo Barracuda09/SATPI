@@ -20,14 +20,13 @@
 #ifndef INPUT_DVB_DELIVERY_LNB_H_INCLUDE
 #define INPUT_DVB_DELIVERY_LNB_H_INCLUDE INPUT_DVB_DELIVERY_LNB_H_INCLUDE
 
+#include <Defs.h>
 #include <FwDecl.h>
 #include <base/XMLSupport.h>
 
 #include <cstdint>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 /// The class @c Lnb specifies which type of LNB is connected
 class Lnb :
@@ -72,7 +71,7 @@ class Lnb :
 		// =======================================================================
 	public:
 
-		void getIntermediateFrequency(uint32_t &freq,
+		void getIntermediateFrequency(FeID id, uint32_t &freq,
 			bool &hiband, Polarization pol) const;
 
 		// =======================================================================
@@ -92,8 +91,6 @@ class Lnb :
 		uint32_t _lofHigh;
 };
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_DELIVERY_LNB_H_INCLUDE

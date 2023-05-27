@@ -120,6 +120,7 @@
 				var diseqc = visibleStream.getElementsByTagName("diseqc");
 				if (diseqc.length > 0) {
 					page += addTableLineEntry("Switch Type", xmlDoc, streamID + "switchType");
+					page += addTableLineEntry("Number of Switch Inputs", xmlDoc, streamID + "numberOfInputs");
 					page += addTableLineEntry("Repeat DiSEqC", xmlDoc, streamID + "diseqc_repeat");
 					page += addTableLineEntry("Channel Freq (MHz)", xmlDoc, streamID + "chFreq");
 					page += addTableLineEntry("Channel Slot (0-32)", xmlDoc, streamID + "chSlot");
@@ -131,7 +132,7 @@
 			var lnb = visibleStream.getElementsByTagName("lnbtype");
 			if (lnb.length > 0) {
 				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">LNB Configuration</th></tr>";
-				for (var i = 0; i < lnb.length; i++) {
+				for (var i = 1; i <= lnb.length; i++) {
 					page += "<tr class=\"\"><th colspan=\"" + (streams.length+1) + "\">LNB " + i + "</th></tr>";
 					var lnbt = streamID + "lnb" + i + " ";
 					page += addTableLineEntry("Lof High (MHz)", xmlDoc, lnbt + "lofHigh");
@@ -182,7 +183,7 @@
 				content = href.substr(1, href.length);
 				updatePage();
 			});
-
+			// check if we have #stream2
 			var hash = location.hash;
 			if (hash.length > 0) {
 				// remove # from URL hash
@@ -191,7 +192,7 @@
 				$(showTab).tab('show');
 				updatePage();
 			} else {
-				content = "stream1";
+				content = 'stream1';
 			}
 		}
 		if (autoload == 1) {

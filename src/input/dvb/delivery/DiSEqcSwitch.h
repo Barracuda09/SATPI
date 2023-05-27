@@ -26,6 +26,7 @@
 #include <input/dvb/delivery/Lnb.h>
 
 #include <cstdint>
+#include <vector>
 
 namespace input::dvb::delivery {
 
@@ -74,7 +75,8 @@ namespace input::dvb::delivery {
 				UNCOMMITTED,
 				CASCADE
 			};
-			Lnb _lnb;
+			std::vector<Lnb> _lnb{1};
+			int _numberOfInputs = 1;
 			uint8_t _addressByte = 0x10;
 			uint8_t _commandByte = 0x38;
 			SwitchType _switchType = SwitchType::COMMITTED;

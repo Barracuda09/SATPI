@@ -31,14 +31,18 @@
 
 namespace input::dvb::delivery {
 
-	// =======================================================================
-	// -- input::dvb::delivery::DiSEqc ---------------------------------------
-	// =======================================================================
+	// ===========================================================================
+	// -- input::dvb::delivery::DiSEqc -------------------------------------------
+	// ===========================================================================
 
 	bool DiSEqcSwitch::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
 			const int src, const Lnb::Polarization pol) {
 		bool hiband = false;
-		_lnb.getIntermediateFrequency(freq, hiband, pol);
+		if (src > _numberOfInputs) {
+			_lnb[0].getIntermediateFrequency(id, freq, hiband, pol);
+		} else {
+			_lnb[src].getIntermediateFrequency(id, freq, hiband, pol);
+		}
 
 		// Framing 0xe0: Command from Master, No reply required, First transmission
 		// -------------------------------------------------------------------------
@@ -138,7 +142,10 @@ namespace input::dvb::delivery {
 			ADD_XML_ELEMENT(xml, "option2", "Cascade");
 			ADD_XML_END_ELEMENT(xml, "list");
 		ADD_XML_END_ELEMENT(xml, "switchType");
-		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
+		ADD_XML_NUMBER_INPUT(xml, "numberOfInputs", _numberOfInputs, 1, 16);
+		for (int i = 0; i < _numberOfInputs; ++i) {
+			ADD_XML_N_ELEMENT(xml, "lnb", i + 1, _lnb[i].toXML());
+		}
 	}
 
 	void DiSEqcSwitch::doNextFromXML(const std::string &xml) {
@@ -162,8 +169,15 @@ namespace input::dvb::delivery {
 					SI_LOG_ERROR("Frontend: x, Wrong Switch Type requested, not changing");
 			}
 		}
-		if (findXMLElement(xml, "lnb0", element)) {
-			_lnb.fromXML(element);
+		if (findXMLElement(xml, "numberOfInputs.value", element)) {
+			const int n = std::stoi(element);
+			_numberOfInputs = (n > 0) ? n : 1;
+			_lnb.resize(_numberOfInputs);
+		}
+		for (int i = 0; i < _numberOfInputs; ++i) {
+			if (findXMLElement(xml, "lnb" + i + 1, element)) {
+				_lnb[i].fromXML(element);
+			}
 		}
 	}
 

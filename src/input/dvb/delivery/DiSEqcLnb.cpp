@@ -38,7 +38,7 @@ namespace input::dvb::delivery {
 	bool DiSEqcLnb::sendDiseqc(const int feFD, const FeID id, uint32_t &freq,
 			const int src, const Lnb::Polarization pol) {
 		bool hiband = false;
-		_lnb.getIntermediateFrequency(freq, hiband, pol);
+		_lnb.getIntermediateFrequency(id, freq, hiband, pol);
 
 		SI_LOG_INFO("Frontend: @#1, Sending LNB: Mini-Switch Src: @#2", id, src);
 
@@ -80,12 +80,12 @@ namespace input::dvb::delivery {
 	}
 
 	void DiSEqcLnb::doNextAddToXML(std::string &xml) const {
-		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
+		ADD_XML_N_ELEMENT(xml, "lnb", 1, _lnb.toXML());
 	}
 
 	void DiSEqcLnb::doNextFromXML(const std::string &xml) {
 		std::string element;
-		if (findXMLElement(xml, "lnb0", element)) {
+		if (findXMLElement(xml, "lnb1", element)) {
 			_lnb.fromXML(element);
 		}
 	}

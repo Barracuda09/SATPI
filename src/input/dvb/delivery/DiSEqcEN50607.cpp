@@ -48,7 +48,7 @@ namespace input::dvb::delivery {
 			int src, Lnb::Polarization pol) {
 
 		bool hiband = false;
-		_lnb.getIntermediateFrequency(freq, hiband, pol);
+		_lnb.getIntermediateFrequency(id, freq, hiband, pol);
 
 		// Calulate T
 		const uint32_t t = (freq / 1000.0) - 100.0;
@@ -83,7 +83,7 @@ namespace input::dvb::delivery {
 		ADD_XML_NUMBER_INPUT(xml, "chFreq", _chFreq, 0, 2150);
 		ADD_XML_NUMBER_INPUT(xml, "chSlot", _chSlot, 0, 31);
 		ADD_XML_NUMBER_INPUT(xml, "pin", _pin, 0, 256);
-		ADD_XML_N_ELEMENT(xml, "lnb", 0, _lnb.toXML());
+		ADD_XML_N_ELEMENT(xml, "lnb", 1, _lnb.toXML());
 	}
 
 	void DiSEqcEN50607::doNextFromXML(const std::string &xml) {
@@ -97,7 +97,7 @@ namespace input::dvb::delivery {
 		if (findXMLElement(xml, "pin.value", element)) {
 			_pin = std::stoi(element);
 		}
-		if (findXMLElement(xml, "lnb0", element)) {
+		if (findXMLElement(xml, "lnb1", element)) {
 			_lnb.fromXML(element);
 		}
 	}

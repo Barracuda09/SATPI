@@ -27,9 +27,7 @@
 
 #include <stdint.h>
 
-namespace input {
-namespace dvb {
-namespace delivery {
+namespace input::dvb::delivery {
 
 	/// The class @c DiSEqcLnb specifies which type of DiSEqc LNB is connected
 	class DiSEqcLnb :
@@ -67,8 +65,6 @@ namespace delivery {
 			Lnb _lnb;
 	};
 
-} // namespace delivery
-} // namespace dvb
-} // namespace input
+}
 
 #endif // INPUT_DVB_DELIVERY_DISEQCLNB_H_INCLUDE
