@@ -6,4 +6,4 @@ open_collective: # Replace with a single Open Collective username
 ko_fi: # Replace with a single Ko-fi username
 tidelift: # Replace with a single Tidelift platform-name/package-name e.g., npm/babel
 community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
-custom: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=H9AX9N7HWSWXE&item_name=SatPI&item_number=SatPI&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
+custom: custom: ["https://www.paypal.com/donate/?business=H9AX9N7HWSWXE&no_recurring=0&item_name=If+you+use+and+like+SatPI%2C+please+consider+making+a+donation+for+my+effort+in+creating+it+and+make+it+beter.+Thanks%21&currency_code=EUR", SatPI]
