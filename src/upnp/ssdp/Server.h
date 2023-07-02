@@ -79,13 +79,15 @@ class Server :
 		void sendSATIPClientDiscoverResponse(
 			SocketClient& udpMultiSend,
 			struct sockaddr_in& si_other,
-			const std::string& ip_addr);
+			const std::string& ip_addr,
+			const std::string& userAgent);
 
 		///
 		void sendRootDeviceDiscoverResponse(
 			SocketClient& udpMultiSend,
 			struct sockaddr_in& si_other,
-			const std::string& ip_addr);
+			const std::string& ip_addr,
+			const std::string& userAgent);
 
 		///
 		void sendDiscoverResponse(
@@ -96,7 +98,8 @@ class Server :
 		///
 		void checkDefendDeviceID(
 			unsigned int otherDeviceID,
-			std::string_view ip_addr);
+			std::string_view ip_addr,
+			const std::string& server);
 
 		///
 		void sendGiveUpDeviceID(
@@ -126,7 +129,7 @@ class Server :
 	private:
 		using ServerMap = std::map<int, std::string>;
 
-		ServerMap servers;
+		ServerMap _servers;
 
 		base::Mutex _mutex;
 		const Properties &_properties;

@@ -75,7 +75,7 @@ void Server::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
 	ADD_XML_ELEMENT(xml, "ttl", _ttl);
 	size_t i = 0;
-	for (auto server : servers) {
+	for (auto server : _servers) {
 		ADD_XML_N_ELEMENT(xml, "satipserver", i, server.second);
 		++i;
 	}
@@ -186,18 +186,22 @@ void Server::checkReply(
 			if (!deviceID.empty() && usn.find("SatIPServer:1") != std::string::npos) {
 				// check server found with clashing DEVICEID? we should defend it!!
 				// get device id of other
+				StringVector server = StringConverter::split(headers.getFieldParameter("SERVER"), " ");
 				const unsigned int otherDeviceID = std::stoi(deviceID);
-				checkDefendDeviceID(otherDeviceID, ipAddress);
+				checkDefendDeviceID(otherDeviceID, ipAddress, (server.size() >= 2) ? server[2] : "Unkown");
 			}
 		} else if (method == "M-SEARCH") {
 			if (!deviceID.empty()) {
 				// someone contacted us, so this should mean we have the same DEVICEID
 				sendGiveUpDeviceID(udpMultiSend, si_other, ipAddress);
 			} else if (!st.empty()) {
+				StringVector userAgent = StringConverter::split(headers.getFieldParameter("USER-AGENT"), " ");
 				if (st == "urn:ses-com:device:SatIPServer:1") {
-					sendSATIPClientDiscoverResponse(udpMultiSend, si_other, ipAddress);
+					sendSATIPClientDiscoverResponse(
+						udpMultiSend, si_other, ipAddress, (userAgent.size() >= 2) ? userAgent[2] : "Unkown");
 				} else if (st == "upnp:rootdevice") {
-					sendRootDeviceDiscoverResponse(udpMultiSend, si_other, ipAddress);
+					sendRootDeviceDiscoverResponse(
+						udpMultiSend, si_other, ipAddress, (userAgent.size() >= 2) ? userAgent[2] : "Unkown");
 				}
 			}
 		}
@@ -206,10 +210,11 @@ void Server::checkReply(
 
 void Server::checkDefendDeviceID(
 		unsigned int otherDeviceID,
-		const std::string_view ip_addr) {
+		const std::string_view ip_addr,
+		const std::string& server) {
 	// check server found with clashing DEVICEID? we should defend it!!
 	if (_deviceID == otherDeviceID) {
-		SI_LOG_INFO("Found SAT>IP Server @#1: with clashing DEVICEID @#2 defending", ip_addr, otherDeviceID);
+		SI_LOG_INFO("Found SAT>IP Server @#1 [@#2]: with clashing DEVICEID @#3 defending", ip_addr, server, otherDeviceID);
 		SocketClient udpSend;
 		initUDPSocket(udpSend, ip_addr, SSDP_PORT, _ttl);
 		// send message back
@@ -229,9 +234,9 @@ void Server::checkDefendDeviceID(
 		if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
 			SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 		}
-	} else if (servers.find(otherDeviceID) == servers.end()) {
-		SI_LOG_INFO("Found SAT>IP Server @#1: with DEVICEID @#2", ip_addr, otherDeviceID);
-		servers[otherDeviceID] = ip_addr;
+	} else if (_servers.find(otherDeviceID) == _servers.end()) {
+		SI_LOG_INFO("Found SAT>IP Server @#1 [@#2]: with DEVICEID @#3", ip_addr, server, otherDeviceID);
+		_servers[otherDeviceID] = StringConverter::stringFormat("@#1 [@#2]", ip_addr, server);
 	}
 }
 
@@ -278,8 +283,9 @@ void Server::sendGiveUpDeviceID(
 void Server::sendSATIPClientDiscoverResponse(
 		SocketClient& udpMultiSend,
 		sockaddr_in &si_other,
-		const std::string &ip_addr) {
-	SI_LOG_INFO("SAT>IP Client @#1 : tries to discover the network, sending reply back", ip_addr);
+		const std::string &ip_addr,
+		const std::string& userAgent) {
+	SI_LOG_INFO("SAT>IP Client @#1 [@#2]: tries to discover the network, sending reply back", ip_addr, userAgent);
 
 	sendDiscoverResponse(udpMultiSend, "urn:ses-com:device:SatIPServer:1", si_other);
 }
@@ -287,8 +293,9 @@ void Server::sendSATIPClientDiscoverResponse(
 void Server::sendRootDeviceDiscoverResponse(
 		SocketClient& udpMultiSend,
 		sockaddr_in &si_other,
-		const std::string &ip_addr) {
-	SI_LOG_INFO("Root Device Client @#1 : tries to discover the network, sending reply back", ip_addr);
+		const std::string &ip_addr,
+		const std::string& userAgent) {
+	SI_LOG_INFO("Root Device Client @#1 [@#2]: tries to discover the network, sending reply back", ip_addr, userAgent);
 
 	sendDiscoverResponse(udpMultiSend, "upnp:rootdevice", si_other);
 }
