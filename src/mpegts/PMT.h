@@ -99,7 +99,7 @@ class PMT :
 		}
 
 		std::vector<ECMData> getECMPIDs() const {
-			return _ecmPID;
+			return _pmtData.ecmPID;
 		}
 
 		bool isReadySend() const {
@@ -121,13 +121,23 @@ class PMT :
 			int provid;
 		};
 
+		struct ESData {
+			int pid;
+			int streamType;
+		};
+
+		struct PMTData {
+			int pid;
+			std::vector<ECMData> ecmPID;
+			std::vector<ESData>  esPID;
+		};
+
 	private:
 
 		mpegts::TSData _progInfo;
 		uint16_t _programNumber = 0;
 		int _pcrPID = 0;
-		std::vector<int> _elementaryPID;
-		std::vector<ECMData> _ecmPID;
+		PMTData _pmtData;
 		std::size_t _prgLength = 0;
 		mutable bool _send = false;
 };

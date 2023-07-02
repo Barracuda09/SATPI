@@ -42,11 +42,11 @@ void SDT::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "transportStreamID", _transportStreamID);
 	ADD_XML_ELEMENT(xml, "networkID", _networkID);
 	for (const auto &[serviceID, sdtData] : _sdtTable) {
-		std::string name = "serviceID_" + DIGIT(serviceID, 6);
-		ADD_XML_BEGIN_ELEMENT(xml, name);
+		ADD_XML_BEGIN_ELEMENT(xml, "service");
+			ADD_XML_ELEMENT(xml, "serviceID", DIGIT(serviceID, 6));
 			ADD_XML_ELEMENT(xml, "networkName", sdtData.networkNameUTF8);
 			ADD_XML_ELEMENT(xml, "channelName", sdtData.channelNameUTF8);
-		ADD_XML_END_ELEMENT(xml, name);
+		ADD_XML_END_ELEMENT(xml, "service");
 	}
 }
 

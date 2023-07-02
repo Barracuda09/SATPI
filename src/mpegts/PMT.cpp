@@ -32,8 +32,9 @@ void PMT::clear() {
 	_prgLength = 0;
 	_send = false;
 	_progInfo.clear();
-	_elementaryPID.clear();
-	_ecmPID.clear();
+	_pmtData.pid = 0;
+	_pmtData.ecmPID.clear();
+	_pmtData.esPID.clear();
 	TableData::clear();
 }
 
@@ -42,11 +43,15 @@ void PMT::clear() {
 // =============================================================================
 
 void PMT::doAddToXML(std::string &xml) const {
+	ADD_XML_ELEMENT(xml, "pid", _pmtData.pid);
 	ADD_XML_ELEMENT(xml, "serviceID", DIGIT(_programNumber, 6));
-	for (const auto &pid : _elementaryPID) {
-		ADD_XML_ELEMENT(xml, "elementaryPID", pid);
+	for (const auto &data : _pmtData.esPID) {
+		ADD_XML_BEGIN_ELEMENT(xml, "elementary");
+			ADD_XML_ELEMENT(xml, "pid", data.pid);
+			ADD_XML_ELEMENT(xml, "streamtype", data.streamType);
+		ADD_XML_END_ELEMENT(xml, "elementary");
 	}
-	for (const auto &data : _ecmPID) {
+	for (const auto &data : _pmtData.ecmPID) {
 		std::string name = "caid_" + HEX(data.caid, 4);
 		ADD_XML_BEGIN_ELEMENT(xml, name);
 			ADD_XML_ELEMENT(xml, "ecmPID", data.ecmpid);
@@ -148,8 +153,8 @@ void PMT::parse(const FeID id) {
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
 
+		_pmtData.pid = tableData.pid;
 //		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PMT data", id);
-
 		SI_LOG_INFO("Frontend: @#1, PMT - PID: @#2 - Section Length: @#3  Prog NR: @#4  Version: @#5  secNr: @#6  lastSecNr: @#7  PCR-PID: @#8  Program Length: @#9  CRC: @#10",
 			id, PID(tableData.pid), DIGIT(tableData.sectionLength, 4), DIGIT(_programNumber, 5), tableData.version,
 			tableData.secNr, tableData.lastSecNr, PID(_pcrPID), _prgLength, HEX(tableData.crc, 4));
@@ -164,7 +169,7 @@ void PMT::parse(const FeID id) {
 				if (_progInfo[i + 0u] == 0x09 && subLength > 0) {
 					const int caid   =  (_progInfo[i + 2u] << 8u)         | _progInfo[i + 3u];
 					const int ecmpid = ((_progInfo[i + 4u] & 0x1F) << 8u) | _progInfo[i + 5u];
-					_ecmPID.emplace_back(ECMData{caid, ecmpid, 0});
+					_pmtData.ecmPID.emplace_back(ECMData{caid, ecmpid, 0});
 					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - CAID: @#2  ECM-PID: @#3  ES-Length: @#4",
 						id, HEX(caid, 4), PID(ecmpid), DIGIT(subLength, 3));
 				}
@@ -181,7 +186,7 @@ void PMT::parse(const FeID id) {
 			const int streamType    =   ptr[i + 0u];
 			const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];
 			const std::size_t esInfoLength  = ((ptr[i + 3u] & 0x0F) << 8u) | ptr[i + 4u];
-			_elementaryPID.emplace_back(elementaryPID);
+			_pmtData.esPID.emplace_back(ESData{elementaryPID, streamType});
 			SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - Stream Type: @#2  ES PID: @#3  ES-Length: @#4",
 				id, DIGIT(streamType, 2), PID(elementaryPID), DIGIT(esInfoLength, 3));
 			for (std::size_t j = 0u; j < esInfoLength; ) {
@@ -191,7 +196,7 @@ void PMT::parse(const FeID id) {
 					const int caid   =  (ptr[j + i +  7u] << 8u) | ptr[j + i + 8u];
 					const int ecmpid = ((ptr[j + i +  9u] & 0x1F) << 8u) | ptr[j + i + 10u];
 					const int provid = ((ptr[j + i + 11u] & 0x1F) << 8u) | ptr[j + i + 12u];
-					_ecmPID.emplace_back(ECMData{caid, ecmpid, provid});
+					_pmtData.ecmPID.emplace_back(ECMData{caid, ecmpid, 0});
 					SB_LOG_INFO(MPEGTS_TABLES, "Frontend: @#1, PMT - ECM-PID - CAID: @#2  ECM-PID: @#3  PROVID: @#4 ES-Length: @#5",
 						id, HEX(caid, 4), PID(ecmpid), HEX(provid, 6), DIGIT(subLength, 3));
 
