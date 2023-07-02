@@ -149,18 +149,21 @@ bool DeviceData::hasDeviceDataChanged() const {
 	return _changed;
 }
 
-void DeviceData::parseAndUpdatePidsTable(const TransportParamVector& params) {
+void DeviceData::parseAndUpdatePidsTable(FeID id, const TransportParamVector& params) {
 	const std::string pidsList = params.getParameter("pids");
 	if (!pidsList.empty()) {
-		_filter.parsePIDString(pidsList, true);
+		SI_LOG_DEBUG("Frontend: @#1, Parsing PID parameter: pids=@#2", id, pidsList);
+		_filter.parsePIDString(id, pidsList, true);
 	}
 	const std::string addpidsList = params.getParameter("addpids");
 	if (!addpidsList.empty()) {
-		_filter.parsePIDString(addpidsList, true);
+		SI_LOG_DEBUG("Frontend: @#1, Parsing PID parameter: addpids=@#2", id, addpidsList);
+		_filter.parsePIDString(id, addpidsList, true);
 	}
 	const std::string delpidsList = params.getParameter("delpids");
 	if (!delpidsList.empty()) {
-		_filter.parsePIDString(delpidsList, false);
+		SI_LOG_DEBUG("Frontend: @#1, Parsing PID parameter: delpids=@#2", id, delpidsList);
+		_filter.parsePIDString(id, delpidsList, false);
 	}
 }
 

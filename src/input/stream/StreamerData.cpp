@@ -53,10 +53,10 @@ void StreamerData::doInitialize() {
 	_udp = false;
 }
 
-void StreamerData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+void StreamerData::doParseStreamString(const FeID id, const TransportParamVector& params) {
 	const std::string uri = params.getURIParameter("uri");
 	if (uri.empty() || (hasFilePath() && uri == _uri)) {
-		parseAndUpdatePidsTable(params);
+		parseAndUpdatePidsTable(id, params);
 		return;
 	}
 	initialize();
@@ -76,7 +76,7 @@ void StreamerData::doParseStreamString(const FeID UNUSED(id), const TransportPar
 			_port = std::stoi(_uri.substr(begin, end - begin));
 		}
 	}
-	parseAndUpdatePidsTable(params);
+	parseAndUpdatePidsTable(id, params);
 }
 
 std::string StreamerData::doAttributeDescribeString(const FeID id) const {

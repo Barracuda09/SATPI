@@ -70,9 +70,10 @@ class Filter :
 		void clear();
 
 		/// Parse the CSV PID string with requested PIDs and update @see PidTable
+		/// @param id
 		/// @param reqPids specifies the requested PIDs
 		/// @param add specifies if true to open all the PIDs or false to close
-		void parsePIDString(const std::string &reqPids, bool add);
+		void parsePIDString(FeID id, const std::string &reqPids, bool add);
 
 		/// Add the filter data to MPEG Tables and
 		/// optionally purge TS packets from unused pids if filter is true

@@ -71,6 +71,8 @@ namespace input::dvb::delivery {
 	bool DVBC::setProperties(int feFD, const input::dvb::FrontendData &frontendData) {
 		struct dtv_property p[15];
 		int size = 0;
+		const uint32_t freq = frontendData.getFrequency() * 1000;
+		SI_LOG_DEBUG("Frontend: @#1, Set Properties: Frequency @#2", _feID, freq);
 
 		#define FILL_PROP(CMD, DATA) { p[size].cmd = CMD; p[size].u.data = DATA; ++size; }
 
@@ -79,7 +81,7 @@ namespace input::dvb::delivery {
 			case input::InputSystem::DVBC:
 				FILL_PROP(DTV_BANDWIDTH_HZ,    frontendData.getBandwidthHz());
 				FILL_PROP(DTV_DELIVERY_SYSTEM, frontendData.convertDeliverySystem());
-				FILL_PROP(DTV_FREQUENCY,       frontendData.getFrequency() * 1000UL);
+				FILL_PROP(DTV_FREQUENCY,       freq);
 				FILL_PROP(DTV_INVERSION,       frontendData.getSpectralInversion());
 				FILL_PROP(DTV_MODULATION,      frontendData.getModulationType());
 				FILL_PROP(DTV_SYMBOL_RATE,     frontendData.getSymbolRate());

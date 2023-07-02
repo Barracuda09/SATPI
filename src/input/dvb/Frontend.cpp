@@ -467,8 +467,9 @@ void Frontend::closeActivePIDFilters() {
 	_frontendData.getFilter().closeActivePIDFilters(_feID,
 		// closePid lambda function
 		[&](const int pid) {
-			if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-				SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(pid));
+			uint16_t p = pid;
+			if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &p) != 0) {
+				SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(p));
 				return false;
 			}
 			return true;
@@ -483,6 +484,7 @@ void Frontend::updatePIDFilters() {
 	_frontendData.getFilter().updatePIDFilters(_feID,
 		// openPid lambda function
 		[&](const int pid) {
+			uint16_t p = pid;
 			// Check if we have already a DMX open
 			if (_fd_dmx == -1) {
 				// try opening DMX, try again if fails
@@ -518,18 +520,18 @@ void Frontend::updatePIDFilters() {
 					}
 					SI_LOG_INFO("Frontend: @#1, Set DMX_SET_SOURCE with (Src: @#2 - Offset: @#3)", _feID, n, offset);
 				}
-				struct dmx_pes_filter_params pesFilter;
-				pesFilter.pid      = pid;
+				struct dmx_pes_filter_params pesFilter{};
+				pesFilter.pid      = p;
 				pesFilter.input    = DMX_IN_FRONTEND;
 				pesFilter.output   = DMX_OUT_TSDEMUX_TAP;
 				pesFilter.pes_type = DMX_PES_OTHER;
 				pesFilter.flags    = DMX_IMMEDIATE_START;
 				if (::ioctl(_fd_dmx, DMX_SET_PES_FILTER, &pesFilter) != 0) {
-					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, PID(pid));
+					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, PID(p));
 					return false;
 				}
-			} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &pid) != 0) {
-				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(pid));
+			} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &p) != 0) {
+				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(p));
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -537,8 +539,9 @@ void Frontend::updatePIDFilters() {
 		},
 		// closePid lambda function
 		[&](const int pid) {
-			if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &pid) != 0) {
-				SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(pid));
+			uint16_t p = pid;
+			if (::ioctl(_fd_dmx, DMX_REMOVE_PID, &p) != 0) {
+				SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(p));
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -800,12 +803,12 @@ bool Frontend::setupAndTune() {
 						_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
 						SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
 						break;
-					} else {
-						SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS", _feID);
 					}
 					if (i == 1) {
 						SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
 					}
+				} else {
+					SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS", _feID);
 				}
 				const unsigned long waitTime = sw.getIntervalMS();
 				if (waitTime > _waitOnLockTimeout) {

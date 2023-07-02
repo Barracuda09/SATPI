@@ -59,9 +59,11 @@ void Filter::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "networkname", sdtData.networkNameUTF8);
 
 	ADD_XML_ELEMENT(xml, "pat", getPATData()->toXML());
-	for (const auto &[pid, pmt] : _pmtMap) {
-		ADD_XML_ELEMENT(xml, "pmt_" + DIGIT(pid, 4), pmt->toXML());
-	}
+	ADD_XML_BEGIN_ELEMENT(xml, "pmtlist");
+		for (const auto &[pid, pmt] : _pmtMap) {
+			ADD_XML_ELEMENT(xml, "pmt", pmt->toXML());
+		}
+	ADD_XML_END_ELEMENT(xml, "pmtlist");
 	ADD_XML_ELEMENT(xml, "sdt", getSDTData()->toXML());
 	ADD_XML_ELEMENT(xml, "nit", getNITData()->toXML());
 }
@@ -99,7 +101,7 @@ void Filter::clear() {
 	_pidTable.clear();
 }
 
-void Filter::parsePIDString(const std::string &reqPids, const bool add) {
+void Filter::parsePIDString(const FeID id, const std::string &reqPids, const bool add) {
 	base::MutexLock lock(_mutex);
 	if (reqPids.find("all") != std::string::npos ||
 		reqPids.find("none") != std::string::npos) {
@@ -109,11 +111,24 @@ void Filter::parsePIDString(const std::string &reqPids, const bool add) {
 			_pidTable.setAllPID(add);
 		}
 	} else {
-		const std::string pidlist = reqPids + ((add) ? ("," + _userPids) : "");
-		StringVector pids = StringConverter::split(pidlist, ",");
-		for (const std::string &pid : pids) {
-			if (std::isdigit(pid[0]) != 0) {
-				_pidTable.setPID(std::stoi(pid), add);
+		const StringVector reqPidList = StringConverter::split(reqPids, ",");
+		for (const std::string &pid : reqPidList) {
+			try {
+				if (const auto p = std::stoi(pid); p > 18 || add) {
+					_pidTable.setPID(p, add);
+				}
+			} catch (const std::invalid_argument &) {
+				SI_LOG_ERROR("Frontend: @#1, Error, skipping PID: @#2", id, pid);
+			}
+		}
+		if (add) {
+			const StringVector userPidList = StringConverter::split(_userPids, ",");
+			for (const std::string &pid : userPidList) {
+				try {
+					_pidTable.setPID(std::stoi(pid), add);
+				} catch (const std::invalid_argument &) {
+					SI_LOG_ERROR("Frontend: @#1, Error, skipping PID: @#2", id, pid);
+				}
 			}
 		}
 	}

@@ -118,7 +118,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 		const std::string method = params[0];
 		if (reqFreq != oldFreq) {
 			// New frequency, so initialize FrontendData and 'remove' all used PIDS
-			SI_LOG_INFO("Frontend: @#1, New frequency requested, clearing old channel data...", id);
+			SI_LOG_INFO("Frontend: @#1, New frequency requested (@#2 -> @#3), clearing old channel data...", id, oldFreq, reqFreq);
 			initialize();
 			_freq = reqFreq * 1000.0;
 			_changed = true;
@@ -359,7 +359,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (sm != -1) {
 		_siso_miso = sm;
 	}
-	parseAndUpdatePidsTable(params);
+	parseAndUpdatePidsTable(id, params);
 }
 
 std::string FrontendData::doAttributeDescribeString(const FeID id) const {

@@ -50,11 +50,11 @@ void TSReaderData::doInitialize() {
 	_genPSI = false;
 }
 
-void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportParamVector& params) {
+void TSReaderData::doParseStreamString(const FeID id, const TransportParamVector& params) {
 	const std::string genPSI = params.getParameter("genPSI");
 	if (genPSI == "yes") {
 		initialize();
-		parseAndUpdatePidsTable(params);
+		parseAndUpdatePidsTable(id, params);
 		_changed = true;
 		_genPSI = true;
 		_pcrTimer = 100;
@@ -63,7 +63,7 @@ void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportPar
 	const std::string filePath = params.getURIParameter("exec");
 	// Check did we receive an new path or just the same again
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
-		parseAndUpdatePidsTable(params);
+		parseAndUpdatePidsTable(id, params);
 		return;
 	}
 	initialize();
@@ -75,7 +75,7 @@ void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportPar
 	if (pcrTimer != -1) {
 		_pcrTimer = pcrTimer;
 	}
-	parseAndUpdatePidsTable(params);
+	parseAndUpdatePidsTable(id, params);
 }
 
 std::string TSReaderData::doAttributeDescribeString(const FeID id) const {
