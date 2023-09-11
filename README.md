@@ -65,6 +65,8 @@ Tested Programs
 - DVBviewer Lite Edition. see http://www.satip.info/products
 - Elgato Sat>IP App for Android
 - VDR
+- satip-client for Enigma2 boxes
+- VLC <a href="http://satip.info/sites/satip/files/files/Microsoft%20Word%20-%20mini-howto_satip_with_vlc_v2.pdf">Howto</a>
 
 Tested Hardware
 ---------------
