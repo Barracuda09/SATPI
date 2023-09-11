@@ -103,8 +103,8 @@ namespace input::dvb::delivery {
 			// Mono-point LNB without switch
 			ifreq = std::abs(static_cast<long>(freq) - static_cast<long>(_lofLow));
 		}
-		SI_LOG_DEBUG("Frontend: @#1, Using LNB with: Lof High=@#2 MHz  Lof Low=@#3 MHz  Lof Switch=@#4 MHz",
-			id, _lofHigh / 1000, _lofLow / 1000, _switchlof / 1000);
+		SI_LOG_DEBUG("Frontend: @#1, Using LNB with: Lof-High=@#2 MHz  Lof-Low=@#3 MHz  Lof-Switch=@#4 MHz -> IF=@#5 MHz",
+			id, _lofHigh / 1000, _lofLow / 1000, _switchlof / 1000, ifreq / 1000);
 		freq = ifreq;
 	}
 
