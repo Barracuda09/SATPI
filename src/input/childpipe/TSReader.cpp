@@ -108,7 +108,7 @@ bool TSReader::isDataAvailable() {
 		_t1 = std::chrono::steady_clock::now();
 		_deviceData.getFilter().getPCRData()->clearPCRDelta();
 	} else {
-		std::this_thread::sleep_for(std::chrono::microseconds(150 + pcrTimer));
+		std::this_thread::sleep_for(std::chrono::microseconds(15 + pcrTimer));
 	}
 	return true;
 }
