@@ -141,8 +141,8 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 
 	for (std::size_t i = begin; i < size; ++i) {
 		const unsigned char *ptr = buffer.getTSPacketPtr(i);
-		// Check is this the beginning of the TS and no Transport error indicator
-		if (ptr[0] != 0x47 || (ptr[1] & 0x80) == 0x80) {
+		// Check is this the beginning of the TS and no Transport error indicator and not a NULL packet
+		if (ptr[0] != 0x47 || (ptr[1] & 0x80) == 0x80 || (ptr[1] == 0x1F && ptr[2] == 0xFF)) {
 			if (filter && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);
 			}
