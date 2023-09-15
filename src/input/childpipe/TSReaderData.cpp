@@ -100,7 +100,7 @@ bool TSReaderData::hasFilePath() const {
 }
 
 int TSReaderData::getPCRTimer() const {
-	base::MutexLock lock(_mutex);
+//	base::MutexLock lock(_mutex);
 	return _pcrTimer;
 }
 
