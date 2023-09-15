@@ -99,20 +99,21 @@ void PacketBuffer::purge() {
 	// i: represents the packet number, and not the packet position!
 	std::size_t skipData = 0;
 	for (std::size_t i = (bufSize / TS_PACKET_SIZE); i > 0 ; --i) {
-		unsigned char *cData = getTSPacketPtr(i-1);
+		unsigned char *cData = getTSPacketPtr(i - 1);
 		if (cData[1] == 0xFF) {
 			// Next packet needs to be purged as well, then continue to next
-			if (i > 1 && (cData-TS_PACKET_SIZE)[1] == 0xFF) {
+			if (i > 1 && (cData - TS_PACKET_SIZE)[1] == 0xFF) {
 				skipData += TS_PACKET_SIZE;
 				continue;
 			}
+			skipData += TS_PACKET_SIZE;
 			// Remove current (plus other) packet from the buffer
 			unsigned char *endData = getWriteBufferPtr();
-			unsigned char *nextData = cData + skipData + TS_PACKET_SIZE;
+			unsigned char *nextData = cData + skipData;
 			if (nextData < endData) {
-				std::memmove(cData, nextData, endData - nextData);
+				std::memcpy(cData, nextData, endData - nextData);
 			}
-			_writeIndex -= TS_PACKET_SIZE + skipData;
+			_writeIndex -= skipData;
 			skipData = 0;
 		}
 	}
