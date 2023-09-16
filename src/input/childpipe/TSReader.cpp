@@ -32,6 +32,11 @@
 namespace input::childpipe {
 
 // =============================================================================
+//  -- Static constexpr variables ----------------------------------------------
+// =============================================================================
+static constexpr int WAIT_TIMER = 15;
+
+// =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
 // =============================================================================
 
@@ -108,7 +113,7 @@ bool TSReader::isDataAvailable() {
 		_t1 = std::chrono::steady_clock::now();
 		_deviceData.getFilter().getPCRData()->clearPCRDelta();
 	} else {
-		std::this_thread::sleep_for(std::chrono::microseconds(15 + pcrTimer));
+		std::this_thread::sleep_for(std::chrono::microseconds(WAIT_TIMER + pcrTimer));
 	}
 	return true;
 }
