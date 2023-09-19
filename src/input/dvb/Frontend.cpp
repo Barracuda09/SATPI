@@ -114,13 +114,13 @@ static void getAttachedFrontends(
 	const std::string dvr0 = StringConverter::stringFormat(DVR.c_str(), 0, 0);
 	const std::string dmx0 = StringConverter::stringFormat(DMX.c_str(), 0, 0);
 	input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe0, dvr0, dmx0);
-	streamVector.push_back(std::make_shared<Stream>(frontend0, decrypt));
+	streamVector.push_back(Stream::makeSP(frontend0, decrypt));
 
 	const std::string fe1 = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
 	const std::string dvr1 = StringConverter::stringFormat(DVR.c_str(), 1, 0);
 	const std::string dmx1 = StringConverter::stringFormat(DMX.c_str(), 1, 0);
 	input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe1, dvr1, dmx1);
-	streamVector.push_back(std::make_shared<Stream>(frontend1, decrypt));
+	streamVector.push_back(Stream::makeSP(frontend1, decrypt));
 #else
 	dirent **file_list;
 	const int n = scandir(path.c_str(), &file_list, nullptr, versionsort);
@@ -146,7 +146,7 @@ static void getAttachedFrontends(
 							// Make new frontend here
 							const StreamSpVector::size_type size = streamVector.size();
 							const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
-							streamVector.push_back(std::make_shared<Stream>(frontend, decrypt));
+							streamVector.push_back(Stream::makeSP(frontend, decrypt));
 						}
 						break;
 					case S_IFDIR:

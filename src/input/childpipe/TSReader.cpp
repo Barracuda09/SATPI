@@ -60,7 +60,7 @@ void TSReader::enumerate(
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::childpipe::SpTSReader tsreader =
 		std::make_shared<input::childpipe::TSReader>(size, appDataPath, enableUnsecureFrontends);
-	streamVector.push_back(std::make_shared<Stream>(tsreader, nullptr));
+	streamVector.push_back(Stream::makeSP(tsreader, nullptr));
 }
 
 // =============================================================================

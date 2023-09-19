@@ -56,7 +56,7 @@ void Streamer::enumerate(
 	SI_LOG_INFO("Setting up TS Streamer");
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress, appDataPath);
-	streamVector.push_back(std::make_shared<Stream>(streamer, nullptr));
+	streamVector.push_back(Stream::makeSP(streamer, nullptr));
 }
 
 // =============================================================================
