@@ -353,10 +353,10 @@ bool Stream::processStreamingRequest(const SocketClient &client, const int clien
 		_client[clientID].setUserAgent(userAgent);
 	}
 
+	TransportParamVector params = client.getTransportParameters();
 	const std::string method = client.getMethod();
 	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
 			client.hasTransportParameters()) {
-		TransportParamVector params = client.getTransportParameters();
 		_device->parseStreamString(params);
 	}
 
@@ -370,8 +370,24 @@ bool Stream::processStreamingRequest(const SocketClient &client, const int clien
 	// Get transport type from request, and maybe ports
 	if (_streamingType == StreamingType::NONE) {
 		if (method == "GET") {
-			_streamingType = StreamingType::HTTP;
-			_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::FILE_DESCRIPTOR);
+			const std::string multicast = params.getParameter("multicast");
+			if (!multicast.empty()) {
+				// Format: multicast=IP_ADDR,RTP_PORT,RTCP_PORT,TTL
+				const StringVector multiParam = StringConverter::split(multicast, ",");
+				if (multiParam.size() == 4) {
+					client.spoofHeaderWith(StringConverter::stringFormat(
+						"Transport: RTP/AVP;multicast;destination=@#1;port=@#2-@#3;ttl=@#4\r\n",
+						multiParam[0], multiParam[1], multiParam[2], multiParam[3]));
+					headers = client.getHeaders();
+					SI_LOG_INFO("Frontend: @#1, Setup Multicast (@#2) for StreamClient[@#3]",
+						_device->getFeID(), multicast, clientID);
+					_streamingType = StreamingType::RTSP_MULTICAST;
+					_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::TEARDOWN);
+				}
+			} else {
+				_streamingType = StreamingType::HTTP;
+				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::FILE_DESCRIPTOR);
+			}
 			_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
 		} else {
 			const std::string transport = headers.getFieldParameter("Transport");
