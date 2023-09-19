@@ -110,7 +110,7 @@ void Server::threadEntry() {
 	SocketClient udpMultiSend;
 	SocketClient udpMultiListen;
 	initUDPSocket(udpMultiSend, "239.255.255.250", SSDP_PORT, _ttl);
-	initMutlicastUDPSocket(udpMultiListen, "239.255.255.250", _bindIPAddress, SSDP_PORT);
+	initMutlicastUDPSocket(udpMultiListen, "239.255.255.250", _bindIPAddress, SSDP_PORT, _ttl);
 
 	std::time_t repeat_time = 0;
 	struct pollfd pfd[1];

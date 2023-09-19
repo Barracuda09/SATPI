@@ -34,14 +34,12 @@ bool UdpSocket::initUDPSocket(
 		int port,
 		int ttl) {
 	// fill in the socket structure with host information
-	server.setupSocketStructure(ipAddr, port);
+	server.setupSocketStructure(ipAddr, port, ttl);
 
 	if (!server.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
 		SI_LOG_ERROR("UDP Server handle failed");
 		return false;
 	}
-	server.setSocketMutlicastTTL(ttl);
-	server.setSocketUnicastTTL(ttl);
 	return true;
 }
 
@@ -49,9 +47,10 @@ bool UdpSocket::initMutlicastUDPSocket(
 		SocketClient &server,
 		const std::string &multicastIPAddr,
 		const std::string &interfaceIPaddr,
-		int port) {
+		const int port,
+		const int ttl) {
 	// fill in the socket structure with host information
-	server.setupSocketStructureWithAnyAddress(port);
+	server.setupSocketStructureWithAnyAddress(port, ttl);
 
 	if (!server.setupSocketHandle(SOCK_DGRAM, IPPROTO_UDP)) {
 		SI_LOG_ERROR("UDP Multicast Server handle failed");

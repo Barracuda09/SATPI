@@ -63,7 +63,7 @@ class SocketClient :
 		}
 
 		/// Add HTTP message data
-		/// @param msg specifiet the message to set/add
+		/// @param msg specifies the message to set/add
 		void addMessage(const std::string &msg) {
 			_msg += msg;
 		}

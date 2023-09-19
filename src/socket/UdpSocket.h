@@ -60,11 +60,13 @@ class UdpSocket :
 		/// @param multicastIPAddr
 		/// @param port
 		/// @param interfaceIPaddr
+		/// @param ttl
 		bool initMutlicastUDPSocket(
 			SocketClient &server,
 			const std::string &multicastIPAddr,
 			const std::string &interfaceIPaddr,
-			int port);
+			int port,
+			int ttl);
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

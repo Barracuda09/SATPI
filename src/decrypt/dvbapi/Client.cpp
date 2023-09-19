@@ -224,7 +224,7 @@ namespace decrypt::dvbapi {
 
 	bool Client::initClientSocket(SocketClient &client, const std::string &ipAddr, int port) {
 
-		client.setupSocketStructure(ipAddr, port);
+		client.setupSocketStructure(ipAddr, port, 1);
 
 		if (!client.setupSocketHandle(SOCK_STREAM /*| SOCK_NONBLOCK*/, 0)) {
 			SI_LOG_ERROR("OSCam Server handle failed");

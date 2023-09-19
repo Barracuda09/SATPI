@@ -48,13 +48,18 @@ class SocketAttr {
 		/// Close the file descriptor of this Socket
 		virtual void closeFD();
 
-		///
-		void setupSocketStructure(std::string_view ipAddr, int port);
+		/// Setup Socket address struct with IP and Port
+		/// @param ipAddr
+		/// @param port
+		/// @param ttl
+		void setupSocketStructure(std::string_view ipAddr, int port, int ttl);
 
 		///
-		void setupSocketStructureWithAnyAddress(int port);
+		void setupSocketStructureWithAnyAddress(int port, int ttl);
 
-		///
+		/// Setup Socket type with protocol and open File Descriptor
+		/// @param type
+		/// @param protocol
 		bool setupSocketHandle(int type, int protocol);
 
 		/// Set the IP address of this client
@@ -92,12 +97,6 @@ class SocketAttr {
 
 		/// Set the Receive and Send timeout in Sec for this socket
 		void setSocketTimeoutInSec(unsigned int timeout);
-
-		/// Set the time-to-live value of outgoing multicast packets for this socket
-		bool setSocketMutlicastTTL(int ttl);
-
-		/// Set the time-to-live value of outgoing unicast packets for this socket
-		bool setSocketUnicastTTL(int ttl);
 
 		/// Get the file descriptor of this Socket
 		int getFD() const;
@@ -138,6 +137,7 @@ class SocketAttr {
 		int _fd;
 		struct sockaddr_in _addr;
 		std::string _ipAddr;
+		int _ttl;
 
 };
 

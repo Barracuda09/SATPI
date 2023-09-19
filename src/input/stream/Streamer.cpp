@@ -165,7 +165,7 @@ bool Streamer::update() {
 		//  Open mutlicast stream
 		const std::string multiAddr = _deviceData.getMultiAddr();
 		const int port = _deviceData.getPort();
-		if(initMutlicastUDPSocket(_udpMultiListen, multiAddr, _bindIPAddress, port)) {
+		if(initMutlicastUDPSocket(_udpMultiListen, multiAddr, _bindIPAddress, port, 1)) {
 			SI_LOG_INFO("Frontend: @#1, Streamer reading from: @#2:@#3  fd @#4",
 				_feID, multiAddr, port, _udpMultiListen.getFD());
 			// set receive buffer to 8MB

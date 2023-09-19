@@ -402,8 +402,8 @@ bool Stream::processStreamingRequest(const SocketClient &client, const int clien
 				const int port = headers.getIntFieldParameter("Transport", "client_port");
 				if (port != -1) {
 					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1);
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port, 1);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1, 1);
 				}
 			}
 			break;
@@ -412,10 +412,14 @@ bool Stream::processStreamingRequest(const SocketClient &client, const int clien
 				if (!dest.empty()) {
 					_client[clientID].setIPAddressOfStream(dest);
 				}
-				const int port = headers.getIntFieldParameter("Transport", "port");
-				if (port != -1) {
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(dest, port);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(dest, port + 1);
+				const std::string ports = headers.getStringFieldParameter("Transport", "port");
+				const StringVector port = StringConverter::split(ports, "-");
+				const int ttl = headers.getIntFieldParameter("Transport", "ttl");
+				if (port.size() == 2) {
+					const int rtp  = std::isdigit(port[0][0]) ? std::stoi(port[0]) : 15000;
+					const int rtcp = std::isdigit(port[1][0]) ? std::stoi(port[1]) : 15001;
+					_client[clientID].getRtpSocketAttr().setupSocketStructure(dest, rtp, ttl);
+					_client[clientID].getRtcpSocketAttr().setupSocketStructure(dest, rtcp, ttl);
 				}
 			}
 			break;
