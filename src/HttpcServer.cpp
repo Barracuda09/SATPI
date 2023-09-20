@@ -176,8 +176,14 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 			// Check the Method
 			if (method == "GET") {
 				stream->update(clientID);
-				getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
-
+				const std::string multicast = params.getParameter("multicast");
+				if (multicast.empty()) {
+					getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
+				} else {
+					const std::string content("Stream: Setup done\r\n");
+					getHtmlBodyWithContent(httpcReply, HTML_OK, "", CONTENT_TYPE_TEXT, content.size(), 0);
+					httpcReply += content;
+				}
 			} else if (method == "SETUP") {
 				methodSetup(*stream, clientID, httpcReply);
 
