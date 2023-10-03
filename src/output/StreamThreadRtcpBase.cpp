@@ -141,7 +141,7 @@ std::pair<PacketPtr, int> StreamThreadRtcpBase::getAPP() {
 	const int ws = (len / 4) - 1;
 	app[2] = (ws >> 8) & 0xff;
 	app[3] = (ws >> 0) & 0xff;
-	const int ss = len - sizeof(app);
+	const int ss = desc.size();
 	app[14] = (ss >> 8) & 0xff;
 	app[15] = (ss >> 0) & 0xff;
 	return {std::move(app), len};
