@@ -75,7 +75,7 @@ class TableData {
 		// =========================================================================
 	public:
 
-		static uint32_t calculateCRC32(const unsigned char *data, std::size_t len);
+		static uint32_t calculateCRC32(const unsigned char* data, std::size_t len);
 
 		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
@@ -91,12 +91,12 @@ class TableData {
 		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
 
 		/// Collect Table data for tableID
-		void collectData(FeID id, int tableID, const unsigned char *data, bool trace) {
+		void collectData(FeID id, int tableID, const unsigned char* data, bool trace) {
 			collectData(id, tableID, data, trace, false);
 		}
 
 		/// Collect Raw Table data for tableID
-		void collectRawData(FeID id, int tableID, const unsigned char *data, bool trace) {
+		void collectRawData(FeID id, int tableID, const unsigned char* data, bool trace) {
 			collectData(id, tableID, data, trace, true);
 		}
 
@@ -112,7 +112,7 @@ class TableData {
 	protected:
 
 		/// Add Table data that was collected
-		bool addData(int tableID, const unsigned char *data, int length, int pid, int cc);
+		bool addData(int tableID, const unsigned char* data, int length, int pid, int cc);
 
 		/// Set if the current Table has been collected
 		void setCollected();
@@ -121,26 +121,26 @@ class TableData {
 		const char* getTableTXT(int tableID) const;
 
 		///
-		uint8_t getByte(size_t &i, const unsigned char *buf) {
+		uint8_t getByte(size_t &i, const unsigned char* buf) {
 			uint8_t d = buf[i];
 			++i;
 			return d;
 		}
 
 		///
-		uint16_t getWord(size_t &i, const unsigned char *buf) {
+		uint16_t getWord(size_t &i, const unsigned char* buf) {
 			uint16_t d = (buf[i] << 8) | buf[i + 1];
 			i += 2;
 			return d;
 		}
 
-		uint32_t get24Bits(size_t &i, const unsigned char *buf) {
+		uint32_t get24Bits(size_t &i, const unsigned char* buf) {
 			uint32_t d = (buf[i] << 16) | (buf[i + 1] << 8) | buf[i + 2];
 			i += 3;
 			return d;
 		}
 
-		uint32_t getDWord(size_t &i, const unsigned char *buf) {
+		uint32_t getDWord(size_t &i, const unsigned char* buf) {
 			uint32_t d = (buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
 			i += 4;
 			return d;
@@ -149,7 +149,7 @@ class TableData {
 	private:
 
 		/// Collect Table data for tableID
-		void collectData(FeID id, int tableID, const unsigned char *data, bool trace, bool raw);
+		void collectData(FeID id, int tableID, const unsigned char* data, bool trace, bool raw);
 
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------

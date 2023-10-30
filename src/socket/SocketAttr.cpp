@@ -36,7 +36,7 @@
 	SocketAttr::SocketAttr() :
 		_fd(-1),
 		_ipAddr("0.0.0.0"),
-		_ttl(1) {
+		_ttl(0) {
 		std::memset(&_addr, 0, sizeof(_addr));
 	}
 
@@ -87,14 +87,14 @@
 				SI_LOG_PERROR("setsockopt: SO_REUSEADDR");
 				return false;
 			}
-			if (type == SOCK_DGRAM) {
+			if (type == SOCK_DGRAM && _ttl > 0) {
 				int ttl = _ttl;
 				if (::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) == -1) {
 					SI_LOG_PERROR("setsockopt: IP_MULTICAST_TTL");
 					return false;
 				}
 				if (::setsockopt(_fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
-					SI_LOG_PERROR("setsockopt: IP_TTL");
+					SI_LOG_PERROR("setsockopt: IP_TTL: @#1", ttl);
 					return false;
 				}
 			}
@@ -182,7 +182,7 @@
 	bool SocketAttr::sendDataTo(const void *buf, std::size_t len, int flags) {
 		if (::sendto(_fd, buf, len, flags, reinterpret_cast<sockaddr *>(&_addr),
 				   sizeof(_addr)) == -1) {
-			SI_LOG_PERROR("sendto");
+			SI_LOG_PERROR("sendto (fd: @#1)", _fd);
 			return false;
 		}
 		return true;

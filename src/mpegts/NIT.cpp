@@ -160,7 +160,7 @@ void NIT::clear() {
 void NIT::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "networkID", DIGIT(_nid, 4));
 	ADD_XML_ELEMENT(xml, "networkName", _networkName);
-	for (const auto &entry : _table) {
+	for (const auto& entry : _table) {
 		std::string name = "transportStreamID_" + DIGIT(entry.transportStreamID, 0);
 		ADD_XML_BEGIN_ELEMENT(xml, name);
 			ADD_XML_ELEMENT(xml, "msys", entry.msys);
@@ -183,7 +183,7 @@ void NIT::parse(const FeID id) {
 	for (std::size_t secNr = 0; secNr < _numberOfSections; ++secNr) {
 		TableData::Data tableData;
 		if (getDataForSectionNumber(secNr, tableData)) {
-			const unsigned char *data = tableData.data.c_str();
+			const unsigned char* data = tableData.data.data();
 			size_t index = 8;
 			_nid =  getWord(index, data);
 
@@ -294,7 +294,7 @@ mpegts::TSData NIT::generateFrom(
 	mpegts::TSData data;
 
 	int prognr = 0;
-	for (auto [freq, element] : info) {
+	for (const auto& [freq, element] : info) {
 		SI_LOG_DEBUG("Frontend: @#1, Generating NIT: Prog NR: @#2 - @#3  PMT PID: @#4",
 			id, HEX(prognr, 4), DIGIT(prognr, 5), element.freq);
 	}

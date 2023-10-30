@@ -56,7 +56,7 @@ StringVector StringConverter::split(const std::string_view input,
 
 std::string StringConverter::stringToUpper(const std::string_view str) {
 	std::string result(str);
-	for (auto &c : result) {
+	for (auto& c : result) {
 		if (std::islower(c)) {
 			c = std::toupper(c);
 		}
@@ -99,7 +99,7 @@ std::string StringConverter::getline(const std::string_view msg,
 	return std::string(line);
 }
 
-std::string StringConverter::convertToHexASCIITable(const unsigned char *p, const std::size_t length, const std::size_t blockSize) {
+std::string StringConverter::convertToHexASCIITable(const unsigned char* p, const std::size_t length, const std::size_t blockSize) {
 	if (blockSize == 0) {
 		return "";
 	}

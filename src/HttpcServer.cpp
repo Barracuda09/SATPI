@@ -23,6 +23,7 @@
 #include <Log.h>
 #include <Properties.h>
 #include <Stream.h>
+#include <output/StreamClient.h>
 #include <StreamManager.h>
 #include <StringConverter.h>
 #include <socket/SocketClient.h>
@@ -31,6 +32,8 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <fcntl.h>
+
+extern const char* const satpi_version;
 
 const char *HttpcServer::HTML_BODY_WITH_CONTENT =
 	"@#1 @#2\r\n" \
@@ -81,8 +84,6 @@ HttpcServer::HttpcServer(
 		TcpSocket(maxClients, protocol),
 		_streamManager(streamManager),
 		_bindIPAddress(bindIPAddress) {}
-
-HttpcServer::~HttpcServer() {}
 
 void HttpcServer::initialize(
 		int port,
@@ -164,18 +165,23 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const std::string method = client.getMethod();
 	std::string httpcReply;
 	if (sessionID.empty() && method == "OPTIONS") {
-		methodOptions("", cseq, httpcReply);
+		static const char *RTSP_OPTIONS_OK =
+			"RTSP/1.0 200 OK\r\n" \
+			"Server: satpi/@#1\r\n" \
+			"CSeq: @#2\r\n" \
+			"Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
+			"\r\n";
+		httpcReply = StringConverter::stringFormat(RTSP_OPTIONS_OK, satpi_version, cseq);
 	} else if (sessionID.empty() && method == "DESCRIBE") {
 		methodDescribe("", cseq, feIndex, httpcReply);
 	} else {
-		int clientID;
-		SpStream stream = _streamManager.findStreamAndClientIDFor(client, clientID);
+		const auto [stream, streamClient] = _streamManager.findStreamAndClientFor(client);
 		if (stream != nullptr) {
-			stream->processStreamingRequest(client, clientID);
+			stream->processStreamingRequest(client, streamClient);
 
 			// Check the Method
 			if (method == "GET") {
-				stream->update(clientID);
+				stream->update(streamClient);
 				const std::string multicast = params.getParameter("multicast");
 				if (multicast.empty()) {
 					getHtmlBodyNoContent(httpcReply, HTML_OK, "", CONTENT_TYPE_VIDEO, 0);
@@ -185,27 +191,26 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 					httpcReply += content;
 				}
 			} else if (method == "SETUP") {
-				methodSetup(*stream, clientID, httpcReply);
+				httpcReply = streamClient->getSetupMethodReply(stream->getStreamID());
 
-				if (!stream->update(clientID)) {
+				if (!stream->update(streamClient)) {
 					// something wrong here... send 408 error
 					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
-					stream->teardown(clientID);
+					stream->teardown(streamClient);
 				}
 			} else if (method == "PLAY") {
-				methodPlay(*stream, clientID, httpcReply);
+				httpcReply = streamClient->getPlayMethodReply(stream->getStreamID(), _bindIPAddress);
 
-				if (!stream->update(clientID)) {
+				if (!stream->update(streamClient)) {
 					// something wrong here... send 408 error
 					getHtmlBodyNoContent(httpcReply, HTML_REQUEST_TIMEOUT, "", CONTENT_TYPE_VIDEO, cseq);
-					stream->teardown(clientID);
+					stream->teardown(streamClient);
 				}
 			} else if (method == "TEARDOWN") {
-				methodTeardown(sessionID, cseq, httpcReply);
-
-				stream->teardown(clientID);
+				httpcReply = streamClient->getTeardownMethodReply();
+				stream->teardown(streamClient);
 			} else if (method == "OPTIONS") {
-				methodOptions(sessionID, cseq, httpcReply);
+				httpcReply = streamClient->getOptionsMethodReply();
 			} else if (method == "DESCRIBE") {
 				methodDescribe(sessionID, cseq, feIndex, httpcReply);
 			} else {
@@ -221,7 +226,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	}
 	const unsigned long time = sw.getIntervalMS();
 	SI_LOG_DEBUG("Send reply in @#1 ms\r\n@#2", time, httpcReply);
-	if (!client.sendData(httpcReply.c_str(), httpcReply.size(), MSG_NOSIGNAL)) {
+	if (!client.sendData(httpcReply.data(), httpcReply.size(), MSG_NOSIGNAL)) {
 		SI_LOG_ERROR("Send Streaming reply failed");
 	}
 }

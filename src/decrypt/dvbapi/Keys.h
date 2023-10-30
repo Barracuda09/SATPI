@@ -53,7 +53,7 @@ class Keys {
 		// =========================================================================
 	public:
 
-		void set(const unsigned char *cw, int parity, int index);
+		void set(const unsigned char* cw, int parity, int index);
 
 		void setICAM(const unsigned char ecm, int parity);
 

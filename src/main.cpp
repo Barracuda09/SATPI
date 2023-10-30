@@ -72,7 +72,7 @@ static void child_handler(int signum) {
 			exitApp = true;
 			break;
 		case SIGSEGV:
-			Utils::createBackTrace(appName.c_str());
+			Utils::createBackTrace(appName.data());
 			exit(1);
 			break;
 		default:
@@ -95,9 +95,9 @@ static void daemonize(const std::string &lockfile, const char *user) {
 	// create the lock file as the current user
 	// give group 'rw' permission and other users 'r' permissions
 	if (!lockfile.empty()) {
-		lfp = open(lockfile.c_str(), O_RDWR | O_CREAT, 0664);
+		lfp = open(lockfile.data(), O_RDWR | O_CREAT, 0664);
 		if (lfp < 0) {
-			printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile.c_str(), strerror(errno), errno);
+			printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile.data(), strerror(errno), errno);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -151,7 +151,7 @@ static void daemonize(const std::string &lockfile, const char *user) {
 
 	// at this point we are executing as the child process
 	struct passwd *pw = getpwuid(geteuid());
-	printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile.c_str());
+	printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile.data());
 
 	// now record our pid to lockfile
 	sprintf(str, "%d\n", getpid());
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
 			} else if (strcmp(argv[i], "--backtrace") == 0) {
 				if (i + 1 < argc) {
 					++i;
-					Utils::annotateBackTrace(appName.c_str(), argv[i]);
+					Utils::annotateBackTrace(appName.data(), argv[i]);
 					return EXIT_SUCCESS;
 				}
 				printUsage(argv[0]);

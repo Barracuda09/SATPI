@@ -123,7 +123,7 @@ bool TcpSocket::initServerSocket(
 		int maxClients,
 		bool nonblock) {
 	// fill in the socket structure with host information
-	_server.setupSocketStructure(ipAddr, port, 1);
+	_server.setupSocketStructure(ipAddr, port, 0);
 
 	if (!_server.setupSocketHandle(SOCK_STREAM | ((nonblock) ? SOCK_NONBLOCK : 0), 0)) {
 		SI_LOG_ERROR("TCP Server handle failed");

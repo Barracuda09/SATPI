@@ -37,6 +37,8 @@ static base::Mutex logMutex;
 
 bool Log::_syslogOn = false;
 bool Log::_coutLog = true;
+bool Log::_logDebug = true;
+
 Log::LogBuffer Log::_appLogBuffer;
 
 void Log::openAppLog(const char *deamonName, const bool daemonize) {
@@ -64,6 +66,9 @@ void Log::log(const int priority, const std::string &msg) {
 	if ((priority & MPEGTS_TABLES) == MPEGTS_TABLES) {
 		return;
 	}
+	if (priority == LOG_DEBUG && !_logDebug) {
+		return;
+	}
 	// set timestamp
 	struct timespec timeStamp;
 	struct tm result;
@@ -87,7 +92,7 @@ void Log::log(const int priority, const std::string &msg) {
 
 		// log to syslog
 		if (_syslogOn) {
-			syslog(priority, "%s", line.c_str());
+			syslog(priority, "%s", line.data());
 		}
 
 #ifdef DEBUG
@@ -112,7 +117,7 @@ std::string Log::makeJSON() {
 	{
 		base::MutexLock lock(logMutex);
 		if (!_appLogBuffer.empty()) {
-			for (const LogElem &elem : _appLogBuffer) {
+			for (const LogElem& elem : _appLogBuffer) {
 				json.startObject();
 				json.addValueString("timestamp", elem.timestamp);
 				json.addValueString("msg", elem.msg);

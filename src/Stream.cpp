@@ -22,45 +22,56 @@
 #include <Log.h>
 #include <StringConverter.h>
 #include <Utils.h>
+#include <output/StreamClient.h>
+#include <input/Device.h>
 #include <input/dvb/Frontend.h>
 #include <input/dvb/FrontendData.h>
 #include <input/dvb/delivery/DVBS.h>
-#include <output/StreamThreadHttp.h>
-#include <output/StreamThreadRtp.h>
-#include <output/StreamThreadRtpTcp.h>
-#include <output/StreamThreadTSWriter.h>
+#include <output/StreamClientOutputHttp.h>
+#include <output/StreamClientOutputRtp.h>
+#include <output/StreamClientOutputRtpTcp.h>
 #include <socket/SocketClient.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef LIBDVBCSA
+	#include <decrypt/dvbapi/Client.h>
+#endif
 
-static unsigned int seedp = 0xFEED;
-const unsigned int Stream::MAX_CLIENTS = 8;
+#include <algorithm>
+#include <thread>
+
 
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
 Stream::Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
-	_streamingType(StreamingType::NONE),
 	_enabled(true),
 	_streamInUse(false),
-	_streamActive(false),
-	_client(new StreamClient[MAX_CLIENTS]),
-	_streaming(nullptr),
 	_decrypt(decrypt),
 	_device(device),
-	_ssrc((uint32_t)(rand_r(&seedp) % 0xffff)),
-	_spc(0),
-	_soc(0),
-	_timestamp(0),
-	_rtp_payload(0.0),
-	_rtcpSignalUpdate(1) {
+	_rtcpSignalUpdate(1),
+	_threadDeviceDataReader(
+		StringConverter::stringFormat("Reader@#1", _device->getFeID()),
+		std::bind(&Stream::threadExecuteDeviceDataReader, this)),
+	_threadDeviceMonitor(
+		StringConverter::stringFormat("Monitor@#1", _device->getFeID()),
+		std::bind(&Stream::threadExecuteDeviceMonitor, this)),
+	_writeIndex(0),
+	_readIndex(0),
+	_sendInterval(100),
+	_signalLock(false) {
 	ASSERT(device);
-}
-
-Stream::~Stream() {
-	DELETE_ARRAY(_client);
+	// Initialize all TS packets
+	for (mpegts::PacketBuffer& buffer : _tsBuffer) {
+		buffer.initialize(0, 0);
+	}
+	std::array<unsigned char, 188> nullPacked{0};
+	nullPacked[0] = 0x47;
+	nullPacked[1] = 0x1F;
+	nullPacked[2] = 0xFF;
+	_tsEmpty.initialize(0, 0);
+	std::memcpy(_tsEmpty.getWriteBufferPtr(), nullPacked.data(), 188);
+	_tsEmpty.addAmountOfBytesWritten(188);
 }
 
 // ===========================================================================
@@ -69,72 +80,6 @@ Stream::~Stream() {
 
 SpStream Stream::makeSP(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) {
 	return std::make_shared<Stream>(device, decrypt);
-}
-
-// ===========================================================================
-// -- StreamInterface --------------------------------------------------------
-// ===========================================================================
-
-StreamID Stream::getStreamID() const {
-	return _device->getStreamID();
-}
-
-FeID Stream::getFeID() const {
-	return _device->getFeID();
-}
-
-int Stream::getFeIndex() const {
-	return _device->getFeIndex();
-}
-
-StreamClient &Stream::getStreamClient(int clientID) const {
-	return _client[clientID];
-}
-
-input::SpDevice Stream::getInputDevice() const {
-	return _device;
-}
-
-#ifdef LIBDVBCSA
-decrypt::dvbapi::SpClient Stream::getDecryptDevice() const {
-	return _decrypt;
-}
-#endif
-
-uint32_t Stream::getSSRC() const {
-	return _ssrc;
-}
-
-long Stream::getTimestamp() const {
-	return _timestamp;
-}
-
-uint32_t Stream::getSPC() const {
-	return _spc;
-}
-
-unsigned int Stream::getRtcpSignalUpdateFrequency() const {
-	return _rtcpSignalUpdate;
-}
-
-uint32_t Stream::getSOC() const {
-	return _soc;
-}
-
-void Stream::addRtpData(uint32_t byte, long timestamp) {
-	// inc RTP packet counter
-	++_spc;
-	_soc += byte;
-	_rtp_payload = _rtp_payload + byte;
-	_timestamp = timestamp;
-}
-
-double Stream::getRtpPayload() const {
-	return _rtp_payload;
-}
-
-std::string Stream::attributeDescribeString() const {
-	return _device->attributeDescribeString();
 }
 
 // =======================================================================
@@ -147,10 +92,9 @@ void Stream::doAddToXML(std::string &xml) const {
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
 	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 1, 5);
-	ADD_XML_ELEMENT(xml, "spc", _spc.load());
-	ADD_XML_ELEMENT(xml, "payload", _rtp_payload.load() / (1024.0 * 1024.0));
-
-	_client[0].addToXML(xml);
+	for (output::SpStreamClient client : _streamClientVector) {
+		client->addToXML(xml);
+	}
 	_device->addToXML(xml);
 }
 
@@ -168,34 +112,144 @@ void Stream::doFromXML(const std::string &xml) {
 // ===========================================================================
 // -- Other member functions -------------------------------------------------
 // ===========================================================================
+
+StreamID Stream::getStreamID() const {
+	return _device->getStreamID();
+}
+
+FeID Stream::getFeID() const {
+	return _device->getFeID();
+}
+
+int Stream::getFeIndex() const {
+	return _device->getFeIndex();
+}
+
 #ifdef LIBDVBCSA
 input::dvb::SpFrontendDecryptInterface Stream::getFrontendDecryptInterface() {
 	return std::dynamic_pointer_cast<input::dvb::FrontendDecryptInterface>(_device);
 }
 #endif
 
-bool Stream::findClientIDFor(SocketClient &socketClient,
-		const bool newSession, const std::string sessionID, int &clientID) {
+void Stream::addDeliverySystemCount(
+		std::size_t &dvbs2,
+		std::size_t &dvbt,
+		std::size_t &dvbt2,
+		std::size_t &dvbc,
+		std::size_t &dvbc2) {
+	if (_enabled) {
+		_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
+	}
+}
+
+void Stream::startStreaming(output::SpStreamClient streamClient) {
+	streamClient->startStreaming();
+
+	// set begin timestamp
+	_t1 = std::chrono::steady_clock::now();
+	_writeIndex = 0;
+	_readIndex = 0;
+	_tsBuffer[_writeIndex].reset();
+
+	_threadDeviceMonitor.startThread();
+	_threadDeviceDataReader.startThread();
+	_threadDeviceDataReader.setPriority(base::Thread::Priority::AboveNormal);
+	SI_LOG_DEBUG("Frontend: @#1, Start Reader and Monitor Thread", _device->getFeID());
+}
+
+void Stream::pauseStreaming(output::SpStreamClient UNUSED(streamClient)) {
+	_threadDeviceDataReader.pauseThread();
+	_threadDeviceMonitor.pauseThread();
+	SI_LOG_DEBUG("Frontend: @#1, Pause Reader and Monitor Thread", _device->getFeID());
+#ifdef LIBDVBCSA
+		if (_decrypt != nullptr) {
+			_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
+		}
+#endif
+}
+
+void Stream::restartStreaming(output::SpStreamClient UNUSED(streamClient)) {
+	// set begin timestamp
+	_t1 = std::chrono::steady_clock::now();
+	_writeIndex = 0;
+	_readIndex = 0;
+	_tsBuffer[_writeIndex].reset();
+
+	_threadDeviceDataReader.restartThread();
+	_threadDeviceMonitor.restartThread();
+	SI_LOG_DEBUG("Frontend: @#1, Restart Reader and Monitor Thread", _device->getFeID());
+}
+
+void Stream::stopStreaming() {
+	_threadDeviceDataReader.stopThread();
+	_threadDeviceMonitor.stopThread();
+	SI_LOG_DEBUG("Frontend: @#1, Stop Reader and Monitor Thread", _device->getFeID());
+#ifdef LIBDVBCSA
+		if (_decrypt != nullptr) {
+			_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
+		}
+#endif
+	_device->teardown();
+	_streamInUse = false;
+}
+
+void Stream::determineAndMakeStreamClientType(FeID feID, const SocketClient &client) {
+	// Split message into Headers
+	HeaderVector headers = client.getHeaders();
+	const TransportParamVector params = client.getTransportParameters();
+	const std::string method = client.getMethod();
+	if (method == "GET") {
+		const std::string multicast = params.getParameter("multicast");
+		if (!multicast.empty()) {
+			// Format: multicast=IP_ADDR,RTP_PORT,RTCP_PORT,TTL
+			const StringVector multiParam = StringConverter::split(multicast, ",");
+			if (multiParam.size() == 4) {
+				client.spoofHeaderWith(StringConverter::stringFormat(
+					"Transport: RTP/AVP;multicast;destination=@#1;port=@#2-@#3;ttl=@#4\r\n",
+					multiParam[0], multiParam[1], multiParam[2], multiParam[3]));
+				headers = client.getHeaders();
+				SI_LOG_INFO("Frontend: @#1, Setup Multicast (@#2) for StreamClient",
+					feID, multicast);
+				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: HTTP -> Multicast", feID);
+				_streamClientVector.push_back(output::StreamClientOutputRtp::makeSP(feID, true));
+			}
+		} else {
+			SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: HTTP", feID);
+			_streamClientVector.push_back(output::StreamClientOutputHttp::makeSP(feID));
+		}
+	} else {
+		const std::string transport = headers.getFieldParameter("Transport");
+		if (transport.find("unicast") != std::string::npos) {
+			if (transport.find("RTP/AVP") != std::string::npos) {
+				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTP/AVP", feID);
+				_streamClientVector.push_back(output::StreamClientOutputRtp::makeSP(feID, false));
+			}
+		} else if (transport.find("multicast") != std::string::npos) {
+			SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTSP Multicast", feID);
+			_streamClientVector.push_back(output::StreamClientOutputRtp::makeSP(feID, true));
+		} else if (transport.find("RTP/AVP/TCP") != std::string::npos) {
+			SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTP/AVP/TCP", feID);
+			_streamClientVector.push_back(output::StreamClientOutputRtpTcp::makeSP(feID));
+		}
+	}
+}
+
+output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
+		const bool newSession, const std::string sessionID) {
 	base::MutexLock lock(_mutex);
 	const FeID id = _device->getFeID();
 	const TransportParamVector params = socketClient.getTransportParameters();
 	const input::InputSystem msys = params.getMSYSParameter();
 	const double reqFreq = params.getDoubleParameter("freq");
 
-	// Check if the input device is set, else this stream is not usable
-	if (!_device) {
-		SI_LOG_ERROR("Frontend: @#1, Input Device not set?...", id);
-		return false;
-	}
-
 	// Do we have a new session then check some things
 	if (newSession) {
 		if (!_enabled) {
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is not enabled, skipping...", id);
-			return false;
+			return nullptr;
 		} else if (_streamInUse) {
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use, skipping...", id);
-			return false;
+			return nullptr;
 		} else if (!_device->capableOf(msys)) {
 			if (_device->capableToTransform(params)) {
 				SI_LOG_INFO("Frontend: @#1, Capable of transforming msys=@#2 with freq=@#3",
@@ -203,26 +257,30 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 			} else {
 				SI_LOG_INFO("Frontend: @#1, Not capable of handling msys=@#2 with freq=@#3",
 					id, StringConverter::delsys_to_string(msys), reqFreq);
-				return false;
+				return nullptr;
 			}
 		}
 	}
 
+	// @TODO[StreamClient] Make here StreamClients etc. (add sharing)
+	if (_streamClientVector.empty()) {
+		determineAndMakeStreamClientType(id, socketClient);
+	}
+
 	// if we have a session ID try to find it among our StreamClients
-	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
+	for (output::SpStreamClient client : _streamClientVector) {
 		// If we have a new session we like to find an empty slot so '-1'
-		if (_client[i].getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
+		if (client->getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != input::InputSystem::UNDEFINED) {
-				SI_LOG_INFO("Frontend: @#1, StreamClient[@#2] with SessionID @#3 for @#4",
-					id, i, sessionID, StringConverter::delsys_to_string(msys));
+				SI_LOG_INFO("Frontend: @#1, StreamClient with SessionID @#2 for @#3",
+					id, sessionID, StringConverter::delsys_to_string(msys));
 			} else {
-				SI_LOG_INFO("Frontend: @#1, StreamClient[@#2] with SessionID @#3",
-					id, i, sessionID);
+				SI_LOG_INFO("Frontend: @#1, StreamClient with SessionID @#2",
+					id, sessionID);
 			}
-			_client[i].setSocketClient(socketClient);
+			client->setSocketClient(socketClient);
 			_streamInUse = true;
-			clientID = i;
-			return true;
+			return client;
 		}
 	}
 	if (msys != input::InputSystem::UNDEFINED) {
@@ -231,244 +289,172 @@ bool Stream::findClientIDFor(SocketClient &socketClient,
 	} else {
 		SI_LOG_INFO("Frontend: @#1, No StreamClient with SessionID @#2", id, sessionID);
 	}
-	return false;
+	return nullptr;
 }
 
 void Stream::checkForSessionTimeout() {
 	base::MutexLock lock(_mutex);
-
-	for (std::size_t i = 0; i < MAX_CLIENTS; ++i) {
-		if (_client[i].sessionTimeout() || !_enabled) {
+	if (!_streamInUse) {
+		return;
+	}
+	for (const output::SpStreamClient client : _streamClientVector) {
+		if (client->sessionTimeout() || !_enabled) {
 			if (_enabled) {
-				SI_LOG_INFO("Frontend: @#1, Watchdog kicked in for StreamClient[@#2] with SessionID @#3",
-					_device->getFeID(), i, _client[i].getSessionID());
+				SI_LOG_INFO("Frontend: @#1, Watchdog kicked in for StreamClient with SessionID @#2",
+					_device->getFeID(), client->getSessionID());
 			} else {
-				SI_LOG_INFO("Frontend: @#1, Reclaiming StreamClient[@#2] with SessionID @#3",
-					_device->getFeID(), i, _client[i].getSessionID());
+				SI_LOG_INFO("Frontend: @#1, Reclaiming StreamClient with SessionID @#2",
+					_device->getFeID(), client->getSessionID());
 			}
-			teardown(i);
+			teardown(client);
 		}
 	}
 }
 
-bool Stream::update(int clientID) {
+bool Stream::update(output::SpStreamClient streamClient) {
 	base::MutexLock lock(_mutex);
-	const FeID id = _device->getFeID();
-	// first time streaming?
-	if (!_streaming) {
-		switch (_streamingType) {
-			case StreamingType::NONE:
-				_streaming.reset(nullptr);
-				SI_LOG_ERROR("Frontend: @#1, No streaming type found!!", id);
-				break;
-			case StreamingType::HTTP:
-				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: HTTP", id);
-				_streaming.reset(new output::StreamThreadHttp(*this));
-				break;
-			case StreamingType::RTSP_UNICAST:
-				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTSP Unicast", id);
-				_streaming.reset(new output::StreamThreadRtp(*this));
-				break;
-			case StreamingType::RTSP_MULTICAST:
-				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTSP Multicast", id);
-				_streaming.reset(new output::StreamThreadRtp(*this));
-				break;
-			case StreamingType::RTP_TCP:
-				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: RTP/TCP", id);
-				_streaming.reset(new output::StreamThreadRtpTcp(*this));
-				break;
-			case StreamingType::FILE_SRC:
-				SI_LOG_DEBUG("Frontend: @#1, Found Streaming type: FILE", id);
-				_streaming.reset(new output::StreamThreadTSWriter(*this, "test.ts"));
-				break;
-			default:
-				_streaming.reset(nullptr);
-				SI_LOG_ERROR("Frontend: @#1, Unknown streaming type!", id);
-		};
-		if (!_streaming) {
-			return false;
-		}
-	}
-	// Get changed flag, before device update, because it resets it
-	const bool changed = _device->hasDeviceDataChanged();
+
+	// Get frequency changed flag, before device update, because it resets it
+	const bool frequencyChanged = _device->hasDeviceFrequencyChanged();
 
 	if (!_device->update()) {
 		return false;
 	}
 
 	// start or restart streaming again
-	if (_streaming) {
-		if (!_streamActive) {
-			_streamActive = _streaming->startStreaming(clientID);
-		} else if (changed) {
-			_streaming->restartStreaming(clientID);
-		}
+	const bool threadStopped = _threadDeviceDataReader.isStopped();
+	if (threadStopped) {
+		startStreaming(streamClient);
+	} else if (frequencyChanged) {
+		restartStreaming(streamClient);
 	}
 	return true;
 }
 
-bool Stream::teardown(int clientID) {
+bool Stream::teardown(output::SpStreamClient streamClient) {
 	base::MutexLock lock(_mutex);
 
-	SI_LOG_INFO("Frontend: @#1, Teardown StreamClient[@#2] with SessionID @#3",
-		_device->getFeID(), clientID, _client[clientID].getSessionID());
+	SI_LOG_INFO("Frontend: @#1, Teardown StreamClient with SessionID @#2",
+		_device->getFeID(), streamClient->getSessionID());
 
-	// Stop streaming by deleting object
-	if (_streaming) {
-		_streaming.reset(nullptr);
+	const auto s = std::find(_streamClientVector.begin(), _streamClientVector.end(), streamClient);
+	if (s != _streamClientVector.end()) {
+		_streamClientVector.erase(s);
 	}
 
-	_device->teardown();
-
-	// as last, else sessionID and IP is reset
-	_client[clientID].teardown();
-
-	// @TODO Are all other StreamClients stopped??
-	if (clientID == 0) {
-		for (std::size_t i = 1; i < MAX_CLIENTS; ++i) {
-			_client[i].teardown();
-		}
-		_streamActive = false;
-		_streamInUse = false;
-		_streamingType = StreamingType::NONE;
+	streamClient->teardown();
+	if (_streamClientVector.size() == 0) {
+		stopStreaming();
 	}
 	return true;
 }
 
-bool Stream::processStreamingRequest(const SocketClient &client, const int clientID) {
+bool Stream::processStreamingRequest(const SocketClient &client, output::SpStreamClient streamClient) {
 	base::MutexLock lock(_mutex);
 
-	// Split message into Headers
-	HeaderVector headers = client.getHeaders();
-
-	// Save clients seq number
-	const std::string cseq = headers.getFieldParameter("CSeq");
-	if (!cseq.empty()) {
-		_client[clientID].setCSeq(std::stoi(cseq));
-	}
-
-	// Save clients User-Agent
-	const std::string userAgent = headers.getFieldParameter("User-Agent");
-	if (!userAgent.empty()) {
-		_client[clientID].setUserAgent(userAgent);
-	}
-
-	TransportParamVector params = client.getTransportParameters();
-	const std::string method = client.getMethod();
-	if ((method == "SETUP" || method == "PLAY"  || method == "GET") &&
-			client.hasTransportParameters()) {
-		_device->parseStreamString(params);
-	}
-
-	// Channel changed?.. stop/pause Stream
-	if (_device->hasDeviceDataChanged()) {
-		if (_streaming) {
-			_streaming->pauseStreaming(clientID);
+	if (client.hasTransportParameters()) {
+		const std::string method = client.getMethod();
+		if (method == "SETUP" || method == "PLAY"  || method == "GET") {
+			const TransportParamVector params = client.getTransportParameters();
+			_device->parseStreamString(params);
 		}
 	}
 
-	// Get transport type from request, and maybe ports
-	if (_streamingType == StreamingType::NONE) {
-		if (method == "GET") {
-			const std::string multicast = params.getParameter("multicast");
-			if (!multicast.empty()) {
-				// Format: multicast=IP_ADDR,RTP_PORT,RTCP_PORT,TTL
-				const StringVector multiParam = StringConverter::split(multicast, ",");
-				if (multiParam.size() == 4) {
-					client.spoofHeaderWith(StringConverter::stringFormat(
-						"Transport: RTP/AVP;multicast;destination=@#1;port=@#2-@#3;ttl=@#4\r\n",
-						multiParam[0], multiParam[1], multiParam[2], multiParam[3]));
-					headers = client.getHeaders();
-					SI_LOG_INFO("Frontend: @#1, Setup Multicast (@#2) for StreamClient[@#3]",
-						_device->getFeID(), multicast, clientID);
-					_streamingType = StreamingType::RTSP_MULTICAST;
-					_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::TEARDOWN);
-				}
-			} else {
-				_streamingType = StreamingType::HTTP;
-				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::FILE_DESCRIPTOR);
-			}
-			_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
-		} else {
-			const std::string transport = headers.getFieldParameter("Transport");
-			if (transport.find("unicast") != std::string::npos) {
-				if (transport.find("RTP/AVP") != std::string::npos) {
-					_streamingType = StreamingType::RTSP_UNICAST;
-				}
-				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::WATCHDOG);
-			} else if (transport.find("multicast") != std::string::npos) {
-				_streamingType = StreamingType::RTSP_MULTICAST;
-				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::TEARDOWN);
-			} else if (transport.find("RTP/AVP/TCP") != std::string::npos) {
-				_streamingType = StreamingType::RTP_TCP;
-				_client[clientID].setSessionTimeoutCheck(StreamClient::SessionTimeoutCheck::WATCHDOG);
-			}
-		}
+	// Frequency changed?.. pause Stream
+	if (_device->hasDeviceFrequencyChanged() && _threadDeviceDataReader.isStarted()) {
+		pauseStreaming(streamClient);
 	}
 
-	switch (_streamingType) {
-		case StreamingType::RTP_TCP: {
-				const int interleaved = headers.getIntFieldParameter("Transport", "interleaved");
-				if (interleaved != -1) {
-					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
-				}
-			}
-			break;
-		case StreamingType::RTSP_UNICAST: {
-				const int port = headers.getIntFieldParameter("Transport", "client_port");
-				if (port != -1) {
-					_client[clientID].setIPAddressOfStream(_client[clientID].getIPAddressOfSocket());
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port, 1);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(_client[clientID].getIPAddressOfStream(), port + 1, 1);
-				}
-			}
-			break;
-		case StreamingType::RTSP_MULTICAST: {
-				const std::string dest = headers.getStringFieldParameter("Transport", "destination");
-				if (!dest.empty()) {
-					_client[clientID].setIPAddressOfStream(dest);
-				}
-				const std::string ports = headers.getStringFieldParameter("Transport", "port");
-				const StringVector port = StringConverter::split(ports, "-");
-				const int ttl = headers.getIntFieldParameter("Transport", "ttl");
-				if (port.size() == 2) {
-					const int rtp  = std::isdigit(port[0][0]) ? std::stoi(port[0]) : 15000;
-					const int rtcp = std::isdigit(port[1][0]) ? std::stoi(port[1]) : 15001;
-					_client[clientID].getRtpSocketAttr().setupSocketStructure(dest, rtp, ttl);
-					_client[clientID].getRtcpSocketAttr().setupSocketStructure(dest, rtcp, ttl);
-				}
-			}
-			break;
-		default:
-			// Do nothing here
-			break;
-	};
-
-	_client[clientID].restartWatchDog();
+	streamClient->processStreamingRequest(client);
 	return true;
 }
 
 std::string Stream::getDescribeMediaLevelString() const {
-	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
-		"m=video @#1 RTP/AVP 33\r\n" \
-		"c=IN IP4 @#2\r\n" \
-		"a=control:stream=@#3\r\n" \
-		"a=fmtp:33 @#4\r\n" \
-		"a=@#5\r\n";
 	_device->monitorSignal(false);
-	const std::string desc_attr = _device->attributeDescribeString();
-	if (desc_attr.size() > 5) {
-		if (_streamingType == StreamingType::RTSP_MULTICAST) {
-			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-				_client[0].getRtpSocketAttr().getSocketPort(),
-				_client[0].getIPAddressOfStream() + "/0",
-				_device->getStreamID().getID(), desc_attr,
-				(_streamActive) ? "sendonly" : "inactive");
-		} else {
-			return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-				0, "0.0.0.0", _device->getStreamID().getID(), desc_attr,
-				(_streamActive) ? "sendonly" : "inactive");
+	const std::string describe = _device->attributeDescribeString();
+	std::string mediaLevel;
+	if (describe.size() > 5) {
+		for (const output::SpStreamClient client : _streamClientVector) {
+			mediaLevel += client->getDescribeMediaLevelString(_device->getStreamID(), describe);
 		}
 	}
-	return "";
+	return mediaLevel;
 }
+
+bool Stream::threadExecuteDeviceDataReader() {
+	const size_t read = _readIndex;
+	size_t write = _writeIndex;
+	const size_t availableSize = (_writeIndex >= _readIndex) ?
+			((_tsBuffer.size() - _writeIndex) + _readIndex) : (_readIndex - _writeIndex);
+
+//	SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4  A @#5", _device->getFeID(), _tsBuffer.size(), write, read, availableSize);
+	if (_device->isDataAvailable() && availableSize >= 1) {
+		if (_device->readTSPackets(_tsBuffer[_writeIndex])) {
+#ifdef LIBDVBCSA
+			if (_decrypt != nullptr) {
+				_decrypt->decrypt(_device->getFeIndex(), _device->getFeID(), _tsBuffer[_writeIndex]);
+			}
+#endif
+			// goto next, so inc write index
+			++_writeIndex;
+			_writeIndex %= _tsBuffer.size();
+			// reset next
+			_tsBuffer[_writeIndex].reset();
+		}
+	}
+	executeStreamClientWriter();
+	return true;
+}
+
+void Stream::executeStreamClientWriter() {
+	// calculate interval
+	_t2 = std::chrono::steady_clock::now();
+	const unsigned long interval = std::chrono::duration_cast<std::chrono::microseconds>(_t2 - _t1).count();
+	const bool intervalExeeded = interval > _sendInterval;
+
+	const size_t availableSize = (_writeIndex >= _readIndex) ?
+			(_writeIndex - _readIndex) : ((_tsBuffer.size() - _readIndex) + _writeIndex);
+
+	if (availableSize > 0 || intervalExeeded) {
+		const size_t cnt = (availableSize > 4) ? 4 : 1;
+//		SI_LOG_DEBUG("Frontend: @#1, PacketBuffer MAX @#2 W @#3 R @#4 A @#5 C @#6", _device->getFeID(), _tsBuffer.size(), write, read, availableSize, cnt);
+		for (size_t i = 0; i < cnt; ++i) {
+			const bool readyToSend = _tsBuffer[_readIndex].isReadyToSend();
+			if (readyToSend) {
+				_t1 = _t2;
+				bool incrementReadIndex = false;
+				// Send the packet full or not, else send null packet
+				for (const output::SpStreamClient client : _streamClientVector) {
+					if (client->writeData(_tsBuffer[_readIndex])) {
+						incrementReadIndex = true;
+					}
+				}
+				if (incrementReadIndex) {
+					++_readIndex;
+					_readIndex %= _tsBuffer.size();
+				}
+			} else if (intervalExeeded) {
+				for (const output::SpStreamClient client : _streamClientVector) {
+					client->writeData(_tsEmpty);
+				}
+				break;
+			} else {
+				break;
+			}
+		}
+	}
+}
+
+bool Stream::threadExecuteDeviceMonitor() {
+	// check do we need to update Device monitor signals
+	_signalLock = _device->monitorSignal(false);
+	const unsigned long interval = 200 * _rtcpSignalUpdate;
+
+	const std::string desc = _device->attributeDescribeString();
+	for (const output::SpStreamClient client : _streamClientVector) {
+		client->writeRTCPData(desc);
+	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+	return true;
+}
+

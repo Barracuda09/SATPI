@@ -68,7 +68,6 @@ SOURCES = Version.cpp \
 	main.cpp \
 	Satpi.cpp \
 	Stream.cpp \
-	StreamClient.cpp \
 	StreamManager.cpp \
 	StringConverter.cpp \
 	TransportParamVector.cpp \
@@ -108,14 +107,10 @@ SOURCES = Version.cpp \
 	mpegts/PMT.cpp \
 	mpegts/SDT.cpp \
 	mpegts/TableData.cpp \
-	output/StreamThreadBase.cpp \
-	output/StreamThreadHttp.cpp \
-	output/StreamThreadRtcpBase.cpp \
-	output/StreamThreadRtcp.cpp \
-	output/StreamThreadRtcpTcp.cpp \
-	output/StreamThreadRtp.cpp \
-	output/StreamThreadRtpTcp.cpp \
-	output/StreamThreadTSWriter.cpp \
+	output/StreamClient.cpp \
+	output/StreamClientOutputHttp.cpp \
+	output/StreamClientOutputRtp.cpp \
+	output/StreamClientOutputRtpTcp.cpp \
 	socket/HttpcSocket.cpp \
 	socket/TcpSocket.cpp \
 	socket/SocketAttr.cpp \

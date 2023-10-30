@@ -92,7 +92,7 @@ namespace base {
 			for (std::string token; tokenizerTrackInfo.isNextToken(token); ) {
 				const std::string srcStr = findAndParseToken(token, "satip-src=\"");
 				if (!srcStr.empty()) {
-					element.src = std::atof(srcStr.c_str());
+					element.src = std::atof(srcStr.data());
 				}
 				const std::string freqStr = findAndParseToken(token, "satip-freq=\"");
 				if (!freqStr.empty()) {

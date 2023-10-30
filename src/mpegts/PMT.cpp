@@ -45,13 +45,13 @@ void PMT::clear() {
 void PMT::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "pid", _pmtData.pid);
 	ADD_XML_ELEMENT(xml, "serviceID", DIGIT(_programNumber, 6));
-	for (const auto &data : _pmtData.esPID) {
+	for (const auto& data : _pmtData.esPID) {
 		ADD_XML_BEGIN_ELEMENT(xml, "elementary");
 			ADD_XML_ELEMENT(xml, "pid", data.pid);
 			ADD_XML_ELEMENT(xml, "streamtype", data.streamType);
 		ADD_XML_END_ELEMENT(xml, "elementary");
 	}
-	for (const auto &data : _pmtData.ecmPID) {
+	for (const auto& data : _pmtData.ecmPID) {
 		std::string name = "caid_" + HEX(data.caid, 4);
 		ADD_XML_BEGIN_ELEMENT(xml, name);
 			ADD_XML_ELEMENT(xml, "ecmPID", data.ecmpid);
@@ -88,7 +88,7 @@ void PMT::cleanPI(unsigned char *data) {
 		const std::size_t len = sectionLength - 4 - 9 - prgLength;
 
 		// skip to ES Table begin and iterate over entries
-		const unsigned char *ptr = &data[17 + prgLength];
+		const unsigned char* ptr = &data[17 + prgLength];
 		for (std::size_t i = 0; i < len; ) {
 //				const int streamType    =   ptr[i + 0];
 //				const int elementaryPID = ((ptr[i + 1] & 0x1F) << 8) | ptr[i + 2];
@@ -106,7 +106,7 @@ void PMT::cleanPI(unsigned char *data) {
 		pmt[7]  =  (newSectionLength & 0xFF);
 
 		// append calculated CRC
-		const uint32_t crc = mpegts::TableData::calculateCRC32(pmt.c_str() + 5, pmt.size() - 5);
+		const uint32_t crc = mpegts::TableData::calculateCRC32(pmt.data() + 5, pmt.size() - 5);
 		pmt += ((crc >> 24) & 0xFF);
 		pmt += ((crc >> 16) & 0xFF);
 		pmt += ((crc >>  8) & 0xFF);
@@ -117,7 +117,7 @@ void PMT::cleanPI(unsigned char *data) {
 			pmt += 0xFF;
 		}
 		// copy new PMT to buffer
-		memcpy(data, pmt.c_str(), 188);
+		memcpy(data, pmt.data(), 188);
 
 		static bool once = true;
 		if (once) {
@@ -139,7 +139,7 @@ void PMT::cleanPI(unsigned char *data) {
 int PMT::parsePCRPid() {
 	Data tableData;
 	if (getDataForSectionNumber(0, tableData)) {
-		const unsigned char *const data = tableData.data.c_str();
+		const unsigned char* const data = tableData.data.data();
 		_pcrPID = ((data[13u] & 0x1F) << 8) | data[14u];
 	}
 	return _pcrPID;
@@ -148,7 +148,7 @@ int PMT::parsePCRPid() {
 void PMT::parse(const FeID id) {
 	Data tableData;
 	if (getDataForSectionNumber(0, tableData)) {
-		const unsigned char* const data = tableData.data.c_str();
+		const unsigned char* const data = tableData.data.data();
 		_programNumber = ((data[ 8u]       ) << 8) | data[ 9u];
 		_pcrPID        = ((data[13u] & 0x1F) << 8) | data[14u];
 		_prgLength     = ((data[15u] & 0x0F) << 8) | data[16u];
@@ -181,7 +181,7 @@ void PMT::parse(const FeID id) {
 		const std::size_t len = tableData.sectionLength - 4u - 9u - _prgLength;
 
 		// Skip to ES Table begin and iterate over entries
-		const unsigned char *const ptr = &data[17u + _prgLength];
+		const unsigned char* const ptr = &data[17u + _prgLength];
 		for (std::size_t i = 0u; i < len; ) {
 			const int streamType    =   ptr[i + 0u];
 			const int elementaryPID = ((ptr[i + 1u] & 0x1F) << 8u) | ptr[i + 2u];

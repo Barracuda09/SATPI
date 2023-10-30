@@ -40,7 +40,7 @@ void PAT::clear() {
 // =============================================================================
 
 void PAT::doAddToXML(std::string &xml) const {
-	for (const auto &[pid, _] : _pmtPidTable) {
+	for (const auto& [pid, _] : _pmtPidTable) {
 		ADD_XML_ELEMENT(xml, "pmt", pid);
 	}
 }
@@ -54,7 +54,7 @@ void PAT::doFromXML(const std::string &UNUSED(xml)) {}
 void PAT::parse(const FeID id) {
 	Data tableData;
 	if (getDataForSectionNumber(0, tableData)) {
-		const unsigned char *data = tableData.data.c_str();
+		const unsigned char* data = tableData.data.data();
 		_tid =  (data[8u] << 8) | data[9u];
 
 //		SI_LOG_BIN_DEBUG(data, tableData.data.size(), "Frontend: @#1, PAT data", id);
@@ -66,7 +66,7 @@ void PAT::parse(const FeID id) {
 		const size_t len = tableData.sectionLength - 4u - 5u;
 
 		// skip to Table begin and iterate over entries
-		const unsigned char *ptr = &data[13u];
+		const unsigned char* ptr = &data[13u];
 		for (size_t i = 0u; i < len; i += 4u) {
 			// Get PAT entry
 			const int prognr =  (ptr[i + 0u] << 8) | ptr[i + 1u];
@@ -84,7 +84,7 @@ void PAT::parse(const FeID id) {
 }
 
 mpegts::TSData PAT::generateFrom(
-		FeID UNUSED(id), const base::M3UParser::TransformationMap &info) {
+		FeID UNUSED(id), const base::M3UParser::TransformationMap& UNUSED(info)) {
 	static int cc = 0;
 
 	int version = 5;
@@ -122,10 +122,10 @@ mpegts::TSData PAT::generateFrom(
 	tmp[index + 3] = 0x10; //
 	index += 4;
 
+/*
 	int prognr = 0x4000;
 	int pmtPid = 0x0100;
-
-	for (auto [freq, element] : info) {
+	for (const auto& [freq, element] : info) {
 //		SI_LOG_DEBUG("Frontend: @#1, Generating PAT: TID: @#2  Prog NR: @#3 - @#4  PMT PID: @#5  CC: @#6",
 //			id, transportStreamID, HEX(prognr, 4), DIGIT(prognr, 5), element.freq, cc);
 		tmp[index + 0] = (prognr & 0xFF00) >> 8;
@@ -138,6 +138,7 @@ mpegts::TSData PAT::generateFrom(
 		++prognr;
 		pmtPid += 0x10;
 	}
+*/
 	// Adjust lenght
 	int len = index - 8 + 4;
 	tmp[6]  = (len & 0xFF00) >> 8;

@@ -33,9 +33,9 @@ FW_DECL_NS0(StreamManager);
 class RtspServer :
 	public base::ThreadBase,
 	public HttpcServer {
-		// =====================================================================
-		// -- Constructors and destructor --------------------------------------
-		// =====================================================================
+		// =========================================================================
+		// -- Constructors and destructor ------------------------------------------
+		// =========================================================================
 	public:
 
 		RtspServer(StreamManager &streamManager, const std::string &bindIPAddress);
@@ -43,27 +43,13 @@ class RtspServer :
 		virtual ~RtspServer();
 
 		/// Call this to initialize, setup and start this server
-		virtual void initialize(
-			int port,
-			bool nonblock);
+		virtual void initialize(int port, bool nonblock);
 
 	protected:
 		/// Thread function
 		virtual void threadEntry() final;
 
 	private:
-
-		///
-		virtual void methodSetup(const Stream &stream, int clientID, std::string &htmlBody) final;
-
-		///
-		virtual void methodPlay(const Stream &stream, int clientID, std::string &htmlBody) final;
-
-		///
-		virtual void methodTeardown(const std::string &sessionID, int cseq, std::string &htmlBody) final;
-
-		///
-		virtual void methodOptions(const std::string &sessionID, int cseq, std::string &htmlBody) final;
 
 		///
 		virtual void methodDescribe(const std::string &sessionID, int cseq, FeIndex index, std::string &htmlBody) final;

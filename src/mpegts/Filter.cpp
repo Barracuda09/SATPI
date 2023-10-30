@@ -60,7 +60,7 @@ void Filter::doAddToXML(std::string &xml) const {
 
 	ADD_XML_ELEMENT(xml, "pat", getPATData()->toXML());
 	ADD_XML_BEGIN_ELEMENT(xml, "pmtlist");
-		for (const auto &[pid, pmt] : _pmtMap) {
+		for (const auto& [pid, pmt] : _pmtMap) {
 			ADD_XML_ELEMENT(xml, "pmt", pmt->toXML());
 		}
 	ADD_XML_END_ELEMENT(xml, "pmtlist");
@@ -112,7 +112,7 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 		}
 	} else {
 		const StringVector reqPidList = StringConverter::split(reqPids, ",");
-		for (const std::string &pid : reqPidList) {
+		for (const std::string& pid : reqPidList) {
 			try {
 				if (const auto p = std::stoi(pid); p > 18 || add) {
 					_pidTable.setPID(p, add);
@@ -123,7 +123,7 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 		}
 		if (add) {
 			const StringVector userPidList = StringConverter::split(_userPids, ",");
-			for (const std::string &pid : userPidList) {
+			for (const std::string& pid : userPidList) {
 				try {
 					_pidTable.setPID(std::stoi(pid), add);
 				} catch (const std::invalid_argument &) {
@@ -136,22 +136,14 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 
 void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
 //	base::MutexLock lock(_mutex);
-	const std::size_t size = buffer.getNumberOfCompletedPackets();
 	const std::size_t begin = buffer.getBeginOfUnFilteredPackets();
+	const std::size_t size = buffer.getNumberOfCompletedPackets();
 
 	for (std::size_t i = begin; i < size; ++i) {
-		const unsigned char *ptr = buffer.getTSPacketPtr(i);
-		// Check is this the beginning of the TS and no Transport error indicator and not a NULL packet
-		if (ptr[0] != 0x47 || (ptr[1] & 0x80) == 0x80 || (ptr[1] == 0x1F && ptr[2] == 0xFF)) {
-			if (filter && !_pidTable.isAllPID()) {
-				buffer.markTSForPurging(i);
-			}
-			continue;
-		}
-		// get PID and CC from TS
+		const unsigned char* ptr = buffer.getTSPacketPtr(i);
 		const uint16_t pid = ((ptr[1] & 0x1f) << 8) | ptr[2];
-		// If pid was not opened, skip this one (and perhaps purge it)
-		if (!_pidTable.isPIDOpened(pid)) {
+		// Check is this the beginning of the TS and no Transport error indicator and not a NULL packet
+		if (ptr[0] != 0x47 || (ptr[1] & 0x80) == 0x80 || pid == 0x1FFF || !_pidTable.isPIDOpened(pid)) {
 			if (filter && !_pidTable.isAllPID()) {
 				buffer.markTSForPurging(i);
 			}
@@ -246,7 +238,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 #endif
 					}
 				} else if (_filterPCR && PCR::isPCRTableData(ptr)) {
-					for (const auto &[_, pmt] : _pmtMap) {
+					for (const auto& [_, pmt] : _pmtMap) {
 						const int pcrPID = pmt->getPCRPid();
 						if (pid == pcrPID && _pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
 							_pcr->collectData(id, ptr);
@@ -276,7 +268,7 @@ mpegts::SpPMT Filter::getPMTData(const int pid) const {
 	base::MutexLock lock(_mutex);
 	if (pid == 0) {
 		// Try to find current PMT based on open PCR
-		for (const auto &[_, pmt] : _pmtMap) {
+		for (const auto& [_, pmt] : _pmtMap) {
 			const int pcrPID = pmt->getPCRPid();
 			if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
 				return pmt;

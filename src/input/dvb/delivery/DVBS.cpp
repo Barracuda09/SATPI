@@ -97,7 +97,7 @@ namespace input::dvb::delivery {
 					ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
 					ADD_XML_ELEMENT(xml, "value", _fbcConnect - (_fbcSetID * 8));
 					ADD_XML_BEGIN_ELEMENT(xml, "list");
-					for (const auto &choice : _choices) {
+					for (const auto& choice : _choices) {
 						ADD_XML_ELEMENT(xml, StringConverter::stringFormat("option@#1", choice.first), choice.second);
 					}
 					ADD_XML_END_ELEMENT(xml, "list");
@@ -190,12 +190,12 @@ namespace input::dvb::delivery {
 		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
 			// Replace Frontend number with Root Frontend Number
 			fePathDiseqc.replace(fePathDiseqc.end()-1, fePathDiseqc.end(), std::to_string(_fbcConnect));
-			feFDDiseqc = ::open(fePathDiseqc.c_str(), O_RDWR | O_NONBLOCK);
+			feFDDiseqc = ::open(fePathDiseqc.data(), O_RDWR | O_NONBLOCK);
 			if (feFDDiseqc  < 0) {
 				// Probably already open, try to find it and duplicate fd
 				dirent **fileList;
 				const std::string procSelfFD("/proc/self/fd");
-				const int n = scandir(procSelfFD.c_str(), &fileList, nullptr, versionsort);
+				const int n = scandir(procSelfFD.data(), &fileList, nullptr, versionsort);
 				if (n > 0) {
 					for (int i = 0; i < n; ++i) {
 						// Check do we have a digit
@@ -206,7 +206,7 @@ namespace input::dvb::delivery {
 						const int fd = std::atoi(fileList[i]->d_name);
 						const std::string procSelfFDNr = procSelfFD + "/" + std::to_string(fd);
 						char buf[255];
-						const auto s = readlink(procSelfFDNr.c_str(), buf, sizeof(buf));
+						const auto s = readlink(procSelfFDNr.data(), buf, sizeof(buf));
 						if (s > 0) {
 							buf[s] = 0;
 							if (fePathDiseqc == buf) {

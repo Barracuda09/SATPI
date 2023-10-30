@@ -98,6 +98,11 @@ class SocketAttr {
 		/// Set the Receive and Send timeout in Sec for this socket
 		void setSocketTimeoutInSec(unsigned int timeout);
 
+		/// Get the Time(hops) that a packet exists inside network
+		int getTimeToLive() const {
+			return _ttl;
+		}
+
 		/// Get the file descriptor of this Socket
 		int getFD() const;
 

@@ -103,22 +103,16 @@ class HttpcServer {
   processStreamingRequest(..)
 }
 
-class StreamInterface #aaaaff {
-  getInputDevice() = 0
-  getStreamClient(..) = 0
-  getDecryptDevice() = 0
-}
-
-Stream --|> StreamInterface
-Stream *-- StreamClient : " _client[..] "
+Stream *-- output::StreamClient : " _streamClientVector[..] "
+Stream *-- mpegts::PacketBuffer : " _tsBuffer[..] "
 Stream *-- input::Device
-Stream *-- output::StreamThreadBase
 decrypt::dvbapi::Client ..* Stream : " _decrypt "
 class Stream #aaaaff {
   XMLSupport
-  --
+  ** Thread DataReader**
+  ** Thread Monitor/RTCP**
+ --
   enabled
-  StreamingType (RSTP/RTP/HTTP/..)
   streamInUse
   --
   getFrontendDecryptInterface()
@@ -149,10 +143,10 @@ class StreamManager #aaaaff {
   getFrontendDecryptInterface(..)
 }
 
-StreamClient *-- socket::SocketAttr : " _rtp "
-StreamClient *-- socket::SocketAttr : " _rtcp "
-StreamClient *.. socket::SocketClient : " _httpStream "
-class StreamClient #aaaaff {
+output::StreamClient *-- socket::SocketAttr : " _rtp "
+output::StreamClient *-- socket::SocketAttr : " _rtcp "
+output::StreamClient *.. socket::SocketClient : " _httpStream "
+class output::StreamClient #ccffff {
   Mutex _mutex
   --
   SocketClient *_httpStream
@@ -171,33 +165,19 @@ class mpegts::PMT           #11ff11
 class mpegts::PCR           #11ff11
 class mpegts::SDT           #11ff11
 
-output::StreamThreadBase *-- mpegts::PacketBuffer : " _tsBuffer[..] "
-output::StreamThreadBase *.. StreamInterface
-class output::StreamThreadBase #ccffff {
-  ** Thread **
-  --
-}
 
-class output::StreamThreadRtcp #ccffff
-class output::StreamThreadHttp #ccffff
+class output::StreamClientOutputHttp #ccffff
+class output::StreamClientOutputRtp #ccffff
+class output::StreamClientOutputRtpTcp #ccffff
+output::StreamClientOutputHttp --|> output::StreamClient
+output::StreamClientOutputRtp --|> output::StreamClient
+output::StreamClientOutputRtpTcp --|> output::StreamClient
 
-output::StreamThreadRtcp --* output::StreamThreadRtp
+class input::childpipe::TSReader     #99cc11
+class TSReaderData                   #99cc11
 
-output::StreamThreadRtp --|> output::StreamThreadBase
-class output::StreamThreadRtp #ccffff {
-  cseq
-}
-
-output::StreamThreadHttp --|> output::StreamThreadBase
-
-class input::stream::Streamer #55ccff
-input::Device <|-- input::stream::Streamer
-
-class input::file::TSReader     #99cc11
-class TSReaderData              #99cc11
-
-input::Device <|-- input::file::TSReader
-input::file::TSReader *-- TSReaderData
+input::Device <|-- input::childpipe::TSReader
+input::childpipe::TSReader *-- TSReaderData
 
 TSReaderData --|> input::DeviceData
 

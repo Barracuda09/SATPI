@@ -24,14 +24,6 @@
 extern const char* const satpi_version;
 
 // =============================================================================
-// -- Static const data --------------------------------------------------------
-// =============================================================================
-
-const unsigned int Properties::TCP_PORT_MAX = 65535;
-const unsigned int Properties::HTTP_PORT_MIN = 1024;
-const unsigned int Properties::RTSP_PORT_MIN = 554;
-
-// =============================================================================
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
@@ -62,8 +54,6 @@ Properties::Properties(
 	_webPathOpt = webPathOpt;
 	_appdataPathOpt = appdataPathOpt;
 }
-
-Properties::~Properties() {}
 
 // =============================================================================
 //  -- base::XMLSupport --------------------------------------------------------
@@ -103,6 +93,10 @@ void Properties::doFromXML(const std::string &xml) {
 		const bool start = (element == "true") ? true : false;
 		Log::startSysLog(start);
 	}
+	if (findXMLElement(xml, "logDebug.value", element)) {
+		const bool log = (element == "true") ? true : false;
+		Log::logDebug(log);
+	}
 }
 
 void Properties::doAddToXML(std::string &xml) const {
@@ -114,6 +108,7 @@ void Properties::doAddToXML(std::string &xml) const {
 	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
 	ADD_XML_TEXT_INPUT(xml, "appDataPath", _appdataPath);
 	ADD_XML_CHECKBOX(xml, "syslog", (Log::getSysLogState() ? "true" : "false"));
+	ADD_XML_CHECKBOX(xml, "logDebug", (Log::getLogDebugState() ? "true" : "false"));
 }
 
 // =============================================================================

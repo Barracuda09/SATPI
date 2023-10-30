@@ -143,9 +143,9 @@ namespace base {
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 #ifdef HAS_NP_FUNCTIONS
-		pthread_setname_np(_thread, _name.c_str());
+		pthread_setname_np(_thread, _name.data());
 #else
-		prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
+		prctl(PR_SET_NAME, _name.data(), 0, 0, 0);
 #endif
 		try {
 			threadEntry();

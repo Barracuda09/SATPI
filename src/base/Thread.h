@@ -62,7 +62,7 @@ class Thread {
 			const std::string &name,
 			FunctionThreadExecute threadExecuteFunction);
 
-		virtual ~Thread();
+		virtual ~Thread() = default;
 
 		// =====================================================================
 		// -- static member functions ------------------------------------------
@@ -88,6 +88,21 @@ class Thread {
 		/// Start the Thread
 		/// @return true if thread is running false if there was an error
 		bool startThread();
+
+		/// Check if this thread is started
+		bool isStarted() const {
+			return _state == State::Started || _state == State::Starting;
+		}
+
+		/// Check if this thread is paused
+		bool isPaused() const {
+			return _state == State::Paused || _state == State::Pausing;
+		}
+
+		/// Check if this thread is paused
+		bool isStopped() const {
+			return _state == State::Stopped || _state == State::Stopping || _state == State::Unknown;
+		}
 
 		/// Stop the running thread give 5.0 sec to stop else cancel it
 		void stopThread();

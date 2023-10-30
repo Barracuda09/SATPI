@@ -36,7 +36,7 @@ PCR::PCR() :
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-void PCR::collectData(const FeID UNUSED(id), const unsigned char *data) {
+void PCR::collectData(const FeID UNUSED(id), const unsigned char* data) {
 	if (isPCRTableData(data)) {
 		//        4           3          2          1          0
 		// 76543210 98765432 10987654 32109876 54321098 76543210

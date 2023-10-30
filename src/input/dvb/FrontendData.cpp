@@ -121,7 +121,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			SI_LOG_INFO("Frontend: @#1, New frequency requested (@#2 -> @#3), clearing old channel data...", id, oldFreq, reqFreq);
 			initialize();
 			_freq = reqFreq * 1000.0;
-			_changed = true;
+			_frequencyChanged = true;
 		} else if (method == "SETUP" || method == "PLAY") {
 			const std::string list = params.getParameter("pids");
 			if (list.empty()) {
@@ -143,21 +143,21 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (isId != -1) {
 		if (_isId != isId) {
 			_isId = isId;
-			_changed = true;
+			_frequencyChanged = true;
 		}
 	}
 	const int plsCode = params.getIntParameter("plsc");
 	if (plsCode != -1) {
 		if (_plsCode != plsCode) {
 			_plsCode = plsCode & 0x3FFFF;
-			_changed = true;
+			_frequencyChanged = true;
 		}
 	}
 	const int plpId = params.getIntParameter("plp");
 	if (plpId != -1) {
 		if (_plpId != plpId) {
 			_plpId = plpId;
-			_changed = true;
+			_frequencyChanged = true;
 		}
 	}
 	const int plsMode = params.getIntParameter("plsm");

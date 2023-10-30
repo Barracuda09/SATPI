@@ -65,8 +65,8 @@ bool UdpSocket::initMutlicastUDPSocket(
 
 	// request that the kernel joins a multicast group
 	struct ip_mreq mreq;
-	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr.c_str());
-	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr.c_str());
+	mreq.imr_multiaddr.s_addr = inet_addr(multicastIPAddr.data());
+	mreq.imr_interface.s_addr = inet_addr(interfaceIPaddr.data());
 	if (setsockopt(server.getFD(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
 		SI_LOG_PERROR("IP_ADD_MEMBERSHIP");
 		return false;

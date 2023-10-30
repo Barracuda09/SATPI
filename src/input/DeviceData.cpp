@@ -30,7 +30,7 @@ namespace input {
 
 DeviceData::DeviceData() {
 	_delsys = input::InputSystem::UNDEFINED;
-	_changed = false;
+	_frequencyChanged = false;
 	_internalPidFiltering = false;
 	_status = static_cast<fe_status_t>(0);
 	_strength = 0;
@@ -78,7 +78,7 @@ void DeviceData::doFromXML(const std::string &xml) {
 
 void DeviceData::initialize() {
 	base::MutexLock lock(_mutex);
-	_changed = false;
+	_frequencyChanged = false;
 	_delsys = input::InputSystem::UNDEFINED;
 	_filter.clear();
 	setMonitorData(static_cast<fe_status_t>(0), 0, 0, 0, 0);
@@ -139,14 +139,14 @@ fe_delivery_system DeviceData::convertDeliverySystem() const {
 	}
 }
 
-void DeviceData::resetDeviceDataChanged() {
+void DeviceData::resetDeviceFrequencyChanged() {
 	base::MutexLock lock(_mutex);
-	_changed = false;
+	_frequencyChanged = false;
 }
 
-bool DeviceData::hasDeviceDataChanged() const {
+bool DeviceData::hasDeviceFrequencyChanged() const {
 	base::MutexLock lock(_mutex);
-	return _changed;
+	return _frequencyChanged;
 }
 
 void DeviceData::parseAndUpdatePidsTable(FeID id, const TransportParamVector& params) {

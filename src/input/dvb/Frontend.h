@@ -106,16 +106,16 @@ class Frontend :
 
 		virtual const dvbcsa_bs_key_s *getKey(int parity) const final;
 
-		virtual void setKey(const unsigned char *cw, int parity, int index) final;
+		virtual void setKey(const unsigned char* cw, int parity, int index) final;
 
 		virtual void setICAM(const unsigned char ecm, int parity) final;
 
 		virtual void startOSCamFilterData(int pid, int demux, int filter,
-			const unsigned char *filterData, const unsigned char *filterMask) final;
+			const unsigned char* filterData, const unsigned char* filterMask) final;
 
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) final;
 
-		virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int tableID,
+		virtual bool findOSCamFilterData(int pid, const unsigned char* tsPacket, int tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) final;
 
 		virtual std::vector<int> getActiveOSCamDemuxFilters() const final;
@@ -155,7 +155,7 @@ class Frontend :
 
 		virtual bool isDataAvailable() final;
 
-		virtual bool readTSPackets(mpegts::PacketBuffer &buffer, bool finalCall) final;
+		virtual bool readTSPackets(mpegts::PacketBuffer& buffer) final;
 
 		virtual bool capableOf(InputSystem system) const final;
 
@@ -163,7 +163,7 @@ class Frontend :
 
 		virtual bool monitorSignal(bool showStatus) final;
 
-		virtual bool hasDeviceDataChanged() const final;
+		virtual bool hasDeviceFrequencyChanged() const final;
 
 		virtual void parseStreamString(const TransportParamVector& params) final;
 

@@ -56,7 +56,7 @@ void TSReaderData::doParseStreamString(const FeID UNUSED(id), const TransportPar
 		return;
 	}
 	initialize();
-	_changed = true;
+	_frequencyChanged = true;
 	_filePath = filePath;
 }
 

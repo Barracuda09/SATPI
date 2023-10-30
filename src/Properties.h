@@ -34,9 +34,9 @@ class Properties :
 		// =====================================================================
 	public:
 
-		static const unsigned int TCP_PORT_MAX;
-		static const unsigned int HTTP_PORT_MIN;
-		static const unsigned int RTSP_PORT_MIN;
+		static constexpr unsigned int TCP_PORT_MAX = 65535;
+		static constexpr unsigned int HTTP_PORT_MIN = 1024;
+		static constexpr unsigned int RTSP_PORT_MIN = 554;
 
 		// =====================================================================
 		// -- Constructors and destructor --------------------------------------
@@ -52,7 +52,7 @@ class Properties :
 			unsigned int httpPortOpt,
 			unsigned int rtspPortOpt);
 
-		virtual ~Properties();
+		virtual ~Properties() = default;
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------

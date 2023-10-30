@@ -111,7 +111,7 @@ bool TSReader::isDataAvailable() {
 	return true;
 }
 
-bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
+bool TSReader::readTSPackets(mpegts::PacketBuffer& buffer) {
 	if (!_file.is_open()) {
 		return false;
 	}
@@ -123,8 +123,8 @@ bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall)
 		// Add data to Filter
 		_deviceData.getFilter().filterData(_feID, buffer, false);
 	}
-	// Check again if buffer is full or final call before sending
-	return buffer.full() || (finalCall && buffer.isReadyToSend());
+	// Check again if buffer is full
+	return buffer.full();
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
@@ -144,8 +144,8 @@ bool TSReader::monitorSignal(bool UNUSED(showStatus)) {
 	return true;
 }
 
-bool TSReader::hasDeviceDataChanged() const {
-	return _deviceData.hasDeviceDataChanged();
+bool TSReader::hasDeviceFrequencyChanged() const {
+	return _deviceData.hasDeviceFrequencyChanged();
 }
 
 void TSReader::parseStreamString(const TransportParamVector& params) {
@@ -160,8 +160,8 @@ void TSReader::parseStreamString(const TransportParamVector& params) {
 
 bool TSReader::update() {
 	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
-	if (_deviceData.hasDeviceDataChanged()) {
-		_deviceData.resetDeviceDataChanged();
+	if (_deviceData.hasDeviceFrequencyChanged()) {
+		_deviceData.resetDeviceFrequencyChanged();
 		_file.close();
 		if (!_file.is_open()) {
 			const std::string filePath = _deviceData.getFilePath();

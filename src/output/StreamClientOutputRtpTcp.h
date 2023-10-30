@@ -1,4 +1,4 @@
-/* PCR.h
+/* StreamClientOutputRtpTcp.h
 
    Copyright (C) 2014 - 2023 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,62 +17,75 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef MPEGTS_PCR_DATA_H_INCLUDE
-#define MPEGTS_PCR_DATA_H_INCLUDE MPEGTS_PCR_DATA_H_INCLUDE
+#ifndef STREAM_CLIENT_OUTPUT_RTP_TCP_H_INCLUDE
+#define STREAM_CLIENT_OUTPUT_RTP_TCP_H_INCLUDE STREAM_CLIENT_OUTPUT_RTP_TCP_H_INCLUDE
 
 #include <Defs.h>
 #include <FwDecl.h>
+#include <output/StreamClient.h>
 
-#include <cstdint>
+FW_DECL_SP_NS1(output, StreamClientOutputRtpTcp);
 
-FW_DECL_SP_NS1(mpegts, PCR);
+namespace output {
 
-namespace mpegts {
+/// StreamClient defines the owner/participants of an stream
+class StreamClientOutputRtpTcp : public output::StreamClient {
+	public:
 
-class PCR {
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
 		// =========================================================================
 	public:
 
-		PCR();
+		StreamClientOutputRtpTcp(FeID feID) : StreamClient(feID) {};
 
-		virtual ~PCR() = default;
-
-		// =========================================================================
-		//  -- Static member functions ---------------------------------------------
-		// =========================================================================
-	public:
-
-		/// This will check for 'adaptation field flag' and 'PCR field present' to
-		/// indicate this is an PCR table
-		static bool isPCRTableData(const unsigned char* data) {
-			return ((data[3] & 0x20) == 0x20 && (data[5] & 0x10) == 0x10);
-		}
+		virtual ~StreamClientOutputRtpTcp() = default;
 
 		// =========================================================================
-		//  -- Other member functions ----------------------------------------------
+		// -- static member functions ----------------------------------------------
 		// =========================================================================
 	public:
 
-		/// Collect Table data for tableID
-		void collectData(FeID id, const unsigned char* data);
-
-		std::int64_t getPCRDelta() const;
-
-		void clearPCRDelta() {
-			_pcrDelta = 0;
+		template<class... ARGS>
+		static SpStreamClient makeSP(ARGS&&... args) {
+			return std::make_shared<StreamClientOutputRtpTcp>(std::forward<ARGS>(args)...);
 		}
 
 		// =========================================================================
-		//  -- Data members --------------------------------------------------------
+		// -- StreamClient ---------------------------------------------------------
+		// =========================================================================
+	public:
+
+		///
+		virtual std::string getSetupMethodReply(StreamID streamID) final;
+
+	private:
+
+		/// Specialization for @see processStreamingRequest
+		virtual bool doProcessStreamingRequest(const SocketClient& client) final;
+
+		/// Specialization for @see startStreaming
+		virtual void doStartStreaming() final;
+
+		/// Specialization for @see teardown
+		virtual void doTeardown() final;
+
+		/// Specialization for @see writeData
+		virtual bool doWriteData(mpegts::PacketBuffer& buffer) final;
+
+		/// Specialization for @see writeRTCPData
+		virtual void doWriteRTCPData(
+				const PacketPtr& sr, int srlen,
+				const PacketPtr& sdes, int sdeslen,
+				const PacketPtr& app, int applen);
+
+		// =========================================================================
+		// -- Data members ---------------------------------------------------------
 		// =========================================================================
 	private:
 
-		std::uint64_t _pcrPrev;
-		std::int64_t _pcrDelta;
 };
 
 }
 
-#endif // MPEGTS_PCR_DATA_H_INCLUDE
+#endif

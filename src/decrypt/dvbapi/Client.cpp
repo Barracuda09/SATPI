@@ -155,7 +155,7 @@ namespace decrypt::dvbapi {
 							// Don't send PAT or PMT before we have an active
 							if (pid == 0 || frontend->isMarkedAsActivePMT(pid)) {
 							} else {
-								const unsigned char *tableData = filterData.c_str();
+								const unsigned char* tableData = filterData.data();
 								const int sectionLength = (((tableData[6] & 0x0F) << 8) | tableData[7]) + 3; // 3 = tableID + length field
 #ifdef ICAM
 								// Check for ICAM ECM
@@ -224,7 +224,7 @@ namespace decrypt::dvbapi {
 
 	bool Client::initClientSocket(SocketClient &client, const std::string &ipAddr, int port) {
 
-		client.setupSocketStructure(ipAddr, port, 1);
+		client.setupSocketStructure(ipAddr, port, 0);
 
 		if (!client.setupSocketHandle(SOCK_STREAM /*| SOCK_NONBLOCK*/, 0)) {
 			SI_LOG_ERROR("OSCam Server handle failed");
@@ -254,7 +254,7 @@ namespace decrypt::dvbapi {
 		std::memcpy(&buff[4], &version, 2);
 
 		buff[6] = len;
-		std::memcpy(&buff[7], name.c_str(), len);
+		std::memcpy(&buff[7], name.data(), len);
 
 		if (!_client.sendData(buff.get(), 7 + len, MSG_DONTWAIT)) {
 			SI_LOG_ERROR("write failed");
@@ -401,7 +401,7 @@ namespace decrypt::dvbapi {
 					char tmpData[2048];
 					auto i = 0;
 					const ssize_t size = _client.recvDatafrom(tmpData, sizeof(tmpData) - 1, MSG_DONTWAIT);
-					const unsigned char *buf = reinterpret_cast<unsigned char *>(&tmpData);
+					const unsigned char* buf = reinterpret_cast<unsigned char *>(&tmpData);
 					if (size > 0) {
 						while (i < size) {
 							// get command
@@ -423,8 +423,8 @@ namespace decrypt::dvbapi {
 										const int demux   =  buf[i + 5];
 										const int filter  =  buf[i + 6];
 										const int pid     = (buf[i + 7] << 8) | buf[i + 8];
-										const unsigned char *filterData = &buf[i + 9];
-										const unsigned char *filterMask = &buf[i + 25];
+										const unsigned char* filterData = &buf[i + 9];
+										const unsigned char* filterMask = &buf[i + 25];
 
 //										SI_LOG_BIN_DEBUG(&buf[i], 65, "Frontend: @#1, DVBAPI_DMX_SET_FILTER", adapter);
 
@@ -534,10 +534,10 @@ namespace decrypt::dvbapi {
 			_serverIPAddr = element;
 		}
 		if (findXMLElement(xml, "OSCamPORT.value", element)) {
-			_serverPort = std::stoi(element.c_str());
+			_serverPort = std::stoi(element.data());
 		}
 		if (findXMLElement(xml, "AdapterOffset.value", element)) {
-			_adapterOffset = std::stoi(element.c_str());
+			_adapterOffset = std::stoi(element.data());
 		}
 		if (findXMLElement(xml, "OSCamEnabled.value", element)) {
 			_enabled = (element == "true") ? true : false;

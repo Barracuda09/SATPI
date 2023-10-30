@@ -21,23 +21,21 @@
 #define STREAM_H_INCLUDE STREAM_H_INCLUDE
 
 #include <FwDecl.h>
-#include <StreamClient.h>
-#include <StreamInterface.h>
 #include <base/Mutex.h>
+#include <base/Thread.h>
 #include <base/XMLSupport.h>
-#include <input/Device.h>
+#include <mpegts/PacketBuffer.h>
 
+#include <array>
 #include <atomic>
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <vector>
 
 FW_DECL_NS0(SocketClient);
-FW_DECL_NS1(output, StreamThreadBase);
-FW_DECL_NS1(input, DeviceData);
 
-FW_DECL_UP_NS1(output, StreamThreadBase);
+FW_DECL_SP_NS1(input, Device);
+FW_DECL_SP_NS1(output, StreamClient);
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 FW_DECL_SP_NS2(input, dvb, FrontendDecryptInterface);
 
@@ -45,19 +43,8 @@ FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
 /// The class @c Stream carries all the data/information of an stream
 class Stream :
-	public StreamInterface,
 	public base::XMLSupport {
 	public:
-		static const unsigned int MAX_CLIENTS;
-
-		enum class StreamingType {
-			NONE,
-			HTTP,
-			RTSP_UNICAST,
-			RTSP_MULTICAST,
-			RTP_TCP,
-			FILE_SRC
-		};
 
 		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
@@ -66,7 +53,7 @@ class Stream :
 
 		Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt);
 
-		virtual ~Stream();
+		virtual ~Stream() = default;
 
 		// =========================================================================
 		// -- static member functions ----------------------------------------------
@@ -87,45 +74,15 @@ class Stream :
 		virtual void doFromXML(const std::string &xml) final;
 
 		// =========================================================================
-		// -- StreamInterface ------------------------------------------------------
-		// =========================================================================
-	public:
-
-		virtual StreamID getStreamID() const final;
-
-		virtual FeID getFeID() const final;
-
-		virtual int getFeIndex() const final;
-
-		virtual StreamClient &getStreamClient(int clientID) const final;
-
-		virtual input::SpDevice getInputDevice() const final;
-
-#ifdef LIBDVBCSA
-		///
-		virtual decrypt::dvbapi::SpClient getDecryptDevice() const final;
-#endif
-
-		virtual uint32_t getSSRC() const final;
-
-		virtual long getTimestamp() const final;
-
-		virtual uint32_t getSPC() const final;
-
-		virtual unsigned int getRtcpSignalUpdateFrequency() const final;
-
-		virtual uint32_t getSOC() const final;
-
-		virtual void addRtpData(uint32_t byte, long timestamp) final;
-
-		virtual double getRtpPayload() const final;
-
-		virtual std::string attributeDescribeString() const final;
-
-		// =========================================================================
 		// -- Other member functions -----------------------------------------------
 		// =========================================================================
 	public:
+
+		StreamID getStreamID() const;
+
+		FeID getFeID() const;
+
+		int getFeIndex() const;
 
 #ifdef LIBDVBCSA
 		///
@@ -138,21 +95,11 @@ class Stream :
 				std::size_t &dvbt,
 				std::size_t &dvbt2,
 				std::size_t &dvbc,
-				std::size_t &dvbc2) {
-			if (_enabled) {
-				_device->addDeliverySystemCount(dvbs2, dvbt, dvbt2, dvbc, dvbc2);
-			}
-		}
+				std::size_t &dvbc2);
 
-		/// Find the clientID for the requested parameters
-		bool findClientIDFor(SocketClient &socketClient,
-				bool newSession, std::string sessionID, int &clientID);
-
-		/// Check is this stream used already
-		bool streamInUse() const {
-			base::MutexLock lock(_mutex);
-			return _streamInUse;
-		}
+		/// Find the StreamClient for the requested parameters
+		output::SpStreamClient findStreamClientFor(SocketClient &socketClient,
+				bool newSession, std::string sessionID);
 
 		/// Check is this stream enabled, can we use it?
 		bool streamEnabled() const {
@@ -160,18 +107,41 @@ class Stream :
 			return _enabled;
 		}
 
-		/// Get the stream type of this stream
-		StreamingType getStreamingType() const {
-			base::MutexLock lock(_mutex);
-			return _streamingType;
-		}
-
-		/// Teardown the stream client with clientID
-		bool teardown(int clientID);
+		/// Teardown the specified StreamClient
+		/// @param streamClient specifies the client that will be used
+		bool teardown(output::SpStreamClient streamClient);
 
 		/// Check if there are any stream clients with a session time-out
 		/// that should be closed
 		void checkForSessionTimeout();
+
+	private:
+
+		///
+		void startStreaming(output::SpStreamClient streamClient);
+
+		///
+		void pauseStreaming(output::SpStreamClient streamClient);
+
+		///
+		void restartStreaming(output::SpStreamClient streamClient);
+
+		/// Call this when there are no StreamClients using this stream anymore
+		void stopStreaming();
+
+		///
+		void determineAndMakeStreamClientType(FeID feID, const SocketClient &client);
+
+		/// Thread execute function @see base::Thread should @return true to
+		/// keep thread running and @return false will stop and then terminate this thread
+		bool threadExecuteDeviceDataReader();
+
+		/// Write data to Streamclients
+		void executeStreamClientWriter();
+
+		/// Thread execute function @see base::Thread should @return true to
+		/// keep thread running and @return false will stop and then terminate this thread
+		bool threadExecuteDeviceMonitor();
 
 		// =========================================================================
 		// -- Functions used for RTSP Server ---------------------------------------
@@ -179,10 +149,10 @@ class Stream :
 	public:
 
 		///
-		bool processStreamingRequest(const SocketClient &client, int clientID);
+		bool processStreamingRequest(const SocketClient &client, output::SpStreamClient streamClient);
 
 		///
-		bool update(int clientID);
+		bool update(output::SpStreamClient streamClient);
 
 		///
 		std::string getDescribeMediaLevelString() const;
@@ -194,22 +164,24 @@ class Stream :
 
 		base::Mutex _mutex;
 
-		StreamingType     _streamingType; ///
-		bool              _enabled;       /// is this stream enabled, could we use it?
-		bool              _streamInUse;   ///
-		bool              _streamActive;  ///
+		bool _enabled;
+		bool _streamInUse;
 
-		StreamClient     *_client;        /// defines the participants of this stream
-		                                  /// index 0 is the owner of this stream
-		output::UpStreamThreadBase _streaming; ///
-		decrypt::dvbapi::SpClient _decrypt;///
-		input::SpDevice _device;          ///
-		std::atomic<uint32_t> _ssrc;      /// synchronisation source identifier of sender
-		std::atomic<uint32_t> _spc;       /// sender RTP packet count  (used in SR packet)
-		std::atomic<uint32_t> _soc;       /// sender RTP payload count (used in SR packet)
-		std::atomic<long> _timestamp;     ///
-		std::atomic<double> _rtp_payload; ///
-		unsigned int _rtcpSignalUpdate;   ///
+		std::vector<output::SpStreamClient> _streamClientVector;
+
+		decrypt::dvbapi::SpClient _decrypt;
+		input::SpDevice _device;
+		unsigned int _rtcpSignalUpdate;
+		base::Thread _threadDeviceDataReader;
+		base::Thread _threadDeviceMonitor;
+		std::array<mpegts::PacketBuffer, 100> _tsBuffer;
+		mpegts::PacketBuffer _tsEmpty;
+		std::size_t _writeIndex;
+		std::size_t _readIndex;
+		unsigned long _sendInterval;
+		std::chrono::steady_clock::time_point _t1;
+		std::chrono::steady_clock::time_point _t2;
+		std::atomic_bool _signalLock;
 
 };
 

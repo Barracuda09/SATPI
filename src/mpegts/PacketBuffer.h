@@ -76,7 +76,7 @@ class PacketBuffer {
 		void purge();
 
 		/// This will tag the RTP header with sequence number and timestamp
-		void tagRTPHeaderWith(uint16_t cseq, long timestamp);
+		void tagRTPHeaderWith(uint32_t ssrc, uint16_t cseq, long timestamp);
 
 		/// This function will return the maximum number of TS Packets that will fit
 		/// in this TS buffer
@@ -144,7 +144,7 @@ class PacketBuffer {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
-		const unsigned char *getTSPacketPtr(std::size_t packetNumber) const {
+		const unsigned char* getTSPacketPtr(std::size_t packetNumber) const {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}
@@ -167,7 +167,7 @@ class PacketBuffer {
 			if (_decryptPending && ready) {
 				const std::size_t size = getNumberOfCompletedPackets();
 				for (std::size_t i = 0; i < size; ++i) {
-					const unsigned char *ts = getTSPacketPtr(i);
+					const unsigned char* ts = getTSPacketPtr(i);
 					ready &= ((ts[3] & 0x80) != 0x80);
 				}
 			}
@@ -200,7 +200,6 @@ class PacketBuffer {
 		unsigned char       _buffer[MTU];
 		std::size_t         _writeIndex = RTP_HEADER_LEN;
 		mutable std::size_t _processedIndex = RTP_HEADER_LEN;
-		bool                _initialized = false;
 		bool                _decryptPending = false;
 		std::size_t         _purgePending = 0;
 

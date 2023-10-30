@@ -41,7 +41,7 @@ void SDT::clear() {
 void SDT::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "transportStreamID", _transportStreamID);
 	ADD_XML_ELEMENT(xml, "networkID", _networkID);
-	for (const auto &[serviceID, sdtData] : _sdtTable) {
+	for (const auto& [serviceID, sdtData] : _sdtTable) {
 		ADD_XML_BEGIN_ELEMENT(xml, "service");
 			ADD_XML_ELEMENT(xml, "serviceID", DIGIT(serviceID, 6));
 			ADD_XML_ELEMENT(xml, "networkName", sdtData.networkNameUTF8);
@@ -60,7 +60,7 @@ void SDT::parse(const FeID id) {
 	for (std::size_t secNr = 0; secNr < _numberOfSections; ++secNr) {
 		TableData::Data tableData;
 		if (getDataForSectionNumber(secNr, tableData)) {
-			const unsigned char *data = tableData.data.c_str();
+			const unsigned char* data = tableData.data.data();
 			_transportStreamID = (data[ 8u] << 8u) | data[ 9u];
 			_networkID         = (data[13u] << 8u) | data[14u];
 
@@ -73,7 +73,7 @@ void SDT::parse(const FeID id) {
 			const std::size_t len = tableData.sectionLength - 4u - 8u;
 
 			// Skip to Service Description Table begin and iterate over entries
-			const unsigned char *ptr = &data[16u];
+			const unsigned char* ptr = &data[16u];
 			for (std::size_t i = 0u; i < len; ) {
 				const int serviceID = (ptr[i + 0u] << 8u) | ptr[i + 1u];
 				const int eit       =  ptr[i + 2u];
@@ -111,7 +111,7 @@ void SDT::parse(const FeID id) {
 
 // UTF-8 U+0080 U+07FF      yyxx xxxx    yyyyy xxxxxx    110yyyyy 10xxxxxx => UTF-8
 // Ext ASCII - E2       =>  1110 0010 => 00011 100010 => 11000011 10100010 => C3 A2
-void SDT::copyToUTF8(std::string &str, const unsigned char *ptr, const std::size_t len) {
+void SDT::copyToUTF8(std::string &str, const unsigned char* ptr, const std::size_t len) {
 	const std::size_t offset = (ptr[0] < 0x20) ? ((ptr[0] == 0x10) ? 2 : 1) : 0;
 	for (std::size_t i = offset; i < len; ++i) {
 		if ((ptr[i] & 0x80) == 0x80) {

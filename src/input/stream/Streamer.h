@@ -90,7 +90,7 @@ class Streamer :
 
 		virtual bool isDataAvailable() final;
 
-		virtual bool readTSPackets(mpegts::PacketBuffer &buffer, bool finalCall) final;
+		virtual bool readTSPackets(mpegts::PacketBuffer& buffer) final;
 
 		virtual bool capableOf(input::InputSystem msys) const final;
 
@@ -98,7 +98,7 @@ class Streamer :
 
 		virtual bool monitorSignal(bool showStatus) final;
 
-		virtual bool hasDeviceDataChanged() const final;
+		virtual bool hasDeviceFrequencyChanged() const final;
 
 		virtual void parseStreamString(const TransportParamVector& params) final;
 

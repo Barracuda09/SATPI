@@ -27,7 +27,7 @@
 // =============================================================================
 
 std::string TransportParamVector::getParameter(const std::string_view parameter) const {
-	for (const std::string &param : _vector) {
+	for (const std::string& param : _vector) {
 		const auto b = param.find(parameter, 0);
 		const auto e = param.find_first_not_of(parameter, b);
 		if (b != std::string::npos && parameter.size() == e && param[e] == '=') {
@@ -40,7 +40,7 @@ std::string TransportParamVector::getParameter(const std::string_view parameter)
 void TransportParamVector::replaceParameter(
 		const std::string_view parameter,
 		const std::string_view value) {
-	for (std::string &param : _vector) {
+	for (std::string& param : _vector) {
 		const auto b = param.find(parameter, 0);
 		const auto e = param.find_first_not_of(parameter, b);
 		if (b != std::string::npos && parameter.size() == e && param[e] == '=') {

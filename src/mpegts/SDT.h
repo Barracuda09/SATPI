@@ -87,7 +87,7 @@ class SDT :
 
 	protected:
 
-		void copyToUTF8(std::string &str, const unsigned char *ptr, std::size_t len);
+		void copyToUTF8(std::string& str, const unsigned char* ptr, std::size_t len);
 
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------

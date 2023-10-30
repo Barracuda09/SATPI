@@ -26,7 +26,7 @@
 // =============================================================================
 
 std::string HeaderVector::getFieldParameter(const std::string_view reqHeader) const {
-	for (const std::string &header : _vector) {
+	for (const std::string& header : _vector) {
 		const auto b = header.find(reqHeader, 0);
 		const auto e = header.find_first_not_of(reqHeader, b);
 		if (b != std::string::npos && reqHeader.size() == e && header[e] == ':') {
@@ -43,7 +43,7 @@ std::string HeaderVector::getStringFieldParameter(std::string_view header,
 		return std::string();
 	}
 	StringVector params = StringConverter::split(field, ";\r\n");
-	for (const std::string &param : params) {
+	for (const std::string& param : params) {
 		const auto p = param.find(parameter, 0);
 		if (p != std::string::npos) {
 			StringVector r = StringConverter::split(param, "=");

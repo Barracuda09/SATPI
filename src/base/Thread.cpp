@@ -44,11 +44,9 @@ namespace base {
 			const std::string &name,
 			FunctionThreadExecute threadExecuteFunction) :
 		_state(State::Unknown),
-		_thread(0u),
+		_thread(0),
 		_name(name),
 		_threadExecuteFunction(threadExecuteFunction) {}
-
-	Thread::~Thread() {}
 
 	// =========================================================================
 	// -- Other member functions -----------------------------------------------
@@ -72,11 +70,11 @@ namespace base {
 			return;
 		}
 		_state = State::Stopping;
-		size_t timeout = 0u;
+		size_t timeout = 0;
 		while (_state != State::Stopped) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			++timeout;
-			if (timeout > 50u) {
+			if (timeout > 50) {
 				cancelThread();
 				SI_LOG_DEBUG("@#1: Thread did not stop within timeout?  !!TIMEOUT!!", _name);
 				break;
@@ -163,9 +161,9 @@ namespace base {
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 #ifdef HAS_NP_FUNCTIONS
-		pthread_setname_np(_thread, _name.c_str());
+		pthread_setname_np(_thread, _name.data());
 #else
-		prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
+		prctl(PR_SET_NAME, _name.data(), 0, 0, 0);
 #endif
 		try {
 			for (;;) {

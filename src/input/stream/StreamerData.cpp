@@ -60,7 +60,7 @@ void StreamerData::doParseStreamString(const FeID id, const TransportParamVector
 		return;
 	}
 	initialize();
-	_changed = true;
+	_frequencyChanged = true;
 	_uri = uri;
 
 	// Parse uri ex. udp@224.0.1.3:1234

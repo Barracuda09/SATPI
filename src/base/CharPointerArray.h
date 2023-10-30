@@ -35,7 +35,7 @@ class CharPointerArray {
 			// Allocate Size of container + null terminator (and nullptr it)
 			_data = new char *[container.size() + 1]{nullptr};
 			int counter = 0;
-			for (const std::string &str : container) {
+			for (const std::string& str : container) {
 				// Allocate Size of str + null terminator (and zero it)
 				_data[counter] = new char [str.size() + 1]{0};
 				// Copy str

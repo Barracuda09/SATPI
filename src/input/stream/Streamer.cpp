@@ -103,7 +103,7 @@ bool Streamer::isDataAvailable() {
 	return false;
 }
 
-bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
+bool Streamer::readTSPackets(mpegts::PacketBuffer& buffer) {
 	if (_udpMultiListen.getFD() == -1) {
 		return false;
 	}
@@ -117,8 +117,8 @@ bool Streamer::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall)
 		// Add data to Filter
 		_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
 	}
-	// Check again if buffer is full or final call before sending
-	return buffer.full() || (finalCall && buffer.isReadyToSend());
+	// Check again if buffer is full
+	return buffer.full();
 }
 
 bool Streamer::capableOf(const input::InputSystem system) const {
@@ -135,8 +135,8 @@ bool Streamer::monitorSignal(const bool UNUSED(showStatus)) {
 	return true;
 }
 
-bool Streamer::hasDeviceDataChanged() const {
-	return _deviceData.hasDeviceDataChanged();
+bool Streamer::hasDeviceFrequencyChanged() const {
+	return _deviceData.hasDeviceFrequencyChanged();
 }
 
 // Server side
@@ -156,8 +156,8 @@ void Streamer::parseStreamString(const TransportParamVector& params) {
 
 bool Streamer::update() {
 	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
-	if (_deviceData.hasDeviceDataChanged()) {
-		_deviceData.resetDeviceDataChanged();
+	if (_deviceData.hasDeviceFrequencyChanged()) {
+		_deviceData.resetDeviceFrequencyChanged();
 		closeActivePIDFilters();
 		_udpMultiListen.closeFD();
 	}

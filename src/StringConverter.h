@@ -90,7 +90,7 @@ class StringConverter  {
 			return line;
 		}
 
-		static std::string convertToHexASCIITable(const unsigned char *p, std::size_t length, std::size_t blockSize);
+		static std::string convertToHexASCIITable(const unsigned char* p, std::size_t length, std::size_t blockSize);
 
 		template<class T>
 		static std::string hexString(const T &value, const int width) {

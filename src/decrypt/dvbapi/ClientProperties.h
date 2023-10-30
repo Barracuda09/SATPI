@@ -76,7 +76,7 @@ namespace decrypt::dvbapi {
 			void decryptBatch();
 
 			/// Set the 'next' key for the requested parity
-			void setKey(const unsigned char *cw, int parity, int index) {
+			void setKey(const unsigned char* cw, int parity, int index) {
 				_keys.set(cw, parity, index);
 			}
 
@@ -91,7 +91,7 @@ namespace decrypt::dvbapi {
 
 			/// Start and add the requested filter
 			void startOSCamFilterData(const FeID id, int pid, int demux, int filter,
-				const unsigned char *filterData, const unsigned char *filterMask) {
+				const unsigned char* filterData, const unsigned char* filterMask) {
 				_filter.start(id, pid, demux, filter, filterData, filterMask);
 			}
 
@@ -101,7 +101,7 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
-			bool findOSCamFilterData(const FeID id, int pid, const unsigned char *tsPacket, const int tableID,
+			bool findOSCamFilterData(const FeID id, int pid, const unsigned char* tsPacket, const int tableID,
 				int &filter, int &demux, mpegts::TSData &filterData) {
 				return _filter.find(id, pid, tsPacket, tableID, filter, demux, filterData);
 			}

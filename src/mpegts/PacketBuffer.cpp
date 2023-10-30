@@ -48,8 +48,6 @@ void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
 	_buffer[9]  = (ssrc >> 16) & 0xff;      // synchronization source
 	_buffer[10] = (ssrc >>  8) & 0xff;      // synchronization source
 	_buffer[11] = (ssrc >>  0) & 0xff;      // synchronization source
-
-	_initialized = true;
 }
 
 bool PacketBuffer::trySyncing() {
@@ -61,7 +59,7 @@ bool PacketBuffer::trySyncing() {
 		return true;
 	}
 	for (size_t i = RTP_HEADER_LEN; i < MTU_MAX_TS_PACKET_SIZE + RTP_HEADER_LEN - (TS_PACKET_SIZE * 2); ++i) {
-		const unsigned char *cData = _buffer + i;
+		const unsigned char* cData = _buffer + i;
 		if (cData[TS_PACKET_SIZE * 0] == 0x47 &&
 			cData[TS_PACKET_SIZE * 1] == 0x47 &&
 			cData[TS_PACKET_SIZE * 2] == 0x47) {
@@ -91,18 +89,23 @@ void PacketBuffer::purge() {
 	if (_purgePending == 0) {
 		return;
 	}
+	if (_purgePending == NUMBER_OF_TS_PACKETS) {
+		reset();
+		return;
+	}
 	_purgePending = 0;
 	const std::size_t bufSize = getCurrentBufferSize();
 	if (bufSize == 0) {
 		return;
 	}
-	// i: represents the packet number, and not the packet position!
+	const int begin = (bufSize / TS_PACKET_SIZE) - 1;
+	const int end = (_processedIndex > RTP_HEADER_LEN) ? (_processedIndex / TS_PACKET_SIZE) : 0;
 	std::size_t skipData = 0;
-	for (std::size_t i = (bufSize / TS_PACKET_SIZE); i > 0 ; --i) {
-		unsigned char *cData = getTSPacketPtr(i - 1);
+	for (int i = begin; i >= end; --i) {
+		unsigned char *cData = getTSPacketPtr(i);
 		if (cData[1] == 0xFF) {
 			// Next packet needs to be purged as well, then continue to next
-			if (i > 1 && (cData - TS_PACKET_SIZE)[1] == 0xFF) {
+			if (i > 0 && (cData - TS_PACKET_SIZE)[1] == 0xFF) {
 				skipData += TS_PACKET_SIZE;
 				continue;
 			}
@@ -114,21 +117,29 @@ void PacketBuffer::purge() {
 				std::memcpy(cData, nextData, endData - nextData);
 			}
 			_writeIndex -= skipData;
+			_processedIndex = _writeIndex;
 			skipData = 0;
 		}
 	}
 }
 
-void PacketBuffer::tagRTPHeaderWith(const uint16_t cseq, const long timestamp) {
+void PacketBuffer::tagRTPHeaderWith(
+		const uint32_t ssrc, const uint16_t cseq, const long timestamp) {
 	// update sequence number
-	_buffer[2] = ((cseq >> 8) & 0xFF); // sequence number
-	_buffer[3] =  (cseq & 0xFF);       // sequence number
+	_buffer[2] = ((cseq >> 8) & 0xFF);
+	_buffer[3] =  (cseq & 0xFF);
 
 	// update timestamp
-	_buffer[4] = (timestamp >> 24) & 0xFF; // timestamp
-	_buffer[5] = (timestamp >> 16) & 0xFF; // timestamp
-	_buffer[6] = (timestamp >>  8) & 0xFF; // timestamp
-	_buffer[7] = (timestamp >>  0) & 0xFF; // timestamp
+	_buffer[4] = (timestamp >> 24) & 0xFF;
+	_buffer[5] = (timestamp >> 16) & 0xFF;
+	_buffer[6] = (timestamp >>  8) & 0xFF;
+	_buffer[7] = (timestamp >>  0) & 0xFF;
+
+	// Update synchronization source
+	_buffer[8]  = (ssrc >> 24) & 0xFF;
+	_buffer[9]  = (ssrc >> 16) & 0xFF;
+	_buffer[10] = (ssrc >>  8) & 0xFF;
+	_buffer[11] = (ssrc >>  0) & 0xFF;
 }
 
 }

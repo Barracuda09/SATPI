@@ -110,25 +110,25 @@ static void getAttachedFrontends(
 	// unused var
 	(void)path;
 
-	const std::string fe0 = StringConverter::stringFormat(FRONTEND.c_str(), 0, 0);
-	const std::string dvr0 = StringConverter::stringFormat(DVR.c_str(), 0, 0);
-	const std::string dmx0 = StringConverter::stringFormat(DMX.c_str(), 0, 0);
+	const std::string fe0 = StringConverter::stringFormat(FRONTEND.data(), 0, 0);
+	const std::string dvr0 = StringConverter::stringFormat(DVR.data(), 0, 0);
+	const std::string dmx0 = StringConverter::stringFormat(DMX.data(), 0, 0);
 	input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe0, dvr0, dmx0);
 	streamVector.push_back(Stream::makeSP(frontend0, decrypt));
 
-	const std::string fe1 = StringConverter::stringFormat(FRONTEND.c_str(), 1, 0);
-	const std::string dvr1 = StringConverter::stringFormat(DVR.c_str(), 1, 0);
-	const std::string dmx1 = StringConverter::stringFormat(DMX.c_str(), 1, 0);
+	const std::string fe1 = StringConverter::stringFormat(FRONTEND.data(), 1, 0);
+	const std::string dvr1 = StringConverter::stringFormat(DVR.data(), 1, 0);
+	const std::string dmx1 = StringConverter::stringFormat(DMX.data(), 1, 0);
 	input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe1, dvr1, dmx1);
 	streamVector.push_back(Stream::makeSP(frontend1, decrypt));
 #else
 	dirent **file_list;
-	const int n = scandir(path.c_str(), &file_list, nullptr, versionsort);
+	const int n = scandir(path.data(), &file_list, nullptr, versionsort);
 	if (n > 0) {
 		for (int i = 0; i < n; ++i) {
 			const std::string full_path = StringConverter::stringFormat("@#1/@#2", path, file_list[i]->d_name);
 			struct stat stat_buf;
-			if (stat(full_path.c_str(), &stat_buf) == 0) {
+			if (stat(full_path.data(), &stat_buf) == 0) {
 				switch (stat_buf.st_mode & S_IFMT) {
 					case S_IFCHR: // character device
 						if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
@@ -136,12 +136,12 @@ static void getAttachedFrontends(
 							sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
 							int adapt_nr;
 							const std::string ADAPTER_TMP = startPath + "/adapter%d";
-							sscanf(path.c_str(), ADAPTER_TMP.c_str(), &adapt_nr);
+							sscanf(path.data(), ADAPTER_TMP.data(), &adapt_nr);
 
 							// Make new paths
-							const std::string fe = StringConverter::stringFormat(FRONTEND.c_str(), adapt_nr, fe_nr);
-							const std::string dvr = StringConverter::stringFormat(DVR.c_str(), adapt_nr, fe_nr);
-							const std::string dmx = StringConverter::stringFormat(DMX.c_str(), adapt_nr, fe_nr);
+							const std::string fe = StringConverter::stringFormat(FRONTEND.data(), adapt_nr, fe_nr);
+							const std::string dvr = StringConverter::stringFormat(DVR.data(), adapt_nr, fe_nr);
+							const std::string dmx = StringConverter::stringFormat(DMX.data(), adapt_nr, fe_nr);
 
 							// Make new frontend here
 							const StreamSpVector::size_type size = streamVector.size();
@@ -195,6 +195,10 @@ void Frontend::doAddToXML(std::string &xml) const {
 
 	ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 	ADD_XML_NUMBER_INPUT(xml, "waitOnLockTimeout", _waitOnLockTimeout, 0, MAX_WAIT_ON_LOCK_TIMEOUT);
+
+#ifdef LIBDVBCSA
+	ADD_XML_NUMBER_INPUT(xml, "dvbcsa_bs_batch_size", _dvbapiData.getMaximumBatchSize(), 0, _dvbapiData.getMaximumBatchSize());
+#endif
 
 	// Channel
 	_frontendData.addToXML(xml);
@@ -262,7 +266,7 @@ bool Frontend::isDataAvailable() {
 	return false;
 }
 
-bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(finalCall)) {
+bool Frontend::readTSPackets(mpegts::PacketBuffer& buffer) {
 	// try read maximum amount of bytes from DMX
 	const auto readSize = ::read(_fd_dmx, buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 	if (readSize > 0) {
@@ -280,7 +284,7 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer &buffer, const bool UNUSED(fin
 }
 
 bool Frontend::capableOf(const input::InputSystem system) const {
-	for (const input::dvb::delivery::UpSystem &deliverySystem : _deliverySystem) {
+	for (const input::dvb::delivery::UpSystem& deliverySystem : _deliverySystem) {
 		if (deliverySystem->isCapableOf(system)) {
 			return true;
 		}
@@ -402,8 +406,8 @@ bool Frontend::monitorSignal(const bool showStatus) {
 #endif
 }
 
-bool Frontend::hasDeviceDataChanged() const {
-	return _frontendData.hasDeviceDataChanged();
+bool Frontend::hasDeviceFrequencyChanged() const {
+	return _frontendData.hasDeviceFrequencyChanged();
 }
 
 void Frontend::parseStreamString(const TransportParamVector& params) {
@@ -422,8 +426,8 @@ bool Frontend::update() {
 	base::StopWatch sw;
 	sw.start();
 	// Setup, tune and set PID Filters
-	if (_frontendData.hasDeviceDataChanged()) {
-		_frontendData.resetDeviceDataChanged();
+	if (_frontendData.hasDeviceFrequencyChanged()) {
+		_frontendData.resetDeviceFrequencyChanged();
 		_tuned = false;
 		// Close active PIDs
 		closeActivePIDFilters();
@@ -448,7 +452,7 @@ bool Frontend::teardown() {
 	closeActivePIDFilters();
 	_tuned = false;
 	// Do teardown of frontends before closing FE
-	for (const input::dvb::delivery::UpSystem &deliverySystem : _deliverySystem) {
+	for (const input::dvb::delivery::UpSystem& deliverySystem : _deliverySystem) {
 		deliverySystem->teardown(_fd_fe);
 	}
 	closeDMX();
@@ -729,7 +733,7 @@ void Frontend::setupFrontend() {
 }
 
 int Frontend::openFE(const std::string &path, const bool readonly) const {
-	const int fd = ::open(path.c_str(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
+	const int fd = ::open(path.data(), (readonly ? O_RDONLY : O_RDWR) | O_NONBLOCK);
 	if (fd  < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Failed to open @#2", _feID, path);
 	}
@@ -744,7 +748,7 @@ void Frontend::closeFE() {
 }
 
 int Frontend::openDMX(const std::string &path) const {
-	const int fd = ::open(path.c_str(), O_RDWR | O_NONBLOCK);
+	const int fd = ::open(path.data(), O_RDWR | O_NONBLOCK);
 	if (fd < 0) {
 		SI_LOG_PERROR("Frontend: @#1, Failed to open @#2", _feID, path);
 	}
@@ -760,7 +764,7 @@ void Frontend::closeDMX() {
 
 bool Frontend::tune() {
 	const input::InputSystem delsys = _frontendData.getDeliverySystem();
-	for (input::dvb::delivery::UpSystem &system : _deliverySystem) {
+	for (input::dvb::delivery::UpSystem& system : _deliverySystem) {
 		if (system->isCapableOf(delsys)) {
 			return system->tune(_fd_fe, _frontendData);
 		}

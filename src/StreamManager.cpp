@@ -21,7 +21,7 @@
 
 #include <Stream.h>
 #include <Log.h>
-#include <StreamClient.h>
+#include <output/StreamClient.h>
 #include <socket/SocketClient.h>
 #include <StringConverter.h>
 #include <input/childpipe/TSReader.h>
@@ -151,7 +151,7 @@ std::tuple<FeIndex, FeID, StreamID> StreamManager::findFrontendID(const Transpor
 	return { FeIndex(), FeID(), StreamID() };
 }
 
-SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int &clientID) {
+std::tuple<SpStream, output::SpStreamClient>  StreamManager::findStreamAndClientFor(SocketClient &socketClient) {
 	// Here we need to find the correct Stream and StreamClient
 	assert(!_streamVector.empty());
 	HeaderVector headers = socketClient.getHeaders();
@@ -162,7 +162,6 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 
 	std::string sessionID = headers.getFieldParameter("Session");
 	bool newSession = false;
-	clientID = 0;
 
 	// if no sessionID, then make a new one or its just a outside message.
 	if (sessionID.empty()) {
@@ -176,45 +175,47 @@ SpStream StreamManager::findStreamAndClientIDFor(SocketClient &socketClient, int
 		} else {
 			// None of the above.. so it is just an outside session
 			SI_LOG_DEBUG("Found message outside session");
-			return nullptr;
+			return { nullptr, nullptr };
 		}
 	}
 
 	// if no index, then we have to find a suitable one
 	if (feIndex == -1) {
-		SI_LOG_INFO("Found FrondtendID: x (fe=x)  StreamID: x  SessionID: @#1", sessionID);
+		SI_LOG_INFO("Found FrondtendID: x (fe=x)  StreamID: x  SessionID: @#1  New Session: @#2",
+			sessionID, newSession ? "true" : "false");
 		for (SpStream stream : _streamVector) {
-			if (stream->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
-				stream->getStreamClient(clientID).setSessionID(sessionID);
-				return stream;
+			output::SpStreamClient streamClient = stream->findStreamClientFor(socketClient, newSession, sessionID);
+			if (streamClient) {
+				streamClient->setSessionID(sessionID);
+				return { stream, streamClient };
 			}
 		}
 	} else {
 		SI_LOG_INFO("Found FrondtendID: @#1 (fe=@#2)  StreamID: @#3  SessionID: @#4", feID, feID, streamID, sessionID);
 		// Did we find the StreamClient?
-		if (_streamVector[feIndex]->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
-			_streamVector[feIndex]->getStreamClient(clientID).setSessionID(sessionID);
-			return _streamVector[feIndex];
+		output::SpStreamClient streamClient = _streamVector[feIndex]->findStreamClientFor(socketClient, newSession, sessionID);
+		if (streamClient) {
+			streamClient->setSessionID(sessionID);
+			return { _streamVector[feIndex], streamClient };
 		}
 		// No, Then try to search in other Streams
 		for (SpStream stream : _streamVector) {
-			if (stream->findClientIDFor(socketClient, newSession, sessionID, clientID)) {
-				stream->getStreamClient(clientID).setSessionID(sessionID);
-				return stream;
+			streamClient = stream->findStreamClientFor(socketClient, newSession, sessionID);
+			if (streamClient) {
+				streamClient->setSessionID(sessionID);
+				return { stream, streamClient };
 			}
 		}
 	}
 	// Did not find anything
 	SI_LOG_ERROR("Found no Stream/Client of interest!");
-	return nullptr;
+	return { nullptr, nullptr };
 }
 
 void StreamManager::checkForSessionTimeout() {
 	assert(!_streamVector.empty());
 	for (SpStream stream : _streamVector) {
-		if (stream->streamInUse()) {
-			stream->checkForSessionTimeout();
-		}
+		stream->checkForSessionTimeout();
 	}
 }
 

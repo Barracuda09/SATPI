@@ -102,10 +102,7 @@ void PidTable::addPIDData(const int pid, const uint8_t cc) {
 			if (_totalCCErrorsBegin == 0) {
 				_totalCCErrorsBegin = _totalCCErrors;
 			}
-			int diff = cc - data.cc;
-			if (diff < 0) {
-				diff += 0x10;
-			}
+			const uint8_t diff = (cc >= data.cc) ? (cc - data.cc) : ((0x10 - data.cc) + cc);
 			data.cc = cc;
 			data.cc_error += diff;
 			_totalCCErrors += diff;
@@ -134,7 +131,7 @@ void PidTable::setPID(const int pid, const bool use) {
 			}
 			break;
 		default:
-			// Nothing todo here
+			// Nothing to do here
 			break;
 	}
 }

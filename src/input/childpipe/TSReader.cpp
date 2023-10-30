@@ -34,7 +34,7 @@ namespace input::childpipe {
 // =============================================================================
 //  -- Static constexpr variables ----------------------------------------------
 // =============================================================================
-static constexpr int WAIT_TIMER = 15;
+static constexpr int WAIT_TIMER = 10;
 
 // =============================================================================
 //  -- Constructors and destructor ---------------------------------------------
@@ -118,8 +118,8 @@ bool TSReader::isDataAvailable() {
 	return true;
 }
 
-bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall) {
-///////////////////////
+bool TSReader::readTSPackets(mpegts::PacketBuffer& buffer) {
+/* //////////////////////
 	if (_deviceData.generatePSI()) {
 		const mpegts::TSData data = _deviceData.getPSIGenerator().generatePSIFrom(
 			_feID, _transform.getTransformationMap());
@@ -131,24 +131,25 @@ bool TSReader::readTSPackets(mpegts::PacketBuffer &buffer, const bool finalCall)
 
 		return buffer.full();
 	}
-///////////////////////
+////////////////////// */
 	if (!_exec.isOpen()) {
 		return false;
 	}
+	const bool filter = _deviceData.isInternalPidFilteringEnabled();
 	for (int i = 0; i < 7; ++i) {
 		const int readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
 			buffer.trySyncing();
-			_deviceData.getFilter().filterData(_feID, buffer, _deviceData.isInternalPidFilteringEnabled());
-			if (buffer.full() || finalCall) {
-				break;
+			_deviceData.getFilter().filterData(_feID, buffer, filter);
+			if (buffer.full()) {
+				return true;
 			}
 		}
-		std::this_thread::sleep_for(std::chrono::microseconds(5));
+		std::this_thread::sleep_for(std::chrono::microseconds(2));
 	}
-	// Check again if buffer is full or final call before sending
-	return buffer.full() || (finalCall && buffer.isReadyToSend());
+	// Check again if buffer is full
+	return buffer.full();
 }
 
 bool TSReader::capableOf(const input::InputSystem system) const {
@@ -168,8 +169,8 @@ bool TSReader::monitorSignal(bool UNUSED(showStatus)) {
 	return true;
 }
 
-bool TSReader::hasDeviceDataChanged() const {
-	return _deviceData.hasDeviceDataChanged();
+bool TSReader::hasDeviceFrequencyChanged() const {
+	return _deviceData.hasDeviceFrequencyChanged();
 }
 
 void TSReader::parseStreamString(const TransportParamVector& params) {
@@ -184,8 +185,8 @@ void TSReader::parseStreamString(const TransportParamVector& params) {
 
 bool TSReader::update() {
 	SI_LOG_INFO("Frontend: @#1, Updating frontend...", _feID);
-	if (_deviceData.hasDeviceDataChanged()) {
-		_deviceData.resetDeviceDataChanged();
+	if (_deviceData.hasDeviceFrequencyChanged()) {
+		_deviceData.resetDeviceFrequencyChanged();
 		closeActivePIDFilters();
 		_exec.close();
 	}

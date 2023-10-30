@@ -51,15 +51,17 @@ void TSReaderData::doInitialize() {
 }
 
 void TSReaderData::doParseStreamString(const FeID id, const TransportParamVector& params) {
+/*
 	const std::string genPSI = params.getParameter("genPSI");
 	if (genPSI == "yes") {
 		initialize();
 		parseAndUpdatePidsTable(id, params);
-		_changed = true;
+		_frequencyChanged = true;
 		_genPSI = true;
 		_pcrTimer = 100;
 		return;
 	}
+*/
 	const std::string filePath = params.getURIParameter("exec");
 	// Check did we receive an new path or just the same again
 	if (filePath.empty() || (hasFilePath() && filePath == _filePath)) {
@@ -67,7 +69,7 @@ void TSReaderData::doParseStreamString(const FeID id, const TransportParamVector
 		return;
 	}
 	initialize();
-	_changed = true;
+	_frequencyChanged = true;
 	_filePath = StringConverter::getPercentDecoding(filePath);
 	// when 'pcrtimer=' is not set or zero the PCR from the stream is used, else this timer
 	// will be used as read interval.

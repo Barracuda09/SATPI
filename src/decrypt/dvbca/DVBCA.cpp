@@ -164,7 +164,7 @@ static char fileFIFO[] = "/tmp/fifo";
 		mpegts::PMT::Data tableData;
 		pmt.getDataForSectionNumber(0, tableData);
 		const int programNumber = pmt.getProgramNumber();
-		const unsigned char *data = tableData.data.c_str();
+		const unsigned char* data = tableData.data.data();
 		const std::size_t tableSize = (data[6] & 0x0F) | data[7];
 		const mpegts::TSData progInfo = pmt.getProgramInfo();
 		const std::size_t progSize = progInfo.size();
@@ -198,7 +198,7 @@ static char fileFIFO[] = "/tmp/fifo";
 
 		// 4 = CRC   9 = PMT Header from section length
 		const std::size_t len = tableSize - 4u - 9u - progSize;
-		const unsigned char *ptr = &data[17u + progSize];
+		const unsigned char* ptr = &data[17u + progSize];
 		for (std::size_t i = 0u; i < len; ) {
 			caPMT += ptr[i + 0u];
 			caPMT += ptr[i + 1u];
@@ -566,7 +566,7 @@ END
 		}
 
 //		path << "/proc/stb/tsmux/input" << tuner_no << "_choices";
-//		if(::access(path.str().c_str(), R_OK) < 0)
+//		if(::access(path.str().data(), R_OK) < 0)
 
 //		static const char *proc_ci_choices = "/proc/stb/tsmux/ci0_input_choices";
 //		if (CFile::contains_word(proc_ci_choices, "PVR"))	// lowest prio = PVR
@@ -578,11 +578,11 @@ END
 
 //setInputSource(int tuner_no, const std::string &source)	'source' Tuner Letter
 //		snprintf(buf, sizeof(buf), "/proc/stb/tsmux/input%d", tuner_no);
-//		if (CFile::write(buf, source.c_str()) == -1)
+//		if (CFile::write(buf, source.data()) == -1)
 
 //int eDVBCISlot::setSource(const std::string &source)	'source' Tuner Letter
 //	snprintf(buf, sizeof(buf), "/proc/stb/tsmux/ci%d_input", slotid);
-//	if(CFile::write(buf, source.c_str()) == -1)
+//	if(CFile::write(buf, source.data()) == -1)
 
 //int eDVBCISlot::setClockRate(int rate)
 //	snprintf(buf, sizeof(buf), "/proc/stb/tsmux/ci%d_tsclk", slotid);

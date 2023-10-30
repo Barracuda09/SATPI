@@ -43,8 +43,16 @@ class Log {
 
 		static bool getSysLogState();
 
+		static void logDebug(bool log) {
+			_logDebug = log;
+		}
+
+		static bool getLogDebugState() {
+			return _logDebug;
+		}
+
 		template <typename... Args>
-		static void binlog(int priority, const unsigned char *p, int length, const char * format, Args&&... args) {
+		static void binlog(int priority, const unsigned char* p, int length, const char * format, Args&&... args) {
 			std::string data = StringConverter::convertToHexASCIITable(p, length, 16);
 			std::string line = StringConverter::stringFormat(format, std::forward<Args>(args)...);
 			log(priority, StringConverter::stringFormat("@#1\r\n@#2\r\nEND\r\n", line, data));
@@ -83,6 +91,7 @@ class Log {
 		static LogBuffer _appLogBuffer;
 		static bool _syslogOn;
 		static bool _coutLog;
+		static bool _logDebug;
 };
 
 #define MPEGTS_TABLES 0x100

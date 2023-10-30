@@ -46,7 +46,7 @@ namespace decrypt::dvbapi {
 
 			/// Start and add the requested filter
 			void start(const FeID id, int pid, int demux, int filter,
-					const unsigned char *filterData, const unsigned char *filterMask) {
+					const unsigned char* filterData, const unsigned char* filterMask) {
 				base::MutexLock lock(_mutex);
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].set(id, pid, filterData, filterMask);
@@ -54,7 +54,7 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Find the correct filter for the 'collected' data or ts packet
-			bool find(const FeID id, const int pid, const unsigned char *data, const int tableID,
+			bool find(const FeID id, const int pid, const unsigned char* data, const int tableID,
 					int &filter, int &demux, mpegts::TSData &filterData) {
 				base::MutexLock lock(_mutex);
 				for (demux = 0; demux < DEMUX_SIZE; ++demux) {

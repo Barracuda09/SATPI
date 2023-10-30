@@ -20,10 +20,13 @@
 #ifndef DEFS_H_INCLUDE
 #define DEFS_H_INCLUDE DEFS_H_INCLUDE
 
+#include <memory>
 #include <string>
 #include <vector>
 
 using StringVector = std::vector<std::string>;
+
+using PacketPtr = std::unique_ptr<uint8_t[]>;
 
 class TypeID {
 	public:

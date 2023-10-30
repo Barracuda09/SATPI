@@ -51,7 +51,7 @@ const dvbcsa_bs_key_s *Frontend::getKey(int parity) const {
 	return _dvbapiData.getKey(parity);
 }
 
-void Frontend::setKey(const unsigned char *cw, int parity, int index) {
+void Frontend::setKey(const unsigned char* cw, int parity, int index) {
 	_dvbapiData.setKey(cw, parity, index);
 }
 
@@ -60,7 +60,7 @@ void Frontend::setICAM(const unsigned char ecm, const int parity) {
 }
 
 void Frontend::startOSCamFilterData(const int pid, const int demux, const int filter,
-	const unsigned char *filterData, const unsigned char *filterMask) {
+	const unsigned char* filterData, const unsigned char* filterMask) {
 	SI_LOG_INFO("Frontend: @#1, Start filter PID: @#2  demux: @#3  filter: @#4 (data @#5 @#6 @#7 mask @#8 @#9 @#10 @#11)",
 		_feID, PID(pid), demux, filter,
 		HEX2(filterData[0]), HEX2(filterData[1]), HEX2(filterData[2]),
@@ -78,7 +78,7 @@ void Frontend::stopOSCamFilterData(const int pid, const int demux, const int fil
 	// Do not update frontend or remove the PID!
 }
 
-bool Frontend::findOSCamFilterData(const int pid, const unsigned char *tsPacket,
+bool Frontend::findOSCamFilterData(const int pid, const unsigned char* tsPacket,
 		const int tableID, int &filter, int &demux, mpegts::TSData &filterData) {
 	return _dvbapiData.findOSCamFilterData(_feID, pid, tsPacket, tableID, filter, demux, filterData);
 }

@@ -59,7 +59,7 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Collect Table data for tableID
-			void collectRawTableData(const FeID id, const int tableID, const unsigned char *data, bool trace) {
+			void collectRawTableData(const FeID id, const int tableID, const unsigned char* data, bool trace) {
 				_tableData.collectRawData(id, tableID, data, trace);
 			}
 
@@ -95,7 +95,7 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Set the requested filter data and set it active
-			void set(const FeID id, int pid, const unsigned char *data, const unsigned char *mask) {
+			void set(const FeID id, int pid, const unsigned char* data, const unsigned char* mask) {
 				_pid = pid;
 				_id = id;
 				_filterActive = true;
@@ -106,7 +106,7 @@ namespace decrypt::dvbapi {
 			}
 
 			/// Check if the requested data matches this filter or if we already collecting
-			bool matchOrCollecting(const unsigned char *data) const {
+			bool matchOrCollecting(const unsigned char* data) const {
 				if (!_collecting) {
 					bool match = true;
 					const uint32_t sectionLength = (((data[6] & 0x0F) << 8) | data[7]) + 3; // 3 = tableID + length field

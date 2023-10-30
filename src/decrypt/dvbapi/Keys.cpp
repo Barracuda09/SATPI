@@ -34,7 +34,7 @@ namespace decrypt::dvbapi {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-void Keys::set(const unsigned char *cw, int parity, int UNUSED(index)) {
+void Keys::set(const unsigned char* cw, int parity, int UNUSED(index)) {
 	dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
 #ifdef ICAM
 	const unsigned char icamECM = (_icam[parity].size() > 0) ? _icam[parity].back() : 0;

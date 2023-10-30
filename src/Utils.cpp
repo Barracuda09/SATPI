@@ -61,7 +61,7 @@ void Utils::annotateBackTrace(const char *app, const char *file) {
 			const std::string addr = line.substr(begin + 1, end - begin - 1);
 
 			char addr2line[256];
-			snprintf(addr2line, sizeof(addr2line),"addr2line %s -e %s", addr.c_str(), app);
+			snprintf(addr2line, sizeof(addr2line),"addr2line %s -e %s", addr.data(), app);
 
 			base::ChildPIPEReader exec;
 			exec.open(addr2line);

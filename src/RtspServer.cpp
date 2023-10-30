@@ -23,7 +23,7 @@
 #include <Stream.h>
 #include <StreamManager.h>
 #include <socket/SocketClient.h>
-#include <StreamClient.h>
+#include <output/StreamClient.h>
 #include <StringConverter.h>
 
 extern const char* const satpi_version;
@@ -55,134 +55,8 @@ void RtspServer::threadEntry() {
 	}
 }
 
-void RtspServer::methodSetup(const Stream &stream, const int clientID, std::string &htmlBody) {
-	StreamClient &client = stream.getStreamClient(clientID);
-	switch (stream.getStreamingType()) {
-		case Stream::StreamingType::RTP_TCP: {
-			static const char *RTSP_SETUP_OK =
-				"RTSP/1.0 200 OK\r\n" \
-				"Server: satpi/@#1\r\n" \
-				"CSeq: @#2\r\n" \
-				"Session: @#3;timeout=@#4\r\n" \
-				"Transport: RTP/AVP/TCP;unicast;client_ip=@#5;interleaved=0-1\r\n" \
-				"com.ses.streamID: @#6\r\n" \
-				"\r\n";
-
-			// setup reply
-			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
-				satpi_version,
-				client.getCSeq(),
-				client.getSessionID(),
-				client.getSessionTimeout(),
-				client.getIPAddressOfStream(),
-				stream.getStreamID().getID());
-			break;
-		}
-		case Stream::StreamingType::RTSP_UNICAST: {
-			static const char *RTSP_SETUP_OK =
-				"RTSP/1.0 200 OK\r\n" \
-				"Server: satpi/@#1\r\n" \
-				"CSeq: @#2\r\n" \
-				"Session: @#3;timeout=@#4\r\n" \
-				"Transport: RTP/AVP;unicast;client_ip=@#5;client_port=@#6-@#7\r\n" \
-				"com.ses.streamID: @#8\r\n" \
-				"\r\n";
-
-			// setup reply
-			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
-				satpi_version,
-				client.getCSeq(),
-				client.getSessionID(),
-				client.getSessionTimeout(),
-				client.getIPAddressOfStream(),
-				client.getRtpSocketAttr().getSocketPort(),
-				client.getRtcpSocketAttr().getSocketPort(),
-				stream.getStreamID().getID());
-			break;
-		}
-		case Stream::StreamingType::RTSP_MULTICAST: {
-			static const char *RTSP_SETUP_OK =
-				"RTSP/1.0 200 OK\r\n" \
-				"Server: satpi/@#1\r\n" \
-				"CSeq: @#2\r\n" \
-				"Session: @#3;timeout=@#4\r\n" \
-				"Transport: RTP/AVP;multicast;destination=@#5;port=@#6-@#7;ttl=5\r\n" \
-				"com.ses.streamID: @#8\r\n" \
-				"\r\n";
-
-			// setup reply
-			htmlBody = StringConverter::stringFormat(RTSP_SETUP_OK,
-				satpi_version,
-				client.getCSeq(),
-				client.getSessionID(),
-				client.getSessionTimeout(),
-				client.getIPAddressOfStream(),
-				client.getRtpSocketAttr().getSocketPort(),
-				client.getRtcpSocketAttr().getSocketPort(),
-				stream.getStreamID().getID());
-			break;
-		}
-		default:
-			static const char *RTSP_SETUP_REPLY =
-				"RTSP/1.0 461 Unsupported Transport\r\n" \
-				"Server: satpi/@#1\r\n" \
-				"CSeq: @#2\r\n" \
-				"\r\n";
-
-			// setup reply
-			htmlBody = StringConverter::stringFormat(RTSP_SETUP_REPLY,
-				satpi_version,
-				client.getCSeq());
-			return;
-	};
-}
-
-void RtspServer::methodPlay(const Stream &stream, const int clientID, std::string &htmlBody) {
-	const StreamClient &client = stream.getStreamClient(clientID);
-	static const char *RTSP_PLAY_OK =
-		"RTSP/1.0 200 OK\r\n" \
-		"Server: satpi/@#1\r\n" \
-		"RTP-Info: url=rtsp://@#2/stream=@#3\r\n" \
-		"CSeq: @#4\r\n" \
-		"Session: @#5\r\n" \
-		"Range: npt=0.000-\r\n" \
-		"\r\n";
-
-	htmlBody = StringConverter::stringFormat(RTSP_PLAY_OK, satpi_version, _bindIPAddress,
-		stream.getStreamID().getID(), client.getCSeq(), client.getSessionID());
-}
-
-void RtspServer::methodTeardown(
-	const std::string &sessionID, const int cseq, std::string &htmlBody) {
-	static const char *RTSP_TEARDOWN_OK =
-		"RTSP/1.0 200 OK\r\n" \
-		"Server: satpi/@#1\r\n" \
-		"CSeq: @#2\r\n" \
-		"Session: @#3\r\n" \
-		"\r\n";
-
-	htmlBody = StringConverter::stringFormat(RTSP_TEARDOWN_OK, satpi_version, cseq, sessionID);
-}
-
-void RtspServer::methodOptions(
-	const std::string &sessionID, const int cseq, std::string &htmlBody) {
-	static const char *RTSP_OPTIONS_OK =
-		"RTSP/1.0 200 OK\r\n" \
-		"Server: satpi/@#1\r\n" \
-		"CSeq: @#2\r\n" \
-		"Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n" \
-		"@#3" \
-		"\r\n";
-
-	// check if we are in session, then we need to send the Session ID
-	const std::string sessionIDHeaderField = (sessionID.size() > 2) ?
-		StringConverter::stringFormat("Session: @#1\r\n", sessionID) : "";
-
-	htmlBody = StringConverter::stringFormat(RTSP_OPTIONS_OK, satpi_version, cseq, sessionIDHeaderField);
-}
-
 void RtspServer::methodDescribe(
-	const std::string &sessionID, const int cseq, const FeIndex feIndex, std::string &htmlBody) {
+		const std::string &sessionID, const int cseq, const FeIndex feIndex, std::string &htmlBody) {
 	static const char *RTSP_DESCRIBE  =
 		"@#1" \
 		"Server: satpi/@#2\r\n" \

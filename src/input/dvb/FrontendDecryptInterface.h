@@ -70,20 +70,20 @@ class FrontendDecryptInterface {
 		virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
 
 		///
-		virtual void setKey(const unsigned char *cw, int parity, int index) = 0;
+		virtual void setKey(const unsigned char* cw, int parity, int index) = 0;
 
 		///
 		virtual void setICAM(unsigned char ecm, int parity) = 0;
 
 		///
 		virtual void startOSCamFilterData(int pid, int demux, int filter,
-				   const unsigned char *filterData, const unsigned char *filterMask) = 0;
+				   const unsigned char* filterData, const unsigned char* filterMask) = 0;
 
 		///
 		virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
 
 		///
-		virtual bool findOSCamFilterData(int pid, const unsigned char *tsPacket, int tableID,
+		virtual bool findOSCamFilterData(int pid, const unsigned char* tsPacket, int tableID,
 			int &filter, int &demux, mpegts::TSData &filterData) = 0;
 
 		/// Get the vector of current 'active' OSCam demux filters

@@ -92,7 +92,7 @@ bool HttpServer::methodPost(SocketClient &client) {
 	getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
 
 	// send 'htmlBody' to client
-	if (!client.sendData(htmlBody.c_str(), htmlBody.size(), 0)) {
+	if (!client.sendData(htmlBody.data(), htmlBody.size(), 0)) {
 		SI_LOG_ERROR("Send htmlBody failed");
 		return false;
 	}
@@ -147,7 +147,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 			} else if (file == "STOP") {
 				exitRequest = true;
 				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
-			} else if ((docTypeSize = readFile(filePath.c_str(), docType))) {
+			} else if ((docTypeSize = readFile(filePath.data(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID,
 					// XSatipM3U, presentationURL and tuner string
@@ -160,7 +160,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 									_bindIPAddress,
 									std::to_string(_properties.getHttpPort()));
 							const std::string modelName = StringConverter::stringFormat("SatPI Server (@#1)", _bindIPAddress);
-							const std::string newDocType = StringConverter::stringFormat(docType.c_str(),
+							const std::string newDocType = StringConverter::stringFormat(docType.data(),
 								modelName, _properties.getUPnPVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
 							docType = newDocType;
@@ -193,9 +193,9 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 								continue;
 							}
 							if (line.find("rtsp://") != std::string::npos) {
-								docType += StringConverter::stringFormat(line.c_str(), rtsp);
+								docType += StringConverter::stringFormat(line.data(), rtsp);
 							} else if (line.find("http://") != std::string::npos) {
-								docType += StringConverter::stringFormat(line.c_str(), http);
+								docType += StringConverter::stringFormat(line.data(), http);
 							}
 						}
 						docTypeSize = docType.size();
@@ -209,7 +209,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 				}
 			} else {
 				file = _properties.getWebPath() + "/" + "404.html";
-				docTypeSize = readFile(file.c_str(), docType);
+				docTypeSize = readFile(file.data(), docType);
 				getHtmlBodyWithContent(htmlBody, HTML_NOT_FOUND, file, CONTENT_TYPE_HTML, docTypeSize, 0);
 			}
 		}
@@ -217,13 +217,13 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 	// send something?
 	if (htmlBody.size() > 0) {
 		// send 'htmlBody' to client
-		if (!client.sendData(htmlBody.c_str(), htmlBody.size(), 0)) {
+		if (!client.sendData(htmlBody.data(), htmlBody.size(), 0)) {
 			SI_LOG_ERROR("Send htmlBody failed");
 			return false;
 		}
 		// send 'docType' to client if needed
 		if (!headOnly && docTypeSize > 0) {
-			if (!client.sendData(docType.c_str(), docTypeSize, 0)) {
+			if (!client.sendData(docType.data(), docTypeSize, 0)) {
 				SI_LOG_ERROR("Send docType failed");
 				return false;
 			}

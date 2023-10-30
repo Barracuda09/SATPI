@@ -75,7 +75,7 @@ void Server::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "deviceID", _deviceID);
 	ADD_XML_ELEMENT(xml, "ttl", _ttl);
 	size_t i = 0;
-	for (auto server : _servers) {
+	for (const auto& server : _servers) {
 		ADD_XML_N_ELEMENT(xml, "satipserver", i, server.second);
 		++i;
 	}
@@ -85,13 +85,13 @@ void Server::doFromXML(const std::string &xml) {
 	base::MutexLock lock(_mutex);
 	std::string element;
 	if (findXMLElement(xml, "annouceTime.value", element)) {
-		_announceTimeSec = std::stoi(element.c_str());
+		_announceTimeSec = std::stoi(element.data());
 	}
 	if (findXMLElement(xml, "bootID", element)) {
-		_bootID = std::stoi(element.c_str());
+		_bootID = std::stoi(element.data());
 	}
 	if (findXMLElement(xml, "deviceID", element)) {
-		_deviceID = std::stoi(element.c_str());
+		_deviceID = std::stoi(element.data());
 	}
 }
 
@@ -158,7 +158,7 @@ void Server::threadEntry() {
 		}
 	}
 	// we should send bye bye
-	sendByeBye(udpMultiSend, _deviceID, _properties.getUUID().c_str());
+	sendByeBye(udpMultiSend, _deviceID, _properties.getUUID().data());
 }
 
 void Server::checkReply(
@@ -231,7 +231,7 @@ void Server::checkDefendDeviceID(
 			SSDP_PORT,
 			_properties.getUPnPVersion(),
 			_deviceID);
-		if (!udpSend.sendDataTo(msg.c_str(), msg.size(), 0)) {
+		if (!udpSend.sendDataTo(msg.data(), msg.size(), 0)) {
 			SI_LOG_ERROR("SSDP M_SEARCH data send failed");
 		}
 	} else if (_servers.find(otherDeviceID) == _servers.end()) {
@@ -268,7 +268,7 @@ void Server::sendGiveUpDeviceID(
 		_bootID,
 		_deviceID);
 
-	if (::sendto(udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
+	if (::sendto(udpMultiSend.getFD(), msg.data(), msg.size(), 0,
 		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
 		SI_LOG_PERROR("send");
 	}
@@ -325,7 +325,7 @@ void Server::sendDiscoverResponse(
 		_properties.getUUID(),
 		_bootID);
 
-	if (::sendto(udpMultiSend.getFD(), msg.c_str(), msg.size(), 0,
+	if (::sendto(udpMultiSend.getFD(), msg.data(), msg.size(), 0,
 		reinterpret_cast<sockaddr *>(&si_other), sizeof(si_other)) == -1) {
 		SI_LOG_PERROR("send");
 	}
@@ -353,7 +353,7 @@ void Server::sendAnnounce(SocketClient& udpMultiSend) {
 		_properties.getUUID(),
 		_bootID,
 		_deviceID);
-	if (!udpMultiSend.sendDataTo(msgRoot.c_str(), msgRoot.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgRoot.data(), msgRoot.size(), 0)) {
 		SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE data send failed");
 	}
 
@@ -380,7 +380,7 @@ void Server::sendAnnounce(SocketClient& udpMultiSend) {
 		_properties.getUPnPVersion(),
 		_bootID,
 		_deviceID);
-	if (!udpMultiSend.sendDataTo(msgAlive.c_str(), msgAlive.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgAlive.data(), msgAlive.size(), 0)) {
 		SI_LOG_ERROR("SSDP UPNP_ALIVE data send failed");
 	}
 
@@ -407,7 +407,7 @@ void Server::sendAnnounce(SocketClient& udpMultiSend) {
 		_properties.getUUID(),
 		_bootID,
 		_deviceID);
-	if (!udpMultiSend.sendDataTo(msgDevice.c_str(), msgDevice.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgDevice.data(), msgDevice.size(), 0)) {
 		SI_LOG_ERROR("SSDP UPNP_DEVICE data send failed");
 	}
 }
@@ -427,7 +427,7 @@ bool Server::sendByeBye(
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgRoot = StringConverter::stringFormat(UPNP_ROOTDEVICE_BB, uuid, bootId);
-	if (!udpMultiSend.sendDataTo(msgRoot.c_str(), msgRoot.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgRoot.data(), msgRoot.size(), 0)) {
 		SI_LOG_ERROR("SSDP UPNP_ROOTDEVICE_BB data send failed");
 		return false;
 	}
@@ -445,7 +445,7 @@ bool Server::sendByeBye(
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgByeBye = StringConverter::stringFormat(UPNP_BYEBYE, uuid, bootId);
-	if (!udpMultiSend.sendDataTo(msgByeBye.c_str(), msgByeBye.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgByeBye.data(), msgByeBye.size(), 0)) {
 		SI_LOG_ERROR("SSDP BYEBYE data send failed");
 		return false;
 	}
@@ -463,7 +463,7 @@ bool Server::sendByeBye(
 			"CONFIGID.UPNP.ORG: 0\r\n" \
 			"\r\n";
 	const std::string msgDevice = StringConverter::stringFormat(UPNP_DEVICE_BB, uuid, bootId);
-	if (!udpMultiSend.sendDataTo(msgDevice.c_str(), msgDevice.size(), 0)) {
+	if (!udpMultiSend.sendDataTo(msgDevice.data(), msgDevice.size(), 0)) {
 		SI_LOG_ERROR("SSDP UPNP_DEVICE_BB data send failed");
 		return false;
 	}
