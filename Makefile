@@ -18,6 +18,7 @@ INCLUDES +=
 
 LDFLAGS += $(CPU_FLAGS)
 CFLAGS += $(CPU_FLAGS)
+CFLAGS_NEW += $(CPU_FLAGS)
 
 # Libraries needed for linking
 LDFLAGS += -pthread -lrt
@@ -35,25 +36,32 @@ endif
 # Set Compiler Flags
 CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 
+CFLAGS_NEW += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
+
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"
   # "Debug" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -gdwarf-2 -DDEBUG -fstack-protector-all -Wswitch-default
+  CFLAGS += -O0 -g3 -gdwarf-2 -DDEBUG -DDEBUG_LOG -fstack-protector-all -Wswitch-default
+  CFLAGS_NEW += -O3 -s -DNDEBUG -DDEBUG_LOG
   LDFLAGS += -rdynamic
 else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
   CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+  CFLAGS_NEW += -O3 -s -DNDEBUG -DDEBUG_LOG
   LDFLAGS += -rdynamic
 else ifeq "$(BUILD)" "speed"
-  # "Debug" build - with optimization, with debugging symbols
+  # "Debug" build - with optimization, without debugging symbols
   CFLAGS += -Os -s -DNDEBUG
+  CFLAGS_NEW += -Os -s -DNDEBUG
 else ifeq "$(BUILD)" "simu"
   # "Debug Simu" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -DDEBUG -DSIMU -fstack-protector-all
+  CFLAGS += -O0 -g3 -DDEBUG -DDEBUG_LOG -DSIMU -fstack-protector-all
+  CFLAGS_NEW += -O3 -s  -DNDEBUG -DDEBUG_LOG
   LDFLAGS += -rdynamic
 else
   # "Release" build - optimization, and no debug symbols
   CFLAGS += -O2 -s -DNDEBUG
+  CFLAGS_NEW += -O3 -s -DNDEBUG
 endif
 
 # List of source to be compiled
@@ -211,9 +219,14 @@ $(EXECUTABLE): $(OBJECTS) $(HEADERS)
 # A pattern rule is used to build objects from 'cpp' files
 # $< represents the first item in the dependencies list
 # $@ represents the targetname
+$(OBJ_DIR)/mpegts/%.o: $(SRC_DIR)/mpegts/%.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) -c $(CFLAGS_NEW) $< -o $@
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) -c $(CFLAGS) $< -o $@
+
 
 # Create debug versions
 debug:

@@ -98,29 +98,37 @@ void PacketBuffer::purge() {
 	if (bufSize == 0) {
 		return;
 	}
-	const int begin = (bufSize / TS_PACKET_SIZE) - 1;
-	const int end = (_processedIndex > RTP_HEADER_LEN) ? (_processedIndex / TS_PACKET_SIZE) : 0;
-	std::size_t skipData = 0;
-	for (int i = begin; i >= end; --i) {
-		unsigned char *cData = getTSPacketPtr(i);
-		if (cData[1] == 0xFF) {
-			// Next packet needs to be purged as well, then continue to next
-			if (i > 0 && (cData - TS_PACKET_SIZE)[1] == 0xFF) {
-				skipData += TS_PACKET_SIZE;
+	const unsigned char* tsBegin = getTSReadBufferPtr();
+	const unsigned char* tsCheckBegin = getTSReadBufferPtr() + TS_PACKET_SIZE;
+	unsigned char* cDataPtr = _buffer + _writeIndex - TS_PACKET_SIZE;;
+	const unsigned char* nextData = cDataPtr;
+	const unsigned char* endData = _buffer + _writeIndex;
+	// Purge trailing packets by moving pointer
+	for (; cDataPtr > tsBegin; cDataPtr -= TS_PACKET_SIZE) {
+		if (*(cDataPtr + 1) == 0xFF) {
+			endData -= TS_PACKET_SIZE;
+			nextData -= TS_PACKET_SIZE;
+			if (cDataPtr > tsCheckBegin && *((cDataPtr - TS_PACKET_SIZE) + 1) == 0xFF) {
 				continue;
 			}
-			skipData += TS_PACKET_SIZE;
-			// Remove current (plus other) packet from the buffer
-			unsigned char *endData = getWriteBufferPtr();
-			unsigned char *nextData = cData + skipData;
-			if (nextData < endData) {
-				std::memcpy(cData, nextData, endData - nextData);
-			}
-			_writeIndex -= skipData;
-			_processedIndex = _writeIndex;
-			skipData = 0;
 		}
+		cDataPtr -= TS_PACKET_SIZE;
+		break;
 	}
+	// Copy/Move requested packets to begin of buffer (Purge packets)
+	for (; cDataPtr >= tsBegin; cDataPtr -= TS_PACKET_SIZE) {
+		if (*(cDataPtr + 1) == 0xFF) {
+			if (cDataPtr > tsCheckBegin && *((cDataPtr - TS_PACKET_SIZE) + 1) == 0xFF) {
+				continue;
+			}
+			const auto size = endData - nextData;
+			std::memcpy(cDataPtr, nextData, size);
+			endData = cDataPtr + size;
+		}
+		nextData = cDataPtr;
+	}
+	_writeIndex = endData - _buffer;
+	_processedIndex = _writeIndex;
 }
 
 void PacketBuffer::tagRTPHeaderWith(

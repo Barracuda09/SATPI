@@ -97,12 +97,9 @@ class PacketBuffer {
 		/// be processed.
 		std::size_t getBeginOfUnFilteredPackets() const {
 			if (_processedIndex == RTP_HEADER_LEN) {
-				_processedIndex = _writeIndex;
 				return 0;
 			}
-			const std::size_t index = _processedIndex;
-			_processedIndex = _writeIndex;
-			return (index - RTP_HEADER_LEN) / TS_PACKET_SIZE;
+			return (_processedIndex - RTP_HEADER_LEN) / TS_PACKET_SIZE;
 		}
 
 		/// get the amount of data that is in this TS buffer
@@ -123,7 +120,7 @@ class PacketBuffer {
 		}
 
 		/// Get the write pointer for this TS buffer
-		unsigned char *getWriteBufferPtr() {
+		unsigned char* getWriteBufferPtr() {
 			return &_buffer[_writeIndex];
 		}
 
@@ -134,13 +131,13 @@ class PacketBuffer {
 
 		/// This function will return the begin of the first TS packet in this TS buffer
 		/// so without RTP header
-		unsigned char *getTSReadBufferPtr() {
+		unsigned char* getTSReadBufferPtr() {
 			return &_buffer[RTP_HEADER_LEN];
 		}
 
 		/// Get the TS packet pointer for packets 0 up until NUMBER_OF_TS_PACKETS
 		/// @param packetNumber a value from 0 up until NUMBER_OF_TS_PACKETS
-		unsigned char *getTSPacketPtr(std::size_t packetNumber) {
+		unsigned char* getTSPacketPtr(std::size_t packetNumber) {
 			const std::size_t index = (packetNumber * TS_PACKET_SIZE) + RTP_HEADER_LEN;
 			return &_buffer[index];
 		}

@@ -119,7 +119,7 @@ bool TSReader::isDataAvailable() {
 }
 
 bool TSReader::readTSPackets(mpegts::PacketBuffer& buffer) {
-/* //////////////////////
+/*
 	if (_deviceData.generatePSI()) {
 		const mpegts::TSData data = _deviceData.getPSIGenerator().generatePSIFrom(
 			_feID, _transform.getTransformationMap());
@@ -131,12 +131,12 @@ bool TSReader::readTSPackets(mpegts::PacketBuffer& buffer) {
 
 		return buffer.full();
 	}
-////////////////////// */
+*/
 	if (!_exec.isOpen()) {
 		return false;
 	}
 	const bool filter = _deviceData.isInternalPidFilteringEnabled();
-	for (int i = 0; i < 7; ++i) {
+	for (int i = 0; i < 21; ++i) {
 		const int readSize = _exec.read(buffer.getWriteBufferPtr(), buffer.getAmountOfBytesToWrite());
 		if (readSize > 0) {
 			buffer.addAmountOfBytesWritten(readSize);
@@ -146,7 +146,6 @@ bool TSReader::readTSPackets(mpegts::PacketBuffer& buffer) {
 				return true;
 			}
 		}
-		std::this_thread::sleep_for(std::chrono::microseconds(2));
 	}
 	// Check again if buffer is full
 	return buffer.full();

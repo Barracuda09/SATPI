@@ -96,16 +96,7 @@ class Log {
 
 #define MPEGTS_TABLES 0x100
 
-#ifdef NDEBUG
-#define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  format, ##__VA_ARGS__)
-#define SB_LOG_INFO(subsys, format, ...)      Log::applog(LOG_INFO | subsys,  format, ##__VA_ARGS__)
-#define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   format, ##__VA_ARGS__)
-#define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, format, ##__VA_ARGS__)
-#define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
-#define SI_LOG_GIA_PERROR(format, err, ...)   Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), gai_strerror(err), err)
-#define SI_LOG_COND_DEBUG(cond, format, ...)  if (cond) { SI_LOG_DEBUG(format, ##__VA_ARGS__); }
-#define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
-#else
+#ifdef DEBUG_LOG
 #define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
 #define SB_LOG_INFO(subsys, format, ...)      Log::applog(LOG_INFO | subsys, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
 #define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__))
@@ -114,6 +105,15 @@ class Log {
 #define SI_LOG_GIA_PERROR(format, err, ...)   Log::applog(LOG_ERR,   "[@#1:@#2] @#3: @#4 (code @#5)", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(format, ##__VA_ARGS__), gai_strerror(err), err)
 #define SI_LOG_COND_DEBUG(cond, format, ...)  if (cond) { SI_LOG_DEBUG(format, ##__VA_ARGS__); }
 #define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, "[@#1:@#2] @#3", STR(__FILE__, 45), DIGIT(__LINE__, 3), StringConverter::stringFormat(fmt, ##__VA_ARGS__))
+#else
+#define SI_LOG_INFO(format, ...)              Log::applog(LOG_INFO,  format, ##__VA_ARGS__)
+#define SB_LOG_INFO(subsys, format, ...)      Log::applog(LOG_INFO | subsys,  format, ##__VA_ARGS__)
+#define SI_LOG_ERROR(format, ...)             Log::applog(LOG_ERR,   format, ##__VA_ARGS__)
+#define SI_LOG_DEBUG(format, ...)             Log::applog(LOG_DEBUG, format, ##__VA_ARGS__)
+#define SI_LOG_PERROR(format, ...)            Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), strerror(errno), errno)
+#define SI_LOG_GIA_PERROR(format, err, ...)   Log::applog(LOG_ERR,   "@#1: @#2 (code @#3)", StringConverter::stringFormat(format, ##__VA_ARGS__), gai_strerror(err), err)
+#define SI_LOG_COND_DEBUG(cond, format, ...)  if (cond) { SI_LOG_DEBUG(format, ##__VA_ARGS__); }
+#define SI_LOG_BIN_DEBUG(p, length, fmt, ...) Log::binlog(LOG_DEBUG, p, length, fmt, ##__VA_ARGS__)
 #endif
 
 #endif // LOG_H_INCLUDE
