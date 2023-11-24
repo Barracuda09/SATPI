@@ -93,7 +93,7 @@ Build
 
 - To build SatPI just run these commands:
 
-    `git clone git://github.com/Barracuda09/satpi.git`<br/>
+    `git clone https://github.com/Barracuda09/satpi.git`<br/>
     `cd satpi/`<br/>
     `git branch -f devtmp 9c4b71d` -> _will make a branch devtmp of commit 9c4b71d_<br/>
     `git checkout devtmp` -> _this will checkout devtmp_<br/>
