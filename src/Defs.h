@@ -20,6 +20,7 @@
 #ifndef DEFS_H_INCLUDE
 #define DEFS_H_INCLUDE DEFS_H_INCLUDE
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
