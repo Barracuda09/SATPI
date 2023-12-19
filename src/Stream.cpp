@@ -65,12 +65,13 @@ Stream::Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	for (mpegts::PacketBuffer& buffer : _tsBuffer) {
 		buffer.initialize(0, 0);
 	}
-	std::array<unsigned char, 188> nullPacked{0};
+	std::array<unsigned char, 188> nullPacked{};
+	std::memset(nullPacked.data(), 0xFF, nullPacked.size());
 	nullPacked[0] = 0x47;
 	nullPacked[1] = 0x1F;
 	nullPacked[2] = 0xFF;
 	_tsEmpty.initialize(0, 0);
-	std::memcpy(_tsEmpty.getWriteBufferPtr(), nullPacked.data(), 188);
+	std::memcpy(_tsEmpty.getWriteBufferPtr(), nullPacked.data(), nullPacked.size());
 	_tsEmpty.addAmountOfBytesWritten(188);
 }
 
@@ -240,7 +241,6 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 	const FeID id = _device->getFeID();
 	const TransportParamVector params = socketClient.getTransportParameters();
 	const input::InputSystem msys = params.getMSYSParameter();
-	const double reqFreq = params.getDoubleParameter("freq");
 
 	// Do we have a new session then check some things
 	if (newSession) {
@@ -251,6 +251,7 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use, skipping...", id);
 			return nullptr;
 		} else if (!_device->capableOf(msys)) {
+			const double reqFreq = params.getDoubleParameter("freq");
 			if (_device->capableToTransform(params)) {
 				SI_LOG_INFO("Frontend: @#1, Capable of transforming msys=@#2 with freq=@#3",
 					id, StringConverter::delsys_to_string(msys), reqFreq);
@@ -283,6 +284,7 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 			return client;
 		}
 	}
+
 	if (msys != input::InputSystem::UNDEFINED) {
 		SI_LOG_INFO("Frontend: @#1, No StreamClient with SessionID @#2 for @#3",
 			id, sessionID, StringConverter::delsys_to_string(msys));
@@ -382,8 +384,6 @@ std::string Stream::getDescribeMediaLevelString() const {
 }
 
 bool Stream::threadExecuteDeviceDataReader() {
-	const size_t read = _readIndex;
-	size_t write = _writeIndex;
 	const size_t availableSize = (_writeIndex >= _readIndex) ?
 			((_tsBuffer.size() - _writeIndex) + _readIndex) : (_readIndex - _writeIndex);
 
