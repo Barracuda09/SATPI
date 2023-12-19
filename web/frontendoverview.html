@@ -35,6 +35,7 @@
 				page += addTableEntry(xmlDoc, streamID + "streamindex");
 				page += addTableEntry(xmlDoc, streamID + "enable");
 				page += addTableEntry(xmlDoc, streamID + "frontendname");
+				page += addTableEntry(xmlDoc, streamID + "type");
 				page += addTableEntry(xmlDoc, streamID + "owner");
 				page += addTableEntry(xmlDoc, streamID + "spc");
 				var input = xmlDoc.querySelector(streamID + "tunefreq");
@@ -83,6 +84,7 @@
 				<th class="col-xs-1">#</th>
 				<th class="col-xs-1">Enable</th>
 				<th class="col-xs-1">Name</th>
+				<th class="col-xs-1">Type</th>
 				<th class="col-xs-1">Owner</th>
 				<th class="col-xs-1"># Packets</th>
 				<th class="col-xs-1">Frequency (kHz)</th>
