@@ -34,7 +34,7 @@ static_assert(CHAR_BIT == 8, "Error CHAR_BIT != 8");
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
+void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) noexcept {
 	// initialize RTP header
 	_buffer[0]  = 0x80;                     // version: 2, padding: 0, extension: 0, CSRC: 0
 	_buffer[1]  = 33;                       // marker: 0, payload type: 33 (MP2T)
@@ -50,7 +50,7 @@ void PacketBuffer::initialize(const uint32_t ssrc, const long timestamp) {
 	_buffer[11] = (ssrc >>  0) & 0xff;      // synchronization source
 }
 
-bool PacketBuffer::trySyncing() {
+bool PacketBuffer::trySyncing() noexcept {
 	const std::size_t size = getCurrentBufferSize();
 	if (size < (TS_PACKET_SIZE * 3)) {
 		return false;
@@ -76,7 +76,7 @@ bool PacketBuffer::trySyncing() {
 	return false;
 }
 
-void PacketBuffer::markTSForPurging(std::size_t packetNumber) {
+void PacketBuffer::markTSForPurging(std::size_t packetNumber) noexcept {
 	if (packetNumber <= NUMBER_OF_TS_PACKETS) {
 		// Invalid TS packets are labeled 0xFF _after_ the first SYNC Byte.
 		unsigned char *cData = getTSPacketPtr(packetNumber);
@@ -85,7 +85,7 @@ void PacketBuffer::markTSForPurging(std::size_t packetNumber) {
 	}
 }
 
-void PacketBuffer::purge() {
+void PacketBuffer::purge() noexcept {
 	if (_purgePending == 0) {
 		return;
 	}
@@ -132,7 +132,7 @@ void PacketBuffer::purge() {
 }
 
 void PacketBuffer::tagRTPHeaderWith(
-		const uint32_t ssrc, const uint16_t cseq, const long timestamp) {
+		const uint32_t ssrc, const uint16_t cseq, const long timestamp) noexcept {
 	// update sequence number
 	_buffer[2] = ((cseq >> 8) & 0xFF);
 	_buffer[3] =  (cseq & 0xFF);

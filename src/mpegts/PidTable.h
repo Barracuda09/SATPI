@@ -32,7 +32,7 @@ class PidTable {
 		// =========================================================================
 	public:
 
-		PidTable();
+		PidTable() noexcept;
 
 		virtual ~PidTable() = default;
 
@@ -42,24 +42,24 @@ class PidTable {
 	public:
 
 		/// Clear all PID data
-		void clear();
+		void clear() noexcept;
 
 		/// Reset that PID has changed
-		void resetPIDTableChanged();
+		void resetPIDTableChanged() noexcept;
 
 		/// Check if the PID has changed
-		bool hasPIDTableChanged() const {
+		bool hasPIDTableChanged() const noexcept {
 			return _changed;
 		}
 
 		/// Get the amount of packet that were received of this pid
-		uint32_t getPacketCounter(int pid) const;
+		uint32_t getPacketCounter(int pid) const noexcept;
 
 		/// Get the amount Continuity Counter Error of this pid
-		uint32_t getCCErrors(int pid) const;
+		uint32_t getCCErrors(int pid) const noexcept;
 
 		/// Get the total amount of Continuity Counter Error
-		uint32_t getTotalCCErrors() const {
+		uint32_t getTotalCCErrors() const noexcept {
 			return _totalCCErrors - _totalCCErrorsBegin;
 		}
 
@@ -67,40 +67,40 @@ class PidTable {
 		std::string getPidCSV() const;
 
 		/// Set the continuity counter for pid
-		void addPIDData(int pid, uint8_t cc);
+		void addPIDData(int pid, uint8_t cc) noexcept;
 
 		/// Set pid used or not
-		void setPID(int pid, bool use);
+		void setPID(int pid, bool use) noexcept;
 
 		/// Check if this pid is opened
-		bool isPIDOpened(int pid) const {
+		bool isPIDOpened(int pid) const noexcept {
 			return _data[pid].state == State::Opened;
 		}
 
 		/// Check if this pid should be closed
-		bool shouldPIDClose(int pid) const;
+		bool shouldPIDClose(int pid) const noexcept;
 
 		/// Set that this pid is closed
-		void setPIDClosed(int pid);
+		void setPIDClosed(int pid) noexcept;
 
 		/// Check if PID should be opened
-		bool shouldPIDOpen(int pid) const;
+		bool shouldPIDOpen(int pid) const noexcept;
 
 		/// Set that this pid is opened
-		void setPIDOpened(int pid);
+		void setPIDOpened(int pid) noexcept;
 
 		/// Set all PID
-		void setAllPID(bool use);
+		void setAllPID(bool use) noexcept;
 
 		/// Check if all PIDs (full Transport Stream) is on
-		bool isAllPID() const {
+		bool isAllPID() const noexcept {
 			return _data[ALL_PIDS].state == State::Opened;
 		}
 
 	protected:
 
 		/// Reset the pid data like counters etc.
-		void resetPidData(int pid);
+		void resetPidData(int pid) noexcept;
 
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------

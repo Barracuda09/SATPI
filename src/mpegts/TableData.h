@@ -75,7 +75,7 @@ class TableData {
 		// =========================================================================
 	public:
 
-		static uint32_t calculateCRC32(const unsigned char* data, std::size_t len);
+		static uint32_t calculateCRC32(const unsigned char* data, std::size_t len) noexcept;
 
 		// =========================================================================
 		//  -- Other member functions ----------------------------------------------
@@ -83,12 +83,12 @@ class TableData {
 	public:
 
 		/// Clear the collected table and data
-		virtual void clear();
+		virtual void clear() noexcept;
 
 		/// Get an copy of the requested table data
 		/// @param secNr
 		/// @param data
-		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const;
+		bool getDataForSectionNumber(size_t secNr, TableData::Data &data) const noexcept;
 
 		/// Collect Table data for tableID
 		void collectData(FeID id, int tableID, const unsigned char* data, bool trace) {
@@ -104,7 +104,7 @@ class TableData {
 		TSData getData(size_t secNr) const;
 
 		/// Check if Table is collected
-		bool isCollected() const;
+		bool isCollected() const noexcept;
 
 		/// Get the associated PID of this table
 		int getAssociatedPID() const;
@@ -115,32 +115,32 @@ class TableData {
 		bool addData(int tableID, const unsigned char* data, int length, int pid, int cc);
 
 		/// Set if the current Table has been collected
-		void setCollected();
+		void setCollected() noexcept;
 
 		///
-		const char* getTableTXT(int tableID) const;
+		const char* getTableTXT(int tableID) const noexcept;
 
 		///
-		uint8_t getByte(size_t &i, const unsigned char* buf) {
+		uint8_t getByte(size_t &i, const unsigned char* buf) const noexcept {
 			uint8_t d = buf[i];
 			++i;
 			return d;
 		}
 
 		///
-		uint16_t getWord(size_t &i, const unsigned char* buf) {
+		uint16_t getWord(size_t &i, const unsigned char* buf) const noexcept {
 			uint16_t d = (buf[i] << 8) | buf[i + 1];
 			i += 2;
 			return d;
 		}
 
-		uint32_t get24Bits(size_t &i, const unsigned char* buf) {
+		uint32_t get24Bits(size_t &i, const unsigned char* buf) const noexcept {
 			uint32_t d = (buf[i] << 16) | (buf[i + 1] << 8) | buf[i + 2];
 			i += 3;
 			return d;
 		}
 
-		uint32_t getDWord(size_t &i, const unsigned char* buf) {
+		uint32_t getDWord(size_t &i, const unsigned char* buf) const noexcept {
 			uint32_t d = (buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3];
 			i += 4;
 			return d;

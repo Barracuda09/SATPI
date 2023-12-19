@@ -35,7 +35,7 @@ class PCR {
 		// =========================================================================
 	public:
 
-		PCR();
+		PCR() = default;
 
 		virtual ~PCR() = default;
 
@@ -69,8 +69,8 @@ class PCR {
 		// =========================================================================
 	private:
 
-		std::uint64_t _pcrPrev;
-		std::int64_t _pcrDelta;
+		std::uint64_t _pcrPrev = 0;
+		std::int64_t _pcrDelta = 0;
 };
 
 }

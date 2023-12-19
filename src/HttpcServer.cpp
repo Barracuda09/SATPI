@@ -35,7 +35,7 @@
 
 extern const char* const satpi_version;
 
-const char *HttpcServer::HTML_BODY_WITH_CONTENT =
+const char* HttpcServer::HTML_BODY_WITH_CONTENT =
 	"@#1 @#2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
 	"Location: @#3\r\n" \
@@ -46,7 +46,7 @@ const char *HttpcServer::HTML_BODY_WITH_CONTENT =
 	"@#7" \
 	"\r\n";
 
-const char *HttpcServer::HTML_BODY_NO_CONTENT =
+const char* HttpcServer::HTML_BODY_NO_CONTENT =
 	"@#1 @#2\r\n" \
 	"Server: SatPI WebServer v0.1\r\n" \
 	"Location: @#3\r\n" \
@@ -112,7 +112,8 @@ void HttpcServer::getHtmlBodyNoContent(std::string &htmlBody, const std::string 
 
 bool HttpcServer::process(SocketClient &client) {
 
-//	SI_LOG_DEBUG("@#1 HTML data from client @#2: @#3", client.getProtocol(), client.getIPAddress(), client.getRawMessage());
+//	SI_LOG_DEBUG("@#1 HTML data from client @#2: @#3",
+//		client.getProtocol(), client.getIPAddressOfSocket(), client.getRawMessage());
 
 	// parse HTML
 	const std::string method = client.getMethod();
@@ -165,7 +166,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 	const std::string method = client.getMethod();
 	std::string httpcReply;
 	if (sessionID.empty() && method == "OPTIONS") {
-		static const char *RTSP_OPTIONS_OK =
+		static const char* RTSP_OPTIONS_OK =
 			"RTSP/1.0 200 OK\r\n" \
 			"Server: satpi/@#1\r\n" \
 			"CSeq: @#2\r\n" \

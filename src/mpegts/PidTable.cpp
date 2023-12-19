@@ -28,7 +28,7 @@ namespace mpegts {
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
-PidTable::PidTable() {
+PidTable::PidTable() noexcept {
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
 		resetPidData(i);
 	}
@@ -40,7 +40,7 @@ PidTable::PidTable() {
 // =============================================================================
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
-void PidTable::clear() {
+void PidTable::clear() noexcept {
 	_changed = false;
 	_totalCCErrorsBegin = 0;
 	for (size_t i = 0; i < MAX_PIDS; ++i) {
@@ -54,22 +54,22 @@ void PidTable::clear() {
 	}
 }
 
-void PidTable::resetPidData(const int pid) {
+void PidTable::resetPidData(const int pid) noexcept {
 	_data[pid].state    = State::Closed;
 	_data[pid].cc       = 0x80;
 	_data[pid].cc_error = 0;
 	_data[pid].count    = 0;
 }
 
-uint32_t PidTable::getPacketCounter(const int pid) const {
+uint32_t PidTable::getPacketCounter(const int pid) const noexcept {
 	return _data[pid].count;
 }
 
-uint32_t PidTable::getCCErrors(const int pid) const {
+uint32_t PidTable::getCCErrors(const int pid) const noexcept {
 	return _data[pid].cc_error;
 }
 
-void PidTable::resetPIDTableChanged() {
+void PidTable::resetPIDTableChanged() noexcept {
 	_changed = false;
 }
 
@@ -90,7 +90,7 @@ std::string PidTable::getPidCSV() const {
 	return "";
 }
 
-void PidTable::addPIDData(const int pid, const uint8_t cc) {
+void PidTable::addPIDData(const int pid, const uint8_t cc) noexcept {
 	PidData &data = _data[pid];
 	++data.count;
 	if (data.cc == 0x80) {
@@ -110,7 +110,7 @@ void PidTable::addPIDData(const int pid, const uint8_t cc) {
 	}
 }
 
-void PidTable::setPID(const int pid, const bool use) {
+void PidTable::setPID(const int pid, const bool use) noexcept {
 	switch (_data[pid].state) {
 		case State::Closed:
 			if (use) {
@@ -136,12 +136,12 @@ void PidTable::setPID(const int pid, const bool use) {
 	}
 }
 
-bool PidTable::shouldPIDClose(const int pid) const {
+bool PidTable::shouldPIDClose(const int pid) const noexcept {
 	return _data[pid].state == State::ShouldClose ||
 		_data[pid].state == State::ShouldCloseReopen;
 }
 
-void PidTable::setPIDClosed(const int pid) {
+void PidTable::setPIDClosed(const int pid) noexcept {
 	switch (_data[pid].state) {
 		case State::ShouldCloseReopen:
 			_data[pid].state = State::ShouldOpen;
@@ -156,15 +156,15 @@ void PidTable::setPIDClosed(const int pid) {
 	_data[pid].count    = 0;
 }
 
-bool PidTable::shouldPIDOpen(const int pid) const {
+bool PidTable::shouldPIDOpen(const int pid) const noexcept {
 	return _data[pid].state == State::ShouldOpen;
 }
 
-void PidTable::setPIDOpened(const int pid) {
+void PidTable::setPIDOpened(const int pid) noexcept {
 	_data[pid].state = State::Opened;
 }
 
-void PidTable::setAllPID(const bool use) {
+void PidTable::setAllPID(const bool use) noexcept {
 	setPID(ALL_PIDS, use);
 }
 

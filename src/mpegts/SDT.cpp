@@ -27,7 +27,7 @@ namespace mpegts {
 //  -- mpegts::TableData -------------------------------------------------------
 // =============================================================================
 
-void SDT::clear() {
+void SDT::clear() noexcept {
 	_transportStreamID = 0;
 	_networkID = 0;
 	_sdtTable.clear();

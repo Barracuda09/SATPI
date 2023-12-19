@@ -107,7 +107,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 
 	// Parse what to get
 	if (client.isRootFile()) {
-		static const char *HTML_MOVED = "<html>\r\n"                           \
+		static const char* HTML_MOVED = "<html>\r\n"                           \
 		                               "<head>\r\n"                            \
 		                               "<title>Page is moved</title>\r\n"      \
 		                               "</head>\r\n"                           \

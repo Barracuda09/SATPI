@@ -147,7 +147,7 @@ static std::string rolloffTostring(int rolloff) {
 //  -- mpegts::TableData -------------------------------------------------------
 // =============================================================================
 
-void NIT::clear() {
+void NIT::clear() noexcept {
 	TableData::clear();
 	_table.clear();
 	_nid = 0;

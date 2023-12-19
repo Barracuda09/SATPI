@@ -34,8 +34,8 @@ FW_DECL_SP_NS1(output, StreamClient);
 class HttpcServer :
 	public TcpSocket {
 	private:
-		static const char *HTML_BODY_WITH_CONTENT;
-		static const char *HTML_BODY_NO_CONTENT;
+		static const char* HTML_BODY_WITH_CONTENT;
+		static const char* HTML_BODY_NO_CONTENT;
 
 		static const std::string HTML_PROTOCOL_RTSP_VERSION;
 		static const std::string HTML_PROTOCOL_HTTP_VERSION;

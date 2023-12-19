@@ -55,7 +55,7 @@ class SDT :
 		// =========================================================================
 	public:
 
-		virtual void clear() final;
+		virtual void clear() noexcept final;
 
 		// =========================================================================
 		// -- base::XMLSupport -----------------------------------------------------
@@ -75,11 +75,11 @@ class SDT :
 
 		void parse(FeID id);
 
-		int getTransportStreamID() const {
+		int getTransportStreamID() const noexcept {
 			return _transportStreamID;
 		}
 
-		int getNetworkID() const {
+		int getNetworkID() const noexcept {
 			return _networkID;
 		}
 

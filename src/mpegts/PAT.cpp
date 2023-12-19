@@ -29,7 +29,7 @@ namespace mpegts {
 //  -- mpegts::TableData -------------------------------------------------------
 // =============================================================================
 
-void PAT::clear() {
+void PAT::clear() noexcept {
 	_tid = 0;
 	_pmtPidTable.clear();
 	TableData::clear();

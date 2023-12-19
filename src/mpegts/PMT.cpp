@@ -26,7 +26,7 @@ namespace mpegts {
 //  -- mpegts::TableData -------------------------------------------------------
 // =============================================================================
 
-void PMT::clear() {
+void PMT::clear() noexcept {
 	_programNumber = 0;
 	_pcrPID = 0;
 	_prgLength = 0;

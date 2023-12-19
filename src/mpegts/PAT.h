@@ -49,7 +49,7 @@ class PAT :
 		// =========================================================================
 	public:
 
-		virtual void clear() final;
+		virtual void clear() noexcept final;
 
 		// =========================================================================
 		// -- base::XMLSupport -----------------------------------------------------
@@ -69,7 +69,7 @@ class PAT :
 
 		void parse(FeID id);
 
-		bool isMarkedAsPMT(const int pid) const {
+		bool isMarkedAsPMT(const int pid) const noexcept {
 			const auto s = _pmtPidTable.find(pid);
 			if (s != _pmtPidTable.end()) {
 				return s->second;
