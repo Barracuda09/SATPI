@@ -169,7 +169,7 @@ void StreamClient::setSocketClient(SocketClient &socket) {
 }
 
 std::string StreamClient::getSetupMethodReply(const StreamID UNUSED(streamID)) {
-	static const char *RTSP_SETUP_REPLY =
+	static const char* RTSP_SETUP_REPLY =
 		"RTSP/1.0 461 Unsupported Transport\r\n" \
 		"Server: satpi/@#1\r\n" \
 		"CSeq: @#2\r\n" \
@@ -182,7 +182,7 @@ std::string StreamClient::getSetupMethodReply(const StreamID UNUSED(streamID)) {
 std::string StreamClient::getPlayMethodReply(
 		StreamID streamID,
 		const std::string& ipAddressOfServer) {
-	static const char *RTSP_PLAY_OK =
+	static const char* RTSP_PLAY_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"Server: satpi/@#1\r\n" \
 		"RTP-Info: url=rtsp://@#2/stream=@#3\r\n" \
@@ -199,7 +199,7 @@ std::string StreamClient::getPlayMethodReply(
 }
 
 std::string StreamClient::getOptionsMethodReply() const {
-	static const char *RTSP_OPTIONS_OK =
+	static const char* RTSP_OPTIONS_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"Server: satpi/@#1\r\n" \
 		"CSeq: @#2\r\n" \
@@ -211,7 +211,7 @@ std::string StreamClient::getOptionsMethodReply() const {
 }
 
 std::string StreamClient::getTeardownMethodReply() const {
-	static const char *RTSP_TEARDOWN_OK =
+	static const char* RTSP_TEARDOWN_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"Server: satpi/@#1\r\n" \
 		"CSeq: @#2\r\n" \

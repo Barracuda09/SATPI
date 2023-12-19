@@ -60,9 +60,10 @@ class StreamClientOutputRtp : public output::StreamClient {
 		virtual std::string getSetupMethodReply(StreamID streamID) final;
 
 		///
-		virtual std::string getDescribeMediaLevelString(
+		/// @param fmtp specifies the specific Media Format description Parameter
+		virtual std::string getSDPMediaLevelString(
 				StreamID streamID,
-				const std::string& deviceAttributeDescription) const final;
+				const std::string& fmtp) const final;
 
 	private:
 

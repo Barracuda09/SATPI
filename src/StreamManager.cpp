@@ -113,18 +113,6 @@ std::string StreamManager::getXMLDeliveryString() const {
 	return delSysStr;
 }
 
-std::string StreamManager::getRTSPDescribeString() const {
-	std::size_t dvb_s2 = 0u;
-	std::size_t dvb_t = 0u;
-	std::size_t dvb_t2 = 0u;
-	std::size_t dvb_c = 0u;
-	std::size_t dvb_c2 = 0u;
-	for (SpStream stream : _streamVector) {
-		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
-	}
-	return StringConverter::stringFormat("@#1,@#2,@#3", dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
-}
-
 std::tuple<FeIndex, FeID> StreamManager::findFrontendIDWithStreamID(const StreamID id) const {
 	for (SpStream stream : _streamVector) {
 		if (stream->getStreamID() == id) {
@@ -219,9 +207,38 @@ void StreamManager::checkForSessionTimeout() {
 	}
 }
 
-std::string StreamManager::getDescribeMediaLevelString(const FeIndex feIndex) const {
+std::string StreamManager::getSDPSessionLevelString(
+		const std::string& bindIPAddress,
+		const std::string& sessionID) const {
 	assert(!_streamVector.empty());
-	return _streamVector[feIndex.getID()]->getDescribeMediaLevelString();
+	std::size_t dvb_s2 = 0u;
+	std::size_t dvb_t = 0u;
+	std::size_t dvb_t2 = 0u;
+	std::size_t dvb_c = 0u;
+	std::size_t dvb_c2 = 0u;
+	for (SpStream stream : _streamVector) {
+		stream->addDeliverySystemCount(dvb_s2, dvb_t, dvb_t2, dvb_c, dvb_c2);
+	}
+	std::string sessionNameString = StringConverter::stringFormat("@#1,@#2,@#3",
+			dvb_s2, dvb_t + dvb_t2, dvb_c + dvb_c2);
+
+	static const char* SDP_SESSION_LEVEL =
+		"v=0\r\n" \
+		"o=- @#1 @#2 IN IP4 @#3\r\n" \
+		"s=SatIPServer:1 @#4\r\n" \
+		"t=0 0\r\n";
+
+	// Describe streams
+	return StringConverter::stringFormat(SDP_SESSION_LEVEL,
+		(sessionID.size() > 2) ? sessionID : "0",
+		(sessionID.size() > 2) ? sessionID : "0",
+		bindIPAddress,
+		sessionNameString);
+}
+
+std::string StreamManager::getSDPMediaLevelString(const FeIndex feIndex) const {
+	assert(!_streamVector.empty());
+	return _streamVector[feIndex.getID()]->getSDPMediaLevelString();
 }
 
 #ifdef LIBDVBCSA

@@ -371,13 +371,13 @@ bool Stream::processStreamingRequest(const SocketClient &client, output::SpStrea
 	return true;
 }
 
-std::string Stream::getDescribeMediaLevelString() const {
+std::string Stream::getSDPMediaLevelString() const {
 	_device->monitorSignal(false);
-	const std::string describe = _device->attributeDescribeString();
+	const std::string fmtp = _device->attributeDescribeString();
 	std::string mediaLevel;
-	if (describe.size() > 5) {
+	if (fmtp.size() > 5) {
 		for (const output::SpStreamClient client : _streamClientVector) {
-			mediaLevel += client->getDescribeMediaLevelString(_device->getStreamID(), describe);
+			mediaLevel += client->getSDPMediaLevelString(_device->getStreamID(), fmtp);
 		}
 	}
 	return mediaLevel;

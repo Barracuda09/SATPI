@@ -155,7 +155,7 @@ class Stream :
 		bool update(output::SpStreamClient streamClient);
 
 		///
-		std::string getDescribeMediaLevelString() const;
+		std::string getSDPMediaLevelString() const;
 
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------

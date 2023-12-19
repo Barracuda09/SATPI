@@ -90,15 +90,17 @@ class StreamManager :
 		std::string getXMLDeliveryString() const;
 
 		///
-		std::string getRTSPDescribeString() const;
-
-		///
 		std::size_t getMaxStreams() const {
 			return _streamVector.size();
 		}
 
 		///
-		std::string getDescribeMediaLevelString(FeIndex feIndex) const;
+		std::string getSDPSessionLevelString(
+				const std::string& bindIPAddress,
+				const std::string& sessionID) const;
+
+		///
+		std::string getSDPMediaLevelString(FeIndex feIndex) const;
 
 #ifdef LIBDVBCSA
 		///

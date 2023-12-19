@@ -29,7 +29,7 @@ namespace output {
 
 std::string StreamClientOutputRtp::getSetupMethodReply(const StreamID streamID) {
 	if (_multicast) {
-		static const char *RTSP_SETUP_OK =
+		static const char* RTSP_SETUP_OK =
 			"RTSP/1.0 200 OK\r\n" \
 			"Server: satpi/@#1\r\n" \
 			"CSeq: @#2\r\n" \
@@ -47,7 +47,7 @@ std::string StreamClientOutputRtp::getSetupMethodReply(const StreamID streamID) 
 			_rtcp.getSocketPort(),
 			streamID.getID());
 	} else {
-			static const char *RTSP_SETUP_OK =
+			static const char* RTSP_SETUP_OK =
 				"RTSP/1.0 200 OK\r\n" \
 				"Server: satpi/@#1\r\n" \
 				"CSeq: @#2\r\n" \
@@ -67,24 +67,24 @@ std::string StreamClientOutputRtp::getSetupMethodReply(const StreamID streamID) 
 		}
 }
 
-std::string StreamClientOutputRtp::getDescribeMediaLevelString(
+std::string StreamClientOutputRtp::getSDPMediaLevelString(
 		StreamID streamID,
-		const std::string& deviceAttributeDescription) const {
-	static const char *RTSP_DESCRIBE_MEDIA_LEVEL =
+		const std::string& fmtp) const {
+	static const char* SDP_MEDIA_LEVEL =
 		"m=video @#1 RTP/AVP 33\r\n" \
 		"c=IN IP4 @#2\r\n" \
 		"a=control:stream=@#3\r\n" \
 		"a=fmtp:33 @#4\r\n" \
 		"a=@#5\r\n";
 	if (_multicast) {
-		return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
+		return StringConverter::stringFormat(SDP_MEDIA_LEVEL,
 			_rtp.getSocketPort(),
 			_ipAddressOfStream + "/" + std::to_string(_rtp.getTimeToLive()),
-			streamID.getID(), deviceAttributeDescription,
+			streamID.getID(), fmtp,
 			(_streamActive) ? "sendonly" : "inactive");
 	} else {
-		return StringConverter::stringFormat(RTSP_DESCRIBE_MEDIA_LEVEL,
-			0, "0.0.0.0", streamID.getID(), deviceAttributeDescription,
+		return StringConverter::stringFormat(SDP_MEDIA_LEVEL,
+			0, "0.0.0.0", streamID.getID(), fmtp,
 			(_streamActive) ? "sendonly" : "inactive");
 	}
 }

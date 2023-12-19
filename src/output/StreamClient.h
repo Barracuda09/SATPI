@@ -145,9 +145,10 @@ class StreamClient : public base::XMLSupport {
 		virtual std::string getTeardownMethodReply() const;
 
 		///
-		virtual std::string getDescribeMediaLevelString(
+		/// @param fmtp specifies the specific Media Format description Parameter
+		virtual std::string getSDPMediaLevelString(
 				StreamID UNUSED(streamID),
-				const std::string& UNUSED(deviceAttributeDescription)) const {
+				const std::string& UNUSED(fmtp)) const {
 			return "";
 		}
 

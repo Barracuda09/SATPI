@@ -28,7 +28,7 @@
 
 extern const char* const satpi_version;
 
-RtspServer::RtspServer(StreamManager &streamManager, const std::string &bindIPAddress) :
+RtspServer::RtspServer(StreamManager& streamManager, const std::string& bindIPAddress) :
 		ThreadBase("RtspServer"),
 		HttpcServer(20, "RTSP", streamManager, bindIPAddress) {}
 
@@ -56,8 +56,8 @@ void RtspServer::threadEntry() {
 }
 
 void RtspServer::methodDescribe(
-		const std::string &sessionID, const int cseq, const FeIndex feIndex, std::string &htmlBody) {
-	static const char *RTSP_DESCRIBE  =
+		const std::string& sessionID, const int cseq, const FeIndex feIndex, std::string& htmlBody) {
+	static const char* RTSP_DESCRIBE =
 		"@#1" \
 		"Server: satpi/@#2\r\n" \
 		"CSeq: @#3\r\n" \
@@ -68,24 +68,13 @@ void RtspServer::methodDescribe(
 		"\r\n" \
 		"@#7";
 
-	static const char *RTSP_DESCRIBE_SESSION_LEVEL =
-		"v=0\r\n" \
-		"o=- @#1 @#2 IN IP4 @#3\r\n" \
-		"s=SatIPServer:1 @#4\r\n" \
-		"t=0 0\r\n";
-
-	// Describe streams
-	std::string desc = StringConverter::stringFormat(RTSP_DESCRIBE_SESSION_LEVEL,
-		(sessionID.size() > 2) ? sessionID : "0",
-		(sessionID.size() > 2) ? sessionID : "0",
-		_bindIPAddress,
-		_streamManager.getRTSPDescribeString());
-
+	std::string desc = _streamManager.getSDPSessionLevelString(
+			_bindIPAddress, sessionID);
 	std::size_t streamsSetup = 0;
 
 	// Lambda Expression 'setupDescribeMediaLevelString'
 	const auto setupDescribeMediaLevelString = [&](const FeIndex feIdx) {
-		const std::string mediaLevel = _streamManager.getDescribeMediaLevelString(feIdx);
+		const std::string mediaLevel = _streamManager.getSDPMediaLevelString(feIdx);
 		if (mediaLevel.size() > 5) {
 			++streamsSetup;
 			desc += mediaLevel;

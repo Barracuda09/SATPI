@@ -38,7 +38,7 @@ class RtspServer :
 		// =========================================================================
 	public:
 
-		RtspServer(StreamManager &streamManager, const std::string &bindIPAddress);
+		RtspServer(StreamManager& streamManager, const std::string& bindIPAddress);
 
 		virtual ~RtspServer();
 
@@ -52,7 +52,7 @@ class RtspServer :
 	private:
 
 		///
-		virtual void methodDescribe(const std::string &sessionID, int cseq, FeIndex index, std::string &htmlBody) final;
+		virtual void methodDescribe(const std::string& sessionID, int cseq, FeIndex index, std::string& htmlBody) final;
 
 		// =====================================================================
 		// -- Data members -----------------------------------------------------

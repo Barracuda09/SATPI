@@ -28,7 +28,7 @@ namespace output {
 // =============================================================================
 
 std::string StreamClientOutputRtpTcp::getSetupMethodReply(const StreamID streamID) {
-	static const char *RTSP_SETUP_OK =
+	static const char* RTSP_SETUP_OK =
 		"RTSP/1.0 200 OK\r\n" \
 		"Server: satpi/@#1\r\n" \
 		"CSeq: @#2\r\n" \
