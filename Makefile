@@ -18,7 +18,7 @@ INCLUDES +=
 
 LDFLAGS += $(CPU_FLAGS)
 CFLAGS += $(CPU_FLAGS)
-CFLAGS_NEW += $(CPU_FLAGS)
+CFLAGS_OPT += $(CPU_FLAGS)
 
 # Libraries needed for linking
 LDFLAGS += -pthread -lrt
@@ -36,32 +36,32 @@ endif
 # Set Compiler Flags
 CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 
-CFLAGS_NEW += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
+CFLAGS_OPT += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
 ifeq "$(BUILD)" "debug"
   # "Debug" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -gdwarf-2 -DDEBUG -DDEBUG_LOG -fstack-protector-all -Wswitch-default
-  CFLAGS_NEW += -O3 -s -DNDEBUG -DDEBUG_LOG
-  LDFLAGS += -rdynamic
+  CFLAGS     += -O0 -g3 -gdwarf-2 -DDEBUG -DDEBUG_LOG -fstack-protector-all -Wswitch-default
+  CFLAGS_OPT += -O3 -s -DNDEBUG -DDEBUG_LOG
+  LDFLAGS    += -rdynamic
 else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
-  CFLAGS += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
-  CFLAGS_NEW += -O3 -s -DNDEBUG -DDEBUG_LOG
-  LDFLAGS += -rdynamic
+  CFLAGS     += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
+  CFLAGS_OPT += -O3 -s -DNDEBUG -DDEBUG_LOG
+  LDFLAGS    += -rdynamic
 else ifeq "$(BUILD)" "speed"
   # "Debug" build - with optimization, without debugging symbols
-  CFLAGS += -Os -s -DNDEBUG
-  CFLAGS_NEW += -Os -s -DNDEBUG
+  CFLAGS     += -Os -s -DNDEBUG
+  CFLAGS_OPT += -Os -s -DNDEBUG
 else ifeq "$(BUILD)" "simu"
   # "Debug Simu" build - no optimization, with debugging symbols
-  CFLAGS += -O0 -g3 -DDEBUG -DDEBUG_LOG -DSIMU -fstack-protector-all
-  CFLAGS_NEW += -O3 -s  -DNDEBUG -DDEBUG_LOG
-  LDFLAGS += -rdynamic
+  CFLAGS     += -O0 -g3 -DDEBUG -DDEBUG_LOG -DSIMU -fstack-protector-all
+  CFLAGS_OPT += -O3 -s  -DNDEBUG -DDEBUG_LOG
+  LDFLAGS    += -rdynamic
 else
   # "Release" build - optimization, and no debug symbols
-  CFLAGS += -O2 -s -DNDEBUG
-  CFLAGS_NEW += -O3 -s -DNDEBUG
+  CFLAGS     += -O2 -s -DNDEBUG
+  CFLAGS_OPT += -O3 -s -DNDEBUG
 endif
 
 # List of source to be compiled
@@ -133,13 +133,14 @@ endif
 
 # Add dvbcsa ?
 ifeq "$(LIBDVBCSA)" "yes"
-  LDFLAGS += -ldvbcsa
-#  CFLAGS  += -DUSE_DEPRECATED_DVBAPI
-  CFLAGS  += -DLIBDVBCSA
-  SOURCES += decrypt/dvbapi/Client.cpp
-  SOURCES += decrypt/dvbapi/ClientProperties.cpp
-  SOURCES += decrypt/dvbapi/Keys.cpp
-  SOURCES += input/dvb/Frontend_DecryptInterface.cpp
+  LDFLAGS    += -ldvbcsa
+#  CFLAGS     += -DUSE_DEPRECATED_DVBAPI
+  CFLAGS     += -DLIBDVBCSA
+  CFLAGS_OPT +=-DLIBDVBCSA
+  SOURCES    += decrypt/dvbapi/Client.cpp
+  SOURCES    += decrypt/dvbapi/ClientProperties.cpp
+  SOURCES    += decrypt/dvbapi/Keys.cpp
+  SOURCES    += input/dvb/Frontend_DecryptInterface.cpp
 # Need to build with ICAM support
 ifeq "$(ICAM)" "yes"
   CFLAGS += -DICAM
@@ -221,7 +222,11 @@ $(EXECUTABLE): $(OBJECTS) $(HEADERS)
 # $@ represents the targetname
 $(OBJ_DIR)/mpegts/%.o: $(SRC_DIR)/mpegts/%.cpp $(HEADERS)
 	@mkdir -p $(@D)
-	$(CXX) -c $(CFLAGS_NEW) $< -o $@
+	$(CXX) -c $(CFLAGS_OPT) $< -o $@
+
+$(OBJ_DIR)/decrypt/dvbapi/%.o: $(SRC_DIR)/decrypt/dvbapi/%.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) -c $(CFLAGS_OPT) $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(@D)
