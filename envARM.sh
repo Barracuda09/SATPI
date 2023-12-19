@@ -18,7 +18,7 @@
 
 ###############################################################################
 # ARM based BroadCom Chips
-export CPU_FLAGS="-march=armv7ve -mtune=cortex-a15 -mfpu=vfpv4"
+export CPU_FLAGS="-march=armv7-a -mtune=cortex-a15 -mfpu=vfpv4"
 
 #export CXXPREFIX=~/vu/opt/toolchains/stbgcc-6.3-1.8/bin/arm-linux-
 #export CXXSUFFIX=
