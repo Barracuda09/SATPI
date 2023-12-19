@@ -80,6 +80,7 @@ namespace input::dvb::delivery {
 			uint8_t _addressByte = 0x10;
 			uint8_t _commandByte = 0x38;
 			SwitchType _switchType = SwitchType::COMMITTED;
+			bool _enableMiniDiSEqCSwitch = false;
 	};
 
 }

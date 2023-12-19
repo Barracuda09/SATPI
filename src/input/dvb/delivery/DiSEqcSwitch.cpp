@@ -61,6 +61,9 @@ namespace input::dvb::delivery {
 		// -------------------------------------------------------------------------
 		// size    0x04: send x bytes
 		dvb_diseqc_master_cmd cmd = {{0xe0, _addressByte, _commandByte, 0xf0}, 4};
+		const auto minisw = _enableMiniDiSEqCSwitch ?
+				MiniDiSEqCSwitch::DoNotSend :
+				(((src & 0x80) == 0x80) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA);
 		switch (_addressByte) {
 			default:
 				cmd.msg[1] = 0x10;
@@ -76,13 +79,11 @@ namespace input::dvb::delivery {
 						cmd.msg[3] |= (src << 2) & 0x0f;
 						cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
 						cmd.msg[3] |= hiband ? 0x1 : 0x0;
-						const auto minisw = (src % 2) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
 						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
 						break;
 					}
 					case SwitchType::UNCOMMITTED: {
 						cmd.msg[3] |= src & 0x0f;
-						const auto minisw = (src % 2) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
 						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
 						break;
 					}
@@ -90,7 +91,6 @@ namespace input::dvb::delivery {
 						const int srcCommitted = src & 0x03;
 						const int srcUncommitted = (src >> 2) & 0x0F;
 						const bool uncommittedFirst = (src & 0x40) == 0x40;
-						const auto minisw = ((src & 0x80) == 0x80) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA;
 						if (uncommittedFirst) {
 							cmd.msg[2] = 0x39;
 							cmd.msg[3] = 0xf0 | srcUncommitted;
