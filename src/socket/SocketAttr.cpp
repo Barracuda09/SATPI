@@ -23,12 +23,15 @@
 #include <StringConverter.h>
 #include <socket/SocketClient.h>
 
-#include <string>
+#include <chrono>
 #include <cstring>
+#include <string>
+#include <thread>
 
 #include <arpa/inet.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 
 	// ===================================================================
 	//  -- Constructors and destructor -----------------------------------
@@ -162,6 +165,7 @@
 	}
 
 	bool SocketAttr::sendData(const void *buf, std::size_t len, int flags) {
+		base::MutexLock lock(_mutex);
 		if (::send(_fd, buf, len, flags) == -1) {
 			SI_LOG_PERROR("send");
 			return false;
@@ -170,13 +174,30 @@
 	}
 
 	bool SocketAttr::writeData(const iovec *iov, const int iovcnt) {
-		if (::writev(_fd, iov, iovcnt) == -1) {
-			if (errno != EBADF) {
-				SI_LOG_PERROR("writev");
-			}
+		if (_fd == -1) {
 			return false;
 		}
-		return true;
+		{
+			base::MutexLock lock(_mutex);
+			if (::writev(_fd, iov, iovcnt) != -1) {
+				return true;
+			}
+		}
+		if (errno != EBADF) {
+			timeval tv{};
+			fd_set fds{};
+			tv.tv_sec = 5;
+			FD_ZERO(&fds);
+			FD_SET(_fd, &fds);
+			if (select(1, &fds, nullptr, nullptr, &tv) != -1) {
+				base::MutexLock lock(_mutex);
+				if (::writev(_fd, iov, iovcnt) != -1) {
+					return true;
+				}
+			}
+		}
+		SI_LOG_PERROR("writeData: ");
+		return false;
 	}
 
 	bool SocketAttr::sendDataTo(const void *buf, std::size_t len, int flags) {

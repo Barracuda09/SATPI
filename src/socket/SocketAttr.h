@@ -21,6 +21,7 @@
 #define SOCKET_SOCKETATTR_H_INCLUDE SOCKET_SOCKETATTR_H_INCLUDE
 
 #include <FwDecl.h>
+#include <base/Mutex.h>
 
 #include <string>
 #include <string_view>
@@ -139,6 +140,7 @@ class SocketAttr {
 
 	protected:
 
+		base::Mutex _mutex;
 		int _fd;
 		struct sockaddr_in _addr;
 		std::string _ipAddr;
