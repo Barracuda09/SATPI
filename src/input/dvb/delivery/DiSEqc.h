@@ -121,8 +121,8 @@ namespace input::dvb::delivery {
 		protected:
 
 			unsigned int _diseqcRepeat = 0;
-			unsigned int _delayBeforeWrite = 10;
-			unsigned int _delayAfterWrite = 15;
+			unsigned int _delayBeforeWrite = 35;
+			unsigned int _delayAfterWrite = 40;
 	};
 
 }
