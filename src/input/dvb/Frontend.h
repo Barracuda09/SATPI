@@ -159,6 +159,8 @@ class Frontend :
 
 		virtual bool capableOf(InputSystem system) const final;
 
+		virtual bool capableToShare(const TransportParamVector& params) const final;
+
 		virtual bool capableToTransform(const TransportParamVector& params) const final;
 
 		virtual bool monitorSignal(bool showStatus) final;

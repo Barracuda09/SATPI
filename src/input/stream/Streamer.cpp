@@ -125,6 +125,10 @@ bool Streamer::capableOf(const input::InputSystem system) const {
 	return system == input::InputSystem::STREAMER;
 }
 
+bool Streamer::capableToShare(const TransportParamVector& UNUSED(params)) const {
+	return false;
+}
+
 bool Streamer::capableToTransform(const TransportParamVector& params) const {
 	const input::InputSystem system = _transform.getTransformationSystemFor(params);
 	return capableOf(system);

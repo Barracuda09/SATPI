@@ -241,14 +241,15 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 	const FeID id = _device->getFeID();
 	const TransportParamVector params = socketClient.getTransportParameters();
 	const input::InputSystem msys = params.getMSYSParameter();
+	const bool shareable = _device->capableToShare(params);
 
 	// Do we have a new session then check some things
 	if (newSession) {
 		if (!_enabled) {
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is not enabled, skipping...", id);
 			return nullptr;
-		} else if (_streamInUse) {
-			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use, skipping...", id);
+		} else if (_streamInUse && !shareable) {
+			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use and not shareable, skipping...", id);
 			return nullptr;
 		} else if (!_device->capableOf(msys)) {
 			const double reqFreq = params.getDoubleParameter("freq");
@@ -268,9 +269,10 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 		determineAndMakeStreamClientType(id, socketClient);
 	}
 
-	// if we have a session ID try to find it among our StreamClients
+	// Try to find an empty or requested StreamClients
 	for (output::SpStreamClient client : _streamClientVector) {
-		// If we have a new session we like to find an empty slot so '-1'
+		// If we have a new session we like to find an empty slot so '-1' or
+		// try to find the requested sessionID
 		if (client->getSessionID().compare(newSession ? "-1" : sessionID) == 0) {
 			if (msys != input::InputSystem::UNDEFINED) {
 				SI_LOG_INFO("Frontend: @#1, StreamClient with SessionID @#2 for @#3",
@@ -283,6 +285,11 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 			_streamInUse = true;
 			return client;
 		}
+	}
+
+	if (shareable) {
+		SI_LOG_INFO("Frontend: @#1, StreamClient with SessionID @#2 is Sharing...", id, sessionID);
+		// @TODO: Sharing of devices among StreamClients
 	}
 
 	if (msys != input::InputSystem::UNDEFINED) {

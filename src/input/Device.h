@@ -74,6 +74,10 @@ class Device :
 		/// @param system specifies the input system that this device is capable of
 		virtual bool capableOf(input::InputSystem system) const = 0;
 
+		/// Check if this device can be shared
+		/// @param params
+		virtual bool capableToShare(const TransportParamVector& params) const = 0;
+
 		/// Check if this device can transform the reguest according to an M3U file
 		/// This function should be called after function @c capableOf
 		/// @param params

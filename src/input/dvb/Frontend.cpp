@@ -292,6 +292,12 @@ bool Frontend::capableOf(const input::InputSystem system) const {
 	return false;
 }
 
+bool Frontend::capableToShare(const TransportParamVector& UNUSED(params)) const {
+	// @TODO: Check if the same "channel" is requested for sharing this frontend
+	//        maybe check if sharing is allowed
+	return false;
+}
+
 bool Frontend::capableToTransform(const TransportParamVector& params) const {
 	const input::InputSystem system = _transform.getTransformationSystemFor(params);
 	return capableOf(system);

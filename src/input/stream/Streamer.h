@@ -94,6 +94,8 @@ class Streamer :
 
 		virtual bool capableOf(input::InputSystem msys) const final;
 
+		virtual bool capableToShare(const TransportParamVector& params) const final;
+
 		virtual bool capableToTransform(const TransportParamVector& params) const final;
 
 		virtual bool monitorSignal(bool showStatus) final;

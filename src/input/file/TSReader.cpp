@@ -106,7 +106,7 @@ bool TSReader::isDataAvailable() {
 		_t1 = std::chrono::steady_clock::now();
 		_deviceData.getFilter().getPCRData()->clearPCRDelta();
 	} else {
-		std::this_thread::sleep_for(std::chrono::microseconds(150));
+		std::this_thread::sleep_for(std::chrono::microseconds(15));
 	}
 	return true;
 }
@@ -131,6 +131,10 @@ bool TSReader::capableOf(const input::InputSystem system) const {
 	if (_enableUnsecureFrontends) {
 		return system == input::InputSystem::FILE_SRC;
 	}
+	return false;
+}
+
+bool TSReader::capableToShare(const TransportParamVector& UNUSED(params)) const {
 	return false;
 }
 

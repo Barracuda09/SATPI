@@ -158,6 +158,10 @@ bool TSReader::capableOf(const input::InputSystem system) const {
 	return false;
 }
 
+bool TSReader::capableToShare(const TransportParamVector& UNUSED(params)) const {
+	return false;
+}
+
 bool TSReader::capableToTransform(const TransportParamVector& params) const {
 	const input::InputSystem system = _transform.getTransformationSystemFor(params);
 	return system == input::InputSystem::CHILDPIPE;
