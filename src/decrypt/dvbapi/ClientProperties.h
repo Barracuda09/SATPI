@@ -27,7 +27,9 @@
 #include <decrypt/dvbapi/Filter.h>
 #include <decrypt/dvbapi/Keys.h>
 
-FW_DECL_NS0(dvbcsa_bs_batch_s);
+extern "C" {
+	#include <dvbcsa/dvbcsa.h>
+}
 
 namespace decrypt::dvbapi {
 
@@ -69,7 +71,13 @@ namespace decrypt::dvbapi {
 			/// @param ptr specifies the pointer to de data that should be decrypted
 			/// @param len specifies the lenght of data
 			/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
-			void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr);
+			void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
+				_batch[_batchCount].data = ptr;
+				_batch[_batchCount].len  = len;
+				_ts[_batchCount].data = originalPtr;
+				_parity = parity;
+				++_batchCount;
+			}
 
 			/// This function will decrypt the batch upon success it will clear scramble flag
 			/// on failure it will make a NULL TS Packet and clear scramble flag

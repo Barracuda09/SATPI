@@ -22,10 +22,6 @@
 #include <Utils.h>
 #include <Unused.h>
 
-extern "C" {
-	#include <dvbcsa/dvbcsa.h>
-}
-
 namespace decrypt::dvbapi {
 
 	// ===========================================================================
@@ -57,15 +53,6 @@ namespace decrypt::dvbapi {
 		_batchCount = 0;
 		_parity = 0;
 		_filter.clear();
-	}
-
-	void ClientProperties::setBatchData(unsigned char *ptr, int len,
-		int parity, unsigned char *originalPtr) {
-		_batch[_batchCount].data = ptr;
-		_batch[_batchCount].len  = len;
-		_ts[_batchCount].data = originalPtr;
-		_parity = parity;
-		++_batchCount;
 	}
 
 	void ClientProperties::decryptBatch() {

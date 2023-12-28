@@ -85,13 +85,37 @@ class Filter :
 		/// This will return true if the requested pid is the active/current one
 		/// accoording to the PCR that is open.
 		/// @param pid specifies the PID to check if it is the current one
-		bool isMarkedAsActivePMT(int pid) const;
+		bool isMarkedAsActivePMT(int pid) const {
+			// Do not use lock here, its used for decrypt (Uses to much time)
+			if (_pat->isMarkedAsPMT(pid) && _pmtMap.find(pid) != _pmtMap.end()) {
+				const int pcrPID = _pmtMap[pid]->getPCRPid();
+				if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
+					return true;
+				}
+			}
+			return false;
+		}
 
 		/// This will return the requested PMT for the specified pid
 		/// @param pid specifies the PID to retrieve if it does not exists it will
 		/// return an empty PMT. When set to 0 it will try to return the current PMT
 		/// accoording the PCR that is open
-		mpegts::SpPMT getPMTData(int pid) const;
+		mpegts::SpPMT getPMTData(int pid) const {
+			base::MutexLock lock(_mutex);
+			if (pid == 0) {
+				// Try to find current PMT based on open PCR
+				for (const auto& [_, pmt] : _pmtMap) {
+					const int pcrPID = pmt->getPCRPid();
+					if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
+						return pmt;
+					}
+				}
+			}
+			if (_pmtMap.find(pid) != _pmtMap.end()) {
+				return _pmtMap[pid];
+			}
+			return std::make_shared<PMT>();
+		}
 
 		///
 		mpegts::SpPCR getPCRData() const {
@@ -121,13 +145,22 @@ class Filter :
 		// =========================================================================
 
 		/// Get the total amount of Continuity Counter Error
-		uint32_t getTotalCCErrors() const;
+		uint32_t getTotalCCErrors() const {
+			base::MutexLock lock(_mutex);
+			return _pidTable.getTotalCCErrors();
+		}
 
 		/// Get the CSV of all the requested PID
-		std::string getPidCSV() const;
+		std::string getPidCSV() const {
+			base::MutexLock lock(_mutex);
+			return _pidTable.getPidCSV();
+		}
 
 		/// Set pid used or not
-		void setPID(int pid, bool val);
+		void setPID(int pid, bool val) {
+			base::MutexLock lock(_mutex);
+			_pidTable.setPID(pid, val);
+		}
 
 		/// Close all active PID filter
 		/// @param feID specifies the frontend ID

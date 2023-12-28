@@ -45,7 +45,9 @@ class PidTable {
 		void clear() noexcept;
 
 		/// Reset that PID has changed
-		void resetPIDTableChanged() noexcept;
+		void resetPIDTableChanged() noexcept {
+			_changed = false;
+		}
 
 		/// Check if the PID has changed
 		bool hasPIDTableChanged() const noexcept {
@@ -53,10 +55,14 @@ class PidTable {
 		}
 
 		/// Get the amount of packet that were received of this pid
-		uint32_t getPacketCounter(int pid) const noexcept;
+		uint32_t getPacketCounter(int pid) const noexcept {
+			return _data[pid].count;
+		}
 
 		/// Get the amount Continuity Counter Error of this pid
-		uint32_t getCCErrors(int pid) const noexcept;
+		uint32_t getCCErrors(int pid) const noexcept {
+			return _data[pid].cc_error;
+		}
 
 		/// Get the total amount of Continuity Counter Error
 		uint32_t getTotalCCErrors() const noexcept {
@@ -67,7 +73,25 @@ class PidTable {
 		std::string getPidCSV() const;
 
 		/// Set the continuity counter for pid
-		void addPIDData(int pid, uint8_t cc) noexcept;
+		void addPIDData(int pid, uint8_t cc) noexcept {
+			PidData &data = _data[pid];
+			++data.count;
+			if (data.cc == 0x80) {
+				data.cc = cc;
+			} else if (data.cc != cc) {
+				++data.cc;
+				data.cc %= 0x10;
+				if (data.cc != cc) {
+					if (_totalCCErrorsBegin == 0) {
+						_totalCCErrorsBegin = _totalCCErrors;
+					}
+					const uint8_t diff = (cc >= data.cc) ? (cc - data.cc) : ((0x10 - data.cc) + cc);
+					data.cc = cc;
+					data.cc_error += diff;
+					_totalCCErrors += diff;
+				}
+			}
+		}
 
 		/// Set pid used or not
 		void setPID(int pid, bool use) noexcept;

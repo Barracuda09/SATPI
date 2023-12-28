@@ -253,47 +253,4 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 	}
 }
 
-bool Filter::isMarkedAsActivePMT(const int pid) const {
-	// Do not use lock here, its used for decrypt (Uses to much time)
-	if (_pat->isMarkedAsPMT(pid) && _pmtMap.find(pid) != _pmtMap.end()) {
-		const int pcrPID = _pmtMap[pid]->getPCRPid();
-		if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
-			return true;
-		}
-	}
-	return false;
-}
-
-mpegts::SpPMT Filter::getPMTData(const int pid) const {
-	base::MutexLock lock(_mutex);
-	if (pid == 0) {
-		// Try to find current PMT based on open PCR
-		for (const auto& [_, pmt] : _pmtMap) {
-			const int pcrPID = pmt->getPCRPid();
-			if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {
-				return pmt;
-			}
-		}
-	}
-	if (_pmtMap.find(pid) != _pmtMap.end()) {
-		return _pmtMap[pid];
-	}
-	return std::make_shared<PMT>();
-}
-
-uint32_t Filter::getTotalCCErrors() const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.getTotalCCErrors();
-}
-
-std::string Filter::getPidCSV() const {
-	base::MutexLock lock(_mutex);
-	return _pidTable.getPidCSV();
-}
-
-void Filter::setPID(const int pid, const bool val) {
-	base::MutexLock lock(_mutex);
-	_pidTable.setPID(pid, val);
-}
-
 }

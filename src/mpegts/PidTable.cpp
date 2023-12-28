@@ -61,18 +61,6 @@ void PidTable::resetPidData(const int pid) noexcept {
 	_data[pid].count    = 0;
 }
 
-uint32_t PidTable::getPacketCounter(const int pid) const noexcept {
-	return _data[pid].count;
-}
-
-uint32_t PidTable::getCCErrors(const int pid) const noexcept {
-	return _data[pid].cc_error;
-}
-
-void PidTable::resetPIDTableChanged() noexcept {
-	_changed = false;
-}
-
 std::string PidTable::getPidCSV() const {
 	if (_data[ALL_PIDS].state == State::Opened) {
 		return "all";
@@ -88,26 +76,6 @@ std::string PidTable::getPidCSV() const {
 		return csv;
 	}
 	return "";
-}
-
-void PidTable::addPIDData(const int pid, const uint8_t cc) noexcept {
-	PidData &data = _data[pid];
-	++data.count;
-	if (data.cc == 0x80) {
-		data.cc = cc;
-	} else if (data.cc != cc) {
-		++data.cc;
-		data.cc %= 0x10;
-		if (data.cc != cc) {
-			if (_totalCCErrorsBegin == 0) {
-				_totalCCErrorsBegin = _totalCCErrors;
-			}
-			const uint8_t diff = (cc >= data.cc) ? (cc - data.cc) : ((0x10 - data.cc) + cc);
-			data.cc = cc;
-			data.cc_error += diff;
-			_totalCCErrors += diff;
-		}
-	}
 }
 
 void PidTable::setPID(const int pid, const bool use) noexcept {
