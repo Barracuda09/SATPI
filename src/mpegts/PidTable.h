@@ -78,13 +78,11 @@ class PidTable {
 			++data.count;
 			if (data.cc == 0x80) {
 				data.cc = cc;
+				_totalCCErrorsBegin = _totalCCErrors;
 			} else if (data.cc != cc) {
 				++data.cc;
 				data.cc %= 0x10;
 				if (data.cc != cc) {
-					if (_totalCCErrorsBegin == 0) {
-						_totalCCErrorsBegin = _totalCCErrors;
-					}
 					const uint8_t diff = (cc >= data.cc) ? (cc - data.cc) : ((0x10 - data.cc) + cc);
 					data.cc = cc;
 					data.cc_error += diff;
