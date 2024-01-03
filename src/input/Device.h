@@ -83,6 +83,10 @@ class Device :
 		/// @param params
 		virtual bool capableToTransform(const TransportParamVector& params) const = 0;
 
+		/// Check if this device is already claimed/opened by an other process.
+		/// @return true meaning the device is opened by an other process
+		virtual bool isLockedByOtherProcess() const = 0;
+
 		/// Monitor signal of this device
 		/// @return true meaning there is a Signal Lock
 		virtual bool monitorSignal(bool showStatus) = 0;

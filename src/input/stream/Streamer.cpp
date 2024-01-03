@@ -134,6 +134,10 @@ bool Streamer::capableToTransform(const TransportParamVector& params) const {
 	return capableOf(system);
 }
 
+bool Streamer::isLockedByOtherProcess() const {
+	return false;
+}
+
 bool Streamer::monitorSignal(const bool UNUSED(showStatus)) {
 	_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
 	return true;

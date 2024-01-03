@@ -98,6 +98,8 @@ class Streamer :
 
 		virtual bool capableToTransform(const TransportParamVector& params) const final;
 
+		virtual bool isLockedByOtherProcess() const final;
+
 		virtual bool monitorSignal(bool showStatus) final;
 
 		virtual bool hasDeviceFrequencyChanged() const final;

@@ -303,6 +303,15 @@ bool Frontend::capableToTransform(const TransportParamVector& params) const {
 	return capableOf(system);
 }
 
+bool Frontend::isLockedByOtherProcess() const {
+	int fd = ::open(_path_to_fe.data(), O_RDWR);
+	if (fd  < 0) {
+		return true;
+	}
+	CLOSE_FD(fd);
+	return false;
+}
+
 bool Frontend::monitorSignal(const bool showStatus) {
 #if SIMU
 	(void)showStatus;

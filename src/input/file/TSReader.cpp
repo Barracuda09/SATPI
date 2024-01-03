@@ -143,6 +143,10 @@ bool TSReader::capableToTransform(const TransportParamVector& params) const {
 	return system == input::InputSystem::FILE_SRC;
 }
 
+bool TSReader::isLockedByOtherProcess() const {
+	return false;
+}
+
 bool TSReader::monitorSignal(bool UNUSED(showStatus)) {
 	_deviceData.setMonitorData(FE_HAS_LOCK, 240, 15, 0, 0);
 	return true;

@@ -251,6 +251,9 @@ output::SpStreamClient Stream::findStreamClientFor(SocketClient &socketClient,
 		} else if (_streamInUse && !shareable) {
 			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use and not shareable, skipping...", id);
 			return nullptr;
+		} else if (_device->isLockedByOtherProcess()) {
+			SI_LOG_INFO("Frontend: @#1, New session but this stream is in use by an other process, skipping...", id);
+			return nullptr;
 		} else if (!_device->capableOf(msys)) {
 			const double reqFreq = params.getDoubleParameter("freq");
 			if (_device->capableToTransform(params)) {
