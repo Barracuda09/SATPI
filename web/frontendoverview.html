@@ -27,8 +27,13 @@
 				var streamID = "stream" + index + " ";
 				var visibleStream = xmlDoc.getElementsByTagName("stream" + index)[0];
 				var attached = xmlDoc.querySelector(streamID + "attached").innerHTML;
+				var status = xmlDoc.querySelector(streamID + "status").innerHTML;
 				if (attached == "yes") {
-					page += '<tr class="table-info">';
+					if (status == 31) {
+						page += '<tr class="table-success">';
+					} else {
+						page += '<tr class="table-info">';
+					}
 				} else {
 					page += "<tr>";
 				}
@@ -38,6 +43,7 @@
 				page += addTableEntry(xmlDoc, streamID + "type");
 				page += addTableEntry(xmlDoc, streamID + "owner");
 				page += addTableEntry(xmlDoc, streamID + "spc");
+				page += addTableEntry(xmlDoc, streamID + "totalCCErrors");
 				var input = xmlDoc.querySelector(streamID + "tunefreq");
 				if (input) {
 					page += addTableEntry(xmlDoc, streamID + "tunefreq");
@@ -86,7 +92,8 @@
 				<th class="col-xs-1">Name</th>
 				<th class="col-xs-1">Type</th>
 				<th class="col-xs-1">Owner</th>
-				<th class="col-xs-1"># Packets</th>
+				<th class="col-xs-1">Packets</th>
+				<th class="col-xs-1">CC Error</th>
 				<th class="col-xs-1">Frequency (kHz)</th>
 				<th class="col-xs-1">Delivery System</th>
 				<th class="col-xs-3">Path</th>
