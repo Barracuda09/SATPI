@@ -86,7 +86,7 @@ class Filter :
 		/// accoording to the PCR that is open.
 		/// @param pid specifies the PID to check if it is the current one
 		bool isMarkedAsActivePMT(int pid) const {
-			// Do not use lock here, its used for decrypt (Uses to much time)
+			base::MutexLock lock(_mutex);
 			if (_pat->isMarkedAsPMT(pid) && _pmtMap.find(pid) != _pmtMap.end()) {
 				const int pcrPID = _pmtMap[pid]->getPCRPid();
 				if (_pidTable.isPIDOpened(pcrPID) && _pidTable.getPacketCounter(pcrPID) > 0) {

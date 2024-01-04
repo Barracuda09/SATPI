@@ -135,7 +135,7 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 }
 
 void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool filter) {
-//	base::MutexLock lock(_mutex);
+	base::MutexLock lock(_mutex);
 	const std::size_t begin = buffer.getBeginOfUnFilteredPackets();
 	const std::size_t size = buffer.getNumberOfCompletedPackets();
 
