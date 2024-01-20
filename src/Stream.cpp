@@ -93,7 +93,7 @@ void Stream::doAddToXML(std::string &xml) const {
 	ADD_XML_CHECKBOX(xml, "enable", (_enabled ? "true" : "false"));
 	ADD_XML_ELEMENT(xml, "attached", _streamInUse ? "yes" : "no");
 	ADD_XML_NUMBER_INPUT(xml, "rtcpSignalUpdate", _rtcpSignalUpdate, 1, 5);
-	for (output::SpStreamClient client : _streamClientVector) {
+	for (const output::SpStreamClient &client : _streamClientVector) {
 		client->addToXML(xml);
 	}
 	_device->addToXML(xml);
@@ -309,7 +309,7 @@ void Stream::checkForSessionTimeout() {
 	if (!_streamInUse) {
 		return;
 	}
-	for (const output::SpStreamClient client : _streamClientVector) {
+	for (const output::SpStreamClient &client : _streamClientVector) {
 		if (client->sessionTimeout() || !_enabled) {
 			if (_enabled) {
 				SI_LOG_INFO("Frontend: @#1, Watchdog kicked in for StreamClient with SessionID @#2",
@@ -386,7 +386,7 @@ std::string Stream::getSDPMediaLevelString() const {
 	const std::string fmtp = _device->attributeDescribeString();
 	std::string mediaLevel;
 	if (fmtp.size() > 5) {
-		for (const output::SpStreamClient client : _streamClientVector) {
+		for (const output::SpStreamClient &client : _streamClientVector) {
 			mediaLevel += client->getSDPMediaLevelString(_device->getStreamID(), fmtp);
 		}
 	}
@@ -434,7 +434,7 @@ void Stream::executeStreamClientWriter() {
 				_t1 = _t2;
 				bool incrementReadIndex = false;
 				// Send the packet full or not, else send null packet
-				for (const output::SpStreamClient client : _streamClientVector) {
+				for (const output::SpStreamClient &client : _streamClientVector) {
 					if (client->writeData(_tsBuffer[_readIndex])) {
 						incrementReadIndex = true;
 					}
@@ -444,7 +444,7 @@ void Stream::executeStreamClientWriter() {
 					_readIndex %= _tsBuffer.size();
 				}
 			} else if (intervalExeeded) {
-				for (const output::SpStreamClient client : _streamClientVector) {
+				for (const output::SpStreamClient &client : _streamClientVector) {
 					client->writeData(_tsEmpty);
 				}
 				break;
@@ -461,7 +461,7 @@ bool Stream::threadExecuteDeviceMonitor() {
 	const unsigned long interval = 200 * _rtcpSignalUpdate;
 
 	const std::string desc = _device->attributeDescribeString();
-	for (const output::SpStreamClient client : _streamClientVector) {
+	for (const output::SpStreamClient &client : _streamClientVector) {
 		client->writeRTCPData(desc);
 	}
 	std::this_thread::sleep_for(std::chrono::milliseconds(interval));
