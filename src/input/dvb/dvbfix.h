@@ -35,6 +35,10 @@
 #define NOT_PREFERRED_DVB_API 1
 #endif
 
+#ifdef  DEFINE_SYS_DVBS2X
+#define SYS_DVBS2X            static_cast<fe_delivery_system_t>(21)
+#endif
+
 #ifndef DTV_STREAM_ID
 #define DTV_STREAM_ID         42
 #endif

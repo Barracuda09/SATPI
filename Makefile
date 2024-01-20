@@ -12,6 +12,7 @@ CXX ?= $(CXXPREFIX)g++$(CXXSUFFIX)
 RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf npfunc)
 RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /dev/null ; echo $$? ; rm -rf atomic)
 RESULT_HAS_BACKTRACE_FUNCTIONS := $(shell $(CXX) -o backtrace checks/backtrace.cpp 2> /dev/null ; echo $$? ; rm -rf backtrace)
+RESULT_HAS_SYS_DVBS2X := $(shell $(CXX) -o sysdvb2sx checks/sysdvb2sx.cpp 2> /dev/null ; echo $$? ; rm -rf sysdvb2sx)
 
 # Includes needed for proper compilation
 INCLUDES +=
@@ -30,12 +31,24 @@ endif
 
 # RESULT_HAS_BACKTRACE_FUNCTIONS = 1 if compile fails
 ifeq "$(RESULT_HAS_BACKTRACE_FUNCTIONS)" "1"
-  CFLAGS += -DHAS_NO_BACKTRACE_FUNCTIONS
+  CFLAGS     += -DHAS_NO_BACKTRACE_FUNCTIONS
+  CFLAGS_OPT += -DHAS_NO_BACKTRACE_FUNCTIONS
+endif
+
+# RESULT_HAS_SYS_DVBS2X = 1 if compile fails
+ifeq "$(RESULT_HAS_SYS_DVBS2X)" "1"
+  CFLAGS     += -DDEFINE_SYS_DVBS2X
+  CFLAGS_OPT += -DDEFINE_SYS_DVBS2X
+endif
+
+# RESULT_HAS_NP_FUNCTIONS = 0 if compile is succesfull which means NP are OK
+ifeq "$(RESULT_HAS_NP_FUNCTIONS)" "0"
+  CFLAGS     += -DHAS_NP_FUNCTIONS
+  CFLAGS_OPT += -DHAS_NP_FUNCTIONS
 endif
 
 # Set Compiler Flags
-CFLAGS += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
-
+CFLAGS     += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 CFLAGS_OPT += -I src -std=c++17 -Werror=vla -Wall -Wextra -Winit-self -Wshadow -pthread $(INCLUDES)
 
 # Build "debug", "release" or "simu"
@@ -46,8 +59,8 @@ ifeq "$(BUILD)" "debug"
   LDFLAGS    += -rdynamic
 else ifeq "$(BUILD)" "debug1"
   # "Debug" build - with optimization, with debugging symbols
-  CFLAGS     += -O2 -g3 -DDEBUG -fstack-protector-all -Wswitch-default
-  CFLAGS_OPT += -O3 -s -DNDEBUG -DDEBUG_LOG
+  CFLAGS     += -O0 -g3 -gdwarf-2 -DDEBUG -DDEBUG_LOG -fstack-protector-all -Wswitch-default
+  CFLAGS_OPT += -O0 -g3 -gdwarf-2 -DDEBUG -DDEBUG_LOG -fstack-protector-all -Wswitch-default
   LDFLAGS    += -rdynamic
 else ifeq "$(BUILD)" "speed"
   # "Debug" build - with optimization, without debugging symbols
@@ -58,10 +71,15 @@ else ifeq "$(BUILD)" "simu"
   CFLAGS     += -O0 -g3 -DDEBUG -DDEBUG_LOG -DSIMU -fstack-protector-all
   CFLAGS_OPT += -O3 -s  -DNDEBUG -DDEBUG_LOG
   LDFLAGS    += -rdynamic
+else ifeq "$(BUILD)" "static"
+  CFLAGS     += -O2 -s -DNDEBUG
+  CFLAGS_OPT += -O3 -s -DNDEBUG
+  LDFLAGS    += -static
 else
   # "Release" build - optimization, and no debug symbols
   CFLAGS     += -O2 -s -DNDEBUG
   CFLAGS_OPT += -O3 -s -DNDEBUG
+  LDFLAGS    += -rdynamic
 endif
 
 # List of source to be compiled
@@ -136,7 +154,7 @@ ifeq "$(LIBDVBCSA)" "yes"
   LDFLAGS    += -ldvbcsa
 #  CFLAGS     += -DUSE_DEPRECATED_DVBAPI
   CFLAGS     += -DLIBDVBCSA
-  CFLAGS_OPT +=-DLIBDVBCSA
+  CFLAGS_OPT += -DLIBDVBCSA
   SOURCES    += decrypt/dvbapi/Client.cpp
   SOURCES    += decrypt/dvbapi/ClientProperties.cpp
   SOURCES    += decrypt/dvbapi/Keys.cpp
@@ -151,14 +169,6 @@ endif
 ifeq "$(DVBCA)" "yes"
   CFLAGS  += -DADDDVBCA
   SOURCES += decrypt/dvbca/DVBCA.cpp
-endif
-
-# Has np functions
-# RESULT_HAS_NP_FUNCTIONS = 0 if compile is succesfull which means NP are OK
-ifeq "$(HAS_NP_FUNCTIONS)" "yes"
-  CFLAGS  += -DHAS_NP_FUNCTIONS
-else ifeq "$(RESULT_HAS_NP_FUNCTIONS)" "0"
-  CFLAGS  += -DHAS_NP_FUNCTIONS
 endif
 
 # Need to build for Enigma support
@@ -239,6 +249,9 @@ debug:
 
 debug1:
 	$(MAKE) "BUILD=debug1" LIBDVBCSA=yes
+
+static:
+	$(MAKE) "BUILD=static"
 
 speed:
 	$(MAKE) "BUILD=speed" LIBDVBCSA=yes
