@@ -45,6 +45,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <base/StopWatch.h>
+
 namespace input::dvb {
 
 // =============================================================================
@@ -255,7 +257,7 @@ bool Frontend::isDataAvailable() {
 	pfd.fd = _fd_dmx;
 	pfd.events = POLLIN;
 	pfd.revents = 0;
-	const int pollRet = ::poll(&pfd, 1, 180);
+	const int pollRet = ::poll(&pfd, 1, 100);
 	if (pollRet > 0) {
 		return (pfd.revents & POLLIN) == POLLIN;
 	} else if (pollRet < 0) {
@@ -273,6 +275,7 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer& buffer) {
 		buffer.addAmountOfBytesWritten(readSize);
 		if (buffer.full()) {
 			_frontendData.getFilter().filterData(_feID, buffer, false);
+
 			return true;
 		}
 	} else if (readSize < 0) {
@@ -457,8 +460,8 @@ bool Frontend::update() {
 		return false;
 	}
 	updatePIDFilters();
-	const unsigned long time = sw.getIntervalMS();
-	SI_LOG_INFO("Frontend: @#1, Updating frontend (Finished in @#2 ms)", _feID, time);
+	const unsigned long time = sw.getIntervalUS();
+	SI_LOG_INFO("Frontend: @#1, Updating frontend (Finished in @#2 us)", _feID, time);
 	return true;
 }
 
@@ -553,7 +556,7 @@ void Frontend::updatePIDFilters() {
 				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(p));
 				return false;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			return true;
 		},
 		// closePid lambda function
@@ -563,7 +566,7 @@ void Frontend::updatePIDFilters() {
 				SI_LOG_PERROR("Frontend: @#1, DMX_REMOVE_PID: PID @#2", _feID, PID(p));
 				return false;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			return true;
 		});
 }
