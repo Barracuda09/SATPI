@@ -65,11 +65,11 @@ class Mutex {
 		/// @param timeout specifies the time, in msec, to try locking this mutex.
 		bool tryLock(unsigned int timeout) const {
 			while (pthread_mutex_trylock(&_mutex) != 0) {
-				std::this_thread::sleep_for(std::chrono::microseconds(1000));
-				--timeout;
 				if (timeout == 0) {
 					return false;
 				}
+				std::this_thread::sleep_for(std::chrono::microseconds(1000));
+				--timeout;
 			}
 			return true;
 		}
