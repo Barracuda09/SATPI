@@ -233,7 +233,7 @@ class StreamClient : public base::XMLSupport {
 		std::atomic<uint32_t> _senderRtpPacketCnt;
 		std::atomic<uint32_t> _senderOctectPayloadCnt;
 		std::atomic<long> _timestamp;
-		std::atomic<long long> _payload;
+		std::atomic<long> _payload;
 
 };
 
