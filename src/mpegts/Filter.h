@@ -208,7 +208,9 @@ class Filter :
 		/// @param openPid specifies the lambda function to use to open the PID with
 		template<typename OPEN_FUNC>
 		void openPIDFilter_L(const FeID feID, const int pid, OPEN_FUNC openPid) {
+			_mutex.unlock();
 			const bool done = openPid(pid);
+			_mutex.tryLock(15000);
 			if (done) {
 				_pidTable.setPIDOpened(pid);
 				SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
@@ -223,7 +225,9 @@ class Filter :
 		/// @param closePid specifies the lambda function to use to close the PID with
 		template<typename CLOSE_FUNC>
 		void closePIDFilter_L(const FeID feID, const int pid, CLOSE_FUNC closePid) {
+			_mutex.unlock();
 			const bool done = closePid(pid);
+			_mutex.tryLock(15000);
 			if (done) {
 				SI_LOG_DEBUG("Frontend: @#1, Remove filter PID: @#2 - Packet Count: @#3:@#4@#5",
 					feID, PID(pid),
