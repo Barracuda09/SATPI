@@ -20,6 +20,8 @@
 #ifndef BASE_STOP_WATCH
 #define BASE_STOP_WATCH BASE_STOP_WATCH
 
+#include <Log.h>
+
 #include <chrono>
 
 namespace base {
@@ -53,6 +55,11 @@ class StopWatch {
 			return std::chrono::duration_cast<std::chrono::milliseconds>(t - _t1).count();
 		}
 
+		unsigned long getIntervalUS() const {
+			const auto t = std::chrono::steady_clock::now();
+			return std::chrono::duration_cast<std::chrono::microseconds>(t - _t1).count();
+		}
+
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------
 		// =========================================================================
@@ -62,6 +69,12 @@ class StopWatch {
 		std::chrono::steady_clock::time_point _t2;
 
 };
+
+#define SW_DECL(name) base::StopWatch name
+#define SW_LOG_INTERVAL_US(name, msg) SI_LOG_DEBUG(msg, name.getIntervalUS());
+#define SW_LOG_INTERVAL_US_NOT_ZERO(name, msg) { const auto t = name.getIntervalUS(); if (t > 0) { SI_LOG_DEBUG(msg, t); } };
+#define SW_LOG_INTERVAL_MS(name, msg) SI_LOG_DEBUG(msg, name.getIntervalMS());
+#define SW_LOG_INTERVAL_MS_NOT_ZERO(name, msg) { const auto t = name.getIntervalMS(); if (t > 0) { SI_LOG_DEBUG(msg, t); } };
 
 } // namespace base
 
