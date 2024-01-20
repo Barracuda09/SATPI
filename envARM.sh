@@ -1,36 +1,20 @@
 #!/bin/sh
 
 # use:
-#    source ./env.sh
+#    source ./env.sh [gcc12]
 #
 # CFLAGS as used for Vu+ uno 4K
 
-#export INCLUDES=--sysroot=~/git/pi/tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/arm-linux-gnueabihf/sysroot
-#export INCLUDES=
+# ARM based Chips
+export CPU_FLAGS="-march=armv7-a -mtune=cortex-a15 -mfpu=neon-vfpv4"
 
-
-#export CXXPREFIX=~/vu/opt/toolchains/stbgcc-4.8-1.7/bin/arm-linux-
-#export CXXSUFFIX=
-#export CXX=~/vu/opt/toolchains/stbgcc-4.8-1.7/bin/arm-linux-c++
-#export CPP=~/vu/opt/toolchains/stbgcc-4.8-1.7/bin/arm-linux-cpp
-#export CC=~/vu/opt/toolchains/stbgcc-4.8-1.7/bin/arm-linux-gcc
-#PYTHON_CPPFLAGS=~/vu/opt/toolchains/stbgcc-4.8-1.7/python-runtime/include/python2.7
-
-###############################################################################
-# ARM based BroadCom Chips
-export CPU_FLAGS="-march=armv7-a -mtune=cortex-a15 -mfpu=vfpv4"
-
-#export CXXPREFIX=~/vu/opt/toolchains/stbgcc-6.3-1.8/bin/arm-linux-
-#export CXXSUFFIX=
-#export CXX=~/vu/opt/toolchains/stbgcc-6.3-1.8/bin/arm-linux-c++
-#export CPP=~/vu/opt/toolchains/stbgcc-6.3-1.8/bin/arm-linux-cpp
-#export CC=~/vu/opt/toolchains/stbgcc-6.3-1.8/bin/arm-linux-gcc
-#export PYTHON_CPPFLAGS=~/vu/opt/toolchains/stbgcc-6.3-1.8/python-runtime/include/python2.7
-
-export CXXPREFIX=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-
-export CXXSUFFIX=
-export CXX=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-c++
-export CPP=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-cpp
-export CC=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-gcc
-export PYTHON_CPPFLAGS=~/vu/opt/toolchains/stbgcc-8.3-0.4/python-runtime/include/python2.7
-###############################################################################
+if [[ -n $1 && $1 = "gcc12" ]] ; then
+  export CXXPREFIX=arm-linux-gnueabihf-
+  export CXXSUFFIX=-12
+  export CXX=$CXXPREFIX"g++"$CXXSUFFIX
+else
+  export CXXPREFIX=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-
+  export CXXSUFFIX=
+  export CXX=$CXXPREFIX"c++"$CXXSUFFIX
+fi
+echo Using: $CXX
