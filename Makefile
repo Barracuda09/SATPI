@@ -13,6 +13,7 @@ RESULT_HAS_NP_FUNCTIONS := $(shell $(CXX) -o npfunc checks/npfunc.cpp -pthread 2
 RESULT_HAS_ATOMIC_FUNCTIONS := $(shell $(CXX) -o atomic checks/atomic.cpp 2> /dev/null ; echo $$? ; rm -rf atomic)
 RESULT_HAS_BACKTRACE_FUNCTIONS := $(shell $(CXX) -o backtrace checks/backtrace.cpp 2> /dev/null ; echo $$? ; rm -rf backtrace)
 RESULT_HAS_SYS_DVBS2X := $(shell $(CXX) -o sysdvb2sx checks/sysdvb2sx.cpp 2> /dev/null ; echo $$? ; rm -rf sysdvb2sx)
+RESULT_HAS_STRING_VIEW := $(shell $(CXX) -std=c++17 -o string_view checks/string_view.cpp -pthread 2> /dev/null ; echo $$? ; rm -rf string_view)
 
 # Includes needed for proper compilation
 INCLUDES +=
@@ -23,6 +24,17 @@ CFLAGS_OPT += $(CPU_FLAGS)
 
 # Libraries needed for linking
 LDFLAGS += -pthread -lrt
+
+# Enable Backport mode (ancient compilers previous to C++17)
+ifeq "$(RESULT_HAS_STRING_VIEW)" "1"
+	CFLAGS     += -isystem nonstd -DNEED_BACKPORT
+  CFLAGS_OPT += -isystem nonstd -DNEED_BACKPORT
+endif
+
+ifeq "$(CPP11)" "yes"
+	CFLAGS     += -isystem nonstd -DNEED_BACKPORT
+  CFLAGS_OPT += -isystem nonstd -DNEED_BACKPORT
+endif
 
 # RESULT_HAS_ATOMIC_FUNCTIONS = 1 if compile fails
 ifeq "$(RESULT_HAS_ATOMIC_FUNCTIONS)" "1"
@@ -116,6 +128,7 @@ SOURCES = Version.cpp \
 	input/dvb/delivery/DVBC.cpp \
 	input/dvb/delivery/DVBS.cpp \
 	input/dvb/delivery/DVBT.cpp \
+	input/dvb/delivery/FBC.cpp \
 	input/dvb/delivery/Lnb.cpp \
 	input/file/TSReader.cpp \
 	input/file/TSReaderData.cpp \

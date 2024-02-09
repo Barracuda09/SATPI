@@ -1,4 +1,4 @@
-/* DVBS.h
+/* FBC.h
 
    Copyright (C) 2014 - 2023 Marc Postema (mpostema09 -at- gmail.com)
 
@@ -17,32 +17,29 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 */
-#ifndef INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
-#define INPUT_DVB_DELIVERY_DVBS_H_INCLUDE INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
+#ifndef INPUT_DVB_DELIVERY_FBC_H_INCLUDE
+#define INPUT_DVB_DELIVERY_FBC_H_INCLUDE INPUT_DVB_DELIVERY_FBC_H_INCLUDE
 
 #include <Defs.h>
 #include <FwDecl.h>
-#include <input/dvb/delivery/FBC.h>
+#include <base/XMLSupport.h>
 #include <input/dvb/delivery/System.h>
 
-#include <cstdint>
 #include <string>
 #include <map>
 
-FW_DECL_UP_NS3(input, dvb, delivery, DiSEqc);
-
 namespace input::dvb::delivery {
 
-/// The class @c DVBS specifies DVB-S/S2 delivery system
-class DVBS :
-	public input::dvb::delivery::System {
+/// The class @c FBC specifies tuners that support FBC delivery system
+class FBC :
+	public base::XMLSupport {
 		// =========================================================================
 		//  -- Constructors and destructor -----------------------------------------
 		// =========================================================================
 	public:
 
-		explicit DVBS(FeIndex index, FeID id, const std::string &fePath, unsigned int dvbVersion);
-		virtual ~DVBS() = default;
+		FBC(const FeIndex index, const FeID id, const std::string& name, bool satTuner);
+		virtual ~FBC() = default;
 
 		// =========================================================================
 		// -- base::XMLSupport -----------------------------------------------------
@@ -56,50 +53,53 @@ class DVBS :
 		virtual void doFromXML(const std::string &xml) final;
 
 		// =========================================================================
-		// -- input::dvb::delivery::System -----------------------------------------
+		// -- Other member functions -----------------------------------------------
 		// =========================================================================
 	public:
 
-		virtual bool tune(
-			int feFD,
-			const input::dvb::FrontendData &frontendData) final;
-
-		virtual bool isCapableOf(input::InputSystem system) const final {
-			return system == input::InputSystem::DVBS2X ||
-				system == input::InputSystem::DVBS2 ||
-				system == input::InputSystem::DVBS;
+		bool isFBCTuner() const noexcept {
+			return _fbcTuner;
 		}
 
-		///
-		virtual void teardown(int feFD) const;
+		bool doSendDiSEqcViaRootTuner() const noexcept {
+			return _fbcTuner && _fbcLinked && _satTuner && _sendDiSEqcViaRootTuner;
+		}
 
-		// =========================================================================
-		// -- Other member functions -----------------------------------------------
-		// =========================================================================
+		int getFileDescriptorOfRootTuner(std::string& fePath) const;
+
 	private:
 
 		///
-		bool setProperties(int feFD, uint32_t freq, const input::dvb::FrontendData &frontendData);
+		int readProcData(FeIndex index, const std::string& procEntry) const;
+
+		///
+		void writeProcData(FeIndex index, const std::string& procEntry, int value);
+
+		///
+		void readConnectionChoices(FeIndex index, int offset);
 
 		// =========================================================================
 		// -- Data members ---------------------------------------------------------
 		// =========================================================================
 	private:
 
-		enum class DiseqcType {
-			Switch,
-			EN50494,
-			EN50607,
-			Lnb
-		};
-		FBC _fbc;
-		DiseqcType _diseqcType;
-		UpDiSEqc _diseqc;
-		bool _turnoffLnbVoltage;
-		bool _higherLnbVoltage;
+		FeIndex _index;
+		FeID _id;
+		std::string _name;
+		bool _satTuner;
+		using ConnectionChoices = std::map<int, std::string>;
+		ConnectionChoices _choices;
+		bool _fbcTuner;
+		bool _fbcRoot;
+		int _fbcSetID;
+		int _fbcConnect;
+		int _offset;
+		char _tunerLetter;
+		bool _fbcLinked;
+		bool _sendDiSEqcViaRootTuner;
 
 };
 
 }
 
-#endif // INPUT_DVB_DELIVERY_DVBS_H_INCLUDE
+#endif

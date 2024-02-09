@@ -34,17 +34,26 @@ namespace input::dvb::delivery {
 	//  -- Constructors and destructor ---------------------------------------
 	// =======================================================================
 	DVBC::DVBC(const FeIndex index, const FeID id, const std::string &fePath, unsigned int dvbVersion) :
-		input::dvb::delivery::System(index, id, fePath, dvbVersion) {}
+		input::dvb::delivery::System(index, id, fePath, dvbVersion),
+		_fbc(index, id, "DVB-C(2)", false) {}
 
 	// =======================================================================
 	//  -- base::XMLSupport --------------------------------------------------
 	// =======================================================================
 
 	void DVBC::doAddToXML(std::string &xml) const {
-		ADD_XML_ELEMENT(xml, "type", "DVB-C(2)");
+		if (_fbc.isFBCTuner()) {
+			_fbc.addToXML(xml);
+		} else {
+			ADD_XML_ELEMENT(xml, "type", "DVB-C(2)");
+		}
 	}
 
-	void DVBC::doFromXML(const std::string &UNUSED(xml)) {}
+	void DVBC::doFromXML(const std::string& xml) {
+		if (_fbc.isFBCTuner()) {
+			_fbc.fromXML(xml);
+		}
+	}
 
 	// =======================================================================
 	// -- input::dvb::delivery::System ---------------------------------------

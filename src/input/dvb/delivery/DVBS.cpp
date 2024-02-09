@@ -35,9 +35,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include <unistd.h>
-#include <dirent.h>
-
 namespace input::dvb::delivery {
 
 	// Copyright (C) 2017 Marcus Metzler <mocm@metzlerbros.de>
@@ -62,25 +59,11 @@ namespace input::dvb::delivery {
 
 	DVBS::DVBS(const FeIndex index, const FeID id, const std::string &fePath, unsigned int dvbVersion) :
 		input::dvb::delivery::System(index, id, fePath, dvbVersion),
+		_fbc(index, id, "DVB-S(2)", true),
 		_diseqcType(DiseqcType::Lnb),
 		_diseqc(new DiSEqcLnb),
 		_turnoffLnbVoltage(false),
 		_higherLnbVoltage(false) {
-
-		// Only DVB-S2 have special handling for FBC tuners
-		_fbcSetID = readProcData(index, "fbc_set_id");
-		_fbcTuner = _fbcSetID >= 0;
-		_fbcConnect = 0;
-		_fbcLinked = false;
-		_fbcRoot = false;
-		_sendDiSEqcViaRootTuner = false;
-		if (_fbcTuner) {
-			// Read 'settings' from system, add offset to address FBC Slots A and B
-			readConnectionChoices(index, _fbcSetID * 8);
-			_fbcRoot = _choices.find(index.getID()) != _choices.end();
-			_fbcLinked = readProcData(index, "fbc_link");
-			_fbcConnect = readProcData(index, "fbc_connect");
-		}
 	}
 
 	// =========================================================================
@@ -88,23 +71,8 @@ namespace input::dvb::delivery {
 	// =========================================================================
 
 	void DVBS::doAddToXML(std::string &xml) const {
-		if (_fbcTuner) {
-			const std::string typeStr = StringConverter::stringFormat("DVB-S(2) FBC@#1 (Slot @#2)",
-				(_fbcRoot ? "-Root" : ""), ((_fbcSetID == 0) ? "A" : "B"));
-			ADD_XML_ELEMENT(xml, "type", typeStr);
-			ADD_XML_BEGIN_ELEMENT(xml, "fbc");
-				ADD_XML_BEGIN_ELEMENT(xml, "fbcConnection");
-					ADD_XML_ELEMENT(xml, "inputtype", "selectionlist");
-					ADD_XML_ELEMENT(xml, "value", _fbcConnect - (_fbcSetID * 8));
-					ADD_XML_BEGIN_ELEMENT(xml, "list");
-					for (const auto& choice : _choices) {
-						ADD_XML_ELEMENT(xml, StringConverter::stringFormat("option@#1", choice.first), choice.second);
-					}
-					ADD_XML_END_ELEMENT(xml, "list");
-				ADD_XML_END_ELEMENT(xml, "fbcConnection");
-				ADD_XML_CHECKBOX(xml, "fbcLinked", (_fbcLinked ? "true" : "false"));
-				ADD_XML_CHECKBOX(xml, "sendDiSEqcViaRootTuner", (_sendDiSEqcViaRootTuner ? "true" : "false"));
-			ADD_XML_END_ELEMENT(xml, "fbc");
+		if (_fbc.isFBCTuner()) {
+			_fbc.addToXML(xml);
 		} else {
 			ADD_XML_ELEMENT(xml, "type", "DVB-S(2)");
 		}
@@ -165,16 +133,8 @@ namespace input::dvb::delivery {
 				_diseqc->fromXML(element);
 			}
 		}
-		if (findXMLElement(xml, "fbcLinked.value", element)) {
-			_fbcLinked = (element == "true") ? true : false;
-			writeProcData(_index, "fbc_link", _fbcLinked ? 1 : 0);
-		}
-		if (findXMLElement(xml, "fbcConnection.value", element)) {
-			_fbcConnect = std::stoi(element) + (_fbcSetID * 8);
-			writeProcData(_index, "fbc_connect", _fbcConnect);
-		}
-		if (findXMLElement(xml, "sendDiSEqcViaRootTuner.value", element)) {
-			_sendDiSEqcViaRootTuner =  (element == "true") ? true : false;
+		if (_fbc.isFBCTuner()) {
+			_fbc.fromXML(xml);
 		}
 	}
 
@@ -187,38 +147,8 @@ namespace input::dvb::delivery {
 
 		std::string fePathDiseqc(_fePath);
 		int feFDDiseqc = feFD;
-		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
-			// Replace Frontend number with Root Frontend Number
-			fePathDiseqc.replace(fePathDiseqc.end()-1, fePathDiseqc.end(), std::to_string(_fbcConnect));
-			feFDDiseqc = ::open(fePathDiseqc.data(), O_RDWR | O_NONBLOCK);
-			if (feFDDiseqc  < 0) {
-				// Probably already open, try to find it and duplicate fd
-				dirent **fileList;
-				const std::string procSelfFD("/proc/self/fd");
-				const int n = scandir(procSelfFD.data(), &fileList, nullptr, versionsort);
-				if (n > 0) {
-					for (int i = 0; i < n; ++i) {
-						// Check do we have a digit
-						if (std::isdigit(fileList[i]->d_name[0]) == 0) {
-							continue;
-						}
-						// Get the link the fd points to
-						const int fd = std::atoi(fileList[i]->d_name);
-						const std::string procSelfFDNr = procSelfFD + "/" + std::to_string(fd);
-						char buf[255];
-						const auto s = readlink(procSelfFDNr.data(), buf, sizeof(buf));
-						if (s > 0) {
-							buf[s] = 0;
-							if (fePathDiseqc == buf) {
-								// Found it so duplicate and stop;
-								feFDDiseqc = ::dup(fd);
-								break;
-							}
-						}
-					}
-					free(fileList);
-				}
-			}
+		if (_fbc.doSendDiSEqcViaRootTuner()) {
+			feFDDiseqc = _fbc.getFileDescriptorOfRootTuner(fePathDiseqc);
 		}
 		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3",
 				_feID, fePathDiseqc, feFDDiseqc);
@@ -232,7 +162,7 @@ namespace input::dvb::delivery {
 			return false;
 		}
 
-		if (_fbcTuner && _fbcLinked && _sendDiSEqcViaRootTuner) {
+		if (_fbc.doSendDiSEqcViaRootTuner()) {
 			SI_LOG_INFO("Frontend: @#1, Closing @#2 with fd: @#3", _feID, fePathDiseqc, feFDDiseqc);
 			::close(feFDDiseqc);
 		}
@@ -313,60 +243,6 @@ namespace input::dvb::delivery {
 			return false;
 		}
 		return true;
-	}
-
-	// =========================================================================
-	//  -- FBC member functions ------------------------------------------------
-	// =========================================================================
-
-	int DVBS::readProcData(const FeIndex index, const std::string &procEntry) const {
-		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", index.getID(), procEntry);
-		std::ifstream file(filePath);
-		if (file.is_open()) {
-			int value;
-			file >> value;
-			return value;
-		}
-		return -1;
-	}
-
-	void DVBS::writeProcData(const FeIndex index, const std::string &procEntry, int value) {
-		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/@#2", index.getID(), procEntry);
-		std::ofstream file(filePath);
-		if (file.is_open()) {
-			file << value;
-		}
-	}
-
-	void DVBS::readConnectionChoices(const FeIndex index, int offset) {
-		// File looks something like: 0=A, 1=B
-		const std::string filePath = StringConverter::stringFormat(
-			"/proc/stb/frontend/@#1/fbc_connect_choices", index.getID());
-		std::ifstream file(filePath);
-		if (!file.is_open()) {
-			return;
-		}
-		while(1) {
-			std::string choice;
-			file >> choice;
-			if (choice.empty()) {
-				break;
-			}
-			// Remove any unnecessary chars from choice
-			const std::string::size_type pos = choice.find(',');
-			if (pos != std::string::npos) {
-				choice.erase(pos);
-			}
-			base::StringTokenizer tokenizerChoice(choice, "=");
-			std::string idx;
-			std::string name;
-			if (tokenizerChoice.isNextToken(idx) &&
-			    tokenizerChoice.isNextToken(name)) {
-				_choices[std::stoi(idx) + offset] = name;
-			}
-		}
 	}
 
 }

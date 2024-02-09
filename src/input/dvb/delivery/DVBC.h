@@ -22,6 +22,7 @@
 
 #include <Defs.h>
 #include <FwDecl.h>
+#include <input/dvb/delivery/FBC.h>
 #include <input/dvb/delivery/System.h>
 
 FW_DECL_NS2(input, dvb, FrontendData);
@@ -73,6 +74,8 @@ class DVBC :
 		// -- Data members ---------------------------------------------------------
 		// =========================================================================
 	private:
+
+		FBC _fbc;
 
 };
 

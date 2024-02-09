@@ -109,9 +109,11 @@
 			var fbc = visibleStream.getElementsByTagName("fbc");
 			if (fbc.length > 0) {
 				page += "<tr class=\"separator bg-info\"><th colspan=\"" + (streams.length+1) + "\">FBC Configuration</th></tr>";
-				page += addTableLineEntry("FBC Connection", xmlDoc, streamID + "fbcConnection");
+				page += addTableLineEntry("FBC Input Connection", xmlDoc, streamID + "fbcConnection");
 				page += addTableLineEntry("FBC Linked", xmlDoc, streamID + "fbcLinked");
 				page += addTableLineEntry("Send DiSEqC Via Linked Root Tuner", xmlDoc, streamID + "sendDiSEqcViaRootTuner");
+				page += addTableLineEntry("FBC Tuner Connected to", xmlDoc, streamID + "fbcConnectionRaw");
+				page += addTableLineEntry("FBC Tuner Slot Offset", xmlDoc, streamID + "fbcTunerSlotOffset");
 			}
 
 			var diseqcType = visibleStream.getElementsByTagName("diseqcType");
