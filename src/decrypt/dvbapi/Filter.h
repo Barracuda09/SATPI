@@ -45,7 +45,7 @@ namespace decrypt::dvbapi {
 		public:
 
 			/// Start and add the requested filter
-			void start(const FeID id, int pid, int demux, int filter,
+			void start(const FeID id, int pid, unsigned int demux, unsigned int filter,
 					const unsigned char* filterData, const unsigned char* filterMask) {
 				base::MutexLock lock(_mutex);
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
@@ -55,7 +55,7 @@ namespace decrypt::dvbapi {
 
 			/// Find the correct filter for the 'collected' data or ts packet
 			bool find(const FeID id, const int pid, const unsigned char* data, const int tableID,
-					int &filter, int &demux, mpegts::TSData &filterData) {
+					unsigned int& filter, unsigned int& demux, mpegts::TSData& filterData) {
 				base::MutexLock lock(_mutex);
 				for (demux = 0; demux < DEMUX_SIZE; ++demux) {
 					for (filter = 0; filter < FILTER_SIZE; ++filter) {
@@ -76,14 +76,11 @@ namespace decrypt::dvbapi {
 						}
 					}
 				}
-				// Did not find it yet, reset and try again later
-				filter = -1;
-				demux = -1;
 				return false;
 			}
 
 			/// Stop the requested filter
-			void stop(int demux, int filter) {
+			void stop(unsigned int demux, unsigned int filter) {
 				base::MutexLock lock(_mutex);
 				if (demux < DEMUX_SIZE && filter < FILTER_SIZE) {
 					_filterData[demux][filter].clear();
@@ -92,8 +89,8 @@ namespace decrypt::dvbapi {
 
 			void clear() {
 				base::MutexLock lock(_mutex);
-				for (int demux = 0; demux < DEMUX_SIZE; ++demux) {
-					for (int filter = 0; filter < FILTER_SIZE; ++filter) {
+				for (unsigned int demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (unsigned int filter = 0; filter < FILTER_SIZE; ++filter) {
 						_filterData[demux][filter].clear();
 					}
 				}
@@ -101,8 +98,8 @@ namespace decrypt::dvbapi {
 
 			std::vector<int> getActiveDemuxFilters() const {
 				std::vector<int> index;
-				for (int demux = 0; demux < DEMUX_SIZE; ++demux) {
-					for (int filter = 0; filter < FILTER_SIZE; ++filter) {
+				for (unsigned int demux = 0; demux < DEMUX_SIZE; ++demux) {
+					for (unsigned int filter = 0; filter < FILTER_SIZE; ++filter) {
 						if (_filterData[demux][filter].active()) {
 							index.emplace_back(demux);
 							break;
@@ -112,9 +109,9 @@ namespace decrypt::dvbapi {
 				return index;
 			}
 
-			std::vector<int> getActiveFilterPIDs(int demux) const {
+			std::vector<int> getActiveFilterPIDs(unsigned int demux) const {
 				std::vector<int> pids;
-				for (int filter = 0; filter < FILTER_SIZE; ++filter) {
+				for (unsigned int filter = 0; filter < FILTER_SIZE; ++filter) {
 					if (_filterData[demux][filter].active()) {
 						pids.emplace_back(_filterData[demux][filter].getAssociatedPID());
 					}
@@ -127,8 +124,8 @@ namespace decrypt::dvbapi {
 			// =======================================================================
 		private:
 
-			static constexpr int DEMUX_SIZE  = 25;
-			static constexpr int FILTER_SIZE = 15;
+			static constexpr unsigned int DEMUX_SIZE  = 25;
+			static constexpr unsigned int FILTER_SIZE = 15;
 
 			base::Mutex _mutex;
 			FilterData _filterData[DEMUX_SIZE][FILTER_SIZE];

@@ -199,7 +199,7 @@ void Frontend::doAddToXML(std::string &xml) const {
 	ADD_XML_NUMBER_INPUT(xml, "waitOnLockTimeout", _waitOnLockTimeout, 0, MAX_WAIT_ON_LOCK_TIMEOUT);
 
 #ifdef LIBDVBCSA
-	ADD_XML_NUMBER_INPUT(xml, "dvbcsa_bs_batch_size", _dvbapiData.getMaximumBatchSize(), 0, _dvbapiData.getMaximumBatchSize());
+	_dvbapiData.addToXML(xml);
 #endif
 
 	// Channel

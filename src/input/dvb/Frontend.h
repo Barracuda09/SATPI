@@ -92,35 +92,60 @@ class Frontend :
 		// =========================================================================
 	public:
 
-		virtual FeID getFeID() const final;
+		virtual FeID getFeID() const noexcept final {
+			return _feID;
+		}
 
-		virtual int getBatchCount() const final;
+		virtual unsigned int getBatchCount() const noexcept final {
+			return _dvbapiData.getBatchCount();
+		}
 
-		virtual int getBatchParity() const final;
+		virtual unsigned int getBatchParity() const noexcept final {
+			return _dvbapiData.getBatchParity();
+		}
 
-		virtual int getMaximumBatchSize() const final;
+		virtual unsigned int getMaximumBatchSize() const noexcept final {
+			return _dvbapiData.getMaximumBatchSize();
+		}
 
-		virtual void decryptBatch() final;
+		virtual void decryptBatch() noexcept final {
+			return _dvbapiData.decryptBatch();
+		}
 
-		virtual void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) final;
+		virtual void setBatchData(unsigned char* ptr, unsigned int len,
+				unsigned int parity, unsigned char* originalPtr) noexcept final {
+			_dvbapiData.setBatchData(ptr, len, parity, originalPtr);
+		}
 
-		virtual const dvbcsa_bs_key_s *getKey(int parity) const final;
+		virtual const dvbcsa_bs_key_s* getKey(unsigned int parity) const final {
+			return _dvbapiData.getKey(parity);
+		}
 
-		virtual void setKey(const unsigned char* cw, int parity, int index) final;
+		virtual void setKey(const unsigned char* cw, unsigned int parity, int index) final {
+			_dvbapiData.setKey(cw, parity, index);
+		}
 
-		virtual void setICAM(const unsigned char ecm, int parity) final;
+		virtual void setICAM(const unsigned char ecm, unsigned int parity) final {
+			_dvbapiData.setICAM(ecm, parity);
+		}
 
-		virtual void startOSCamFilterData(int pid, int demux, int filter,
+		virtual void startOSCamFilterData(int pid, unsigned int demux, unsigned int filter,
 			const unsigned char* filterData, const unsigned char* filterMask) final;
 
-		virtual void stopOSCamFilterData(int pid, int demux, int filter) final;
+		virtual void stopOSCamFilterData(int pid, unsigned int demux, unsigned int filter) final;
 
 		virtual bool findOSCamFilterData(int pid, const unsigned char* tsPacket, int tableID,
-			int &filter, int &demux, mpegts::TSData &filterData) final;
+				unsigned int& filter, unsigned int& demux, mpegts::TSData& filterData) final {
+			return _dvbapiData.findOSCamFilterData(_feID, pid, tsPacket, tableID, filter, demux, filterData);
+		}
 
-		virtual std::vector<int> getActiveOSCamDemuxFilters() const final;
+		virtual std::vector<int> getActiveOSCamDemuxFilters() const final {
+			return _dvbapiData.getActiveOSCamDemuxFilters();
+		}
 
-		virtual void stopOSCamFilters(FeID id) final;
+		virtual void stopOSCamFilters(FeID id) final {
+			_dvbapiData.stopOSCamFilters(id);
+		}
 
 		virtual void setECMInfo(
 			int pid,
@@ -128,17 +153,26 @@ class Frontend :
 			int caID,
 			int provID,
 			int emcTime,
-			const std::string &cardSystem,
-			const std::string &readerName,
-			const std::string &sourceName,
-			const std::string &protocolName,
-			int hops) final;
+			const std::string& cardSystem,
+			const std::string& readerName,
+			const std::string& sourceName,
+			const std::string& protocolName,
+			int hops) final {
+			_dvbapiData.setECMInfo(pid, serviceID, caID, provID, emcTime,
+				cardSystem, readerName, sourceName, protocolName, hops);
+		}
 
-		virtual bool isMarkedAsActivePMT(int pid) const final;
+		virtual bool isMarkedAsActivePMT(int pid) const final {
+			return _frontendData.getFilter().isMarkedAsActivePMT(pid);
+		}
 
-		virtual mpegts::SpPMT getPMTData(int pid) const final;
+		virtual mpegts::SpPMT getPMTData(int pid) const final {
+			return _frontendData.getFilter().getPMTData(pid);
+		}
 
-		virtual mpegts::SpSDT getSDTData() const final;
+		virtual mpegts::SpSDT getSDTData() const final {
+			return _frontendData.getFilter().getSDTData();
+		}
 #endif
 
 		// =========================================================================

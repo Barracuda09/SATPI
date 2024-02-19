@@ -164,7 +164,7 @@ endif
 
 # Add dvbcsa ?
 ifeq "$(LIBDVBCSA)" "yes"
-  LDFLAGS    += -ldvbcsa
+  LDFLAGS    += -ldvbcsa -ldl
 #  CFLAGS     += -DUSE_DEPRECATED_DVBAPI
   CFLAGS     += -DLIBDVBCSA
   CFLAGS_OPT += -DLIBDVBCSA
@@ -172,10 +172,6 @@ ifeq "$(LIBDVBCSA)" "yes"
   SOURCES    += decrypt/dvbapi/ClientProperties.cpp
   SOURCES    += decrypt/dvbapi/Keys.cpp
   SOURCES    += input/dvb/Frontend_DecryptInterface.cpp
-# Need to build with ICAM support
-ifeq "$(ICAM)" "yes"
-  CFLAGS += -DICAM
-endif
 endif
 
 # Add dvbca ?
@@ -294,8 +290,7 @@ help:
 	@echo "Help, use these command for building this project:"
 	@echo " - Make project clean                   :  make clean"
 	@echo " - Make debug version                   :  make debug"
-	@echo " - Make debug version with DVBAPI       :  make debug LIBDVBCSA=yes"
-	@echo " - Make debug version with DVBAPI(ICAM) :  make debug LIBDVBCSA=yes ICAM=yes"
+	@echo " - Make debug version with DVBAPI(ICAM) :  make debug LIBDVBCSA=yes"
 	@echo " - Make debug version for ENIGMA        :  make debug ENIGMA=yes"
 	@echo " - Make production version with DVBAPI  :  make LIBDVBCSA=yes"
 	@echo " - Make production version with DVBAPI  :  make speed LIBDVBCSA=yes"

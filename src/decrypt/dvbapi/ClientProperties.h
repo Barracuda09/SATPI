@@ -24,6 +24,7 @@
 #include <FwDecl.h>
 #include <mpegts/TableData.h>
 #include <base/TimeCounter.h>
+#include <base/XMLSupport.h>
 #include <decrypt/dvbapi/Filter.h>
 #include <decrypt/dvbapi/Keys.h>
 
@@ -33,128 +34,142 @@ extern "C" {
 
 namespace decrypt::dvbapi {
 
-	///
-	class ClientProperties {
-		public:
+///
+class ClientProperties :
+	public base::XMLSupport {
+		// ================================================================
+		// -- Constructors and destructor ---------------------------------
+		// ================================================================
+	public:
 
-			// ================================================================
-			// -- Constructors and destructor ---------------------------------
-			// ================================================================
-			ClientProperties();
+		ClientProperties();
 
-			virtual ~ClientProperties();
+		virtual ~ClientProperties();
 
-			ClientProperties(const ClientProperties&) = delete;
+		ClientProperties(const ClientProperties&) = delete;
 
-			ClientProperties& operator=(const ClientProperties&) = delete;
+		ClientProperties& operator=(const ClientProperties&) = delete;
 
-			// ================================================================
-			//  -- Other member functions -------------------------------------
-			// ================================================================
+		// =========================================================================
+		// -- base::XMLSupport -----------------------------------------------------
+		// =========================================================================
+	private:
 
-			/// Get the maximum decrypt batch size
-			int getMaximumBatchSize() const {
-				return _batchSize;
-			}
+		/// @see XMLSupport
+		virtual void doAddToXML(std::string &xml) const final;
 
-			/// Get how big this decrypt batch is
-			int getBatchCount() const {
-				return _batchCount;
-			}
+		/// @see XMLSupport
+		virtual void doFromXML(const std::string &xml) final;
 
-			/// Get the global parity of this decrypt batch
-			int getBatchParity() const {
-				return _parity;
-			}
+		// ================================================================
+		//  -- Other member functions -------------------------------------
+		// ================================================================
+	public:
 
-			/// Set the pointers into the decrypt batch
-			/// @param ptr specifies the pointer to de data that should be decrypted
-			/// @param len specifies the lenght of data
-			/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
-			void setBatchData(unsigned char *ptr, int len, int parity, unsigned char *originalPtr) {
-				_batch[_batchCount].data = ptr;
-				_batch[_batchCount].len  = len;
-				_ts[_batchCount].data = originalPtr;
-				_parity = parity;
-				++_batchCount;
-			}
+		/// Get the maximum decrypt batch size
+		unsigned int getMaximumBatchSize() const noexcept {
+			return _batchSize;
+		}
 
-			/// This function will decrypt the batch upon success it will clear scramble flag
-			/// on failure it will make a NULL TS Packet and clear scramble flag
-			void decryptBatch();
+		/// Get how big this decrypt batch is
+		unsigned int getBatchCount() const noexcept {
+			return _batchCount;
+		}
 
-			/// Set the 'next' key for the requested parity
-			void setKey(const unsigned char* cw, int parity, int index) {
-				_keys.set(cw, parity, index);
-			}
+		/// Get the global parity of this decrypt batch
+		unsigned int getBatchParity() const noexcept {
+			return _parity;
+		}
 
-			void setICAM(const unsigned char ecm, const int parity) {
-				_keys.setICAM(ecm, parity);
-			}
+		/// Set the pointers into the decrypt batch
+		/// @param ptr specifies the pointer to de data that should be decrypted
+		/// @param len specifies the lenght of data
+		/// @param originalPtr specifies the original TS packet (so we can clear scramble flag when finished)
+		void setBatchData(unsigned char* ptr, unsigned int len, unsigned int parity, unsigned char* originalPtr) noexcept {
+			_batch[_batchCount].data = ptr;
+			_batch[_batchCount].len  = len;
+			_ts[_batchCount].data = originalPtr;
+			_parity = parity;
+			++_batchCount;
+		}
 
-			/// Get the active key for the requested parity
-			const dvbcsa_bs_key_s *getKey(int parity) const {
-				return _keys.get(parity);
-			}
+		/// This function will decrypt the batch upon success it will clear scramble flag
+		/// on failure it will make a NULL TS Packet and clear scramble flag
+		void decryptBatch() noexcept;
 
-			/// Start and add the requested filter
-			void startOSCamFilterData(const FeID id, int pid, int demux, int filter,
-				const unsigned char* filterData, const unsigned char* filterMask) {
-				_filter.start(id, pid, demux, filter, filterData, filterMask);
-			}
+		/// Set the 'next' key for the requested parity
+		void setKey(const unsigned char* cw, const unsigned int parity, const int index) {
+			_keys.set(cw, parity, index, _icamEnabled);
+		}
 
-			/// Stop the requested filter
-			void stopOSCamFilterData(int demux, int filter) {
-				_filter.stop(demux, filter);
-			}
+		void setICAM(const unsigned char ecm, const unsigned int parity) {
+			_keys.setICAM(ecm, parity);
+		}
 
-			/// Find the correct filter for the 'collected' data or ts packet
-			bool findOSCamFilterData(const FeID id, int pid, const unsigned char* tsPacket, const int tableID,
-				int &filter, int &demux, mpegts::TSData &filterData) {
-				return _filter.find(id, pid, tsPacket, tableID, filter, demux, filterData);
-			}
+		/// Get the active key for the requested parity
+		const dvbcsa_bs_key_s* getKey(unsigned int parity) const {
+			return _keys.get(parity);
+		}
 
-			/// Get the vector of current 'active' demux filters
-			std::vector<int> getActiveOSCamDemuxFilters() const {
-				return _filter.getActiveDemuxFilters();
-			}
+		/// Start and add the requested filter
+		void startOSCamFilterData(const FeID id, int pid, unsigned int demux, unsigned int filter,
+			const unsigned char* filterData, const unsigned char* filterMask) {
+			_filter.start(id, pid, demux, filter, filterData, filterMask);
+		}
 
-			/// Get the vector of current 'active' PIDs that are being filtered
-			std::vector<int> getActiveFilterPIDs(int demux) const {
-				return _filter.getActiveFilterPIDs(demux);
-			}
+		/// Stop the requested filter
+		void stopOSCamFilterData(unsigned int demux, unsigned int filter) {
+			_filter.stop(demux, filter);
+		}
 
-			/// Clear all 'active' filters
-			void stopOSCamFilters(FeID id);
+		/// Find the correct filter for the 'collected' data or ts packet
+		bool findOSCamFilterData(const FeID id, int pid, const unsigned char* tsPacket, const int tableID,
+			unsigned int& filter, unsigned int& demux, mpegts::TSData& filterData) {
+			return _filter.find(id, pid, tsPacket, tableID, filter, demux, filterData);
+		}
 
-			///
-			void setECMInfo(
-				int pid,
-				int serviceID,
-				int caID,
-				int provID,
-				int emcTime,
-				const std::string &cardSystem,
-				const std::string &readerName,
-				const std::string &sourceName,
-				const std::string &protocolName,
-				int hops);
+		/// Get the vector of current 'active' demux filters
+		std::vector<int> getActiveOSCamDemuxFilters() const {
+			return _filter.getActiveDemuxFilters();
+		}
 
-			// ================================================================
-			//  -- Data members -----------------------------------------------
-			// ================================================================
+		/// Get the vector of current 'active' PIDs that are being filtered
+		std::vector<int> getActiveFilterPIDs(unsigned int demux) const {
+			return _filter.getActiveFilterPIDs(demux);
+		}
 
-		private:
+		/// Clear all 'active' filters
+		void stopOSCamFilters(FeID id);
 
-			struct dvbcsa_bs_batch_s *_batch;
-			struct dvbcsa_bs_batch_s *_ts;
-			int _batchSize;
-			int _batchCount;
-			int _parity;
-			Keys _keys;
-			Filter _filter;
+		///
+		void setECMInfo(
+			int pid,
+			int serviceID,
+			int caID,
+			int provID,
+			int emcTime,
+			const std::string& cardSystem,
+			const std::string& readerName,
+			const std::string& sourceName,
+			const std::string& protocolName,
+			int hops);
 
-	};
+		// ================================================================
+		//  -- Data members -----------------------------------------------
+		// ================================================================
+	private:
+
+		struct dvbcsa_bs_batch_s* _batch;
+		struct dvbcsa_bs_batch_s* _ts;
+		unsigned int _batchSizeMax;
+		unsigned int _batchSize;
+		unsigned int _batchCount;
+		unsigned int _parity;
+		bool _icamEnabled;
+		Keys _keys;
+		Filter _filter;
+
+};
 
 }
 

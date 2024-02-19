@@ -22,80 +22,102 @@
 #include <Utils.h>
 #include <Unused.h>
 
+#include <dlfcn.h>
+
 namespace decrypt::dvbapi {
 
-	// ===========================================================================
-	// -- Constructors and destructor --------------------------------------------
-	// ===========================================================================
+// ===========================================================================
+// -- Constructors and destructor --------------------------------------------
+// ===========================================================================
 
-	ClientProperties::ClientProperties() {
-		_batchSize = dvbcsa_bs_batch_size();
-		_batch = new dvbcsa_bs_batch_s[_batchSize + 1];
-		_ts = new dvbcsa_bs_batch_s[_batchSize + 1];
-		_batchCount = 0;
-		_parity = 0;
-	}
-
-	ClientProperties::~ClientProperties() {
-		DELETE_ARRAY(_batch);
-		DELETE_ARRAY(_ts);
-		_keys.freeKeys();
-	}
-
-	// ===========================================================================
-	// -- Other member functions -------------------------------------------------
-	// ===========================================================================
-
-	void ClientProperties::stopOSCamFilters(FeID id) {
-		SI_LOG_INFO("Frontend: @#1, Clearing OSCam filters and Keys...", id);
-		// free keys
-		_keys.freeKeys();
-		_batchCount = 0;
-		_parity = 0;
-		_filter.clear();
-	}
-
-	void ClientProperties::decryptBatch() {
-		const auto key = _keys.get(_parity);
-		if (key != nullptr) {
-			// terminate batch buffer
-			setBatchData(nullptr, 0, _parity, nullptr);
-			// decrypt it
-			dvbcsa_bs_decrypt(key, _batch, 184);
-
-			// clear scramble flags, so we can send it.
-			unsigned int i = 0;
-			while (_ts[i].data != nullptr) {
-				_ts[i].data[3] &= 0x3F;
-				++i;
-			}
+ClientProperties::ClientProperties() {
+	_batchSizeMax = dvbcsa_bs_batch_size();
+	_batchSize = _batchSizeMax;
+	_batch = new dvbcsa_bs_batch_s[_batchSizeMax + 1];
+	_ts = new dvbcsa_bs_batch_s[_batchSizeMax + 1];
+	_batchCount = 0;
+	_parity = 0;
+	void* handle = dlopen("libdvbcsa.so.1", RTLD_LAZY | RTLD_NODELETE);
+	if (handle != nullptr) {
+		if (dlsym(handle, "dvbcsa_bs_key_set_ecm") == nullptr) {
+			SI_LOG_INFO("  ICAM support in libdvbcsa.so: No");
+			_icamEnabled = false;
 		} else {
-			unsigned int i = 0;
-			while (_ts[i].data != nullptr) {
-				// set decrypt failed by setting NULL packet ID..
-				_ts[i].data[1] |= 0x1F;
-				_ts[i].data[2] |= 0xFF;
-
-				// clear scramble flag, so we can send it.
-				_ts[i].data[3] &= 0x3F;
-				++i;
-			}
+			SI_LOG_INFO("  ICAM support in libdvbcsa.so: Yes");
+			_icamEnabled = true;
 		}
-		// decrypted this batch reset counter
-		_batchCount = 0;
+		dlclose(handle);
 	}
+}
 
-	void ClientProperties::setECMInfo(
-		int UNUSED(pid),
-		int UNUSED(serviceID),
-		int UNUSED(caID),
-		int UNUSED(provID),
-		int UNUSED(emcTime),
-		const std::string &UNUSED(cardSystem),
-		const std::string &UNUSED(readerName),
-		const std::string &UNUSED(sourceName),
-		const std::string &UNUSED(protocolName),
-		int UNUSED(hops)) {
+ClientProperties::~ClientProperties() {
+	DELETE_ARRAY(_batch);
+	DELETE_ARRAY(_ts);
+	_keys.freeKeys();
+}
+
+// =============================================================================
+//  -- base::XMLSupport --------------------------------------------------------
+// =============================================================================
+
+void ClientProperties::doAddToXML(std::string& xml) const {
+	ADD_XML_NUMBER_INPUT(xml, "dvbcsa_bs_batch_size", _batchSize, 0, _batchSizeMax);
+	ADD_XML_ELEMENT(xml, "icamEnabled", _icamEnabled ? "Yes" : "No");
+}
+
+void ClientProperties::doFromXML(const std::string& UNUSED(xml)) {
+}
+
+// ===========================================================================
+// -- Other member functions -------------------------------------------------
+// ===========================================================================
+
+void ClientProperties::stopOSCamFilters(FeID id) {
+	SI_LOG_INFO("Frontend: @#1, Clearing OSCam filters and Keys...", id);
+	// free keys
+	_keys.freeKeys();
+	_batchCount = 0;
+	_parity = 0;
+	_filter.clear();
+}
+
+void ClientProperties::decryptBatch() noexcept {
+	const auto key = _keys.get(_parity);
+	if (key != nullptr) {
+		// terminate batch buffer
+		setBatchData(nullptr, 0, _parity, nullptr);
+		// decrypt it
+		dvbcsa_bs_decrypt(key, _batch, 184);
+
+		// clear scramble flags, so we can send it.
+		for (unsigned int i = 0; _ts[i].data != nullptr; ++i) {
+			_ts[i].data[3] &= 0x3F;
+		}
+	} else {
+		for (unsigned int i = 0; _ts[i].data != nullptr; ++i) {
+			// set decrypt failed by setting NULL packet ID..
+			_ts[i].data[1] |= 0x1F;
+			_ts[i].data[2] |= 0xFF;
+
+			// clear scramble flag, so we can send it.
+			_ts[i].data[3] &= 0x3F;
+		}
 	}
+	// decrypted this batch reset counter
+	_batchCount = 0;
+}
+
+void ClientProperties::setECMInfo(
+	int UNUSED(pid),
+	int UNUSED(serviceID),
+	int UNUSED(caID),
+	int UNUSED(provID),
+	int UNUSED(emcTime),
+	const std::string& UNUSED(cardSystem),
+	const std::string& UNUSED(readerName),
+	const std::string& UNUSED(sourceName),
+	const std::string& UNUSED(protocolName),
+	int UNUSED(hops)) {
+}
 
 }

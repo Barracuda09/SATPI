@@ -53,17 +53,17 @@ class Keys {
 		// =========================================================================
 	public:
 
-		void set(const unsigned char* cw, int parity, int index);
+		void set(const unsigned char* cw, unsigned int parity, int index, bool icamEnabled);
 
-		void setICAM(const unsigned char ecm, int parity);
+		void setICAM(const unsigned char ecm, unsigned int parity);
 
-		const dvbcsa_bs_key_s *get(int parity) const;
+		const dvbcsa_bs_key_s *get(unsigned int parity) const;
 
 		void freeKeys();
 
 	private:
 
-		void remove(int parity);
+		void remove(unsigned int parity);
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------

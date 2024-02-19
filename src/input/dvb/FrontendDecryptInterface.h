@@ -48,43 +48,43 @@ class FrontendDecryptInterface {
 	public:
 
 		/// Get the feID of this Frontend
-		virtual FeID getFeID() const = 0;
+		virtual FeID getFeID() const noexcept = 0;
 
 		///
-		virtual int getBatchCount() const = 0;
+		virtual unsigned int getBatchCount() const noexcept = 0;
 
 		///
-		virtual int getBatchParity() const = 0;
+		virtual unsigned int getBatchParity() const noexcept = 0;
 
 		///
-		virtual int getMaximumBatchSize() const = 0;
+		virtual unsigned int getMaximumBatchSize() const noexcept = 0;
 
 		///
-		virtual void decryptBatch() = 0;
+		virtual void decryptBatch() noexcept = 0;
 
 		///
-		virtual void setBatchData(unsigned char *ptr, int len, int parity,
-			unsigned char *originalPtr) = 0;
+		virtual void setBatchData(unsigned char* ptr, unsigned int len, unsigned int parity,
+			unsigned char* originalPtr) noexcept = 0;
 
 		///
-		virtual const dvbcsa_bs_key_s *getKey(int parity) const = 0;
+		virtual const dvbcsa_bs_key_s* getKey(unsigned int parity) const = 0;
 
 		///
-		virtual void setKey(const unsigned char* cw, int parity, int index) = 0;
+		virtual void setKey(const unsigned char* cw, unsigned int parity, int index) = 0;
 
 		///
-		virtual void setICAM(unsigned char ecm, int parity) = 0;
+		virtual void setICAM(unsigned char ecm, unsigned int parity) = 0;
 
 		///
-		virtual void startOSCamFilterData(int pid, int demux, int filter,
+		virtual void startOSCamFilterData(int pid, unsigned int demux, unsigned int filter,
 				   const unsigned char* filterData, const unsigned char* filterMask) = 0;
 
 		///
-		virtual void stopOSCamFilterData(int pid, int demux, int filter) = 0;
+		virtual void stopOSCamFilterData(int pid, unsigned int demux, unsigned int filter) = 0;
 
 		///
 		virtual bool findOSCamFilterData(int pid, const unsigned char* tsPacket, int tableID,
-			int &filter, int &demux, mpegts::TSData &filterData) = 0;
+			unsigned int& filter, unsigned int& demux, mpegts::TSData& filterData) = 0;
 
 		/// Get the vector of current 'active' OSCam demux filters
 		virtual std::vector<int> getActiveOSCamDemuxFilters() const = 0;
@@ -99,10 +99,10 @@ class FrontendDecryptInterface {
 			int caID,
 			int provID,
 			int emcTime,
-			const std::string &cardSystem,
-			const std::string &readerName,
-			const std::string &sourceName,
-			const std::string &protocolName,
+			const std::string& cardSystem,
+			const std::string& readerName,
+			const std::string& sourceName,
+			const std::string& protocolName,
 			int hops) = 0;
 
 		///

@@ -23,9 +23,7 @@
 
 extern "C" {
 	#include <dvbcsa/dvbcsa.h>
-#ifdef ICAM
-	void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key);
-#endif
+	void dvbcsa_bs_key_set_ecm(unsigned char ecm, const dvbcsa_cw_t cw, struct dvbcsa_bs_key_s *key) __attribute__((weak));
 }
 
 namespace decrypt::dvbapi {
@@ -34,28 +32,28 @@ namespace decrypt::dvbapi {
 //  -- Other member functions --------------------------------------------------
 // =============================================================================
 
-void Keys::set(const unsigned char* cw, int parity, int UNUSED(index)) {
-	dvbcsa_bs_key_s *k = dvbcsa_bs_key_alloc();
-#ifdef ICAM
+void Keys::set(const unsigned char* cw, unsigned int parity, int UNUSED(index), const bool icamEnabled) {
+	dvbcsa_bs_key_s* k = dvbcsa_bs_key_alloc();
 	const unsigned char icamECM = (_icam[parity].size() > 0) ? _icam[parity].back() : 0;
-	dvbcsa_bs_key_set_ecm(icamECM, cw, k);
-#else
-	dvbcsa_bs_key_set(cw, k);
-#endif
+	if (icamEnabled) {
+		dvbcsa_bs_key_set_ecm(icamECM, cw, k);
+	} else {
+		dvbcsa_bs_key_set(cw, k);
+	}
 	_key[parity].push(std::make_tuple(base::TimeCounter::getTicks(), k));
 	while (_key[parity].size() > 1) {
 		remove(parity);
 	}
 }
 
-void Keys::setICAM(const unsigned char ecm, int parity) {
+void Keys::setICAM(const unsigned char ecm, unsigned int parity) {
 	_icam[parity].push(ecm);
 	while (_icam[parity].size() > 1) {
 		_icam[parity].pop();
 	}
 }
 
-const dvbcsa_bs_key_s * Keys::get(int parity) const {
+const dvbcsa_bs_key_s* Keys::get(unsigned int parity) const {
 	if (!_key[parity].empty()) {
 		const KeyTuple tup = _key[parity].back();
 //		const long duration = base::TimeCounter::getTicks() - pair.first;
@@ -80,7 +78,7 @@ void Keys::freeKeys() {
 	}
 }
 
-void Keys::remove(int parity) {
+void Keys::remove(unsigned int parity) {
 	const KeyTuple tup = _key[parity].front();
 	dvbcsa_bs_key_free(std::get<1>(tup));
 	_key[parity].pop();
