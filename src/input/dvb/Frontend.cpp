@@ -197,6 +197,7 @@ void Frontend::doAddToXML(std::string &xml) const {
 
 	ADD_XML_NUMBER_INPUT(xml, "dvrbuffer", _dvrBufferSizeMB, 0, MAX_DVR_BUFFER_SIZE);
 	ADD_XML_NUMBER_INPUT(xml, "waitOnLockTimeout", _waitOnLockTimeout, 0, MAX_WAIT_ON_LOCK_TIMEOUT);
+	ADD_XML_CHECKBOX(xml, "forceOldStyleStatus", (_oldApiCallStats ? "true" : "false"));
 
 #ifdef LIBDVBCSA
 	_dvbapiData.addToXML(xml);
@@ -222,6 +223,9 @@ void Frontend::doFromXML(const std::string &xml) {
 	if (findXMLElement(xml, "waitOnLockTimeout.value", element)) {
 		const unsigned int c = std::stoi(element);
 		_waitOnLockTimeout = (c < MAX_WAIT_ON_LOCK_TIMEOUT) ? c : MAX_WAIT_ON_LOCK_TIMEOUT;
+	}
+	if (findXMLElement(xml, "forceOldStyleStatus.value", element)) {
+		_oldApiCallStats = (element == "true") ? true : false;
 	}
 	for (std::size_t i = 0; i < _deliverySystem.size(); ++i) {
 		const std::string deliverySystem = StringConverter::stringFormat("deliverySystem@#1", i);
@@ -358,7 +362,7 @@ bool Frontend::monitorSignal(const bool showStatus) {
 					strength = cmdseq.props[0].u.st.stat[0].svalue * 0.0001;
 					break;
 				case FE_SCALE_RELATIVE:
-					strength = cmdseq.props[0].u.st.stat[0].uvalue;
+					strength = (static_cast<uint32_t>(cmdseq.props[0].u.st.stat[0].uvalue) * 100) >> 16;
 					break;
 				case FE_SCALE_NOT_AVAILABLE:
 				default:
@@ -371,7 +375,7 @@ bool Frontend::monitorSignal(const bool showStatus) {
 					snr = cmdseq.props[1].u.st.stat[0].svalue * 0.0001;
 					break;
 				case FE_SCALE_RELATIVE:
-					snr = cmdseq.props[1].u.st.stat[0].uvalue;
+					snr = (static_cast<uint32_t>(cmdseq.props[1].u.st.stat[0].uvalue) * 100) >> 16;
 					break;
 				case FE_SCALE_NOT_AVAILABLE:
 				default:
@@ -387,7 +391,7 @@ bool Frontend::monitorSignal(const bool showStatus) {
 					break;
 				case FE_SCALE_NOT_AVAILABLE:
 				default:
-					_oldApiCallStats = true;
+					ber = 0;
 					break;
 			}
 		}
