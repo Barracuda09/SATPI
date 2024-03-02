@@ -61,6 +61,9 @@ Stream::Stream(input::SpDevice device, decrypt::dvbapi::SpClient decrypt) :
 	_sendInterval(100),
 	_signalLock(false) {
 	ASSERT(device);
+#ifdef LIBDVBCSA
+	ASSERT(decrypt);
+#endif
 	// Initialize all TS packets
 	for (mpegts::PacketBuffer& buffer : _tsBuffer) {
 		buffer.initialize(0, 0);
@@ -163,9 +166,8 @@ void Stream::pauseStreaming(output::SpStreamClient UNUSED(streamClient)) {
 	_threadDeviceMonitor.pauseThread();
 	SI_LOG_DEBUG("Frontend: @#1, Pause Reader and Monitor Thread", _device->getFeID());
 #ifdef LIBDVBCSA
-		if (_decrypt != nullptr) {
-			_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
-		}
+	// When LIBDVBCSA is defined _decrypt is created
+	_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
 #endif
 }
 
@@ -186,9 +188,8 @@ void Stream::stopStreaming() {
 	_threadDeviceMonitor.stopThread();
 	SI_LOG_DEBUG("Frontend: @#1, Stop Reader and Monitor Thread", _device->getFeID());
 #ifdef LIBDVBCSA
-		if (_decrypt != nullptr) {
-			_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
-		}
+	// When LIBDVBCSA is defined _decrypt is created
+	_decrypt->stopDecrypt(_device->getFeIndex(), _device->getFeID());
 #endif
 	_device->teardown();
 	_streamInUse = false;
@@ -401,9 +402,8 @@ bool Stream::threadExecuteDeviceDataReader() {
 	if (_device->isDataAvailable() && availableSize >= 1) {
 		if (_device->readTSPackets(_tsBuffer[_writeIndex])) {
 #ifdef LIBDVBCSA
-			if (_decrypt != nullptr) {
-				_decrypt->decrypt(_device->getFeIndex(), _device->getFeID(), _tsBuffer[_writeIndex]);
-			}
+			// When LIBDVBCSA is defined _decrypt is created
+			_decrypt->decrypt(_device->getFeIndex(), _device->getFeID(), _tsBuffer[_writeIndex]);
 #endif
 			// goto next, so inc write index
 			++_writeIndex;
