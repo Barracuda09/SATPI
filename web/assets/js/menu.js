@@ -17,7 +17,7 @@ function buildmenu() {
 	menu +=       "<li class=\"nav-item\" id=\"about\"            ><a class=\"nav-link\" href=\"about.html\"><span class=\"fas fa-info-circle\"></span> About</a></li>";
 	menu +=     "</ul>";
 	menu +=     "<span class=\"navbar-text small-text-size\">";
-	menu +=       "Copyright &#169; 2014 - 2023 Marc Postema";
+	menu +=       "Copyright &#169; 2014 - 2024 Marc Postema";
 	menu +=     "</span>";
 	menu +=   "</div>";
 	menu += "</nav>";
