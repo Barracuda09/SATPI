@@ -112,10 +112,14 @@ class DeviceData :
 		input::InputSystem getDeliverySystem() const;
 
 		///
-		const mpegts::Filter &getFilter() const;
+		const mpegts::Filter& getFilter() const noexcept {
+			return _filter;
+		}
 
 		///
-		mpegts::Filter &getFilter();
+		mpegts::Filter& getFilter() noexcept {
+			return _filter;
+		}
 
 		///
 		const mpegts::Generator &getPSIGenerator() const;

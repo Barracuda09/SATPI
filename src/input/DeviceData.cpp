@@ -100,14 +100,6 @@ input::InputSystem DeviceData::getDeliverySystem() const {
 	return _delsys;
 }
 
-const mpegts::Filter &DeviceData::getFilter() const {
-	return _filter;
-}
-
-mpegts::Filter &DeviceData::getFilter() {
-	return _filter;
-}
-
 const mpegts::Generator &DeviceData::getPSIGenerator() const {
 	return _generator;
 }

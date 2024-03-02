@@ -46,7 +46,7 @@ class StreamManager :
 
 		explicit StreamManager();
 
-		virtual ~StreamManager();
+		virtual ~StreamManager() = default;
 
 		// =====================================================================
 		// -- base::XMLSupport -------------------------------------------------

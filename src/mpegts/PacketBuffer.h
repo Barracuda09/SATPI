@@ -153,11 +153,11 @@ class PacketBuffer {
 		}
 
 		/// This function checks if this TS buffer is ready to be send.
-		/// There should be something in the buffer, in TS_PACKET_SIZE chucks.
+		/// There should be something in the buffer, in TS_PACKET_SIZE chunks.
 		/// When the pending decrypt flag was set, all scramble flags should
 		/// be cleared from all TS packets.
 		bool isReadyToSend() const noexcept {
-			// ready to send, when there is something in the buffer in TS_PACKET_SIZE chucks
+			// ready to send, when there is something in the buffer in TS_PACKET_SIZE chunks
 			// and if all scramble flags are cleared
 //			bool ready = (getCurrentBufferSize() % TS_PACKET_SIZE) == 0;
 			bool ready = full();

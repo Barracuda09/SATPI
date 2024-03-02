@@ -104,7 +104,12 @@ class TableData {
 		TSData getData(size_t secNr) const;
 
 		/// Check if Table is collected
-		bool isCollected() const noexcept;
+		bool isCollected() const noexcept {
+			if (_collectingFinished) {
+				return true;
+			}
+			return checkAllCollected();
+		}
 
 		/// Get the associated PID of this table
 		int getAssociatedPID() const;
@@ -150,6 +155,9 @@ class TableData {
 
 		/// Collect Table data for tableID
 		void collectData(FeID id, int tableID, const unsigned char* data, bool trace, bool raw);
+
+		/// Check if all sections are collected
+		bool checkAllCollected() const noexcept;
 
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------
