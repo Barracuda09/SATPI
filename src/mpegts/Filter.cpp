@@ -150,7 +150,7 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			continue;
 		}
 		const uint8_t cc = ptr[3] & 0x0f;
-		_pidTable.addPIDData(pid, cc);
+		_pidTable.addPIDData(pid, ptr[3]);
 
 		switch (pid) {
 			case 0:
@@ -220,13 +220,13 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 				break;
 			default:
 				if (_pat->isMarkedAsPMT(pid)) {
-					// Did we finish collecting PMT
-					_pmtMap.try_emplace(pid, std::make_shared<PMT>());
-					if (!_pmtMap[pid]->isCollected()) {
+					// Did we finish collecting PMT, we always get a valid PMT (empty or filled)
+					mpegts::SpPMT pmt = _pmtMap.try_emplace(pid, std::make_shared<PMT>()).first->second;
+					if (!pmt->isCollected()) {
 						// collect PMT data
-						_pmtMap[pid]->collectData(id, TableData::PMT_ID, ptr, false);
-						if (_pmtMap[pid]->isCollected()) {
-							_pmtMap[pid]->parse(id);
+						pmt->collectData(id, TableData::PMT_ID, ptr, false);
+						if (pmt->isCollected()) {
+							pmt->parse(id);
 						}
 #ifdef ADDDVBCA
 						const char fileFIFO[] = "/tmp/fifo";

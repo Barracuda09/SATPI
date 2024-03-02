@@ -73,16 +73,20 @@ class PidTable {
 		std::string getPidCSV() const;
 
 		/// Set the continuity counter for pid
-		void addPIDData(const int pid, const uint8_t cc) noexcept {
+		void addPIDData(const int pid, const uint8_t ccByte) noexcept {
 			PidData &data = _data[pid];
 			++data.count;
-			if (data.cc == 0x80) {
-				data.cc = cc;
-				if (!_totalCCErrorsBeginSet) {
-					_totalCCErrorsBegin = _totalCCErrors;
-					_totalCCErrorsBeginSet = true;
+			// Only if it has a Payload
+			if ((ccByte & 0x10) == 0x10) {
+				const uint8_t cc = ccByte & 0x0F;
+				if (data.cc == 0x80) {
+					data.cc = cc;
+					if (!_totalCCErrorsBeginSet) {
+						_totalCCErrorsBegin = _totalCCErrors;
+						_totalCCErrorsBeginSet = true;
+					}
+					return;
 				}
-			} else if (data.cc != cc) {
 				++data.cc;
 				data.cc %= 0x10;
 				if (data.cc != cc) {
