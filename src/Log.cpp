@@ -33,7 +33,9 @@
 
 #define LOG_SIZE 550
 
-static base::Mutex logMutex;
+namespace {
+	base::Mutex globalLogMutex;
+}
 
 bool Log::_syslogOn = false;
 bool Log::_coutLog = true;
@@ -83,7 +85,7 @@ void Log::log(const int priority, const std::string &msg) {
 		&asciiTime[0], DIGIT(timeStamp.tv_nsec/100000, 4), &asciiTime[20]);
 
 	std::string::size_type index = 0;
-	base::MutexLock lock(logMutex);
+	base::MutexLock lock(globalLogMutex);
 	for (;;) {
 		std::string line = StringConverter::getline(msg, index, "\r\n");
 		if (line.empty()) {
@@ -115,7 +117,7 @@ std::string Log::makeJSON() {
 
 	json.startArrayWithName("log");
 	{
-		base::MutexLock lock(logMutex);
+		base::MutexLock lock(globalLogMutex);
 		if (!_appLogBuffer.empty()) {
 			for (const LogElem& elem : _appLogBuffer) {
 				json.startObject();

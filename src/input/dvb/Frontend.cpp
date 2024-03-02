@@ -97,75 +97,77 @@ Frontend::Frontend(
 // =============================================================================
 //  -- Static functions --------------------------------------------------------
 // =============================================================================
-// Called recursive
-static void getAttachedFrontends(
-		StreamSpVector &streamVector,
-		const std::string &appDataPath,
-		decrypt::dvbapi::SpClient decrypt,
-		const std::string &path,
-		const std::string &startPath) {
-	const std::string ADAPTER = startPath + "/adapter@#1";
-	const std::string DMX = ADAPTER + "/demux@#2";
-	const std::string DVR = ADAPTER + "/dvr@#2";
-	const std::string FRONTEND = ADAPTER + "/frontend@#2";
-#if SIMU
-	// unused var
-	(void)path;
+namespace {
+	// Called recursive
+	void getAttachedFrontends(
+			StreamSpVector &streamVector,
+			const std::string &appDataPath,
+			decrypt::dvbapi::SpClient decrypt,
+			const std::string &path,
+			const std::string &startPath) {
+		const std::string ADAPTER = startPath + "/adapter@#1";
+		const std::string DMX = ADAPTER + "/demux@#2";
+		const std::string DVR = ADAPTER + "/dvr@#2";
+		const std::string FRONTEND = ADAPTER + "/frontend@#2";
+	#if SIMU
+		// unused var
+		(void)path;
 
-	const std::string fe0 = StringConverter::stringFormat(FRONTEND.data(), 0, 0);
-	const std::string dvr0 = StringConverter::stringFormat(DVR.data(), 0, 0);
-	const std::string dmx0 = StringConverter::stringFormat(DMX.data(), 0, 0);
-	input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe0, dvr0, dmx0);
-	streamVector.push_back(Stream::makeSP(frontend0, decrypt));
+		const std::string fe0 = StringConverter::stringFormat(FRONTEND.data(), 0, 0);
+		const std::string dvr0 = StringConverter::stringFormat(DVR.data(), 0, 0);
+		const std::string dmx0 = StringConverter::stringFormat(DMX.data(), 0, 0);
+		input::dvb::SpFrontend frontend0 = std::make_shared<input::dvb::Frontend>(0, appDataPath, fe0, dvr0, dmx0);
+		streamVector.push_back(Stream::makeSP(frontend0, decrypt));
 
-	const std::string fe1 = StringConverter::stringFormat(FRONTEND.data(), 1, 0);
-	const std::string dvr1 = StringConverter::stringFormat(DVR.data(), 1, 0);
-	const std::string dmx1 = StringConverter::stringFormat(DMX.data(), 1, 0);
-	input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe1, dvr1, dmx1);
-	streamVector.push_back(Stream::makeSP(frontend1, decrypt));
-#else
-	dirent **file_list;
-	const int n = scandir(path.data(), &file_list, nullptr, versionsort);
-	if (n > 0) {
-		for (int i = 0; i < n; ++i) {
-			const std::string full_path = StringConverter::stringFormat("@#1/@#2", path, file_list[i]->d_name);
-			struct stat stat_buf;
-			if (stat(full_path.data(), &stat_buf) == 0) {
-				switch (stat_buf.st_mode & S_IFMT) {
-					case S_IFCHR: // character device
-						if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
-							int fe_nr;
-							sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
-							int adapt_nr;
-							const std::string ADAPTER_TMP = startPath + "/adapter%d";
-							sscanf(path.data(), ADAPTER_TMP.data(), &adapt_nr);
+		const std::string fe1 = StringConverter::stringFormat(FRONTEND.data(), 1, 0);
+		const std::string dvr1 = StringConverter::stringFormat(DVR.data(), 1, 0);
+		const std::string dmx1 = StringConverter::stringFormat(DMX.data(), 1, 0);
+		input::dvb::SpFrontend frontend1 = std::make_shared<input::dvb::Frontend>(1, appDataPath, fe1, dvr1, dmx1);
+		streamVector.push_back(Stream::makeSP(frontend1, decrypt));
+	#else
+		dirent **file_list;
+		const int n = scandir(path.data(), &file_list, nullptr, versionsort);
+		if (n > 0) {
+			for (int i = 0; i < n; ++i) {
+				const std::string full_path = StringConverter::stringFormat("@#1/@#2", path, file_list[i]->d_name);
+				struct stat stat_buf;
+				if (stat(full_path.data(), &stat_buf) == 0) {
+					switch (stat_buf.st_mode & S_IFMT) {
+						case S_IFCHR: // character device
+							if (strstr(file_list[i]->d_name, "frontend") != nullptr) {
+								int fe_nr;
+								sscanf(file_list[i]->d_name, "frontend%d", &fe_nr);
+								int adapt_nr;
+								const std::string ADAPTER_TMP = startPath + "/adapter%d";
+								sscanf(path.data(), ADAPTER_TMP.data(), &adapt_nr);
 
-							// Make new paths
-							const std::string fe = StringConverter::stringFormat(FRONTEND.data(), adapt_nr, fe_nr);
-							const std::string dvr = StringConverter::stringFormat(DVR.data(), adapt_nr, fe_nr);
-							const std::string dmx = StringConverter::stringFormat(DMX.data(), adapt_nr, fe_nr);
+								// Make new paths
+								const std::string fe = StringConverter::stringFormat(FRONTEND.data(), adapt_nr, fe_nr);
+								const std::string dvr = StringConverter::stringFormat(DVR.data(), adapt_nr, fe_nr);
+								const std::string dmx = StringConverter::stringFormat(DMX.data(), adapt_nr, fe_nr);
 
-							// Make new frontend here
-							const StreamSpVector::size_type size = streamVector.size();
-							const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
-							streamVector.push_back(Stream::makeSP(frontend, decrypt));
-						}
-						break;
-					case S_IFDIR:
-						// do not use dir '.' an '..'
-						if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
-							getAttachedFrontends(streamVector, appDataPath, decrypt, full_path, startPath);
-						}
-						break;
-					default:
-						// Do nothing here, just find next
-						break;
+								// Make new frontend here
+								const StreamSpVector::size_type size = streamVector.size();
+								const input::dvb::SpFrontend frontend = std::make_shared<input::dvb::Frontend>(size, appDataPath, fe, dvr, dmx);
+								streamVector.push_back(Stream::makeSP(frontend, decrypt));
+							}
+							break;
+						case S_IFDIR:
+							// do not use dir '.' an '..'
+							if (strcmp(file_list[i]->d_name, ".") != 0 && strcmp(file_list[i]->d_name, "..") != 0) {
+								getAttachedFrontends(streamVector, appDataPath, decrypt, full_path, startPath);
+							}
+							break;
+						default:
+							// Do nothing here, just find next
+							break;
+					}
 				}
+				free(file_list[i]);
 			}
-			free(file_list[i]);
 		}
+	#endif
 	}
-#endif
 }
 
 // =============================================================================

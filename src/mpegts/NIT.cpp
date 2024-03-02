@@ -22,125 +22,124 @@
 
 namespace mpegts {
 
-// =============================================================================
-//  -- Static Functions --------------------------------------------------------
-// =============================================================================
+namespace {
 
-static std::string polTostring(int fec) {
-	switch (fec) {
-		case 0:
-			return "h";
-		case 1:
-			return "v";
-		case 3:
-			return "l";
-		case 4:
-			return "r";
-		default:
-			return "unknown";
-	};
-}
-
-static std::string fecInnerTostring(int fec) {
-	switch (fec) {
-		case 0:
-			return "Not def";
-		case 1:
-			return "12";
-		case 2:
-			return "23";
-		case 3:
-			return "34";
-		case 4:
-			return "56";
-		case 5:
-			return "78";
-		case 6:
-			return "89";
-		case 7:
-			return "35";
-		case 8:
-			return "45";
-		case 9:
-			return "910";
-		case 15:
-			return "none";
-		default:
-			return StringConverter::stringFormat("FEC Inner res. @#1", DIGIT(fec, 2));
+	std::string polTostring(int fec) {
+		switch (fec) {
+			case 0:
+				return "h";
+			case 1:
+				return "v";
+			case 3:
+				return "l";
+			case 4:
+				return "r";
+			default:
+				return "unknown";
+		};
 	}
-}
 
-static std::string fecOuterTostring(int fec) {
-	switch (fec) {
-		case 0:
-			return "not defined";
-		case 1:
-			return "none";
-		case 2:
-			return "RS(204/188)";
-		default:
-			return StringConverter::stringFormat("FEC Outer res. @#1", DIGIT(fec, 2));
+	std::string fecInnerTostring(int fec) {
+		switch (fec) {
+			case 0:
+				return "Not def";
+			case 1:
+				return "12";
+			case 2:
+				return "23";
+			case 3:
+				return "34";
+			case 4:
+				return "56";
+			case 5:
+				return "78";
+			case 6:
+				return "89";
+			case 7:
+				return "35";
+			case 8:
+				return "45";
+			case 9:
+				return "910";
+			case 15:
+				return "none";
+			default:
+				return StringConverter::stringFormat("FEC Inner res. @#1", DIGIT(fec, 2));
+		}
 	}
-}
 
-static std::string msysTostring(int msys) {
-	switch (msys) {
-		case 0:
-			return "DVB-S";
-		case 1:
-			return "DVB-S2";
-		default:
-			return "Unknown msys";
-	};
-}
+	std::string fecOuterTostring(int fec) {
+		switch (fec) {
+			case 0:
+				return "not defined";
+			case 1:
+				return "none";
+			case 2:
+				return "RS(204/188)";
+			default:
+				return StringConverter::stringFormat("FEC Outer res. @#1", DIGIT(fec, 2));
+		}
+	}
 
-static std::string mtypeSatTostring(int mtype) {
-	switch (mtype) {
-		case 0:
-			return "auto";
-		case 1:
-			return "qpsk";
-		case 2:
-			return "8psk";
-		case 3:
-			return "16qam";
-		default:
-			return "Unknown mtype";
-	};
-}
+	std::string msysTostring(int msys) {
+		switch (msys) {
+			case 0:
+				return "DVB-S";
+			case 1:
+				return "DVB-S2";
+			default:
+				return "Unknown msys";
+		};
+	}
 
-static std::string mtypeCableTostring(int mtype) {
-	switch (mtype) {
-		case 0:
-			return "auto";
-		case 1:
-			return "16qam";
-		case 2:
-			return "32qam";
-		case 3:
-			return "64qam";
-		case 4:
-			return "128qam";
-		case 5:
-			return "256qam";
-		default:
-			return "Unknown mtype";
-	};
-}
+	std::string mtypeSatTostring(int mtype) {
+		switch (mtype) {
+			case 0:
+				return "auto";
+			case 1:
+				return "qpsk";
+			case 2:
+				return "8psk";
+			case 3:
+				return "16qam";
+			default:
+				return "Unknown mtype";
+		};
+	}
 
-static std::string rolloffTostring(int rolloff) {
-	switch (rolloff) {
-		case 0:
-			return "0.35";
-		case 1:
-			return "0.25";
-		case 2:
-			return "0.20";
-		case 3:
-			return "reserved";
-		default:
-			return "Unknown Rolloff";
-	};
+	std::string mtypeCableTostring(int mtype) {
+		switch (mtype) {
+			case 0:
+				return "auto";
+			case 1:
+				return "16qam";
+			case 2:
+				return "32qam";
+			case 3:
+				return "64qam";
+			case 4:
+				return "128qam";
+			case 5:
+				return "256qam";
+			default:
+				return "Unknown mtype";
+		};
+	}
+
+	std::string rolloffTostring(int rolloff) {
+		switch (rolloff) {
+			case 0:
+				return "0.35";
+			case 1:
+				return "0.25";
+			case 2:
+				return "0.20";
+			case 3:
+				return "reserved";
+			default:
+				return "Unknown Rolloff";
+		};
+	}
 }
 
 // =============================================================================

@@ -44,164 +44,166 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-static std::atomic_bool exitApp;
-static std::atomic_bool restartApp;
-static int retval;
-static int otherSig;
-static std::string appName;
+namespace {
+	std::atomic_bool exitApp;
+	std::atomic_bool restartApp;
+	int retval;
+	int otherSig;
+	std::string appName;
 
-static void child_handler(int signum) {
-	switch(signum) {
-		case SIGCHLD:
-		// fall-through
-		case SIGINT:
-		// fall-through
-		case SIGALRM:
-			retval = EXIT_FAILURE;
-			exitApp = true;
-			break;
-		case SIGKILL:
-			SI_LOG_INFO("stopping (KILL)");
-		// fall-through
-		case SIGUSR1:
-		// fall-through
-		case SIGHUP:
-		// fall-through
-		case SIGTERM:
-			retval = EXIT_SUCCESS;
-			exitApp = true;
-			break;
-		case SIGSEGV:
-			Utils::createBackTrace(appName.data());
-			exit(1);
-			break;
-		default:
-			SI_LOG_ERROR("Handle 'Other' signal");
-			otherSig = 1;
-			break;
-	}
-}
-
-static void daemonize(const std::string &lockfile, const char *user) {
-	pid_t pid, sid;
-	int lfp = -1;
-	char str[10];
-
-	// already a daemon
-	if ( getppid() == 1 ) {
-		return;
-	}
-
-	// create the lock file as the current user
-	// give group 'rw' permission and other users 'r' permissions
-	if (!lockfile.empty()) {
-		lfp = open(lockfile.data(), O_RDWR | O_CREAT, 0664);
-		if (lfp < 0) {
-			printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile.data(), strerror(errno), errno);
-			exit(EXIT_FAILURE);
+	void child_handler(int signum) {
+		switch(signum) {
+			case SIGCHLD:
+			// fall-through
+			case SIGINT:
+			// fall-through
+			case SIGALRM:
+				retval = EXIT_FAILURE;
+				exitApp = true;
+				break;
+			case SIGKILL:
+				SI_LOG_INFO("stopping (KILL)");
+			// fall-through
+			case SIGUSR1:
+			// fall-through
+			case SIGHUP:
+			// fall-through
+			case SIGTERM:
+				retval = EXIT_SUCCESS;
+				exitApp = true;
+				break;
+			case SIGSEGV:
+				Utils::createBackTrace(appName.data());
+				exit(1);
+				break;
+			default:
+				SI_LOG_ERROR("Handle 'Other' signal");
+				otherSig = 1;
+				break;
 		}
 	}
-	// drop current user, and try to run as 'user'
-	if (user) {
-		printf("try running as user: %s\r\n", user);
-		struct passwd *pw = getpwnam(user);
-		if (pw) {
-			if (setuid(pw->pw_uid) != 0) {
-				printf("unable to set uid: %d (%s)\r\n", pw->pw_uid, strerror(errno));
+
+	void daemonize(const std::string &lockfile, const char *user) {
+		pid_t pid, sid;
+		int lfp = -1;
+		char str[10];
+
+		// already a daemon
+		if ( getppid() == 1 ) {
+			return;
+		}
+
+		// create the lock file as the current user
+		// give group 'rw' permission and other users 'r' permissions
+		if (!lockfile.empty()) {
+			lfp = open(lockfile.data(), O_RDWR | O_CREAT, 0664);
+			if (lfp < 0) {
+				printf("unable to create lock file %s, %s (code=%d)\r\n", lockfile.data(), strerror(errno), errno);
+				exit(EXIT_FAILURE);
+			}
+		}
+		// drop current user, and try to run as 'user'
+		if (user) {
+			printf("try running as user: %s\r\n", user);
+			struct passwd *pw = getpwnam(user);
+			if (pw) {
+				if (setuid(pw->pw_uid) != 0) {
+					printf("unable to set uid: %d (%s)\r\n", pw->pw_uid, strerror(errno));
+					CLOSE_FD(lfp);
+					exit(EXIT_FAILURE);
+				}
+			} else {
+				printf("unable to find user: %s\r\n", user);
 				CLOSE_FD(lfp);
 				exit(EXIT_FAILURE);
 			}
-		} else {
-			printf("unable to find user: %s\r\n", user);
+		}
+
+		// trap signals that we expect to receive
+		signal(SIGCHLD, child_handler);
+		signal(SIGUSR1, child_handler);
+		signal(SIGALRM, child_handler);
+		signal(SIGTERM, child_handler);
+		signal(SIGHUP,  child_handler);
+		signal(SIGKILL, child_handler);
+		signal(SIGINT,  child_handler);
+		signal(SIGSEGV, child_handler);
+
+		// fork off the parent process
+		pid = fork();
+		if (pid < 0) {
+			printf("unable to fork daemon, %s (code=%d)\r\n", strerror(errno), errno);
 			CLOSE_FD(lfp);
 			exit(EXIT_FAILURE);
 		}
-	}
 
-	// trap signals that we expect to receive
-	signal(SIGCHLD, child_handler);
-	signal(SIGUSR1, child_handler);
-	signal(SIGALRM, child_handler);
-	signal(SIGTERM, child_handler);
-	signal(SIGHUP,  child_handler);
-	signal(SIGKILL, child_handler);
-	signal(SIGINT,  child_handler);
-	signal(SIGSEGV, child_handler);
+		// if we got a good PID, then we can exit the parent process
+		if (pid > 0) {
+			// Wait for confirmation from the child via SIGUSR1, or
+			// for two seconds to elapse (SIGALRM)
+			CLOSE_FD(lfp);
+			alarm(2);
+			pause();
+			exit(EXIT_FAILURE);
+		}
 
-	// fork off the parent process
-	pid = fork();
-	if (pid < 0) {
-		printf("unable to fork daemon, %s (code=%d)\r\n", strerror(errno), errno);
+		// Change the file mode mask
+		umask(0);
+
+		// at this point we are executing as the child process
+		struct passwd *pw = getpwuid(geteuid());
+		printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile.data());
+
+		// now record our pid to lockfile
+		sprintf(str, "%d\n", getpid());
+		if (write(lfp, str, strlen(str)) == -1) {
+			printf("pid file write, %s (code=%d)\r\n", strerror(errno), errno);
+		}
 		CLOSE_FD(lfp);
-		exit(EXIT_FAILURE);
+
+		// cancel certain signals
+		signal(SIGCHLD, SIG_DFL); // A child process dies
+		signal(SIGTSTP, SIG_IGN); // Various TTY signals
+		signal(SIGTTOU, SIG_IGN);
+		signal(SIGTTIN, SIG_IGN);
+
+		// create a new SID for the child process
+		sid = setsid();
+		if (sid < 0) {
+			printf("unable to create a new session, %s (code %d)", strerror(errno), errno);
+			exit(EXIT_FAILURE);
+		}
+
+		// redirect standard files to /dev/null
+		if (!freopen("/dev/null", "r", stdin) ||
+				!freopen("/dev/null", "w", stdout) ||
+				!freopen("/dev/null", "w", stderr)) {
+			printf("freopen failed, %s (code %d)", strerror(errno), errno);
+			exit(EXIT_FAILURE);
+		}
+
+		// tell the parent process that we are running
+		kill(getppid(), SIGUSR1);
 	}
 
-	// if we got a good PID, then we can exit the parent process
-	if (pid > 0) {
-		// Wait for confirmation from the child via SIGUSR1, or
-		// for two seconds to elapse (SIGALRM)
-		CLOSE_FD(lfp);
-		alarm(2);
-		pause();
-		exit(EXIT_FAILURE);
+	void printUsage(const char *prog_name) {
+		printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
+			"\t--help                        show this help and exit\r\n" \
+			"\t--version                     show the version number\r\n" \
+			"\t--user xx                     run as user\r\n" \
+			"\t--dvb-path <path>             set path were to find dvb devices default /dev/dvb\r\n" \
+			"\t--app-data-path <path>        set path for application state data eg. xml files etc\r\n" \
+			"\t--iface-name                  set the network interface to bind to (eg. eth0)\r\n" \
+			"\t--http-path <path>            set root path of web/http pages\r\n" \
+			"\t--http-port <port>            set http port default 8875 (1024 - 65535)\r\n" \
+			"\t--rtsp-port <port>            set rtsp port default 554  ( 554 - 65535)\r\n" \
+			"\t--backtrace <file>            backtrace 'file'\r\n" \
+			"\t--ssdp-ttl <hops>             set the TTL that is used for SSDP server (1 - 15)\r\n" \
+			"\t--childpipe <number>          enabled number amount of Frontends 'Child PIPE - TS Reader' (0 - 25)\r\n" \
+			"\t--enable-unsecure-frontends   enable to use 'Child PIPE - TS Reader' in command directly\r\n" \
+			"\t--no-daemon                   do NOT daemonize\r\n" \
+			"\t--no-ssdp                     do NOT advertise server\r\n", prog_name);
 	}
-
-	// Change the file mode mask
-	umask(0);
-
-	// at this point we are executing as the child process
-	struct passwd *pw = getpwuid(geteuid());
-	printf("running as user: %s with pid %d (%s)\r\n", pw->pw_name, getpid(), lockfile.data());
-
-	// now record our pid to lockfile
-	sprintf(str, "%d\n", getpid());
-	if (write(lfp, str, strlen(str)) == -1) {
-		printf("pid file write, %s (code=%d)\r\n", strerror(errno), errno);
-	}
-	CLOSE_FD(lfp);
-
-	// cancel certain signals
-	signal(SIGCHLD, SIG_DFL); // A child process dies
-	signal(SIGTSTP, SIG_IGN); // Various TTY signals
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-
-	// create a new SID for the child process
-	sid = setsid();
-	if (sid < 0) {
-		printf("unable to create a new session, %s (code %d)", strerror(errno), errno);
-		exit(EXIT_FAILURE);
-	}
-
-	// redirect standard files to /dev/null
-	if (!freopen("/dev/null", "r", stdin) ||
-	    !freopen("/dev/null", "w", stdout) ||
-	    !freopen("/dev/null", "w", stderr)) {
-		printf("freopen failed, %s (code %d)", strerror(errno), errno);
-		exit(EXIT_FAILURE);
-	}
-
-	// tell the parent process that we are running
-	kill(getppid(), SIGUSR1);
-}
-
-static void printUsage(const char *prog_name) {
-	printf("Usage %s [OPTION]\r\n\r\nOptions:\r\n" \
-		"\t--help                        show this help and exit\r\n" \
-		"\t--version                     show the version number\r\n" \
-		"\t--user xx                     run as user\r\n" \
-		"\t--dvb-path <path>             set path were to find dvb devices default /dev/dvb\r\n" \
-		"\t--app-data-path <path>        set path for application state data eg. xml files etc\r\n" \
-		"\t--iface-name                  set the network interface to bind to (eg. eth0)\r\n" \
-		"\t--http-path <path>            set root path of web/http pages\r\n" \
-		"\t--http-port <port>            set http port default 8875 (1024 - 65535)\r\n" \
-		"\t--rtsp-port <port>            set rtsp port default 554  ( 554 - 65535)\r\n" \
-		"\t--backtrace <file>            backtrace 'file'\r\n" \
-		"\t--ssdp-ttl <hops>             set the TTL that is used for SSDP server (1 - 15)\r\n" \
-		"\t--childpipe <number>          enabled number amount of Frontends 'Child PIPE - TS Reader' (0 - 25)\r\n" \
-		"\t--enable-unsecure-frontends   enable to use 'Child PIPE - TS Reader' in command directly\r\n" \
-		"\t--no-daemon                   do NOT daemonize\r\n" \
-		"\t--no-ssdp                     do NOT advertise server\r\n", prog_name);
 }
 
 int main(int argc, char *argv[]) {

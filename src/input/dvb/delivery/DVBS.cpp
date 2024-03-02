@@ -37,20 +37,22 @@
 
 namespace input::dvb::delivery {
 
-	// Copyright (C) 2017 Marcus Metzler <mocm@metzlerbros.de>
-	//                    Ralph Metzler <rjkm@metzlerbros.de>
-	//
-	// https://github.com/DigitalDevices/dddvb/blob/master/apps/pls.c
-	static uint32_t root2gold(uint32_t root) {
-		uint32_t x = 1;
-		uint32_t g = 0;
-		for (; g < 0x3ffff; ++g) {
-			if (root == x) {
-				return g;
+	namespace {
+		// Copyright (C) 2017 Marcus Metzler <mocm@metzlerbros.de>
+		//                    Ralph Metzler <rjkm@metzlerbros.de>
+		//
+		// https://github.com/DigitalDevices/dddvb/blob/master/apps/pls.c
+		uint32_t root2gold(uint32_t root) {
+			uint32_t x = 1;
+			uint32_t g = 0;
+			for (; g < 0x3ffff; ++g) {
+				if (root == x) {
+					return g;
+				}
+				x = (((x ^ (x >> 7)) & 1) << 17) | (x >> 1);
 			}
-			x = (((x ^ (x >> 7)) & 1) << 17) | (x >> 1);
+			return 0x3ffff;
 		}
-		return 0x3ffff;
 	}
 
 	// =========================================================================
