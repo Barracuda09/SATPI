@@ -42,7 +42,7 @@ namespace input::dvb::delivery {
 		//                    Ralph Metzler <rjkm@metzlerbros.de>
 		//
 		// https://github.com/DigitalDevices/dddvb/blob/master/apps/pls.c
-		uint32_t root2gold(uint32_t root) {
+		uint32_t root2gold(const uint32_t root) {
 			uint32_t x = 1;
 			uint32_t g = 0;
 			for (; g < 0x3ffff; ++g) {
@@ -206,7 +206,7 @@ namespace input::dvb::delivery {
 		FILL_PROP(DTV_ROLLOFF,         frontendData.getRollOff());
 		FILL_PROP(DTV_PILOT,           frontendData.getPilotTones());
 
-		auto plsMode = frontendData.getPhysicalLayerSignallingMode();
+		const auto plsMode = frontendData.getPhysicalLayerSignallingMode();
 		int plsCode = frontendData.getPhysicalLayerSignallingCode();
 		int isId = frontendData.getInputStreamIdentifier();
 		if (isId != FrontendData::NO_STREAM_ID) {
@@ -216,9 +216,10 @@ namespace input::dvb::delivery {
 			SI_LOG_DEBUG("Frontend: @#1, Set Properties: StreamID @#2", _feID, isId);
 			FILL_PROP(DTV_STREAM_ID,     isId);
 		}
-
-		if (_dvbVersion >= 0x050B &&
-				frontendData.getPhysicalLayerSignallingMode() != FrontendData::PlsMode::Unknown) {
+		if (plsMode != FrontendData::PlsMode::Unknown) {
+			SI_LOG_DEBUG("Frontend: @#1, Set Properties: PLS Mode @#2", _feID, asInteger(plsMode));
+		}
+		if (_dvbVersion >= 0x050B && plsMode != FrontendData::PlsMode::Unknown) {
 			if (plsMode == FrontendData::PlsMode::Root) {
 					plsCode = root2gold(plsCode);
 			}

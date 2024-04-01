@@ -39,7 +39,7 @@ class FrontendData :
 		static constexpr int DEFAULT_GOLD_CODE = 0;
 		static constexpr int DEFAULT_ROOT_CODE = 1;
 		enum class PlsMode {
-			Root, Gold, Unknown
+			Root, Gold, Combo, Unknown
 		};
 
 		// =========================================================================

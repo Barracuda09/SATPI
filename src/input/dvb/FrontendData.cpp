@@ -163,6 +163,17 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	const int plsMode = params.getIntParameter("plsm");
 	if (plsMode != -1) {
 		_plsMode = integerToEnum<PlsMode>(plsMode & 0x03);
+	} else {
+		const std::string plsModeStr = params.getParameter("plsm");
+		if (!plsModeStr.empty()) {
+			if (plsModeStr == "root") {
+				_plsMode = PlsMode::Root;
+			} else if (plsModeStr == "gold") {
+				_plsMode = PlsMode::Gold;
+			} else if (plsModeStr == "combo") {
+				_plsMode = PlsMode::Combo;
+			}
+		}
 	}
 	const int sr = params.getIntParameter("sr");
 	if (sr != -1) {
