@@ -44,7 +44,7 @@ class Server :
 		// =====================================================================
 	public:
 
-		Server(int ssdpTTL, const std::string &bindIPAddress, const Properties &properties);
+		Server(int ssdpTTL, const Properties& properties);
 
 		virtual ~Server();
 
@@ -133,7 +133,6 @@ class Server :
 
 		base::Mutex _mutex;
 		const Properties &_properties;
-		std::string _bindIPAddress;
 		std::string _xmlDeviceDescriptionFile;
 		std::string _location;
 		std::size_t _announceTimeSec;

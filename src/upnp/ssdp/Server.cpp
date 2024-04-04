@@ -46,12 +46,10 @@ namespace upnp::ssdp {
 
 Server::Server(
 		const int ssdpTTL,
-		const std::string &bindIPAddress,
 		const Properties &properties) :
 	XMLSupport(),
 	ThreadBase("SSDP Server"),
 	_properties(properties),
-	_bindIPAddress(bindIPAddress),
 	_xmlDeviceDescriptionFile("Not Set"),
 	_location("Not Set"),
 	_announceTimeSec(60),
@@ -110,7 +108,7 @@ void Server::threadEntry() {
 	SocketClient udpMultiSend;
 	SocketClient udpMultiListen;
 	initUDPSocket(udpMultiSend, "239.255.255.250", SSDP_PORT, _ttl);
-	initMutlicastUDPSocket(udpMultiListen, "239.255.255.250", _bindIPAddress, SSDP_PORT, _ttl);
+	initMutlicastUDPSocket(udpMultiListen, "239.255.255.250", _properties.getBindIPAddress(), SSDP_PORT, _ttl);
 
 	std::time_t repeat_time = 0;
 	struct pollfd pfd[1];
@@ -227,7 +225,7 @@ void Server::checkDefendDeviceID(
 				"DEVICEID.SES.COM: @#4\r\n" \
 				"\r\n";
 		const std::string msg = StringConverter::stringFormat(UPNP_M_SEARCH,
-			_bindIPAddress,
+			_properties.getIpAddress(),
 			SSDP_PORT,
 			_properties.getUPnPVersion(),
 			_deviceID);
@@ -485,7 +483,7 @@ void Server::incrementBootID() {
 void Server::constructLocation() {
 	_xmlDeviceDescriptionFile = _properties.getXMLDeviceDescriptionFile();
 	_location = StringConverter::stringFormat("http://@#1:@#2/@#3",
-		_bindIPAddress,
+		_properties.getIpAddress(),
 		_properties.getHttpPort(),
 		_xmlDeviceDescriptionFile);
 }

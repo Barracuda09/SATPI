@@ -33,16 +33,7 @@ class InterfaceAttr {
 		/// @param bindInterfaceName specifies the network interface name to bind to
 		explicit InterfaceAttr(const std::string &bindInterfaceName);
 
-		virtual ~InterfaceAttr();
-
-		// =====================================================================
-		//  -- Static member functions -----------------------------------------
-		// =====================================================================
-
-	public:
-
-		/// Get the default netowrk buffer size for UDP packets
-		static int getNetworkUDPBufferSize();
+		virtual ~InterfaceAttr() = default;
 
 		// =====================================================================
 		//  -- Other member functions ------------------------------------------
@@ -50,16 +41,23 @@ class InterfaceAttr {
 
 	public:
 
-		/// Get the default netowrk buffer size for UDP packets
-		void bindToInterfaceName(const std::string &ifaceName);
-
 		/// Get the IP address of the used interface
 		const std::string &getIPAddress() const {
 			return _ipAddr;
 		}
 
+		/// Get the IP address to bind the servers to (The requesed or first one that is UP)
+		const std::string &getBindIPAddress() const {
+			return _bindIPAddress;
+		}
+
 		/// Get the UUID of this device
 		std::string getUUID() const;
+
+	protected:
+
+		/// Find the MAC and IP address of the first adapters that is UP, or requested ifaceName (i.e. eth0)
+		bool getAdapterProperties(const std::string &ifaceName);
 
 		// =====================================================================
 		//  -- Data members ----------------------------------------------------
@@ -68,6 +66,7 @@ class InterfaceAttr {
 	protected:
 
 		std::string _ipAddr;           /// ip address of the used interface
+		std::string _bindIPAddress;    /// bind ip address of the servers
 		std::string _macAddrDecorated; /// mac address of the used interface
 		std::string _macAddr;          /// mac address of the used interface
 		std::string _ifaceName;        /// used interface name i.e. eth0

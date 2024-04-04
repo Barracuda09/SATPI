@@ -35,11 +35,9 @@
 HttpServer::HttpServer(
 	base::XMLSupport &xml,
 	StreamManager &streamManager,
-	const std::string &bindIPAddress,
-	Properties &properties) :
+	const Properties &properties) :
 	ThreadBase("HttpServer"),
-	HttpcServer(20, "HTTP", streamManager, bindIPAddress),
-	_properties(properties),
+	HttpcServer(20, "HTTP", streamManager, properties),
 	_xml(xml) {}
 
 HttpServer::~HttpServer() {
@@ -117,7 +115,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 		                               "<a href=\"@#1:@#2/@#3\">link</a>.</p>\r\n"\
 		                               "</body>\r\n"                           \
 		                               "</html>";
-		docType = StringConverter::stringFormat(HTML_MOVED, _bindIPAddress, _properties.getHttpPort(), "index.html");
+		docType = StringConverter::stringFormat(HTML_MOVED, _properties.getIpAddress(), _properties.getHttpPort(), "index.html");
 		docTypeSize = docType.size();
 
 		getHtmlBodyWithContent(htmlBody, HTML_MOVED_PERMA, "/index.html", CONTENT_TYPE_XML, docTypeSize, 0);
@@ -157,9 +155,9 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 						if (docType.find("@#1") != std::string::npos) {
 							// @todo 'presentationURL' change this later
 							const std::string presentationURL = StringConverter::stringFormat("http://@#1:@#2/",
-									_bindIPAddress,
+									_properties.getIpAddress(),
 									std::to_string(_properties.getHttpPort()));
-							const std::string modelName = StringConverter::stringFormat("SatPI Server (@#1)", _bindIPAddress);
+							const std::string modelName = StringConverter::stringFormat("SatPI Server (@#1)", _properties.getIpAddress());
 							const std::string newDocType = StringConverter::stringFormat(docType.data(),
 								modelName, _properties.getUPnPVersion(), _properties.getUUID(), presentationURL,
 								_streamManager.getXMLDeliveryString(), _properties.getXSatipM3U());
@@ -181,9 +179,9 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 					// did we read our *.m3u, we assume there are some @#1
 					if (docType.find("@#1") != std::string::npos) {
 						const std::string rtsp = StringConverter::stringFormat("@#1:@#2",
-								_bindIPAddress,	std::to_string(_properties.getRtspPort()));
+								_properties.getIpAddress(), std::to_string(_properties.getRtspPort()));
 						const std::string http = StringConverter::stringFormat("@#1:@#2",
-								_bindIPAddress,	std::to_string(_properties.getHttpPort()));
+								_properties.getIpAddress(), std::to_string(_properties.getHttpPort()));
 						std::stringstream docTypeStream(docType);
 						docType.clear();
 						for (std::string line; std::getline(docTypeStream, line); ) {

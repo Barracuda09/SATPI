@@ -40,42 +40,25 @@
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 
-	InterfaceAttr::InterfaceAttr(const std::string &bindInterfaceName) {
-		bindToInterfaceName(bindInterfaceName);
-	}
-
-	InterfaceAttr::~InterfaceAttr() {}
-
-	// =========================================================================
-	//  -- Static member functions ---------------------------------------------
-	// =========================================================================
-
-	int InterfaceAttr::getNetworkUDPBufferSize() {
-		int fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if (fd == -1) {
-			SI_LOG_PERROR("socket");
-			return 0;
-		}
-		int bufferSize;
-		socklen_t optlen = sizeof(bufferSize);
-		if (::getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bufferSize, &optlen) == -1) {
-			SI_LOG_PERROR("getsockopt: SO_SNDBUF");
-			bufferSize = 0;
-		}
-		CLOSE_FD(fd);
-		return bufferSize / 2;
+	InterfaceAttr::InterfaceAttr(const std::string &bindInterfaceName) :
+			_ipAddr("0.0.0.0"),
+			_bindIPAddress("0.0.0.0"),
+			_macAddrDecorated("00:00:00:00:00:00"),
+			_macAddr("000000000000") {
+		getAdapterProperties(bindInterfaceName);
 	}
 
 	// =========================================================================
 	//  -- Other member functions ----------------------------------------------
 	// =========================================================================
 
-	void InterfaceAttr::bindToInterfaceName(const std::string &ifaceName) {
-		struct ifaddrs *ifaddrHead, *ifa;
+	bool InterfaceAttr::getAdapterProperties(const std::string &ifaceName) {
+		struct ifaddrs* ifaddrHead;
+		struct ifaddrs* ifa;
 		// get list of interfaces
 		if (::getifaddrs(&ifaddrHead) == -1) {
 			SI_LOG_PERROR("getifaddrs");
-			return;
+			return false;
 		}
 		bool foundInterface = false;
 		// go through list, find requested ifaceName or first usable interface
@@ -102,6 +85,7 @@
 					continue;
 				}
 				struct ifreq ifr;
+				std::memset(&ifr, 0, sizeof(ifr));
 				ifr.ifr_addr.sa_family = family;
 				std::memcpy(&ifr.ifr_name, ifa->ifa_name, IFNAMSIZ);
 				if (::ioctl(fd, SIOCGIFHWADDR, &ifr) != 0) {
@@ -110,8 +94,8 @@
 					continue;
 				}
 				CLOSE_FD(fd);
-				// Check did we find the requested or we should get the first usable
-				if (ifaceName == ifr.ifr_name || ifaceName.empty()) {
+				// Check did we find the requested or we should get the first usable that is UP
+				if ((ifr.ifr_flags & IFF_UP) == IFF_UP && (ifaceName == ifr.ifr_name || ifaceName.empty())) {
 					const unsigned char* mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
 					_macAddrDecorated = StringConverter::stringFormat("@#1:@#2:@#3:@#4:@#5:@#6",
 						HEXPL(mac[0], 2), HEXPL(mac[1], 2), HEXPL(mac[2], 2),
@@ -121,6 +105,9 @@
 						HEXPL(mac[3], 2), HEXPL(mac[4], 2), HEXPL(mac[5], 2));
 					_ifaceName = ifr.ifr_name;
 					_ipAddr = host;
+					if (!ifaceName.empty()) {
+						_bindIPAddress = host;
+					}
 					foundInterface = true;
 					break;
 				}
@@ -129,7 +116,7 @@
 		// free linked list
 		::freeifaddrs(ifaddrHead);
 		if (foundInterface) {
-			SI_LOG_INFO("@#1: @#2 [@#3]", _ifaceName, _ipAddr, _macAddrDecorated);
+			SI_LOG_INFO("@#1: @#2 [@#3] Bind: @#4", _ifaceName, _ipAddr, _macAddrDecorated, _bindIPAddress);
 		} else {
 			if (ifaceName.empty()) {
 				SI_LOG_INFO("Bind failed: No usable network interface found");
@@ -137,6 +124,7 @@
 				SI_LOG_INFO("Bind failed: Could not find [@#1] interface", ifaceName);
 			}
 		}
+		return foundInterface;
 	}
 
 	std::string InterfaceAttr::getUUID() const {

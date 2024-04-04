@@ -38,10 +38,9 @@ class HttpServer :
 	public:
 
 		HttpServer(
-			base::XMLSupport &xml,
-			StreamManager &streamManager,
-			const std::string &bindIPAddress,
-			Properties &properties);
+			base::XMLSupport& xml,
+			StreamManager& streamManager,
+			const Properties& properties);
 
 		virtual ~HttpServer();
 
@@ -74,7 +73,6 @@ class HttpServer :
 		// =======================================================================
 	private:
 
-		Properties &_properties;
 		base::XMLSupport &_xml;
 
 };

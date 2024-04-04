@@ -25,6 +25,7 @@
 #include <socket/TcpSocket.h>
 #include <Unused.h>
 
+FW_DECL_NS0(Properties);
 FW_DECL_NS0(Stream);
 FW_DECL_NS0(StreamManager);
 
@@ -64,9 +65,11 @@ class HttpcServer :
 		// =======================================================================
 	public:
 
-		HttpcServer(int maxClients, const std::string &protocol,
-			StreamManager &streamManager,
-			const std::string &bindIPAddress);
+		HttpcServer(
+			int maxClients,
+			const std::string& protocol,
+			StreamManager& streamManager,
+			const Properties& properties);
 
 		virtual ~HttpcServer() = default;
 
@@ -97,7 +100,11 @@ class HttpcServer :
 		}
 
 		/// RTSP Method
-		virtual void methodDescribe(const std::string &UNUSED(sessionID), int UNUSED(cseq), FeIndex UNUSED(index), std::string &UNUSED(htmlBody)) {}
+		virtual void methodDescribe(
+			const std::string &UNUSED(sessionID),
+			int UNUSED(cseq),
+			FeIndex UNUSED(index),
+			std::string &UNUSED(htmlBody)) {}
 
 		/// Process the data received from @c SocketClient
 		virtual bool process(SocketClient &client) final;
@@ -115,8 +122,8 @@ class HttpcServer :
 		// =======================================================================
 	protected:
 
-		StreamManager &_streamManager;
-		std::string _bindIPAddress;
+		StreamManager& _streamManager;
+		const Properties& _properties;
 
 };
 

@@ -28,11 +28,12 @@ extern const char* const satpi_version;
 // =============================================================================
 
 Properties::Properties(
-		const std::string &uuid,
-		const std::string &currentPathOpt,
-		const std::string &appdataPathOpt,
-		const std::string &webPathOpt,
-		const std::string &ipAddress,
+		const std::string& uuid,
+		const std::string& currentPathOpt,
+		const std::string& appdataPathOpt,
+		const std::string& webPathOpt,
+		const std::string& ipAddress,
+		const std::string& bindIPAddress,
 		const unsigned int httpPortOpt,
 		const unsigned int rtspPortOpt) :
 	XMLSupport(),
@@ -48,6 +49,7 @@ Properties::Properties(
 	_httpPortOpt = httpPortOpt;
 	_rtspPortOpt = rtspPortOpt;
 	_ipAddress = ipAddress;
+	_bindIPAddress = bindIPAddress;
 
 	_webPath = webPathOpt.empty() ? (currentPathOpt + "/" + "web") : webPathOpt;
 	_appdataPath = appdataPathOpt.empty() ? currentPathOpt : appdataPathOpt;
@@ -103,6 +105,7 @@ void Properties::doAddToXML(std::string &xml) const {
 	ADD_XML_NUMBER_INPUT(xml, "httpport", _httpPort, HTTP_PORT_MIN, TCP_PORT_MAX);
 	ADD_XML_NUMBER_INPUT(xml, "rtspport", _rtspPort, RTSP_PORT_MIN, TCP_PORT_MAX);
 	ADD_XML_TEXT_INPUT(xml, "ipaddress", _ipAddress);
+	ADD_XML_TEXT_INPUT(xml, "bindipaddress", _bindIPAddress);
 	ADD_XML_TEXT_INPUT(xml, "xsatipm3u", _xSatipM3U);
 	ADD_XML_TEXT_INPUT(xml, "xmldesc", _xmlDeviceDescriptionFile);
 	ADD_XML_TEXT_INPUT(xml, "webPath", _webPath);
@@ -178,6 +181,11 @@ std::string Properties::getIpAddress() const {
 	return _ipAddress;
 }
 
+std::string Properties::getBindIPAddress() const {
+	base::MutexLock lock(_mutex);
+	return _bindIPAddress;
+}
+
 std::time_t Properties::getApplicationStartTime() const {
 	base::MutexLock lock(_mutex);
 	return _appStartTime;
@@ -188,7 +196,7 @@ bool Properties::exitApplication() const {
 	return _exitApplication;
 }
 
-void Properties::setExitApplication() {
+void Properties::setExitApplication() const {
 	base::MutexLock lock(_mutex);
 	_exitApplication = true;
 }

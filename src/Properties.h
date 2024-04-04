@@ -44,11 +44,12 @@ class Properties :
 	public:
 
 		Properties(
-			const std::string &uuid,
-			const std::string &currentPathOpt,
-			const std::string &appdataPathOpt,
-			const std::string &webPathOpt,
-			const std::string &ipAddress,
+			const std::string& uuid,
+			const std::string& currentPathOpt,
+			const std::string& appdataPathOpt,
+			const std::string& webPathOpt,
+			const std::string& ipAddress,
+			const std::string& bindIPAddress,
 			unsigned int httpPortOpt,
 			unsigned int rtspPortOpt);
 
@@ -103,8 +104,11 @@ class Properties :
 		/// Get RtspPort
 		unsigned int getRtspPort() const;
 
-		/// Get IP Adress
+		/// Get IP Address
 		std::string getIpAddress() const;
+
+		/// Get Bind IP Address for servers
+		std::string getBindIPAddress() const;
 
 		/// Get application start time
 		std::time_t getApplicationStartTime() const;
@@ -113,7 +117,7 @@ class Properties :
 		bool exitApplication() const;
 
 		/// Sets the exit application flag
-		void setExitApplication();
+		void setExitApplication() const;
 
 	protected:
 
@@ -130,6 +134,7 @@ class Properties :
 		std::string _webPath;
 		std::string _appdataPath;
 		std::string _ipAddress;
+		std::string _bindIPAddress;
 		unsigned int _httpPort;
 		unsigned int _rtspPort;
 		std::string _webPathOpt;
@@ -137,7 +142,7 @@ class Properties :
 		unsigned int _httpPortOpt;
 		unsigned int _rtspPortOpt;
 		std::time_t _appStartTime;     // the application start time (EPOCH)
-		bool _exitApplication;
+		mutable bool _exitApplication;
 };
 
 #endif // PROPERTIES_H_INCLUDE

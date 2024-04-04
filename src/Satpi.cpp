@@ -34,10 +34,10 @@ SatPI::SatPI(const SatPI::Params &params) :
 	_interface(params.ifaceName),
 	_streamManager(),
 	_properties(_interface.getUUID(), params.currentPath, params.appdataPath, params.webPath,
-		_interface.getIPAddress(), params.httpPort, params.rtspPort),
-	_httpServer(*this, _streamManager, _interface.getIPAddress(), _properties),
-	_rtspServer(_streamManager, _interface.getIPAddress()),
-	_ssdpServer(params.ssdpTTL, _interface.getIPAddress(), _properties) {
+		_interface.getIPAddress(), _interface.getBindIPAddress(), params.httpPort, params.rtspPort),
+	_httpServer(*this, _streamManager, _properties),
+	_rtspServer(_streamManager, _properties),
+	_ssdpServer(params.ssdpTTL, _properties) {
 	_properties.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	_ssdpServer.setFunctionNotifyChanges(std::bind(&XMLSaveSupport::notifyChanges, this));
 	//

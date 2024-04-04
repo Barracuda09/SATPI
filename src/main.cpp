@@ -355,7 +355,6 @@ int main(int argc, char *argv[]) {
 	// notify we are alive
 	SI_LOG_INFO("--- Starting SatPI version: @#1 ---", satpi_version);
 	SI_LOG_INFO("Number of processors online: @#1", base::ThreadBase::getNumberOfProcessorsOnline());
-	SI_LOG_INFO("Default network buffer size: @#1 KBytes", InterfaceAttr::getNetworkUDPBufferSize() / 1024);
 	do {
 		try {
 			restartApp = false;
@@ -368,7 +367,7 @@ int main(int argc, char *argv[]) {
 
 			// Loop
 			while (!exitApp && !satpi.exitApplication() && !restartApp) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(120));
+				std::this_thread::sleep_for(std::chrono::milliseconds(150));
 			}
 		} catch (...) {
 			SI_LOG_ERROR("Caught an Exception");

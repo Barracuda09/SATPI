@@ -20,6 +20,7 @@
 #include <RtspServer.h>
 
 #include <Log.h>
+#include <Properties.h>
 #include <Stream.h>
 #include <StreamManager.h>
 #include <socket/SocketClient.h>
@@ -28,9 +29,9 @@
 
 extern const char* const satpi_version;
 
-RtspServer::RtspServer(StreamManager& streamManager, const std::string& bindIPAddress) :
+RtspServer::RtspServer(StreamManager& streamManager, const Properties& properties) :
 		ThreadBase("RtspServer"),
-		HttpcServer(20, "RTSP", streamManager, bindIPAddress) {}
+		HttpcServer(20, "RTSP", streamManager, properties) {}
 
 RtspServer::~RtspServer() {
 	cancelThread();
@@ -69,7 +70,7 @@ void RtspServer::methodDescribe(
 		"@#7";
 
 	std::string desc = _streamManager.getSDPSessionLevelString(
-			_bindIPAddress, sessionID);
+			_properties.getIpAddress(), sessionID);
 	std::size_t streamsSetup = 0;
 
 	// Lambda Expression 'setupDescribeMediaLevelString'
@@ -96,10 +97,10 @@ void RtspServer::methodDescribe(
 	// Are there any streams setup already
 	if (streamsSetup != 0) {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 200 OK\r\n", satpi_version,
-			cseq, _bindIPAddress, desc.size(), sessionIDHeaderField, desc);
+			cseq, _properties.getIpAddress(), desc.size(), sessionIDHeaderField, desc);
 	} else {
 		htmlBody = StringConverter::stringFormat(RTSP_DESCRIBE, "RTSP/1.0 404 Not Found\r\n", satpi_version,
-			cseq, _bindIPAddress, 0, sessionIDHeaderField, "");
+			cseq, _properties.getIpAddress(), 0, sessionIDHeaderField, "");
 	}
 }
 

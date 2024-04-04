@@ -78,17 +78,17 @@ const std::string HttpcServer::CONTENT_TYPE_TEXT        = "text/parameters";
 
 HttpcServer::HttpcServer(
 		int maxClients,
-		const std::string &protocol,
-		StreamManager &streamManager,
-		const std::string &bindIPAddress) :
+		const std::string& protocol,
+		StreamManager& streamManager,
+		const Properties& properties) :
 		TcpSocket(maxClients, protocol),
 		_streamManager(streamManager),
-		_bindIPAddress(bindIPAddress) {}
+		_properties(properties) {}
 
 void HttpcServer::initialize(
 		int port,
 		bool nonblock) {
-	TcpSocket::initialize(_bindIPAddress, port, nonblock);
+	TcpSocket::initialize(_properties.getBindIPAddress(), port, nonblock);
 }
 
 void HttpcServer::getHtmlBodyWithContent(std::string &htmlBody,
@@ -200,7 +200,7 @@ void HttpcServer::processStreamingRequest(SocketClient &client) {
 					stream->teardown(streamClient);
 				}
 			} else if (method == "PLAY") {
-				httpcReply = streamClient->getPlayMethodReply(stream->getStreamID(), _bindIPAddress);
+				httpcReply = streamClient->getPlayMethodReply(stream->getStreamID(), _properties.getIpAddress());
 
 				if (!stream->update(streamClient)) {
 					// something wrong here... send 408 error

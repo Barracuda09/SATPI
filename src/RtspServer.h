@@ -38,7 +38,7 @@ class RtspServer :
 		// =========================================================================
 	public:
 
-		RtspServer(StreamManager& streamManager, const std::string& bindIPAddress);
+		RtspServer(StreamManager& streamManager, const Properties& properties);
 
 		virtual ~RtspServer();
 
@@ -57,7 +57,6 @@ class RtspServer :
 		// =====================================================================
 		// -- Data members -----------------------------------------------------
 		// =====================================================================
-
 };
 
 #endif // RTSP_SERVER_H_INCLUDE
