@@ -149,7 +149,6 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			}
 			continue;
 		}
-		const uint8_t cc = ptr[3] & 0x0f;
 		_pidTable.addPIDData(pid, ptr[3]);
 
 		switch (pid) {
