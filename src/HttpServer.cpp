@@ -102,6 +102,7 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 	std::string docType;
 	int docTypeSize = 0;
 	bool exitRequest = false;
+	bool restartRequest = false;
 
 	// Parse what to get
 	if (client.isRootFile()) {
@@ -145,6 +146,9 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 			} else if (file == "STOP") {
 				exitRequest = true;
 				getHtmlBodyWithContent(htmlBody, HTML_NO_RESPONSE, "", CONTENT_TYPE_HTML, 0, 0);
+			} else if (file == "RESTART") {
+				restartRequest = true;
+				getHtmlBodyWithContent(htmlBody, HTML_RESET_CONTENT, "", CONTENT_TYPE_HTML, 0, 0);
 			} else if ((docTypeSize = readFile(filePath.data(), docType))) {
 				if (file.find(".xml") != std::string::npos) {
 					// check if the request is the SAT>IP description xml then fill in the server version, UUID,
@@ -229,6 +233,9 @@ bool HttpServer::methodGet(SocketClient &client, bool headOnly) {
 		// check did we have stop request
 		if (exitRequest) {
 			_properties.setExitApplication();
+		}
+		if (restartRequest) {
+			_properties.setRestartApplication();
 		}
 		return true;
 	}

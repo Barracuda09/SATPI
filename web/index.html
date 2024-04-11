@@ -61,6 +61,10 @@
 		$('#StopDialog').modal();
 	}
 
+	function restartSatPI() {
+		$('#RestartDialog').modal();
+	}
+
 </script>
 
 </head>
@@ -84,7 +88,27 @@
 				<a href="STOP" class="btn btn-danger" role="button">Yes</a>
 				<button type="button" class="btn btn-success" data-dismiss="modal">No</button>
 			</div>
+		</div>
+	</div>
+</div>
 
+<!-- Restart Dialog -->
+<div class="modal fade" id="RestartDialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Restart SatPI Server?</h4>
+				<button type="button" class="close" data-dismiss="modal">×</button>
+			</div>
+			<div class="modal-body">
+				Are you sure?
+			</div>
+
+			<!-- Modal footer -->
+			<div class="modal-footer">
+				<a href="RESTART" class="btn btn-danger" role="button">Yes</a>
+				<button type="button" class="btn btn-success" data-dismiss="modal">No</button>
+			</div>
 		</div>
 	</div>
 </div>
@@ -108,6 +132,7 @@
 			<tr><td class=\"col-xs-1 \">Satip Description XML</td><td class="col-xs-2">...</td> </tr>
 		</table>
 		<button class="btn btn-danger" type="button" onclick="stopSatPI()"><i class="fas fa-power-off"></i> Stop</button>
+		<button class="btn btn-warning" type="button" onclick="restartSatPI()"><i class="fas fa-redo"></i> Restart</button>
 		<script>
 			// make menu
 			document.getElementById('menu').innerHTML = buildmenu();

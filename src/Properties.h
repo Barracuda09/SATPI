@@ -119,6 +119,12 @@ class Properties :
 		/// Sets the exit application flag
 		void setExitApplication() const;
 
+		/// Check do we need to restart the application
+		bool restartApplication() const;
+
+		/// Sets the restart application flag
+		void setRestartApplication() const;
+
 	protected:
 
 		// =====================================================================
@@ -143,6 +149,7 @@ class Properties :
 		unsigned int _rtspPortOpt;
 		std::time_t _appStartTime;     // the application start time (EPOCH)
 		mutable bool _exitApplication;
+		mutable bool _restartApplication;
 };
 
 #endif // PROPERTIES_H_INCLUDE

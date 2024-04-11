@@ -366,8 +366,10 @@ int main(int argc, char *argv[]) {
 			SatPI satpi(params);
 
 			// Loop
-			while (!exitApp && !satpi.exitApplication() && !restartApp) {
+			while (!exitApp && !restartApp) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(150));
+				restartApp = satpi.restartApplication();
+				exitApp = satpi.exitApplication();
 			}
 		} catch (...) {
 			SI_LOG_ERROR("Caught an Exception");

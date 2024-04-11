@@ -45,6 +45,7 @@ class HttpcServer :
 
 		static const std::string HTML_OK;
 		static const std::string HTML_NO_RESPONSE;
+		static const std::string HTML_RESET_CONTENT;
 		static const std::string HTML_NOT_FOUND;
 		static const std::string HTML_MOVED_PERMA;
 		static const std::string HTML_REQUEST_TIMEOUT;

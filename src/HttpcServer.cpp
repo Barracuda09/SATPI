@@ -60,6 +60,7 @@ const std::string HttpcServer::HTML_PROTOCOL_HTTP_VERSION = "HTTP/1.1";
 
 const std::string HttpcServer::HTML_OK                  = "200 OK";
 const std::string HttpcServer::HTML_NO_RESPONSE         = "204 No Response";
+const std::string HttpcServer::HTML_RESET_CONTENT       = "205 Reset Content";
 const std::string HttpcServer::HTML_NOT_FOUND           = "404 Not Found";
 const std::string HttpcServer::HTML_MOVED_PERMA         = "301 Moved Permanently";
 const std::string HttpcServer::HTML_REQUEST_TIMEOUT     = "408 Request Timeout";

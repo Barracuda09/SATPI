@@ -111,3 +111,7 @@ bool SatPI::saveXML() const {
 bool SatPI::exitApplication() const {
 	return _properties.exitApplication();
 }
+
+bool SatPI::restartApplication() const {
+	return _properties.restartApplication();
+}

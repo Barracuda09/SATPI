@@ -42,7 +42,8 @@ Properties::Properties(
 	_xSatipM3U("channellist.m3u"),
 	_xmlDeviceDescriptionFile("desc.xml"),
 	_appStartTime(std::time(nullptr)),
-	_exitApplication(false) {
+	_exitApplication(false),
+	_restartApplication(false) {
 
 	_httpPort = httpPortOpt == 0 ? 8875 : httpPortOpt;
 	_rtspPort = rtspPortOpt == 0 ? 554 : rtspPortOpt;
@@ -199,4 +200,14 @@ bool Properties::exitApplication() const {
 void Properties::setExitApplication() const {
 	base::MutexLock lock(_mutex);
 	_exitApplication = true;
+}
+
+bool Properties::restartApplication() const {
+	base::MutexLock lock(_mutex);
+	return _restartApplication;
+}
+
+void Properties::setRestartApplication() const {
+	base::MutexLock lock(_mutex);
+	_restartApplication = true;
 }
