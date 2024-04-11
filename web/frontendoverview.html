@@ -37,7 +37,8 @@
 				} else {
 					page += "<tr>";
 				}
-				page += addTableEntry(xmlDoc, streamID + "streamindex");
+				// Add shortcut to Frontend Info Pages
+				page += '<td align="left"> <a href="frontend.html#' + streamID + '">' + xmlDoc.querySelector(streamID + 'streamindex').innerHTML + '</a></td>';
 				page += addTableEntry(xmlDoc, streamID + "enable");
 				page += addTableEntry(xmlDoc, streamID + "frontendname");
 				page += addTableEntry(xmlDoc, streamID + "type");
@@ -70,7 +71,7 @@
 		if (autoload == 1) {
 			xmlLoaded = xml;
 			document.getElementById("body").innerHTML = buildcontent(xml);
-			$('#body').append('<tr class="table-info"><td align="left">' + '5' + '</td><td/></tr>');
+//			$('#body').append('<tr class="table-info"><td align="left">' + '5' + '</td><td/></tr>');
 		}
 	}
 </script>
