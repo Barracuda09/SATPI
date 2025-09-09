@@ -204,7 +204,11 @@ void Properties::setExitApplication() const {
 
 bool Properties::restartApplication() const {
 	base::MutexLock lock(_mutex);
-	return _restartApplication;
+	if (_restartApplication) {
+		_restartApplication = false;
+		return true;
+	}
+	return false;
 }
 
 void Properties::setRestartApplication() const {

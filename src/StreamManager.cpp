@@ -46,7 +46,11 @@ StreamManager::StreamManager() :
 	XMLSupport(),
 	_decrypt(nullptr) {
 #ifdef LIBDVBCSA
+	SI_LOG_INFO("Initializing Decrypt...");
 	_decrypt = std::make_shared<decrypt::dvbapi::Client>(*this);
+	if (!_decrypt) {
+		SI_LOG_INFO("Initializing Decrypt Failed...");
+	}
 #endif
 }
 
@@ -67,10 +71,10 @@ void StreamManager::enumerateDevices(
 
 	// enumerate streams (frontends)
 	input::dvb::Frontend::enumerate(_streamVector, appDataPath, _decrypt, dvbPath);
-	input::file::TSReader::enumerate(_streamVector, appDataPath, enableUnsecureFrontends);
-	input::stream::Streamer::enumerate(_streamVector, bindIPAddress, appDataPath);
+	input::file::TSReader::enumerate(_streamVector, appDataPath, _decrypt, enableUnsecureFrontends);
+	input::stream::Streamer::enumerate(_streamVector, bindIPAddress, appDataPath, _decrypt);
 	for (int i = 0; i < numberOfChildPIPE; ++i) {
-		input::childpipe::TSReader::enumerate(_streamVector, appDataPath, enableUnsecureFrontends);
+		input::childpipe::TSReader::enumerate(_streamVector, appDataPath, _decrypt, enableUnsecureFrontends);
 	}
 }
 

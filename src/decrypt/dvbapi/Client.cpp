@@ -87,8 +87,7 @@ namespace decrypt::dvbapi {
 	}
 
 	Client::~Client() {
-		cancelThread();
-		joinThread();
+		terminateThread();
 	}
 
 	void Client::decrypt(const FeIndex index, const FeID id, mpegts::PacketBuffer &buffer) {
@@ -230,7 +229,7 @@ namespace decrypt::dvbapi {
 			return false;
 		}
 
-		client.setSocketTimeoutInSec(2);
+		client.setSocketTimeoutInSec(1);
 
 		if (!client.connectTo()) {
 			SI_LOG_ERROR("Connecting to OSCam Server failed");
@@ -374,7 +373,7 @@ namespace decrypt::dvbapi {
 		// set time to try to connect
 		std::time_t retryTime = std::time(nullptr) + 2;
 
-		for (;; ) {
+		while (running()) {
 			// try to connect to server
 			if (!_connected) {
 				pfd[0].events  = POLLIN | POLLHUP | POLLRDNORM | POLLERR;

@@ -150,7 +150,6 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 			continue;
 		}
 		_pidTable.addPIDData(pid, ptr[3]);
-
 		switch (pid) {
 			case 0:
 				if (!_pat->isCollected()) {

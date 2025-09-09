@@ -52,11 +52,12 @@ Streamer::Streamer(
 void Streamer::enumerate(
 		StreamSpVector &streamVector,
 		const std::string &bindIPAddress,
-		const std::string &appDataPath) {
+		const std::string &appDataPath,
+		decrypt::dvbapi::SpClient decrypt) {
 	SI_LOG_INFO("Setting up TS Streamer");
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::stream::SpStreamer streamer = std::make_shared<Streamer>(size, bindIPAddress, appDataPath);
-	streamVector.push_back(Stream::makeSP(streamer, nullptr));
+	streamVector.push_back(Stream::makeSP(streamer, decrypt));
 }
 
 // =============================================================================

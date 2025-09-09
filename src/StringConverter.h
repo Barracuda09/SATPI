@@ -52,13 +52,13 @@ class StringConverter  {
 			(void)dummy;
 
 			// Make as little reallocations as possible, so calc size
-			std::string line;
 			std::size_t size = std::strlen(format);
 			for (std::size_t i = 1; i < vectArgs.size(); ++i) {
 				size += vectArgs[i].size();
 			}
 			// remove @#-tags from size (-1 because of always '?' arg)
 			size -= (vectArgs.size() - 1) * 2;
+			std::string line;
 			line.reserve(size);
 
 			for (; *format != '\0'; ++format) {
@@ -188,7 +188,7 @@ class StringConverter  {
 			std::ostringstream stream;
 			stream.setf(std::ios::fixed);
 			stream.precision(4);
-			stream << std::move(t);
+			stream << t;
 			vec.emplace_back(std::move(stream.str()));
 		}
 };

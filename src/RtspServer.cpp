@@ -30,12 +30,11 @@
 extern const char* const satpi_version;
 
 RtspServer::RtspServer(StreamManager& streamManager, const Properties& properties) :
-		ThreadBase("RtspServer"),
+		ThreadBase("RTSP Server"),
 		HttpcServer(20, "RTSP", streamManager, properties) {}
 
 RtspServer::~RtspServer() {
-	cancelThread();
-	joinThread();
+	terminateThread();
 }
 
 void RtspServer::initialize(
@@ -48,12 +47,13 @@ void RtspServer::initialize(
 void RtspServer::threadEntry() {
 	SI_LOG_INFO("Setting up RTSP server");
 
-	for (;;) {
+	while (running()) {
 		// call poll with a timeout of 500 ms
 		poll(500);
 
 		_streamManager.checkForSessionTimeout();
 	}
+	SI_LOG_INFO("Stopping RTSP server");
 }
 
 void RtspServer::methodDescribe(

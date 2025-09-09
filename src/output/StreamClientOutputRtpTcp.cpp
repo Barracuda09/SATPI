@@ -128,8 +128,11 @@ void StreamClientOutputRtpTcp::doWriteRTCPData(
 
 	// send the RTCP/TCP packet
 	if (!writeHttpData(iov, 4)) {
-		SI_LOG_ERROR("Frontend: @#1, Error sending RTCP/TCP Stream Data to @#2:@#3", _feID,
-			_ipAddressOfStream, getHttpSocketPort());
+		if (!isSelfDestructing()) {
+			SI_LOG_ERROR("Frontend: @#1, Error sending RTCP/TCP Stream Data to @#2:@#3", _feID,
+				_ipAddressOfStream, getHttpSocketPort());
+			selfDestruct();
+		}
 	}
 }
 

@@ -49,12 +49,13 @@ TSReader::TSReader(
 void TSReader::enumerate(
 		StreamSpVector &streamVector,
 		const std::string &appDataPath,
+		decrypt::dvbapi::SpClient decrypt,
 		const bool enableUnsecureFrontends) {
 	SI_LOG_INFO("Setting up TS Reader using path: @#1", appDataPath);
 	const StreamSpVector::size_type size = streamVector.size();
 	const input::file::SpTSReader tsreader =
 		std::make_shared<input::file::TSReader>(size, appDataPath, enableUnsecureFrontends);
-	streamVector.push_back(Stream::makeSP(tsreader, nullptr));
+	streamVector.push_back(Stream::makeSP(tsreader, decrypt));
 }
 
 // =============================================================================

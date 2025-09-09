@@ -116,14 +116,16 @@ void PMT::cleanPI(unsigned char *data) {
 		for (int i = pmt.size(); i < 188; ++i) {
 			pmt += 0xFF;
 		}
+
+		static bool printOnce = false;
+		if (!printOnce) {
+			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, OLD PMT data", 99);
+			SI_LOG_BIN_DEBUG(pmt.data(), 188, "Frontend: @#1, NEW PMT data", 99);
+			printOnce = true;
+		}
+
 		// copy new PMT to buffer
 		memcpy(data, pmt.data(), 188);
-
-		static bool once = true;
-		if (once) {
-			SI_LOG_BIN_DEBUG(data, 188, "Frontend: @#1, NEW PMT data", 99);
-			once = false;
-		}
 
 	} else {
 		// Clear PID to NULL packet

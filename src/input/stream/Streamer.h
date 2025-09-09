@@ -32,6 +32,7 @@
 #include <poll.h>
 
 FW_DECL_SP_NS2(input, stream, Streamer);
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
@@ -63,7 +64,8 @@ class Streamer :
 		static void enumerate(
 			StreamSpVector &streamVector,
 			const std::string &bindIPAddress,
-			const std::string &appDataPath);
+			const std::string &appDataPath,
+			decrypt::dvbapi::SpClient decrypt);
 
 		// =========================================================================
 		// -- base::XMLSupport -----------------------------------------------------

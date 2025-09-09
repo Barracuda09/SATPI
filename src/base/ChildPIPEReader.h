@@ -95,7 +95,7 @@ class ChildPIPEReader {
 
 				::execvp(argv[0], argv);
 				SI_LOG_PERROR("execvp");
-				exit(1);
+				return;
 			}
 			// This is the parent process
 			CLOSE_FD(pipefd[WRITE]);

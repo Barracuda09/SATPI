@@ -204,6 +204,13 @@ namespace {
 			"\t--no-daemon                   do NOT daemonize\r\n" \
 			"\t--no-ssdp                     do NOT advertise server\r\n", prog_name);
 	}
+
+	void setupSignals() {
+		signal(SIGSEGV, child_handler);
+		signal(SIGKILL, child_handler);
+		signal(SIGALRM, child_handler);
+		signal(SIGPIPE, SIG_IGN);
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -349,8 +356,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// trap signals that we expect to receive
-	signal(SIGSEGV, child_handler);
-	signal(SIGPIPE, SIG_IGN);
+	setupSignals();
 
 	// notify we are alive
 	SI_LOG_INFO("--- Starting SatPI version: @#1 ---", satpi_version);
@@ -372,7 +378,7 @@ int main(int argc, char *argv[]) {
 				exitApp = satpi.exitApplication();
 			}
 		} catch (...) {
-			SI_LOG_ERROR("Caught an Exception");
+			SI_LOG_ERROR("Main: Caught an Exception");
 		}
 		if (restartApp) {
 			SI_LOG_INFO("--- Restarting SatPI version: @#1 ---", satpi_version);

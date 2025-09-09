@@ -58,8 +58,7 @@ Server::Server(
 	_ttl(ssdpTTL) {}
 
 Server::~Server() {
-	cancelThread();
-	joinThread();
+	terminateThread();
 }
 
 // =============================================================================
@@ -116,7 +115,7 @@ void Server::threadEntry() {
 	pfd[0].events = POLLIN | POLLHUP | POLLRDNORM | POLLERR;
 	pfd[0].revents = 0;
 
-	for (;; ) {
+	while (running()) {
 		// call poll with a timeout of 500 ms
 		const int pollRet = poll(pfd, 1, 500);
 
@@ -157,6 +156,7 @@ void Server::threadEntry() {
 	}
 	// we should send bye bye
 	sendByeBye(udpMultiSend, _deviceID, _properties.getUUID().data());
+	SI_LOG_INFO("Stopping SSDP server");
 }
 
 void Server::checkReply(

@@ -66,8 +66,6 @@ static char fileFIFO[] = "/tmp/fifo";
 		SI_LOG_INFO("Stopping DVB-CA Handler");
 		CLOSE_FD(_fdFifo);
 		close();
-		cancelThread();
-		joinThread();
 		::unlink(fileFIFO);
 	}
 

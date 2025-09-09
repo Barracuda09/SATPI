@@ -26,104 +26,104 @@
 
 namespace base {
 
-	/// ThreadBase can be use to implement thread functionality by inheriting
-	/// this base class
-	class ThreadBase {
-		public:
-			enum class Priority {
-				High,
-				AboveNormal,
-				Normal,
-				BelowNormal,
-				Idle
-			};
+/// ThreadBase can be use to implement thread functionality by inheriting
+/// this base class
+class ThreadBase {
+	public:
+		enum class Priority {
+			High,
+			AboveNormal,
+			Normal,
+			BelowNormal,
+			Idle
+		};
 
-			// ===================================================================
-			//  -- Constructors and destructor -----------------------------------
-			// ===================================================================
-			explicit ThreadBase(const std::string &name);
+		// =========================================================================
+		//  -- Constructors and destructor -----------------------------------------
+		// =========================================================================
+		explicit ThreadBase(const std::string &name);
 
-			virtual ~ThreadBase();
+		virtual ~ThreadBase();
 
-			// ===================================================================
-			// -- Static member functions ----------------------------------------
-			// ===================================================================
+		// =========================================================================
+		// -- Static member functions ----------------------------------------------
+		// =========================================================================
+	public:
 
-		public:
+		/// Get the number of processors that are online (available)
+		/// @return @c returns the number of processors that are online
+		static int getNumberOfProcessorsOnline();
 
-			/// Get the number of processors that are online (available)
-			/// @return @c returns the number of processors that are online
-			static int getNumberOfProcessorsOnline();
+		/// Get the number of processors that are on this host
+		/// @return @c returns the number of processors that are in this host
+		static int getNumberOfProcessorsOnHost();
 
-			/// Get the number of processors that are on this host
-			/// @return @c returns the number of processors that are in this host
-			static int getNumberOfProcessorsOnHost();
+		// =========================================================================
+		// -- Other member functions -----------------------------------------------
+		// =========================================================================
+	public:
 
-			// ===================================================================
-			// -- Other member functions -----------------------------------------
-			// ===================================================================
+		/// Start the Thread
+		/// @return true if thread is running false if there was an error
+		bool startThread();
 
-		public:
+		/// Is thread still running
+		bool running() const {
+			return _run;
+		}
 
-			/// Start the Thread
-			/// @return true if thread is running false if there was an error
-			bool startThread();
-
-			/// Is thread still running
-			bool running() const {
-				return _run;
+		/// Terminate this thread, if the thread did not stop within the
+		/// timeout it will be cancelled
+		void terminateThread() {
+			if (_run) {
+				stopThread();
+				joinThread();
 			}
+		}
 
-			/// Terminate this thread, if the thread did not stop within the
-			/// timeout it will be cancelled
-			void terminateThread() {
-				if (_run) {
-					stopThread();
-					joinThread();
-				}
-			}
+		/// Stop the running thread give 5.0 sec to stop else cancel it
+		void stopThread();
 
-			/// Stop the running thread give 5.0 sec to stop else cancel it
-			void stopThread();
+		/// Cancel the running thread
+		void cancelThread();
 
-			/// Cancel the running thread
-			void cancelThread();
+		/// Will not return until the internal thread has exited.
+		void joinThread();
 
-			/// Will not return until the internal thread has exited.
-			void joinThread();
+		/// This will set the threads affinity (which CPU is used).
+		/// @param cpu Set threads affinity with this CPU.
+		void setAffinity(int cpu);
 
-			/// This will set the threads affinity (which CPU is used).
-			/// @param cpu Set threads affinity with this CPU.
-			void setAffinity(int cpu);
+		/// This will get the scheduled affinity of this thread.
+		/// @return @c returns the affinity of this thread.
+		int getScheduledAffinity() const;
 
-			/// This will get the scheduled affinity of this thread.
-			/// @return @c returns the affinity of this thread.
-			int getScheduledAffinity() const;
+		/// Set the thread priority of the current thread.
+		/// @param priority The priority to set.
+		/// @return @c true if the function was successful, otherwise @c false is
+		/// returned.
+		bool setPriority(const Priority priority);
 
-			/// Set the thread priority of the current thread.
-			/// @param priority The priority to set.
-			/// @return @c true if the function was successful, otherwise @c false is
-			/// returned.
-			bool setPriority(const Priority priority);
+	protected:
 
-		protected:
+		/// thread entry, do not leave this function
+		virtual void threadEntry() = 0;
 
-			/// thread entry, do not leave this function
-			virtual void threadEntry() = 0;
+	private:
+		static void * threadEntryFunc(void *arg) {(static_cast<ThreadBase *>(arg))->threadEntryBase(); return nullptr;}
 
-		private:
-			static void * threadEntryFunc(void *arg) {(static_cast<ThreadBase *>(arg))->threadEntryBase(); return nullptr;}
+		void threadEntryBase();
 
-			void threadEntryBase();
+		// =========================================================================
+		// -- Data members ---------------------------------------------------------
+		// =========================================================================
+	private:
 
-			// =======================================================================
-			// -- Data members -------------------------------------------------------
-			// =======================================================================
-			pthread_t        _thread;
-			std::atomic_bool _run;
-			std::atomic_bool _exit;
-			std::string      _name;
-	};
+		pthread_t        _thread;
+		std::atomic_bool _run;
+		std::atomic_bool _exit;
+		std::string      _name;
+};
 
 } // namespace base
 

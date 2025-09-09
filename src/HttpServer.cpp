@@ -36,13 +36,12 @@ HttpServer::HttpServer(
 	base::XMLSupport &xml,
 	StreamManager &streamManager,
 	const Properties &properties) :
-	ThreadBase("HttpServer"),
+	ThreadBase("HTTP Server"),
 	HttpcServer(20, "HTTP", streamManager, properties),
 	_xml(xml) {}
 
 HttpServer::~HttpServer() {
-	cancelThread();
-	joinThread();
+	terminateThread();
 }
 
 void HttpServer::initialize(
@@ -55,10 +54,11 @@ void HttpServer::initialize(
 void HttpServer::threadEntry() {
 	SI_LOG_INFO("Setting up HTTP server");
 
-	for (;; ) {
+	while (running()) {
 		// call poll with a timeout of 500 ms
 		poll(500);
 	}
+	SI_LOG_INFO("Stopping HTTP server");
 }
 
 std::size_t HttpServer::readFile(const char *filePath, std::string &data) const {

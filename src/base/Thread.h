@@ -62,7 +62,7 @@ class Thread {
 			const std::string &name,
 			FunctionThreadExecute threadExecuteFunction);
 
-		virtual ~Thread() = default;
+		virtual ~Thread();
 
 		// =====================================================================
 		// -- static member functions ------------------------------------------

@@ -100,9 +100,11 @@ namespace base {
 		private:
 
 			void checkAddComma() {
-				const char c = _json.back();
-				if (c == '\"' || c == '}' || c == ']' || std::isdigit(c)) {
-					_json += ", ";
+				if (!_json.empty()) {
+					const char c = _json.back();
+					if (c == '\"' || c == '}' || c == ']' || std::isdigit(c)) {
+						_json += ", ";
+					}
 				}
 			}
 
@@ -133,4 +135,4 @@ namespace base {
 
 } // namespace base
 
-#endif // BASE_JSONSERIALIZER_H_INCLUDE
+#endif

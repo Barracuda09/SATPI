@@ -30,14 +30,14 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-const int HttpcSocket::HTTPC_TIMEOUT = 500;
+	namespace {
+		const int HTTPC_TIMEOUT = 4;
+	}
 
 	// =========================================================================
 	//  -- Constructors and destructor -----------------------------------------
 	// =========================================================================
 	HttpcSocket::HttpcSocket() {}
-
-	HttpcSocket::~HttpcSocket() {}
 
 	// =========================================================================
 	//  -- Other member functions ----------------------------------------------
@@ -95,7 +95,7 @@ const int HttpcSocket::HTTPC_TIMEOUT = 500;
 				}
 			} else {
 				if (timeout != 0 && size == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-					std::this_thread::sleep_for(std::chrono::microseconds(1000));
+					std::this_thread::sleep_for(std::chrono::milliseconds(500));
 					--timeout;
 				} else {
 					return size;

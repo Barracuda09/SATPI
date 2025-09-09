@@ -172,8 +172,11 @@ void StreamClientOutputRtp::doWriteRTCPData(
 
 	// send the RTCP/UDP packet
 	if (!_rtcp.sendDataTo(data.get(), len, 0)) {
-		SI_LOG_ERROR("Frontend: @#1, Error sending RTCP/UDP data to @#2:@#3", _feID,
-			_ipAddressOfStream, _rtcp.getSocketPort());
+		if (!isSelfDestructing()) {
+			SI_LOG_ERROR("Frontend: @#1, Error sending RTCP/UDP data to @#2:@#3", _feID,
+				_ipAddressOfStream, _rtcp.getSocketPort());
+			selfDestruct();
+		}
 	}
 }
 

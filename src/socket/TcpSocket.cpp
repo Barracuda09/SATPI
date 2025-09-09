@@ -31,9 +31,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-// ============================================================================
-//  -- Constructors and destructor --------------------------------------------
-// ============================================================================
+// =============================================================================
+//  -- Constructors and destructor ---------------------------------------------
+// =============================================================================
 
 TcpSocket::TcpSocket(int maxClients, const std::string &protocol) :
 		_MAX_CLIENTS(maxClients),
@@ -43,14 +43,17 @@ TcpSocket::TcpSocket(int maxClients, const std::string &protocol) :
 		_protocolString(protocol) {}
 
 TcpSocket::~TcpSocket() {
+	_server.closeFD();
+	for (std::size_t j = 0; j < _MAX_CLIENTS; ++j) {
+		_client[j].closeFD();
+	}
 	DELETE_ARRAY(_pfd);
 	DELETE_ARRAY(_client);
-	_server.closeFD();
 }
 
-// ============================================================================
-//  -- Other member functions -------------------------------------------------
-// ============================================================================
+// =============================================================================
+//  -- Other member functions --------------------------------------------------
+// =============================================================================
 
 void TcpSocket::initialize(const std::string &ipAddr, int port, bool nonblock) {
 	for (std::size_t i = 0; i < _MAX_CLIENTS; ++i) {
@@ -126,18 +129,18 @@ bool TcpSocket::initServerSocket(
 	_server.setupSocketStructure(ipAddr, port, 0);
 
 	if (!_server.setupSocketHandle(SOCK_STREAM | ((nonblock) ? SOCK_NONBLOCK : 0), 0)) {
-		SI_LOG_ERROR("TCP Server handle failed");
+		SI_LOG_ERROR("@#1: Server handle failed", _protocolString);
 		return false;
 	}
 
-	_server.setSocketTimeoutInSec(2);
+	_server.setSocketTimeoutInSec(1);
 
 	if (!_server.bind()) {
-		SI_LOG_ERROR("TCP Bind failed");
+		SI_LOG_ERROR("@#1: Bind failed", _protocolString);
 		return false;
 	}
 	if (!_server.listen(maxClients)) {
-		SI_LOG_ERROR("TCP Listen failed");
+		SI_LOG_ERROR("@#1: Listen failed", _protocolString);
 		return false;
 	}
 	return true;

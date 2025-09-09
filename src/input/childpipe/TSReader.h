@@ -30,6 +30,7 @@
 #include <chrono>
 
 FW_DECL_SP_NS2(input, childpipe, TSReader);
+FW_DECL_SP_NS2(decrypt, dvbapi, Client);
 
 FW_DECL_VECTOR_OF_SP_NS0(Stream);
 
@@ -61,6 +62,7 @@ class TSReader :
 		static void enumerate(
 			StreamSpVector &streamVector,
 			const std::string &appDataPath,
+			decrypt::dvbapi::SpClient decrypt,
 			bool enableUnsecureFrontends);
 
 		// =========================================================================

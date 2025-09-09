@@ -32,6 +32,8 @@
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 	// ===================================================================
 	//  -- Constructors and destructor -----------------------------------
@@ -44,7 +46,11 @@
 	}
 
 	SocketAttr::~SocketAttr() {
-		closeFD();
+		if (_fd != -1) {
+			SI_LOG_DEBUG("** Close Connection from @#1:@#2 with fd: @#3",
+					_ipAddr, getSocketPort(), _fd);
+			CLOSE_FD(_fd);
+		}
 	}
 
 	// ===================================================================
@@ -143,9 +149,12 @@
 			// save connected file descriptor
 			client.setFD(fdAccept);
 
-			client.setSocketTimeoutInSec(2);
+			client.setSocketTimeoutInSec(1);
 
 			client.setKeepAlive();
+
+			const auto f = ::fcntl(fdAccept, F_GETFD);
+			::fcntl(fdAccept, F_SETFD, f | O_NONBLOCK);
 
 			// save client ip address
 			client.setIPAddressOfSocket(inet_ntoa(client._addr.sin_addr));

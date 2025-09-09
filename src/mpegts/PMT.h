@@ -42,6 +42,14 @@ class PMT :
 		struct ECMData;
 
 		// =========================================================================
+		// -- Static member functions ----------------------------------------------
+		// =========================================================================
+	public:
+
+		///
+		static void cleanPI(unsigned char *pmt);
+
+		// =========================================================================
 		// -- Constructors and destructor ------------------------------------------
 		// =========================================================================
 	public:
@@ -49,15 +57,6 @@ class PMT :
 		PMT() = default;
 
 		virtual ~PMT() = default;
-
-		// =========================================================================
-		// -- Static member functions ----------------------------------------------
-		// =========================================================================
-
-	public:
-
-		///
-		static void cleanPI(unsigned char *pmt);
 
 		// =========================================================================
 		// -- mpegts::TableData ----------------------------------------------------
@@ -116,18 +115,18 @@ class PMT :
 	public:
 
 		struct ECMData {
-			int caid;
-			int ecmpid;
-			int provid;
+			int caid = 0;
+			int ecmpid = 0;
+			int provid = 0;
 		};
 
 		struct ESData {
-			int pid;
-			int streamType;
+			int pid = 0;
+			int streamType = 0;
 		};
 
 		struct PMTData {
-			int pid;
+			int pid = 0;
 			std::vector<ECMData> ecmPID;
 			std::vector<ESData>  esPID;
 		};

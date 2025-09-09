@@ -36,125 +36,129 @@
 
 namespace base {
 
-	// =========================================================================
-	//  -- Constructors and destructor -----------------------------------------
-	// =========================================================================
-	ThreadBase::ThreadBase(const std::string &name) :
-		_thread(0u),
-		_run(false),
-		_exit(false),
-		_name(name) {}
+// =============================================================================
+//  -- Constructors and destructor ---------------------------------------------
+// =============================================================================
 
-	ThreadBase::~ThreadBase() {}
+ThreadBase::ThreadBase(const std::string &name) :
+	_thread(0u),
+	_run(false),
+	_exit(false),
+	_name(name) {}
 
-	// =========================================================================
-	// -- Static member functions ----------------------------------------------
-	// =========================================================================
+ThreadBase::~ThreadBase() = default;
 
-	int ThreadBase::getNumberOfProcessorsOnline() {
-		return sysconf(_SC_NPROCESSORS_ONLN);
-	}
+// =============================================================================
+// -- Static member functions --------------------------------------------------
+// =============================================================================
 
-	int ThreadBase::getNumberOfProcessorsOnHost() {
-		return sysconf(_SC_NPROCESSORS_CONF);
-	}
+int ThreadBase::getNumberOfProcessorsOnline() {
+	return sysconf(_SC_NPROCESSORS_ONLN);
+}
 
-	// =========================================================================
-	// -- Other member functions -----------------------------------------------
-	// =========================================================================
+int ThreadBase::getNumberOfProcessorsOnHost() {
+	return sysconf(_SC_NPROCESSORS_CONF);
+}
 
-	bool ThreadBase::startThread() {
-		_run = true;
-		_exit = false;
-		return (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
-	}
+// =============================================================================
+// -- Other member functions ---------------------------------------------------
+// =============================================================================
 
-	void ThreadBase::stopThread() {
-		_run = false;
-		size_t timeout = 0u;
-		while (!_exit) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			++timeout;
-			if (timeout > 50u) {
-				cancelThread();
-				SI_LOG_DEBUG("@#1: Thread did not stop within timeout?  !!TIMEOUT!!", _name);
-				break;
-			}
+bool ThreadBase::startThread() {
+	_run = true;
+	_exit = false;
+	return (pthread_create(&_thread, nullptr, threadEntryFunc, this) == 0);
+}
+
+void ThreadBase::stopThread() {
+	SI_LOG_DEBUG("@#1: Stop Thread", _name);
+	_run = false;
+	int timeout = 0;
+	while (!_exit) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		++timeout;
+		if (timeout > 60) {
+			cancelThread();
+			SI_LOG_DEBUG("@#1: Thread did not stop within timeout?  !!TIMEOUT!!", _name);
+			break;
 		}
 	}
+	joinThread();
+}
 
-	void ThreadBase::cancelThread() {
-		pthread_cancel(_thread);
-		_exit = true;
-	}
+void ThreadBase::cancelThread() {
+	SI_LOG_DEBUG("@#1: Cancel Thread", _name);
+	_exit = true;
+	pthread_cancel(_thread);
+}
 
-	void ThreadBase::joinThread() {
-		(void) pthread_join(_thread, nullptr);
-	}
+void ThreadBase::joinThread() {
+	(void) pthread_join(_thread, nullptr);
+}
 
-	void ThreadBase::setAffinity(int cpu) {
-		if (cpu > 0 && cpu < getNumberOfProcessorsOnline()) {
-			cpu_set_t cpus;
-			CPU_ZERO(&cpus);
-			CPU_SET(cpu, &cpus);
+void ThreadBase::setAffinity(int cpu) {
+	if (cpu > 0 && cpu < getNumberOfProcessorsOnline()) {
+		cpu_set_t cpus;
+		CPU_ZERO(&cpus);
+		CPU_SET(cpu, &cpus);
 //			pthread_setaffinity_np(_thread, sizeof(cpu_set_t), &cpus);
-			sched_setaffinity(_thread, sizeof(cpu_set_t), &cpus);
-		}
+		sched_setaffinity(_thread, sizeof(cpu_set_t), &cpus);
 	}
+}
 
-	int ThreadBase::getScheduledAffinity() const {
-		return sched_getcpu();
+int ThreadBase::getScheduledAffinity() const {
+	return sched_getcpu();
+}
+
+bool ThreadBase::setPriority(const Priority priority) {
+	double factor = 0.5;
+	switch (priority) {
+		case Priority::High:
+			factor = 1.0;
+			break;
+		case Priority::AboveNormal:
+			factor = 0.75;
+			break;
+		case Priority::Normal:
+			factor = 0.5;
+			break;
+		case Priority::BelowNormal:
+			factor = 0.25;
+			break;
+		case Priority::Idle:
+			factor = 0.0;
+			break;
+		default:
+			SI_LOG_ERROR("@#1: setPriority: Unknown case", _name);
+			return false;
 	}
+	int policy = 0;
+	pthread_attr_t threadAttributes;
+	pthread_attr_init(&threadAttributes);
+	pthread_attr_getschedpolicy(&threadAttributes, &policy);
+	pthread_attr_destroy(&threadAttributes);
+	const int minPriority = sched_get_priority_min(policy);
+	const int maxPriority = sched_get_priority_max(policy);
+	const int linuxPriority = minPriority + ((maxPriority - minPriority) * factor);
+	return (pthread_setschedprio(_thread, linuxPriority) == 0);
+}
 
-	bool ThreadBase::setPriority(const Priority priority) {
-		double factor = 0.5;
-		switch (priority) {
-			case Priority::High:
-				factor = 1.0;
-				break;
-			case Priority::AboveNormal:
-				factor = 0.75;
-				break;
-			case Priority::Normal:
-				factor = 0.5;
-				break;
-			case Priority::BelowNormal:
-				factor = 0.25;
-				break;
-			case Priority::Idle:
-				factor = 0.0;
-				break;
-			default:
-				SI_LOG_ERROR("@#1: setPriority: Unknown case", _name);
-				return false;
-		}
-		int policy = 0;
-		pthread_attr_t threadAttributes;
-		pthread_attr_init(&threadAttributes);
-		pthread_attr_getschedpolicy(&threadAttributes, &policy);
-		pthread_attr_destroy(&threadAttributes);
-		const int minPriority = sched_get_priority_min(policy);
-		const int maxPriority = sched_get_priority_max(policy);
-		const int linuxPriority = minPriority + ((maxPriority - minPriority) * factor);
-		return (pthread_setschedprio(_thread, linuxPriority) == 0);
-	}
-
-	void ThreadBase::threadEntryBase() {
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
-		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+void ThreadBase::threadEntryBase() {
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 #ifdef HAS_NP_FUNCTIONS
-		pthread_setname_np(_thread, _name.data());
+	pthread_setname_np(_thread, _name.data());
 #else
-		prctl(PR_SET_NAME, _name.data(), 0, 0, 0);
+	prctl(PR_SET_NAME, _name.data(), 0, 0, 0);
 #endif
-		try {
-			threadEntry();
-			_exit = true;
-		} catch (...) {
-			SI_LOG_ERROR("@#1: Catched an exception", _name);
-			_exit = true;
-			throw;
-		}
+	try {
+		threadEntry();
+		_exit = true;
+	} catch (...) {
+		SI_LOG_ERROR("@#1: ThreadBase Catched an exception (...)", _name);
+		_exit = true;
+		throw;
 	}
+}
 
-} // namespace base
+}
