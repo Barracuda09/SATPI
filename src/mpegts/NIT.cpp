@@ -1,6 +1,6 @@
 /* NIT.cpp
 
-   Copyright (C) 2014 - 2023 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2026 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -190,7 +190,7 @@ void NIT::parse(const FeID id) {
 
 			SI_LOG_INFO("Frontend: @#1, NIT - Section Length: @#2  NID: @#3  Version: @#4  secNr: @#5 lastSecNr: @#6  CRC: @#7",
 				id, DIGIT(tableData.sectionLength, 4), DIGIT(_nid, 4), tableData.version, tableData.secNr, tableData.lastSecNr, HEX(tableData.crc, 4));
-			
+
 			// Network Descriptors
 			index = 13;
 			const size_t netDescLenEnd = (getWord(index, data) & 0xFFF) + index;

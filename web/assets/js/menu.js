@@ -16,9 +16,7 @@ function buildmenu() {
 	menu +=       "<li class=\"nav-item\" id=\"contact\"          ><a class=\"nav-link\" href=\"contact.html\"><span class=\"fas fa-envelope-open\"></span> Contact</a></li>";
 	menu +=       "<li class=\"nav-item\" id=\"about\"            ><a class=\"nav-link\" href=\"about.html\"><span class=\"fas fa-info-circle\"></span> About</a></li>";
 	menu +=     "</ul>";
-	menu +=     "<span class=\"navbar-text small-text-size\">";
-	menu +=       "Copyright &#169; 2014 - 2024 Marc Postema";
-	menu +=     "</span>";
+	menu +=     "<span class=\"navbar-text small-text-size\" id=\"Copyright\"></span>";
 	menu +=   "</div>";
 	menu += "</nav>";
 	return menu;
@@ -26,5 +24,6 @@ function buildmenu() {
 
 function setMenuItemActive(param) {
 	var obj = document.getElementById(param);
+	document.getElementById("Copyright").appendChild(document.createTextNode("Copyright \xA9 2014 -" + (new Date().getFullYear()) + " Marc Postema"))
 	obj.className = "active";
 }

@@ -1,6 +1,6 @@
 /* SocketAttr.cpp
 
-   Copyright (C) 2014 - 2023 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2026 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License

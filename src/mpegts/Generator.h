@@ -1,6 +1,6 @@
 /* Generator.h
 
-   Copyright (C) 2014 - 2023 Marc Postema (mpostema09 -at- gmail.com)
+   Copyright (C) 2014 - 2026 Marc Postema (mpostema09 -at- gmail.com)
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ class Generator {
 		/// @param feID specifies the frontend ID
 		/// @param info specifies the info for generating the PSI metadata
 		TSData generatePSIFrom(
-				FeID id, const base::M3UParser::TransformationMap &info); 
+				FeID id, const base::M3UParser::TransformationMap &info);
 
 		// =========================================================================
 		//  -- Data members --------------------------------------------------------
