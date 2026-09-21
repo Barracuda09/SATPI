@@ -21,7 +21,7 @@ elif [[ -n $1 && $1 = "gcc4" ]] ; then
   export CXXSUFFIX=
   export CXX=$CXXPREFIX"c++"$CXXSUFFIX
 else
-  export CXXPREFIX=~/vu/opt/toolchains/stbgcc-8.3-0.4/bin/arm-linux-gnueabihf-
+  export CXXPREFIX=~/vu/opt/toolchains/stbgcc-8.3-2.0/bin/arm-linux-gnueabihf-
   export CXXSUFFIX=
   export CXX=$CXXPREFIX"c++"$CXXSUFFIX
 fi
