@@ -44,6 +44,9 @@ namespace input::dvb::delivery {
 			_lnb[src].getIntermediateFrequency(id, freq, hiband, pol);
 		}
 
+		// PATCH 3: Compute target voltage early so we can pass it to sendDiseqcCommand
+		const auto targetVoltage = (pol == Lnb::Polarization::Vertical || pol == Lnb::Polarization::CircularRight) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
+
 		// Framing 0xe0: Command from Master, No reply required, First transmission
 		// -------------------------------------------------------------------------
 		// Address 0x10: Any LNB, Switcher or SMATV (Master to all...)
@@ -63,7 +66,7 @@ namespace input::dvb::delivery {
 		dvb_diseqc_master_cmd cmd = {{0xe0, _addressByte, _commandByte, 0xf0}, 4};
 		const auto minisw = _enableMiniDiSEqCSwitch ?
 				MiniDiSEqCSwitch::DoNotSend :
-				(((src & 0x80) == 0x80) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA);
+				(((src & 1) == 1) ? MiniDiSEqCSwitch::MiniB : MiniDiSEqCSwitch::MiniA);
 		switch (_addressByte) {
 			default:
 				cmd.msg[1] = 0x10;
@@ -76,15 +79,17 @@ namespace input::dvb::delivery {
 					case SwitchType::COMMITTED: {
 						// high nibble: reset bits
 						//  low nibble:   set bits  (option, position, polarizaion, band)
-						cmd.msg[3] |= (src << 2) & 0x0f;
+						// src is 0-based here (sendDiseqc receives getDiSEqcSource()-1)
+						// 0=A(0x00), 1=B(0x04), 2=C(0x08), 3=D(0x0C) - same as minisatip pos
+						cmd.msg[3] |= (src & 0x03) << 2;
 						cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
 						cmd.msg[3] |= hiband ? 0x1 : 0x0;
-						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
+						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat, targetVoltage, hiband);
 						break;
 					}
 					case SwitchType::UNCOMMITTED: {
 						cmd.msg[3] |= src & 0x0f;
-						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat);
+						sendDiseqcCommand(feFD, id, cmd, minisw, src, _diseqcRepeat, targetVoltage, hiband);
 						break;
 					}
 					case SwitchType::CASCADE: {
@@ -94,17 +99,17 @@ namespace input::dvb::delivery {
 						if (uncommittedFirst) {
 							cmd.msg[2] = 0x39;
 							cmd.msg[3] = 0xf0 | srcUncommitted;
-							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0);
+							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0, targetVoltage, hiband);
 							cmd.msg[2] = 0x38;
 							cmd.msg[3] = 0xf0 | srcCommitted;
-							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0);
+							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0, targetVoltage, hiband);
 						} else {
 							cmd.msg[2] = 0x38;
 							cmd.msg[3] = 0xf0 | srcCommitted;
-							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0);
+							sendDiseqcCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, src, 0, targetVoltage, hiband);
 							cmd.msg[2] = 0x39;
 							cmd.msg[3] = 0xf0 | srcUncommitted;
-							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0);
+							sendDiseqcCommand(feFD, id, cmd, minisw, src, 0, targetVoltage, hiband);
 						}
 						break;
 					}
@@ -117,18 +122,8 @@ namespace input::dvb::delivery {
 				break;
 		}
 
-		// Setup LNB
-		const auto v = (pol == Lnb::Polarization::Vertical || pol == Lnb::Polarization::CircularRight) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;
-		if (ioctl(feFD, FE_SET_VOLTAGE, v) == -1) {
-			SI_LOG_PERROR("FE_SET_VOLTAGE failed");
-			return false;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-		const auto tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
-		if (ioctl(feFD, FE_SET_TONE, tone) == -1) {
-			SI_LOG_PERROR("FE_SET_TONE failed");
-			return false;
-		}
+		// PATCH 3: Voltage and tone are now set inside sendDiseqcMasterCommand
+		// (minisatip-style: tone OFF -> voltage -> DiSEqC -> burst -> tone)
 		return true;
 	}
 
@@ -186,11 +181,12 @@ namespace input::dvb::delivery {
 	// ===========================================================================
 
 	bool DiSEqcSwitch::sendDiseqcCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-			MiniDiSEqCSwitch sw, const int src, unsigned int repeatCmd) {
+			MiniDiSEqCSwitch sw, const int src, unsigned int repeatCmd,
+			fe_sec_voltage_t targetVoltage, bool hiband) {
 		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] - DiSEqC Src: @#6",
 			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), src);
 
-		return sendDiseqcMasterCommand(feFD, id, cmd, sw, repeatCmd);
+		return sendDiseqcMasterCommand(feFD, id, cmd, sw, repeatCmd, targetVoltage, hiband);
 	}
 
 }

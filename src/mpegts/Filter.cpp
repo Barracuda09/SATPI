@@ -109,6 +109,17 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 		_pidTable.clear();
 		if (reqPids.find("all") != std::string::npos) {
 			_pidTable.setAllPID(add);
+			// NEXUS: the driver kernel-crashes on the 8192 marker pid
+			// (skipped in openPid). Always open user/table pids too so
+			// PAT/SDT/NIT still flow for service discovery.
+			const StringVector userPidList = StringConverter::split(_userPids, ",");
+			for (const std::string& pid : userPidList) {
+				try {
+					_pidTable.setPID(std::stoi(pid), add);
+				} catch (const std::invalid_argument &) {
+					SI_LOG_ERROR("Frontend: @#1, Error, skipping PID: @#2", id, pid);
+				}
+			}
 		}
 	} else {
 		const StringVector reqPidList = StringConverter::split(reqPids, ",");
@@ -158,6 +169,20 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 					// Did we finish collecting PAT
 					if (_pat->isCollected()) {
 						_pat->parse(id);
+						// Emulate 'pids=all': the NEXUS driver cannot open a
+						// hardware 'all pids' filter (8192 crashes it), so like
+						// minisatip's emulate_pids_all we walk PAT -> PMT -> ES
+						// and open each discovered pid instead.
+						if (_pidTable.isAllPID()) {
+							for (const auto& [pmtPid, _] : _pat->getPMTPidTable()) {
+								if (_emuPmtCount >= EMU_PMT_BUDGET || _emuPidCount >= EMU_PID_BUDGET) {
+									break;
+								}
+								_pidTable.setPID(pmtPid, true);
+								++_emuPidCount;
+								++_emuPmtCount;
+							}
+						}
 					}
 				}
 				break;
@@ -225,6 +250,28 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 						pmt->collectData(id, TableData::PMT_ID, ptr, false);
 						if (pmt->isCollected()) {
 							pmt->parse(id);
+							// Emulate 'pids=all': open every ES + PCR pid of
+							// this service so the full TS flows progressively
+							if (_pidTable.isAllPID()) {
+								for (const auto& es : pmt->getESPIDs()) {
+									if (_emuPidCount >= EMU_PID_BUDGET) {
+										break;
+									}
+									_pidTable.setPID(es.pid, true);
+									++_emuPidCount;
+								}
+								for (const auto& ecm : pmt->getECMPIDs()) {
+									if (ecm.ecmpid > 0 && _emuPidCount < EMU_PID_BUDGET) {
+										_pidTable.setPID(ecm.ecmpid, true);
+										++_emuPidCount;
+									}
+								}
+								const int pcrPid = pmt->getPCRPid();
+								if (pcrPid > 0 && _emuPidCount < EMU_PID_BUDGET) {
+									_pidTable.setPID(pcrPid, true);
+									++_emuPidCount;
+								}
+							}
 						}
 #ifdef ADDDVBCA
 						const char fileFIFO[] = "/tmp/fifo";

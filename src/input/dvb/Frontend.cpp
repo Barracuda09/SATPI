@@ -281,6 +281,12 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer& buffer) {
 		buffer.addAmountOfBytesWritten(readSize);
 		if (buffer.full()) {
 			_frontendData.getFilter().filterData(_feID, buffer, false);
+			// Full-TS emulation requests new pids while parsing PAT/PMT.
+			// NEXUS: DMX_ADD_PID on the live demux fd works mid-stream, so
+			// newly discovered pids are added without disturbing the feed.
+			if (_frontendData.getFilter().hasPIDTableChanged()) {
+				updatePIDFilters();
+			}
 
 			return true;
 		}
@@ -513,27 +519,36 @@ void Frontend::updatePIDFilters() {
 		// openPid lambda function
 		[&](const int pid) {
 			uint16_t p = pid;
+			// NEXUS driver crashes (NULL deref in NEXUS_Recpump_AddPidChannel)
+			// on pid >= 0x2000 - the SatPI "all PIDs" marker (8192). Never send
+			// it to the driver; the demux still passes the full TS once any
+			// filter is open (verified empirically on Vu+ Duo 4K SE).
+			if (p >= 0x2000) {
+				SI_LOG_INFO("Frontend: @#1, Skipping hardware filter for virtual PID @#2", _feID, PID(p));
+				return true;
+			}
 			// Check if we have already a DMX open
 			if (_fd_dmx == -1) {
-				// try opening DMX, try again if fails
+				// NEXUS/Enigma2: DMX_SET_SOURCE must be set on the SAME fd that
+				// owns the filters - the binding does NOT survive close().
+				// A SET_SOURCE on a temp fd + PES filter on another fd starts
+				// the feed with no source -> driver recpump NULL deref (oops).
 				std::size_t timeout = 0;
 				while ((_fd_dmx = openDMX(_path_to_dmx)) == -1) {
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					++timeout;
 					if (timeout > 3) {
-						return false;
+						// fall back to shared demux0 (Enigma2 uses it too)
+						_fd_dmx = openDMX("/dev/dvb/adapter0/demux0");
+						if (_fd_dmx == -1) {
+							return false;
+						}
+						break;
 					}
 				}
 				SI_LOG_INFO("Frontend: @#1, Opened @#2 using fd: @#3", _feID, _path_to_dmx, _fd_dmx);
-				if (_dvrBufferSizeMB > 0) {
-					const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
-					if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
-						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_BUFFER_SIZE", _feID);
-					} else {
-						SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
-					}
-				}
-				// Do we run on an Set-Top Box with Enigma2, then we need to set DMX_SET_SOURCE
+				// Do we run on a Set-Top Box with Enigma2, then we need to set
+				// DMX_SET_SOURCE on the same fd that owns the filters
 				std::ifstream infoVersionFile("/proc/stb/info/version");
 				if (infoVersionFile.is_open()) {
 					int offset = 0;
@@ -548,6 +563,14 @@ void Frontend::updatePIDFilters() {
 					}
 					SI_LOG_INFO("Frontend: @#1, Set DMX_SET_SOURCE with (Src: @#2 - Offset: @#3)", _feID, n, offset);
 				}
+				if (_dvrBufferSizeMB > 0) {
+					const unsigned int size = _dvrBufferSizeMB * 1024 * 1024;
+					if (::ioctl(_fd_dmx, DMX_SET_BUFFER_SIZE, size) != 0) {
+						SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_BUFFER_SIZE", _feID);
+					} else {
+						SI_LOG_INFO("Frontend: @#1, Set DMX buffer size to @#2 Bytes", _feID, size);
+					}
+				}
 				struct dmx_pes_filter_params pesFilter{};
 				pesFilter.pid      = p;
 				pesFilter.input    = DMX_IN_FRONTEND;
@@ -558,6 +581,7 @@ void Frontend::updatePIDFilters() {
 					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, PID(p));
 					return false;
 				}
+
 			} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &p) != 0) {
 				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(p));
 				return false;
@@ -796,6 +820,34 @@ bool Frontend::tune() {
 	return false;
 }
 
+bool Frontend::waitForFrontendLock(base::StopWatch &sw) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(150));
+	// check if frontend is locked, if not try a few times (Untill TIMEOUT)
+	for (int i = 1;; ++i) {
+		fe_status_t status = FE_TIMEDOUT;
+		// first read status
+		if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
+			if (status & FE_HAS_LOCK) {
+				// We are tuned now, add some tuning stats
+				_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
+				SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
+				return true;
+			}
+			if (i == 1) {
+				SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
+			}
+		} else {
+			SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS", _feID);
+		}
+		const unsigned long waitTime = sw.getIntervalMS();
+		if (waitTime > _waitOnLockTimeout) {
+			SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, waitTime);
+			return false;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(150));
+	}
+}
+
 bool Frontend::setupAndTune() {
 	if (!_tuned) {
 		base::StopWatch sw;
@@ -819,34 +871,28 @@ bool Frontend::setupAndTune() {
 		_tuned = true;
 		SI_LOG_INFO("Frontend: @#1, Tuned, waiting on lock...", _feID);
 		std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		bool locked = false;
 		if (sw.getIntervalMS() < _waitOnLockTimeout) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(150));
-			// check if frontend is locked, if not try a few times (Untill TIMEOUT)
-			for (int i = 1;; ++i) {
-				fe_status_t status = FE_TIMEDOUT;
-				// first read status
-				if (::ioctl(_fd_fe, FE_READ_STATUS, &status) == 0) {
-					if (status & FE_HAS_LOCK) {
-						// We are tuned now, add some tuning stats
-						_frontendData.setMonitorData(FE_HAS_LOCK, 100, 8, 0, 0);
-						SI_LOG_INFO("Frontend: @#1, Tuned and locked (FE status @#2)", _feID, HEX(status, 2));
-						break;
-					}
-					if (i == 1) {
-						SI_LOG_INFO("Frontend: @#1, Not locked yet   (FE status @#2)...", _feID, HEX(status, 2));
-					}
-				} else {
-					SI_LOG_PERROR("Frontend: @#1, FE_READ_STATUS", _feID);
-				}
-				const unsigned long waitTime = sw.getIntervalMS();
-				if (waitTime > _waitOnLockTimeout) {
-					SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, waitTime);
-					break;
-				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(150));
-			}
+			locked = waitForFrontendLock(sw);
 		} else {
 			SI_LOG_INFO("Frontend: @#1, Not locked yet   (Timeout @#2 ms)...", _feID, sw.getIntervalMS());
+		}
+		// Clients can forward stale channel list hints that prevent the demod
+		// from locking (e.g. DVBViewer sends 'plts=off' on pilots-on
+		// transponders; combined with an explicit 'fec' this restricts the
+		// demod search too much). Retry once with the hints relaxed to AUTO
+		// so the demod performs a full blind search.
+		if (!locked && _frontendData.hasExplicitTuningHints()) {
+			SI_LOG_INFO("Frontend: @#1, No lock with explicit hints, retuning with pilot/fec/rolloff set to auto...", _feID);
+			_frontendData.relaxTuningHints();
+			_tuned = false;
+			if (tune()) {
+				_tuned = true;
+				sw.start();
+				SI_LOG_INFO("Frontend: @#1, Tuned (auto retry), waiting on lock...", _feID);
+				std::this_thread::sleep_for(std::chrono::milliseconds(300));
+				waitForFrontendLock(sw);
+			}
 		}
 	}
 	return _tuned;

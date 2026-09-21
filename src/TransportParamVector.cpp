@@ -22,6 +22,18 @@
 #include <Log.h>
 #include <StringConverter.h>
 
+#include <cctype>
+
+namespace {
+	// SAT>IP clients are not consistent with value casing (e.g. DVBViewer sends msys=DVBS2).
+	std::string lowerParam(std::string s) {
+		for (auto &c : s) {
+			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+		}
+		return s;
+	}
+}
+
 // =============================================================================
 // -- Other member functions ---------------------------------------------------
 // =============================================================================
@@ -72,7 +84,7 @@ int TransportParamVector::getIntParameter(std::string_view parameter) const {
 }
 
 input::InputSystem TransportParamVector::getMSYSParameter() const {
-	const std::string val = getParameter("msys");
+	const std::string val = lowerParam(getParameter("msys"));
 	if (!val.empty()) {
 		if (val == "dvbs2" || val == "dvbs2x") {
 			return input::InputSystem::DVBS2;

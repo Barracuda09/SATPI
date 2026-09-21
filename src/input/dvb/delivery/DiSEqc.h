@@ -101,7 +101,9 @@ namespace input::dvb::delivery {
 			/// @param sasbBurst specifies the SA/SB tone burst
 			/// @param repeatCmd the number of times this command should be repeated
 			bool sendDiseqcMasterCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-				MiniDiSEqCSwitch sw, unsigned int repeatCmd);
+				MiniDiSEqCSwitch sw, unsigned int repeatCmd,
+				fe_sec_voltage_t targetVoltage = SEC_VOLTAGE_13,
+				bool hiband = false);
 
 		private:
 
@@ -121,8 +123,9 @@ namespace input::dvb::delivery {
 		protected:
 
 			unsigned int _diseqcRepeat = 0;
-			unsigned int _delayBeforeWrite = 35;
-			unsigned int _delayAfterWrite = 40;
+			// minisatip defaults: before_cmd=15ms, after_cmd=54ms
+			unsigned int _delayBeforeWrite = 15;
+			unsigned int _delayAfterWrite = 54;
 	};
 
 }

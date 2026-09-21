@@ -150,3 +150,7 @@ For help on options:
 For normal use just run:
 
     ./satpi   (!!Note you should have the appropriate privilege to open tcp/udp port 554!!)
+
+Credit
+-----
+- Patches taken from fork maintained by [Logic Encoder](https://github.com/logicencoder/satpi)

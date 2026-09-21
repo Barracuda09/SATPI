@@ -77,6 +77,11 @@ class PAT :
 			return false;
 		}
 
+		/// Get all PMT pids found in the PAT
+		const std::unordered_map<int, bool>& getPMTPidTable() const noexcept {
+			return _pmtPidTable;
+		}
+
 		TSData generateFrom(
 				FeID id, const base::M3UParser::TransformationMap &info);
 

@@ -33,6 +33,7 @@
 #include <fstream>
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 
 namespace input::dvb::delivery {
@@ -147,10 +148,19 @@ namespace input::dvb::delivery {
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
 		SI_LOG_INFO("Frontend: @#1, Start tuning process for DVB-S(2)...", _feID);
 
+		// PATCH 2+6: Apply FBC configuration before tuning
+		// minisatip writes fbc_link/fbc_connect in dvb_open_device()
+		_fbc.applyFBCConfiguration();
+
 		std::string fePathDiseqc(_fePath);
 		int feFDDiseqc = feFD;
 		if (_fbc.doSendDiSEqcViaRootTuner()) {
 			feFDDiseqc = _fbc.getFileDescriptorOfRootTuner(fePathDiseqc);
+			if (feFDDiseqc < 0) {
+				SI_LOG_ERROR("Frontend: @#1, Could not open root tuner fd @#2 - falling back to own fd",
+					_feID, fePathDiseqc);
+				feFDDiseqc = feFD;
+			}
 		}
 		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3",
 				_feID, fePathDiseqc, feFDDiseqc);
@@ -161,11 +171,15 @@ namespace input::dvb::delivery {
 		// send diseqc ('src' differs from 'DiSEqC switch position' so adjust with -1)
 		if (_diseqc != nullptr &&
 			!_diseqc->sendDiseqc(feFDDiseqc, _feID, freq, frontendData.getDiSEqcSource() - 1, frontendData.getPolarization())) {
+			SI_LOG_ERROR("Frontend: @#1, sendDiseqc FAILED", _feID);
 			return false;
 		}
+		SI_LOG_DEBUG("Frontend: @#1, sendDiseqc OK, freq after IF conversion: @#2", _feID, freq);
 
-		if (_fbc.doSendDiSEqcViaRootTuner()) {
-			SI_LOG_INFO("Frontend: @#1, Closing @#2 with fd: @#3", _feID, fePathDiseqc, feFDDiseqc);
+		// feFDDiseqc is a dup() of the root tuner's fd (children only) - closing
+		// the dup is safe: the shared file context stays alive via the base fd
+		// which remains open for the process lifetime (like minisatip master->fe).
+		if (feFDDiseqc != feFD && feFDDiseqc >= 0) {
 			::close(feFDDiseqc);
 		}
 

@@ -101,6 +101,16 @@ class FrontendData :
 		///
 		int getPilotTones() const;
 
+		/// @return true when a search hint (pilot/fec/rolloff) is set to a
+		///         non-auto value. Clients like DVBViewer forward (possibly
+		///         stale) channel list values which can prevent the demod
+		///         from locking.
+		bool hasExplicitTuningHints() const;
+
+		/// Relax the demod search hints (pilot/fec/rolloff) to AUTO so a
+		/// retune performs a full blind search.
+		void relaxTuningHints();
+
 		/// Get the LNB polarizaion
 		input::dvb::delivery::Lnb::Polarization getPolarization() const;
 

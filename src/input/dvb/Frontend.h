@@ -31,9 +31,11 @@
 #include <decrypt/dvbapi/ClientProperties.h>
 #endif
 
+#include <chrono>
 #include <string>
 
 FW_DECL_NS1(input, DeviceData);
+FW_DECL_NS1(base, StopWatch);
 FW_DECL_NS3(input, dvb, delivery, System);
 
 FW_DECL_SP_NS2(decrypt, dvbapi, Client);
@@ -242,6 +244,9 @@ class Frontend :
 
 		///
 		bool tune();
+
+		/// Wait on FE_HAS_LOCK until @a sw reaches _waitOnLockTimeout
+		bool waitForFrontendLock(base::StopWatch &sw);
 
 		///
 		bool setupAndTune();

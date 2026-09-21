@@ -162,6 +162,12 @@ class Filter :
 			_pidTable.setPID(pid, val);
 		}
 
+		/// Check if any pid open/close is pending
+		bool hasPIDTableChanged() {
+			base::MutexLock lock(_mutex);
+			return _pidTable.hasPIDTableChanged();
+		}
+
 		/// Close all active PID filter
 		/// @param feID specifies the frontend ID
 		/// @param closePid specifies the lambda function to use to close the PIDs
@@ -216,6 +222,12 @@ class Filter :
 				SI_LOG_DEBUG("Frontend: @#1, Set filter PID: @#2@#3",
 					feID, PID(pid),
 					_pat->isMarkedAsPMT(pid) ? " - PMT" : "");
+			} else {
+				// Mark failed pids closed: NEXUS rejects filters once its pid
+				// channel pool is exhausted. Leaving them in ShouldOpen would
+				// retry a failing ioctl on every filter update (retry storm).
+				_pidTable.setPIDClosed(pid);
+				SI_LOG_INFO("Frontend: @#1, Failed to set filter PID: @#2 (marked closed)", feID, PID(pid));
 			}
 		}
 
@@ -276,6 +288,15 @@ class Filter :
 		mutable mpegts::SpSDT _sdt;
 		bool _filterPCR = false;
 		std::string _userPids;
+		// NEXUS (bcm7335): a demux session supports only ~32 pid channels.
+		// Base filters (0,1,16,17,18) already use 5, so cap auto-emulated
+		// pids; exceeding the limit silently drops the whole ADD batch.
+		// Budget split: a few PMT pids, the rest for their ES/PCR pids so
+		// 'pids=all' still yields real video/audio for the first services.
+		int _emuPidCount = 0;
+		int _emuPmtCount = 0;
+		static constexpr int EMU_PID_BUDGET = 24;
+		static constexpr int EMU_PMT_BUDGET = 8;
 };
 
 }

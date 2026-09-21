@@ -40,6 +40,7 @@ class PMT :
 	public:
 
 		struct ECMData;
+		struct ESData;
 
 		// =========================================================================
 		// -- Static member functions ----------------------------------------------
@@ -99,6 +100,11 @@ class PMT :
 
 		std::vector<ECMData> getECMPIDs() const noexcept {
 			return _pmtData.ecmPID;
+		}
+
+		/// Get all elementary stream pids found in the PMT
+		const std::vector<ESData>& getESPIDs() const noexcept {
+			return _pmtData.esPID;
 		}
 
 		bool isReadySend() const noexcept {

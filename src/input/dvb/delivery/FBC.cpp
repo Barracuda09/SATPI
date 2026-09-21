@@ -27,6 +27,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <map>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -48,7 +49,8 @@ FBC::FBC(const FeIndex index, const FeID id, const std::string& name, const bool
 	_fbcConnect = 0;
 	_fbcLinked = false;
 	_fbcRoot = false;
-	_sendDiSEqcViaRootTuner = false;
+	// Default: send DiSEqC via root tuner (required on Vu+ Duo 4K SE FBC)
+	_sendDiSEqcViaRootTuner = _fbcTuner;
 	_offset = _fbcSetID * 8;
 	_tunerLetter = _index + 'A';
 	if (_fbcTuner) {
@@ -113,38 +115,76 @@ void FBC::doFromXML(const std::string &xml) {
 // =============================================================================
 
 int FBC::getFileDescriptorOfRootTuner(std::string& fePath) const {
-	// Replace Frontend number with Root Frontend Number
-	fePath.replace(fePath.end()-1, fePath.end(), std::to_string(_fbcConnect));
-	int feFD = ::open(fePath.data(), O_RDWR | O_NONBLOCK);
-	if (feFD  < 0) {
-		// Probably already open, try to find it and duplicate fd
-		dirent **fileList;
-		const std::string procSelfFD("/proc/self/fd");
-		const int n = scandir(procSelfFD.data(), &fileList, nullptr, versionsort);
-		if (n > 0) {
-			for (int i = 0; i < n; ++i) {
-				// Check do we have a digit
-				if (std::isdigit(fileList[i]->d_name[0]) == 0) {
-					continue;
-				}
-				// Get the link the fd points to
-				const int fd = std::atoi(fileList[i]->d_name);
-				const std::string procSelfFDNr = procSelfFD + "/" + std::to_string(fd);
-				char buf[255];
-				const auto s = readlink(procSelfFDNr.data(), buf, sizeof(buf));
-				if (s > 0) {
-					buf[s] = 0;
-					if (fePath == buf) {
-						// Found it so duplicate and stop;
-						feFD = ::dup(fd);
-						break;
-					}
+	// Use _fbcConnect which is the actual root frontend this tuner connects to
+	// For child tuners (fe10-fe15 linked to fe9): _fbcConnect = 9
+	// For root tuners: _fbcConnect = own index (e.g. fe9 = 9)
+	const int rootFeID = _fbcConnect;
+	// Replace the entire frontend number (not just last char)
+	const std::size_t pos = fePath.find("frontend");
+	if (pos != std::string::npos) {
+		fePath = fePath.substr(0, pos + 8) + std::to_string(rootFeID);
+	}
+	// minisatip uses master->fe: the already-open persistent fd of the root.
+	// Prefer dup() of an existing fd for this frontend (shares the driver's
+	// per-open file context); only open() fresh when the root isn't open yet.
+	dirent **fileList;
+	const std::string procSelfFD("/proc/self/fd");
+	const int n = scandir(procSelfFD.data(), &fileList, nullptr, versionsort);
+	if (n > 0) {
+		for (int i = 0; i < n; ++i) {
+			if (std::isdigit(fileList[i]->d_name[0]) == 0) {
+				continue;
+			}
+			const int fd = std::atoi(fileList[i]->d_name);
+			const std::string procSelfFDNr = procSelfFD + "/" + std::to_string(fd);
+			char buf[255];
+			const auto s = readlink(procSelfFDNr.data(), buf, sizeof(buf));
+			if (s > 0) {
+				buf[s] = 0;
+				if (fePath == buf) {
+					free(fileList);
+					return ::dup(fd);
 				}
 			}
-			free(fileList);
 		}
+		free(fileList);
+	}
+	// Root frontend not open in this process: open once and keep it cached
+	// open for process lifetime, like minisatip keeps master->fe open.
+	static std::map<std::string, int> rootFdCache;
+	const auto it = rootFdCache.find(fePath);
+	if (it != rootFdCache.end() && it->second >= 0) {
+		return ::dup(it->second);
+	}
+	const int feFD = ::open(fePath.data(), O_RDWR | O_NONBLOCK);
+	if (feFD >= 0) {
+		rootFdCache[fePath] = feFD;
+		return ::dup(feFD);
 	}
 	return feFD;
+}
+
+// PATCH 2+6: Apply FBC configuration at frontend open time
+// minisatip writes fbc_link/fbc_connect in dvb_open_device().
+// SatPI only wrote them on XML config change, so proc values could be stale.
+void FBC::applyFBCConfiguration() {
+	if (!_fbcTuner) {
+		return;
+	}
+	// For root tuners: fbc_link=0, fbc_connect=own frontend number
+	// For child tuners: fbc_link=1 (if linked), fbc_connect=root frontend number
+	if (_fbcRoot) {
+		writeProcData(_index, "fbc_link", 0);
+		// For root tuners, fbc_connect should be own index, not _offset
+		// fe8 (Slot B/A root) -> fbc_connect=8, fe9 (Slot B/B root) -> fbc_connect=9
+		writeProcData(_index, "fbc_connect", _index.getID());
+		SI_LOG_INFO("Frontend FBC: Root @#1 - fbc_link=0, fbc_connect=@#2", _id, _index.getID());
+	} else {
+		const int linkValue = _fbcLinked ? 1 : 0;
+		writeProcData(_index, "fbc_link", linkValue);
+		writeProcData(_index, "fbc_connect", _fbcConnect);
+		SI_LOG_INFO("Frontend FBC: Child @#1 - fbc_link=@#2, fbc_connect=@#3", _id, linkValue, _fbcConnect);
+	}
 }
 
 int FBC::readProcData(const FeIndex index, const std::string &procEntry) const {

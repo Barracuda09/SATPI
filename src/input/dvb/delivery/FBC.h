@@ -62,10 +62,17 @@ class FBC :
 		}
 
 		bool doSendDiSEqcViaRootTuner() const noexcept {
-			return _fbcTuner && _fbcLinked && _satTuner && _sendDiSEqcViaRootTuner;
+			// Only CHILD tuners need DiSEqC via root tuner (they share the root's LNB)
+			// ROOT tuners send DiSEqC on their own fd (they ARE the root)
+			return _fbcTuner && _satTuner && _sendDiSEqcViaRootTuner && !_fbcRoot;
 		}
 
 		int getFileDescriptorOfRootTuner(std::string& fePath) const;
+
+		/// PATCH 2+6: Apply FBC configuration (fbc_link, fbc_connect) at frontend open time.
+		/// minisatip writes these in dvb_open_device(); SatPI only wrote them on XML change.
+		/// This ensures FBC linking is active even after Enigma2/driver resets proc values.
+		void applyFBCConfiguration();
 
 	private:
 

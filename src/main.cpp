@@ -128,6 +128,9 @@ namespace {
 		signal(SIGKILL, child_handler);
 		signal(SIGINT,  child_handler);
 		signal(SIGSEGV, child_handler);
+		// Clients can close the TCP connection while we are writing stream
+		// data; without ignoring SIGPIPE the daemon dies with 'Broken pipe'.
+		signal(SIGPIPE, SIG_IGN);
 
 		// fork off the parent process
 		pid = fork();

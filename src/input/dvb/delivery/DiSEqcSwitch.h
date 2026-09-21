@@ -64,7 +64,8 @@ namespace input::dvb::delivery {
 		private:
 
 			bool sendDiseqcCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-				MiniDiSEqCSwitch sw, int src, unsigned int repeatCmd);
+				MiniDiSEqCSwitch sw, int src, unsigned int repeatCmd,
+				fe_sec_voltage_t targetVoltage, bool hiband);
 
 			// =======================================================================
 			// -- Data members -------------------------------------------------------

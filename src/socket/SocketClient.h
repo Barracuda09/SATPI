@@ -90,15 +90,18 @@ class SocketClient :
 		std::string getMethod() const {
 			// request line should be in the first line (method)
 			HeaderVector headers = getHeaders();
+			if (headers.size() == 0) {
+				return std::string();
+			}
 			const std::string& line = headers[0];
-			if (!headers[0].empty()) {
+			if (!line.empty()) {
 				std::string::const_iterator it = line.begin();
 				// remove any leading whitespace
-				while (*it == ' ') ++it;
+				while (it != line.end() && *it == ' ') ++it;
 
 				// copy method (upper case)
 				std::string method;
-				while (*it != ' ') {
+				while (it != line.end() && *it != ' ') {
 					method += std::toupper(*it);
 					++it;
 				}
@@ -124,6 +127,9 @@ class SocketClient :
 		/// Get the requested resource from HTTP message
 		std::string getRequestedFile() const {
 			HeaderVector headers = getHeaders();
+			if (headers.size() == 0) {
+				return std::string();
+			}
 			const std::string& param = headers[0];
 			if (!param.empty()) {
 				const std::string::size_type begin = param.find_first_of("/");
@@ -156,6 +162,9 @@ class SocketClient :
 		/// Get the Transport Parameters
 		TransportParamVector getTransportParameters() const {
 			HeaderVector headers = getHeaders();
+			if (headers.size() == 0) {
+				return TransportParamVector(StringVector());
+			}
 			return TransportParamVector(StringConverter::split(
 				StringConverter::getPercentDecoding(headers[0]), " /?&"));
 		}

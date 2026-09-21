@@ -94,13 +94,21 @@ namespace input::dvb::delivery {
 	}
 
 	bool DiSEqc::sendDiseqcMasterCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-			MiniDiSEqCSwitch sw, unsigned int repeatCmd) {
+			MiniDiSEqCSwitch sw, unsigned int repeatCmd,
+			fe_sec_voltage_t targetVoltage, bool hiband) {
+		// PATCH 3: minisatip-style DiSEqC sequence
+		// 1. Turn OFF 22kHz tone (mandatory before DiSEqC)
+		// 2. Set target LNB voltage (13V for V, 18V for H) - NOT always 18V
+		// 3. Send DiSEqC command
+		// 4. Send mini-DiSEqC burst (if configured)
+		// 5. Set 22kHz tone based on hiband (ON for high band, OFF for low band)
 		while (1) {
-			if (::ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_18) == -1) {
-				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 18V");
-			}
 			if (::ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
 				SI_LOG_PERROR("FE_SET_TONE failed");
+				return false;
+			}
+			if (::ioctl(feFD, FE_SET_VOLTAGE, targetVoltage) == -1) {
+				SI_LOG_PERROR("FE_SET_VOLTAGE failed");
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
@@ -117,9 +125,12 @@ namespace input::dvb::delivery {
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 			}
 
-			if (ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_13) == -1) {
-				SI_LOG_PERROR("FE_SET_VOLTAGE failed to 13V");
+			// Set 22kHz tone based on hiband (minisatip style)
+			const auto tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
+			if (::ioctl(feFD, FE_SET_TONE, tone) == -1) {
+				SI_LOG_PERROR("FE_SET_TONE failed after DiSEqC");
 			}
+
 			// Should we repeat message
 			if (repeatCmd > 0) {
 				--repeatCmd;
