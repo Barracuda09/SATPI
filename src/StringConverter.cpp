@@ -64,6 +64,16 @@ std::string StringConverter::stringToUpper(const std::string_view str) {
 	return result;
 }
 
+std::string StringConverter::stringToLower(const std::string_view str) {
+	std::string result(str);
+	for (auto& c : result) {
+		if (std::isupper(c)) {
+			c = std::tolower(c);
+		}
+	}
+	return result;
+}
+
 std::string StringConverter::trimWhitespace(const std::string_view str) {
 	std::string sub(str);
 	if (str.size() > 0) {

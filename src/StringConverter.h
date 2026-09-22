@@ -148,6 +148,9 @@ class StringConverter  {
 		static std::string stringToUpper(std::string_view str);
 
 		///
+		static std::string stringToLower(std::string_view str);
+
+		///
 		static void splitPath(const std::string &fullPath, std::string &path, std::string &file);
 
 		///

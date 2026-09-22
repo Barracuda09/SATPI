@@ -24,22 +24,10 @@
 #include <Utils.h>
 #include <StringConverter.h>
 #include <TransportParamVector.h>
-#include <cctype>
 
 namespace input::dvb {
 
 using namespace input::dvb::delivery;
-
-namespace {
-	// SAT>IP clients are not consistent with value casing (e.g. DVBViewer sends pol=V).
-	// Normalize transport string values to lowercase before comparing.
-	std::string lowerParam(std::string s) {
-		for (auto &c : s) {
-			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-		}
-		return s;
-	}
-}
 
 // =============================================================================
 // -- Constructors and destructor ----------------------------------------------
@@ -176,7 +164,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (plsMode != -1) {
 		_plsMode = integerToEnum<PlsMode>(plsMode & 0x03);
 	} else {
-		const std::string plsModeStr = lowerParam(params.getParameter("plsm"));
+		const std::string plsModeStr = StringConverter::stringToLower(params.getParameter("plsm"));
 		if (!plsModeStr.empty()) {
 			if (plsModeStr == "root") {
 				_plsMode = PlsMode::Root;
@@ -195,7 +183,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (msys != input::InputSystem::UNDEFINED) {
 		_delsys = msys;
 	}
-	const std::string pol = lowerParam(params.getParameter("pol"));
+	const std::string pol = StringConverter::stringToLower(params.getParameter("pol"));
 	if (!pol.empty()) {
 		if (pol == "h") {
 			_pol = Lnb::Polarization::Horizontal;
@@ -212,7 +200,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (src >= 1 && src <= 255) {
 		_src = src;
 	}
-	const std::string plts = lowerParam(params.getParameter("plts"));
+	const std::string plts = StringConverter::stringToLower(params.getParameter("plts"));
 	if (!plts.empty()) {
 		// "on", "off"[, "auto"]
 		if (plts == "on") {
@@ -226,7 +214,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_pilot = PILOT_AUTO;
 		}
 	}
-	const std::string ro = lowerParam(params.getParameter("ro"));
+	const std::string ro = StringConverter::stringToLower(params.getParameter("ro"));
 	if (!ro.empty()) {
 		// "0.35", "0.25", "0.20"[, "auto"]
 		if (ro == "0.35") {
@@ -242,7 +230,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_rolloff = ROLLOFF_AUTO;
 		}
 	}
-	const std::string fec = lowerParam(params.getParameter("fec"));
+	const std::string fec = StringConverter::stringToLower(params.getParameter("fec"));
 	if (!fec.empty()) {
 		// "12", "23", "34", "56", "78", "89", "35", "45", "910"[, "auto"]
 		if (fec == "12") {
@@ -276,7 +264,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_fec = FEC_AUTO;
 		}
 	}
-	const std::string mtype = lowerParam(params.getParameter("mtype"));
+	const std::string mtype = StringConverter::stringToLower(params.getParameter("mtype"));
 	if (!mtype.empty()) {
 		if (mtype == "qpsk") {
 			_modtype = QPSK;
@@ -331,7 +319,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 	if (bw != -1) {
 		_bandwidthHz = bw * 1000000.0;
 	}
-	const std::string tmode = lowerParam(params.getParameter("tmode"));
+	const std::string tmode = StringConverter::stringToLower(params.getParameter("tmode"));
 	if (!tmode.empty()) {
 		// "2k", "4k", "8k", "1k", "16k", "32k"[, "auto"]
 		if (tmode == "1k") {
@@ -353,7 +341,7 @@ void FrontendData::doParseStreamString(const FeID id, const TransportParamVector
 			_transmission = TRANSMISSION_MODE_AUTO;
 		}
 	}
-	const std::string gi = lowerParam(params.getParameter("gi"));
+	const std::string gi = StringConverter::stringToLower(params.getParameter("gi"));
 	if (!gi.empty()) {
 		// "14", "18", "116", "132","1128", "19128", "19256"[, "auto"]
 		if (gi == "14") {
