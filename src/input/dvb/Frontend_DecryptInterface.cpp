@@ -31,8 +31,6 @@ void Frontend::startOSCamFilterData(const int pid, const unsigned int demux, con
 		HEX2(filterMask[0]), HEX2(filterMask[1]), HEX2(filterMask[2]), HEX2(filterMask[3]));
 	_dvbapiData.startOSCamFilterData(_feID, pid, demux, filter, filterData, filterMask);
 	_frontendData.getFilter().setPID(pid, true);
-	// now update frontend, PID list has changed
-	updatePIDFilters();
  }
 
 void Frontend::stopOSCamFilterData(const int pid, const unsigned int demux, const unsigned int filter) {

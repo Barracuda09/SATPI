@@ -59,19 +59,19 @@ namespace input::dvb::delivery {
 	//  -- Other member functions ------------------------------------------------
 	// ===========================================================================
 
-	void DiSEqc::turnOffLNBPower(int feFD) const {
+	void DiSEqc::turnOffLNBPower(const int feFD, const FeID id) const {
 		if (::ioctl(feFD, FE_SET_VOLTAGE, SEC_VOLTAGE_OFF) == -1) {
-			SI_LOG_PERROR("FE_SET_VOLTAGE failed to switch off");
+			SI_LOG_PERROR("Frontend: @#1, FE_SET_VOLTAGE failed to switch off", id);
 		}
 	}
 
-	void DiSEqc::enableHigherLnbVoltage(int feFD, bool higherVoltage) const {
+	void DiSEqc::enableHigherLnbVoltage(const int feFD, const FeID id, const bool higherVoltage) const {
 		if (::ioctl(feFD, FE_ENABLE_HIGH_LNB_VOLTAGE, higherVoltage ? 1 : 0) == -1) {
-			SI_LOG_PERROR("FE_ENABLE_HIGH_LNB_VOLTAGE failed to switch off");
+			SI_LOG_PERROR("Frontend: @#1, FE_ENABLE_HIGH_LNB_VOLTAGE failed to switch off", id);
 		}
 	}
 
-	void DiSEqc::sendDiseqcResetCommand(int feFD, FeID id) {
+	void DiSEqc::sendDiseqcResetCommand(const int feFD, const FeID id) {
 		dvb_diseqc_master_cmd cmd = {{0xe0, 0x00, 0x00}, 3};
 
 		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] - DiSEqC 'Reset'",
@@ -82,7 +82,7 @@ namespace input::dvb::delivery {
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 
-	void DiSEqc::sendDiseqcPeripherialPowerOnCommand(int feFD, FeID id) {
+	void DiSEqc::sendDiseqcPeripherialPowerOnCommand(const int feFD, const FeID id) {
 		dvb_diseqc_master_cmd cmd = {{0xe0, 0x00, 0x03}, 3};
 
 		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] - DiSEqC 'Peripherial Power On'",
@@ -93,10 +93,10 @@ namespace input::dvb::delivery {
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
 
-	bool DiSEqc::sendDiseqcMasterCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-			MiniDiSEqCSwitch sw, unsigned int repeatCmd,
-			fe_sec_voltage_t targetVoltage, bool hiband) {
-		// PATCH 3: minisatip-style DiSEqC sequence
+	bool DiSEqc::sendDiseqcMasterCommand(const int feFD, const FeID id, dvb_diseqc_master_cmd &cmd,
+			const MiniDiSEqCSwitch sw, unsigned int repeatCmd,
+			const fe_sec_voltage_t targetVoltage, const bool hiband) {
+		// PATCH 3: DiSEqC sequence now:
 		// 1. Turn OFF 22kHz tone (mandatory before DiSEqC)
 		// 2. Set target LNB voltage (13V for V, 18V for H) - NOT always 18V
 		// 3. Send DiSEqC command
@@ -104,31 +104,31 @@ namespace input::dvb::delivery {
 		// 5. Set 22kHz tone based on hiband (ON for high band, OFF for low band)
 		while (1) {
 			if (::ioctl(feFD, FE_SET_TONE, SEC_TONE_OFF) == -1) {
-				SI_LOG_PERROR("FE_SET_TONE failed");
+				SI_LOG_PERROR("Frontend: @#1, FE_SET_TONE failed", id);
 				return false;
 			}
 			if (::ioctl(feFD, FE_SET_VOLTAGE, targetVoltage) == -1) {
-				SI_LOG_PERROR("FE_SET_VOLTAGE failed");
+				SI_LOG_PERROR("Frontend: @#1, FE_SET_VOLTAGE failed", id);
 				return false;
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayBeforeWrite));
 			if (::ioctl(feFD, FE_DISEQC_SEND_MASTER_CMD, &cmd) == -1) {
-				SI_LOG_PERROR("FE_DISEQC_SEND_MASTER_CMD failed");
+				SI_LOG_PERROR("Frontend: @#1, FE_DISEQC_SEND_MASTER_CMD failed", id);
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(_delayAfterWrite));
 			if (sw != MiniDiSEqCSwitch::DoNotSend) {
 				fe_sec_mini_cmd_t sasbBurst = (sw == MiniDiSEqCSwitch::MiniA) ? SEC_MINI_A : SEC_MINI_B;
 				if (::ioctl(feFD, FE_DISEQC_SEND_BURST, sasbBurst) == -1) {
-					SI_LOG_PERROR("FE_DISEQC_SEND_BURST failed");
+					SI_LOG_PERROR("Frontend: @#1, FE_DISEQC_SEND_BURST failed", id);
 					return false;
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 			}
 
-			// Set 22kHz tone based on hiband (minisatip style)
+			// Set 22kHz tone based on hiband
 			const auto tone = hiband ? SEC_TONE_ON : SEC_TONE_OFF;
 			if (::ioctl(feFD, FE_SET_TONE, tone) == -1) {
-				SI_LOG_PERROR("FE_SET_TONE failed after DiSEqC");
+				SI_LOG_PERROR("Frontend: @#1, FE_SET_TONE failed after DiSEqC", id);
 			}
 
 			// Should we repeat message

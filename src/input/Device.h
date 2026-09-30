@@ -118,7 +118,7 @@ class Device :
 		virtual void updatePIDFilters() {
 			getFilter().updatePIDFilters(_feID,
 				// openPid lambda function
-				[&](const int) {
+				[&](const int, const bool, const bool) {
 					return true;
 				},
 				// closePid lambda function

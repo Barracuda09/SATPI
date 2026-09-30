@@ -509,8 +509,9 @@ void FrontendData::relaxTuningHints() {
 	_pilot = PILOT_AUTO;
 	_fec = FEC_AUTO;
 	_rolloff = ROLLOFF_AUTO;
-	// Keep _modtype: on DVB-S2 drivers QAM_AUTO is not always a valid
-	// blind-search modulation, the delivery system already narrows the scan.
+	// Keep _modtype to what it was set before.
+	//   With DVB-S2 drivers QAM_AUTO is not always a valid blind-search modulation,
+	//   the delivery system already narrows the scan.
 }
 
 int FrontendData::getSpectralInversion() const {

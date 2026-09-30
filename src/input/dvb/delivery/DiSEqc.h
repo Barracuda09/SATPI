@@ -67,13 +67,13 @@ namespace input::dvb::delivery {
 
 			/// This will turn off the power to the LNB
 			/// @param feFD specifies the file descriptor for the frontend
-			virtual void turnOffLNBPower(int feFD) const;
+			virtual void turnOffLNBPower(int feFD, FeID id) const;
 
 			/// This will enable an slightly higher voltages instead of 13/18V,
 			/// in order to compensate for long antenna cables.
 			/// @param feFD specifies the file descriptor for the frontend
 			/// @param higherVoltage when <code>true</code> the LNB voltage will be slightly higher
-			virtual void enableHigherLnbVoltage(int feFD, bool higherVoltage) const;
+			virtual void enableHigherLnbVoltage(int feFD, FeID id, bool higherVoltage) const;
 
 		protected:
 
@@ -123,7 +123,6 @@ namespace input::dvb::delivery {
 		protected:
 
 			unsigned int _diseqcRepeat = 0;
-			// minisatip defaults: before_cmd=15ms, after_cmd=54ms
 			unsigned int _delayBeforeWrite = 15;
 			unsigned int _delayAfterWrite = 54;
 	};

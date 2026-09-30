@@ -27,7 +27,6 @@
 
 #include <cmath>
 #include <fstream>
-#include <map>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -43,7 +42,8 @@ FBC::FBC(const FeIndex index, const FeID id, const std::string& name, const bool
 		_index(index),
 		_id(id),
 		_name(name),
-		_satTuner(satTuner) {
+		_satTuner(satTuner),
+		_rootFDCache(-1) {
 	_fbcSetID = readProcData(index, "fbc_set_id");
 	_fbcTuner = _fbcSetID >= 0;
 	_fbcConnect = 0;
@@ -62,6 +62,13 @@ FBC::FBC(const FeIndex index, const FeID id, const std::string& name, const bool
 	}
 	SI_LOG_INFO("Frontend  FBC: Frontend @#1  Root @#2  Index @#3(@#4)  Offset @#5  Connected @#6  Linked @#7",
 		_id, _fbcRoot, _index, _tunerLetter, _offset, _fbcConnect, _fbcLinked);
+}
+
+FBC::~FBC() {
+	if (_rootFDCache != -1) {
+		SI_LOG_INFO("Frontend: @#1, Closing cached Root FBC @#2 fd: @#3", _id, _fbcRoot, _rootFDCache);
+		CLOSE_FD(_rootFDCache);
+	}
 }
 
 // =============================================================================
@@ -119,12 +126,10 @@ int FBC::getFileDescriptorOfRootTuner(std::string& fePath) const {
 	// For child tuners (fe10-fe15 linked to fe9): _fbcConnect = 9
 	// For root tuners: _fbcConnect = own index (e.g. fe9 = 9)
 	const int rootFeID = _fbcConnect;
-	// Replace the entire frontend number (not just last char)
 	const std::size_t pos = fePath.find("frontend");
 	if (pos != std::string::npos) {
 		fePath = fePath.substr(0, pos + 8) + std::to_string(rootFeID);
 	}
-	// minisatip uses master->fe: the already-open persistent fd of the root.
 	// Prefer dup() of an existing fd for this frontend (shares the driver's
 	// per-open file context); only open() fresh when the root isn't open yet.
 	dirent **fileList;
@@ -149,24 +154,19 @@ int FBC::getFileDescriptorOfRootTuner(std::string& fePath) const {
 		}
 		free(fileList);
 	}
-	// Root frontend not open in this process: open once and keep it cached
-	// open for process lifetime, like minisatip keeps master->fe open.
-	static std::map<std::string, int> rootFdCache;
-	const auto it = rootFdCache.find(fePath);
-	if (it != rootFdCache.end() && it->second >= 0) {
-		return ::dup(it->second);
+	// Root frontend not open in this instance, then
+	// open once and keep it cached open for this SatPI lifetime.
+	if (_rootFDCache >= 0) {
+		return ::dup(_rootFDCache);
 	}
 	const int feFD = ::open(fePath.data(), O_RDWR | O_NONBLOCK);
 	if (feFD >= 0) {
-		rootFdCache[fePath] = feFD;
+		_rootFDCache = feFD;
 		return ::dup(feFD);
 	}
 	return feFD;
 }
 
-// PATCH 2+6: Apply FBC configuration at frontend open time
-// minisatip writes fbc_link/fbc_connect in dvb_open_device().
-// SatPI only wrote them on XML config change, so proc values could be stale.
 void FBC::applyFBCConfiguration() {
 	if (!_fbcTuner) {
 		return;

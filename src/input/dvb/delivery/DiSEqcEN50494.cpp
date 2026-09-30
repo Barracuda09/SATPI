@@ -71,7 +71,7 @@ namespace input::dvb::delivery {
 		cmd.msg[3] |= (t >> 8) & 0x03;
 		cmd.msg[4]  = (t & 0xff);
 
-		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] [@#6] - DiSEqC Src: @#7 - UB: @#8",
+		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC (EN50494): [@#2] [@#3] [@#4] [@#5] [@#6] - DiSEqC Src: @#7 - UB: @#8",
 			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), HEX(cmd.msg[4], 2), src, _chSlot);
 
 		return sendDiseqcMasterCommand(feFD, id, cmd, MiniDiSEqCSwitch::DoNotSend, _diseqcRepeat);

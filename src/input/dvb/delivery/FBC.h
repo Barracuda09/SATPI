@@ -39,7 +39,7 @@ class FBC :
 	public:
 
 		FBC(const FeIndex index, const FeID id, const std::string& name, bool satTuner);
-		virtual ~FBC() = default;
+		virtual ~FBC();
 
 		// =========================================================================
 		// -- base::XMLSupport -----------------------------------------------------
@@ -70,7 +70,6 @@ class FBC :
 		int getFileDescriptorOfRootTuner(std::string& fePath) const;
 
 		/// PATCH 2+6: Apply FBC configuration (fbc_link, fbc_connect) at frontend open time.
-		/// minisatip writes these in dvb_open_device(); SatPI only wrote them on XML change.
 		/// This ensures FBC linking is active even after Enigma2/driver resets proc values.
 		void applyFBCConfiguration();
 
@@ -104,7 +103,7 @@ class FBC :
 		char _tunerLetter;
 		bool _fbcLinked;
 		bool _sendDiSEqcViaRootTuner;
-
+		mutable int _rootFDCache;
 };
 
 }

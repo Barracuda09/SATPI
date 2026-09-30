@@ -103,7 +103,7 @@ class PMT :
 		}
 
 		/// Get all elementary stream pids found in the PMT
-		const std::vector<ESData>& getESPIDs() const noexcept {
+		const std::vector<ESData> getESPIDs() const noexcept {
 			return _pmtData.esPID;
 		}
 

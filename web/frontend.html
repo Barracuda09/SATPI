@@ -91,6 +91,9 @@
 			page += addTableLineEntry("RTCP Signal Update Freq", xmlDoc, streamID + "rtcpSignalUpdate");
 			page += addTableLineEntry("Internal Software Pid Filtering", xmlDoc, streamID + "internalPidFiltering");
 			page += addTableLineEntry("Filter PCR for timing", xmlDoc, streamID + "filterPCR");
+			page += addTableLineEntry("Emulate 'pids=all': By opening 'All' PMT in PAT and ES in PMT", xmlDoc, streamID + "emulatePIDSAll");
+			page += addTableLineEntry("Emulate 'pids=all': Total PID to open", xmlDoc, streamID + "emuTotalPIDBuget");
+			page += addTableLineEntry("Emulate 'pids=all': Total PMT to open ", xmlDoc, streamID + "emuPMTBudget");
 			page += addTableLineEntry("Wait On Tuning Lock Timeout (ms)", xmlDoc, streamID + "waitOnLockTimeout");
 			page += addTableLineEntry("Force Old Styte Signal Status", xmlDoc, streamID + "forceOldStyleStatus");
 			page += addTableLineEntry("Turn off LNB Voltage during teardown", xmlDoc, streamID + "turnoffLNBPower");

@@ -80,7 +80,7 @@ namespace input::dvb::delivery {
 						// high nibble: reset bits
 						//  low nibble:   set bits  (option, position, polarizaion, band)
 						// src is 0-based here (sendDiseqc receives getDiSEqcSource()-1)
-						// 0=A(0x00), 1=B(0x04), 2=C(0x08), 3=D(0x0C) - same as minisatip pos
+						// 0=A(0x00), 1=B(0x04), 2=C(0x08), 3=D(0x0C)
 						cmd.msg[3] |= (src & 0x03) << 2;
 						cmd.msg[3] |= pol == Lnb::Polarization::Horizontal ? 0x2 : 0x0;
 						cmd.msg[3] |= hiband ? 0x1 : 0x0;
@@ -121,9 +121,6 @@ namespace input::dvb::delivery {
 				cmd.msg[3] |= src & 0x0f;
 				break;
 		}
-
-		// PATCH 3: Voltage and tone are now set inside sendDiseqcMasterCommand
-		// (minisatip-style: tone OFF -> voltage -> DiSEqC -> burst -> tone)
 		return true;
 	}
 
@@ -180,9 +177,9 @@ namespace input::dvb::delivery {
 	// -- Other member functions -------------------------------------------------
 	// ===========================================================================
 
-	bool DiSEqcSwitch::sendDiseqcCommand(int feFD, FeID id, dvb_diseqc_master_cmd &cmd,
-			MiniDiSEqCSwitch sw, const int src, unsigned int repeatCmd,
-			fe_sec_voltage_t targetVoltage, bool hiband) {
+	bool DiSEqcSwitch::sendDiseqcCommand(const int feFD, const FeID id, dvb_diseqc_master_cmd &cmd,
+			const MiniDiSEqCSwitch sw, const int src, const unsigned int repeatCmd,
+			const fe_sec_voltage_t targetVoltage, const bool hiband) {
 		SI_LOG_INFO("Frontend: @#1, Sending DiSEqC: [@#2] [@#3] [@#4] [@#5] - DiSEqC Src: @#6",
 			id, HEX(cmd.msg[0], 2), HEX(cmd.msg[1], 2), HEX(cmd.msg[2], 2), HEX(cmd.msg[3], 2), src);
 

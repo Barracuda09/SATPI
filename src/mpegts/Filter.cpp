@@ -24,6 +24,8 @@
 #include <StringConverter.h>
 #include <mpegts/PacketBuffer.h>
 
+#include <fstream>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,12 +37,19 @@ namespace mpegts {
 // -- Constructors and destructor ----------------------------------------------
 // =============================================================================
 
-Filter::Filter() {
+Filter::Filter() :
+		_enigmaTuner(std::ifstream("/proc/stb/info/version").is_open()) {
 	_nit = std::make_shared<NIT>();
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
 	_sdt = std::make_shared<SDT>();
 	_userPids = "0,1,16,17,18";
+
+	// NEXUS driver crashes (NULL deref in NEXUS_Recpump_AddPidChannel) on pid >= 0x2000
+	// Never send it to the driver; the demux still passes the full TS once any
+	// filter is open (verified empirically on Vu+ Duo 4K SE by Logic Encoder).
+	// So force Emulate 'pids=all' for Enigma Tuners (Not adjustible for Enigma tuners)
+	_emulatePIDSAll = _enigmaTuner;
 }
 
 // =============================================================================
@@ -52,6 +61,11 @@ void Filter::doAddToXML(std::string &xml) const {
 	ADD_XML_ELEMENT(xml, "totalCCErrors", getTotalCCErrors());
 	ADD_XML_CHECKBOX(xml, "filterPCR", (_filterPCR ? "true" : "false"));
 	ADD_XML_TEXT_INPUT(xml, "addUserPids", _userPids);
+	if (!_enigmaTuner) {
+		ADD_XML_CHECKBOX(xml, "emulatePIDSAll", (_emulatePIDSAll ? "true" : "false"));
+		ADD_XML_NUMBER_INPUT(xml, "emuTotalPIDBuget", _emuTotalPIDBuget, 5, 50);
+	}
+	ADD_XML_NUMBER_INPUT(xml, "emuPMTBudget", _emuPMTBudget, 1, 8);
 
 	const SDT::Data sdtData = getSDTData()->getSDTDataFor(
 			getPMTData(0)->getProgramNumber());
@@ -85,6 +99,17 @@ void Filter::doFromXML(const std::string &xml) {
 	if (findXMLElement(xml, "filterPCR.value", element)) {
 		_filterPCR = (element == "true") ? true : false;
 	}
+	if (!_enigmaTuner) {
+		if (findXMLElement(xml, "emulatePIDSAll.value", element)) {
+			_emulatePIDSAll = (element == "true") ? true : false;
+		}
+		if (findXMLElement(xml, "emuTotalPIDBuget.value", element)) {
+			_emuTotalPIDBuget = std::stoi(element);
+		}
+	}
+	if (findXMLElement(xml, "emuPMTBudget.value", element)) {
+		_emuPMTBudget = std::stoi(element);
+	}
 }
 
 // =============================================================================
@@ -97,6 +122,8 @@ void Filter::clear() {
 	_pat = std::make_shared<PAT>();
 	_pcr = std::make_shared<PCR>();
 	_sdt = std::make_shared<SDT>();
+	_emuPidCount = 0;
+	_emuPmtCount = 0;
 	_pmtMap.clear();
 	_pidTable.clear();
 }
@@ -109,15 +136,15 @@ void Filter::parsePIDString(const FeID id, const std::string &reqPids, const boo
 		_pidTable.clear();
 		if (reqPids.find("all") != std::string::npos) {
 			_pidTable.setAllPID(add);
-			// NEXUS: the driver kernel-crashes on the 8192 marker pid
-			// (skipped in openPid). Always open user/table pids too so
-			// PAT/SDT/NIT still flow for service discovery.
-			const StringVector userPidList = StringConverter::split(_userPids, ",");
-			for (const std::string& pid : userPidList) {
-				try {
-					_pidTable.setPID(std::stoi(pid), add);
-				} catch (const std::invalid_argument &) {
-					SI_LOG_ERROR("Frontend: @#1, Error, skipping PID: @#2", id, pid);
+			if (_emulatePIDSAll) {
+				// Always open user/table pids too so PAT/SDT/NIT still flow for service discovery.
+				const StringVector userPidList = StringConverter::split(_userPids, ",");
+				for (const std::string& pid : userPidList) {
+					try {
+						_pidTable.setPID(std::stoi(pid), add);
+					} catch (const std::invalid_argument &) {
+						SI_LOG_ERROR("Frontend: @#1, Error, skipping PID: @#2", id, pid);
+					}
 				}
 			}
 		}
@@ -169,13 +196,10 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 					// Did we finish collecting PAT
 					if (_pat->isCollected()) {
 						_pat->parse(id);
-						// Emulate 'pids=all': the NEXUS driver cannot open a
-						// hardware 'all pids' filter (8192 crashes it), so like
-						// minisatip's emulate_pids_all we walk PAT -> PMT -> ES
-						// and open each discovered pid instead.
-						if (_pidTable.isAllPID()) {
+						// Emulate 'pids=all' walk PAT -> PMT -> ES and open each discovered pid instead.
+						if (_emulatePIDSAll && _pidTable.isAllPID()) {
 							for (const auto& [pmtPid, _] : _pat->getPMTPidTable()) {
-								if (_emuPmtCount >= EMU_PMT_BUDGET || _emuPidCount >= EMU_PID_BUDGET) {
+								if (_emuPmtCount >= _emuPMTBudget || _emuPidCount >= _emuTotalPIDBuget) {
 									break;
 								}
 								_pidTable.setPID(pmtPid, true);
@@ -252,22 +276,57 @@ void Filter::filterData(const FeID id, mpegts::PacketBuffer &buffer, const bool 
 							pmt->parse(id);
 							// Emulate 'pids=all': open every ES + PCR pid of
 							// this service so the full TS flows progressively
-							if (_pidTable.isAllPID()) {
+							if (_emulatePIDSAll && _pidTable.isAllPID()) {
 								for (const auto& es : pmt->getESPIDs()) {
-									if (_emuPidCount >= EMU_PID_BUDGET) {
+									if (_emuPidCount >= _emuTotalPIDBuget) {
 										break;
 									}
-									_pidTable.setPID(es.pid, true);
-									++_emuPidCount;
+									switch (es.streamType) {
+										// Video
+										case 0x01: // MPEG-1 Video
+										case 0x02: // MPEG-2 Video
+										case 0x10: // MPEG-4 Visual
+										case 0x1B: // H.264 / AVC
+										case 0x24: // H.265 / HEVC
+										case 0x42: // AVS
+										case 0xEA: // VC-1
+											SI_LOG_INFO("Frontend: @#1, Emulate: Add Video PID @#2", id, PID(es.pid));
+											_pidTable.setPID(es.pid, true);
+											++_emuPidCount;
+											break;
+										// Audio
+										case 0x03: // MPEG-1 Audio
+										case 0x04: // MPEG-2 Audio
+										case 0x0F: // AAC ADTS
+										case 0x11: // AAC LATM/LOAS
+										case 0x1C: // MPEG-4 Audio
+											SI_LOG_INFO("Frontend: @#1, Emulate: Add Audio PID @#2", id, PID(es.pid));
+											_pidTable.setPID(es.pid, true);
+											++_emuPidCount;
+											break;
+										default:
+											// Do not add
+											break;
+									}
 								}
 								for (const auto& ecm : pmt->getECMPIDs()) {
-									if (ecm.ecmpid > 0 && _emuPidCount < EMU_PID_BUDGET) {
+									if (ecm.ecmpid > 0 &&
+											!_pidTable.shouldPIDOpen(ecm.ecmpid) &&
+											!_pidTable.isPIDOpened(ecm.ecmpid) &&
+											_emuPidCount < _emuTotalPIDBuget) {
+										SI_LOG_INFO("Frontend: @#1, Emulate: Add ECM PID @#2", id, PID(ecm.ecmpid));
 										_pidTable.setPID(ecm.ecmpid, true);
 										++_emuPidCount;
+										// @TODO: We should probably only add the supported caID (for now we add first)
+										break;
 									}
 								}
 								const int pcrPid = pmt->getPCRPid();
-								if (pcrPid > 0 && _emuPidCount < EMU_PID_BUDGET) {
+								if (pcrPid > 0 &&
+										!_pidTable.shouldPIDOpen(pcrPid) &&
+										!_pidTable.isPIDOpened(pcrPid) &&
+										_emuPidCount < _emuTotalPIDBuget) {
+									SI_LOG_INFO("Frontend: @#1, Emulate: Add PCR PID @#2", id, PID(pcrPid));
 									_pidTable.setPID(pcrPid, true);
 									++_emuPidCount;
 								}

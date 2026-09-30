@@ -281,13 +281,11 @@ bool Frontend::readTSPackets(mpegts::PacketBuffer& buffer) {
 		buffer.addAmountOfBytesWritten(readSize);
 		if (buffer.full()) {
 			_frontendData.getFilter().filterData(_feID, buffer, false);
-			// Full-TS emulation requests new pids while parsing PAT/PMT.
-			// NEXUS: DMX_ADD_PID on the live demux fd works mid-stream, so
-			// newly discovered pids are added without disturbing the feed.
+			// With Emulation 'pids=all', new PIDs are retrieved during the parsing of PAT/PMT.
+			// So we need to update them, in this read loop if pid table has changed.
 			if (_frontendData.getFilter().hasPIDTableChanged()) {
 				updatePIDFilters();
 			}
-
 			return true;
 		}
 	} else if (readSize < 0) {
@@ -517,13 +515,10 @@ void Frontend::updatePIDFilters() {
 	}
 	_frontendData.getFilter().updatePIDFilters(_feID,
 		// openPid lambda function
-		[&](const int pid) {
+		[&](const int pid, const bool enigmaTuner, const bool emulatePIDSAll) {
 			uint16_t p = pid;
-			// NEXUS driver crashes (NULL deref in NEXUS_Recpump_AddPidChannel)
-			// on pid >= 0x2000 - the SatPI "all PIDs" marker (8192). Never send
-			// it to the driver; the demux still passes the full TS once any
-			// filter is open (verified empirically on Vu+ Duo 4K SE).
-			if (p >= 0x2000) {
+			// Do we need to Emulate 'pids=all'
+			if (emulatePIDSAll && p >= 0x2000) {
 				SI_LOG_INFO("Frontend: @#1, Skipping hardware filter for virtual PID @#2", _feID, PID(p));
 				return true;
 			}
@@ -538,19 +533,20 @@ void Frontend::updatePIDFilters() {
 					std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					++timeout;
 					if (timeout > 3) {
-						// fall back to shared demux0 (Enigma2 uses it too)
-						_fd_dmx = openDMX("/dev/dvb/adapter0/demux0");
-						if (_fd_dmx == -1) {
-							return false;
+						// If Enigma tuner, fall back to shared demux0 (Enigma2 uses it too)
+						if (enigmaTuner) {
+							_fd_dmx = openDMX("/dev/dvb/adapter0/demux0");
+							if (_fd_dmx >= 0) {
+								break;
+							}
 						}
-						break;
+						return false;
 					}
 				}
 				SI_LOG_INFO("Frontend: @#1, Opened @#2 using fd: @#3", _feID, _path_to_dmx, _fd_dmx);
-				// Do we run on a Set-Top Box with Enigma2, then we need to set
+				// Do we have an Enigma2 tuner, then we need to set
 				// DMX_SET_SOURCE on the same fd that owns the filters
-				std::ifstream infoVersionFile("/proc/stb/info/version");
-				if (infoVersionFile.is_open()) {
+				if (enigmaTuner) {
 					int offset = 0;
 					std::ifstream offsetFile("/proc/stb/frontend/dvr_source_offset");
 					if (offsetFile.is_open()) {
@@ -581,7 +577,6 @@ void Frontend::updatePIDFilters() {
 					SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_SET_PES_FILTER for PID: @#2", _feID, PID(p));
 					return false;
 				}
-
 			} else if (::ioctl(_fd_dmx, DMX_ADD_PID, &p) != 0) {
 				SI_LOG_PERROR("Frontend: @#1, Failed to set DMX_ADD_PID for PID: @#2", _feID, PID(p));
 				return false;

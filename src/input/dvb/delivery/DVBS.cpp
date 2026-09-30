@@ -148,8 +148,7 @@ namespace input::dvb::delivery {
 	bool DVBS::tune(const int feFD, const input::dvb::FrontendData &frontendData) {
 		SI_LOG_INFO("Frontend: @#1, Start tuning process for DVB-S(2)...", _feID);
 
-		// PATCH 2+6: Apply FBC configuration before tuning
-		// minisatip writes fbc_link/fbc_connect in dvb_open_device()
+		// PATCH 2+6: Apply FBC configuration again before tuning.
 		_fbc.applyFBCConfiguration();
 
 		std::string fePathDiseqc(_fePath);
@@ -165,7 +164,7 @@ namespace input::dvb::delivery {
 		SI_LOG_INFO("Frontend: @#1, Opened @#2 for Writing DiSEqC command with fd: @#3",
 				_feID, fePathDiseqc, feFDDiseqc);
 
-		_diseqc->enableHigherLnbVoltage(feFDDiseqc, _higherLnbVoltage);
+		_diseqc->enableHigherLnbVoltage(feFDDiseqc, _feID, _higherLnbVoltage);
 
 		uint32_t freq = frontendData.getFrequency();
 		// send diseqc ('src' differs from 'DiSEqC switch position' so adjust with -1)
@@ -178,7 +177,7 @@ namespace input::dvb::delivery {
 
 		// feFDDiseqc is a dup() of the root tuner's fd (children only) - closing
 		// the dup is safe: the shared file context stays alive via the base fd
-		// which remains open for the process lifetime (like minisatip master->fe).
+		// which remains open for the process lifetime
 		if (feFDDiseqc != feFD && feFDDiseqc >= 0) {
 			::close(feFDDiseqc);
 		}
@@ -193,7 +192,7 @@ namespace input::dvb::delivery {
 	void DVBS::teardown(int feFD) const {
 		if (_turnoffLnbVoltage) {
 			SI_LOG_INFO("Frontend: @#1, Turning off LNB Power", _feID);
-			_diseqc->turnOffLNBPower(feFD);
+			_diseqc->turnOffLNBPower(feFD, _feID);
 		}
 	}
 

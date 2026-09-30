@@ -185,7 +185,7 @@ TransportParamVector Transformation::transformStreamString(
 	_transformedDeviceData.parseStreamString(id, params);
 	_transformedDeviceData.getFilter().updatePIDFilters(id,
 		// openPid lambda function
-		[&](const int) {
+		[&](const int, const bool, const bool) {
 			return true;
 		},
 		// closePid lambda function
